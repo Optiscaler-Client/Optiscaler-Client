@@ -152,6 +152,7 @@ Full interface translation in **14 languages**:
 - The app is self-contained, so no external .NET runtime installation is required.
 - On Linux, automatic scanner sources are focused on Steam libraries.
 - Manual add/install flows currently target executable files (`.exe`) for game selection.
+- **Nix/NixOS:** A `flake.nix` is provided for building via Nix. Before the first build, regenerate the lock file by running `nix flake update` in the project root.
 
 ---
 
