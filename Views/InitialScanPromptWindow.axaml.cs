@@ -85,6 +85,7 @@ namespace OptiscalerClient.Views
             var config = _componentService.Config.ScanSources;
 
             var tglSteam = this.FindControl<ToggleSwitch>("TglSteam");
+            var tglHeroic = this.FindControl<ToggleSwitch>("TglHeroic");
             var tglEpic = this.FindControl<ToggleSwitch>("TglEpic");
             var tglGOG = this.FindControl<ToggleSwitch>("TglGOG");
             var tglXbox = this.FindControl<ToggleSwitch>("TglXbox");
@@ -92,6 +93,7 @@ namespace OptiscalerClient.Views
             var tglUbisoft = this.FindControl<ToggleSwitch>("TglUbisoft");
 
             if (tglSteam != null) tglSteam.IsChecked = config.ScanSteam;
+            if (tglHeroic != null) tglHeroic.IsChecked = config.ScanHeroic;
             if (tglEpic != null) tglEpic.IsChecked = config.ScanEpic;
             if (tglGOG != null) tglGOG.IsChecked = config.ScanGOG;
             if (tglXbox != null) tglXbox.IsChecked = config.ScanXbox;
@@ -404,6 +406,7 @@ namespace OptiscalerClient.Views
         private void BtnStartScan_Click(object? sender, RoutedEventArgs e)
         {
             var tglSteam = this.FindControl<ToggleSwitch>("TglSteam");
+            var tglHeroic = this.FindControl<ToggleSwitch>("TglHeroic");
             var tglEpic = this.FindControl<ToggleSwitch>("TglEpic");
             var tglGOG = this.FindControl<ToggleSwitch>("TglGOG");
             var tglXbox = this.FindControl<ToggleSwitch>("TglXbox");
@@ -413,6 +416,7 @@ namespace OptiscalerClient.Views
             var sources = new ScanSourcesConfig
             {
                 ScanSteam = tglSteam?.IsChecked ?? true,
+                ScanHeroic = tglHeroic?.IsChecked ?? true,
                 ScanEpic = tglEpic?.IsChecked ?? true,
                 ScanGOG = tglGOG?.IsChecked ?? true,
                 ScanXbox = tglXbox?.IsChecked ?? true,

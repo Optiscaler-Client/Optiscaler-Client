@@ -24,6 +24,7 @@ namespace OptiscalerClient.Services;
 public class GameScannerService
 {
     private readonly IGameScanner _steamScanner;
+    private readonly IGameScanner _heroicScanner;
     private readonly IGameScanner? _epicScanner;
     private readonly IGameScanner? _gogScanner;
     private readonly IGameScanner? _xboxScanner;
@@ -35,6 +36,7 @@ public class GameScannerService
     public GameScannerService()
     {
         _steamScanner = new SteamScanner();
+        _heroicScanner = new HeroicScanner();
 
         if (OperatingSystem.IsWindows())
         {
@@ -79,6 +81,8 @@ public class GameScannerService
 
             if (scanConfig.ScanSteam)
                 platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Steam library..."); return _steamScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Steam scan error: {ex.Message}"); return new List<Game>(); } }));
+            if (scanConfig.ScanHeroic)
+                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Heroic library..."); return _heroicScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Heroic scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanEpic && _epicScanner != null)
                 platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Epic Games library..."); return _epicScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Epic scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanGOG && _gogScanner != null)

@@ -228,6 +228,10 @@
                                             <TextBlock Grid.Column="0" Text="Steam" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
                                             <ToggleSwitch Grid.Column="1" Name="TglSteam" OnContent="" OffContent="" IsChecked="True"/>
                                         </Grid>
+                                        <Grid Name="GridHeroic" ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="Heroic" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                            <ToggleSwitch Grid.Column="1" Name="TglHeroic" OnContent="" OffContent="" IsChecked="True"/>
+                                        </Grid>
                                         <!-- Windows-only sources; visibility set from code-behind -->
                                         <Grid Name="GridEpic" ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="Epic Games" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>

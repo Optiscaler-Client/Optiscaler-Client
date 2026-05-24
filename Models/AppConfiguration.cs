@@ -71,6 +71,7 @@ namespace OptiscalerClient.Models
     public class ScanSourcesConfig
     {
         public bool ScanSteam { get; set; } = true;
+        public bool ScanHeroic { get; set; } = true;
         public bool ScanEpic { get; set; } = true;
         public bool ScanGOG { get; set; } = true;
         public bool ScanXbox { get; set; } = true;

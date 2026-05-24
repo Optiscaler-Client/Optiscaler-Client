@@ -31,7 +31,7 @@
 
 ### Game Discovery
 
-- **Multi-Platform Auto-Scanner** — Scans **Steam, Epic Games, GOG, EA, Ubisoft, Battle.net, and Xbox/Microsoft Store** libraries in parallel. On Linux, only Steam is scanned automatically.
+- **Multi-Platform Auto-Scanner** — Scans **Steam, Epic Games, GOG, EA, Ubisoft, Battle.net, Heroic, and Xbox/Microsoft Store** libraries in parallel. On Linux, only **Steam** and **Heroic** (Epic Games, GOG) are scanned automatically.
 - **Custom Folder Scanning** — Add any folder as a scan source for DRM-free or standalone games.
 - **Manual Game Addition** — Add games by selecting the executable directly.
 - **Drive Root Filtering** — Limit scanning to specific drives.
@@ -150,7 +150,7 @@ Full interface translation in **14 languages**:
 ### Notes
 
 - The app is self-contained, so no external .NET runtime installation is required.
-- On Linux, automatic scanner sources are focused on Steam libraries.
+- On Linux, automatic scanner sources are focused on Steam and Heroic libraries.
 - Manual add/install flows currently target executable files (`.exe`) for game selection.
 - **Nix/NixOS:** A `flake.nix` is provided for building via Nix. Before the first build, regenerate the lock file by running `nix flake update` in the project root.
 
