@@ -61,6 +61,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
     <PackageReference Include="SharpCompress" Version="0.44.5" />
     <PackageReference Include="System.Management" Version="10.0.0" />
+    <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
   </ItemGroup>
 
   <!-- Expose internals to the test project so tests can use the injectable constructor -->

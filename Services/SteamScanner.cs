@@ -1,16 +1,21 @@
 using Microsoft.Win32;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
-using System.Collections.Generic;
-using System.IO;
 using System.Runtime.Versioning;
-using System.Text.RegularExpressions;
+using ValveKeyValue;
 
 namespace OptiscalerClient.Services;
 
 public class SteamScanner : IGameScanner
 {
     private const string REGISTRY_PATH = @"SOFTWARE\Valve\Steam";
+
+    private static readonly KVSerializerOptions _libraryFolderOptions = new()
+    {
+        HasEscapeSequences = true
+    };
+
+    private static readonly KVSerializer _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
 
     public List<Game> Scan()
     {
@@ -110,17 +115,20 @@ public class SteamScanner : IGameScanner
 
         try
         {
-            var content = File.ReadAllText(vdfPath);
-            var matches = Regex.Matches(content, "\"path\"\\s+\"([^\"]+)\"");
+            using var stream = File.OpenRead(vdfPath);
+            var doc = _kvSerializer.Deserialize(stream, _libraryFolderOptions);
 
-            foreach (Match match in matches)
+            foreach (var (_, value) in doc.Root.Children)
             {
-                if (match.Success && match.Groups.Count > 1)
+                if (value.TryGetValue("path", out var pathValue))
                 {
-                    var path = match.Groups[1].Value.Replace("\\\\", "\\");
-                    var canon = CanonicalPath(path);
-                    if (seen.Add(canon))
-                        folders.Add(canon);
+                    var path = pathValue.ToString();
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var canon = CanonicalPath(path);
+                        if (seen.Add(canon))
+                            folders.Add(canon);
+                    }
                 }
             }
         }
@@ -136,21 +144,23 @@ public class SteamScanner : IGameScanner
     {
         try
         {
-            var content = File.ReadAllText(manifestPath);
+            using var stream = File.OpenRead(manifestPath);
+            var appState = _kvSerializer.Deserialize<AppState>(stream);
 
             // Extract AppID
-            var appIdMatch = Regex.Match(content, "\"appid\"\\s+\"(\\d+)\"");
-            var appId = appIdMatch.Success ? appIdMatch.Groups[1].Value : Path.GetFileName(manifestPath).Replace("appmanifest_", "").Replace(".acf", "");
+            var appId = !string.IsNullOrEmpty(appState.AppId)
+                ? appState.AppId
+                : Path.GetFileName(manifestPath).Replace("appmanifest_", "").Replace(".acf", "");
 
             // Extract Name
-            var nameMatch = Regex.Match(content, "\"name\"\\s+\"([^\"]+)\"");
-            var name = nameMatch.Success ? nameMatch.Groups[1].Value : "Unknown Game";
+            var name = !string.IsNullOrEmpty(appState.Name)
+                ? appState.Name
+                : "Unknown Game";
 
             // Extract InstallDir
-            var installDirMatch = Regex.Match(content, "\"installdir\"\\s+\"([^\"]+)\"");
-            if (!installDirMatch.Success) return null;
+            var installDirName = appState.InstallDir;
+            if (string.IsNullOrEmpty(installDirName)) return null;
 
-            var installDirName = installDirMatch.Groups[1].Value;
             var steamappsPath = Path.GetDirectoryName(manifestPath); // .../steamapps
             if (steamappsPath == null) return null;
 
@@ -170,5 +180,17 @@ public class SteamScanner : IGameScanner
             DebugWindow.Log($"[Steam] Error parsing manifest '{manifestPath}': {ex.Message}");
             return null;
         }
+    }
+
+    private sealed class AppState
+    {
+        [KVProperty("appid")]
+        public string? AppId { get; set; }
+
+        [KVProperty("name")]
+        public string? Name { get; set; }
+
+        [KVProperty("installdir")]
+        public string? InstallDir { get; set; }
     }
 }
