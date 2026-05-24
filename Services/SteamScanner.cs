@@ -10,6 +10,13 @@ public class SteamScanner : IGameScanner
 {
     private const string REGISTRY_PATH = @"SOFTWARE\Valve\Steam";
 
+    // Allows unit tests to inject a fake Steam path, bypassing registry/filesystem lookups.
+    private readonly string? _overrideSteamPath;
+
+    public SteamScanner() { }
+
+    internal SteamScanner(string steamPath) => _overrideSteamPath = steamPath;
+
     private static readonly KVSerializerOptions _libraryFolderOptions = new()
     {
         HasEscapeSequences = true
@@ -60,6 +67,8 @@ public class SteamScanner : IGameScanner
 
     private string? GetSteamInstallPath()
     {
+        if (_overrideSteamPath is not null)
+            return _overrideSteamPath;
         if (OperatingSystem.IsWindows())
             return GetSteamInstallPathWindows();
         return GetSteamInstallPathLinux();
