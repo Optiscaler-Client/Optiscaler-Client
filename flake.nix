@@ -1,5 +1,6 @@
 {
   inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
   };
   outputs =
@@ -17,7 +18,7 @@
         dotnet-runtime = dotnet.runtime;
       in
       rec {
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             dotnet-sdk
             fontconfig.lib
