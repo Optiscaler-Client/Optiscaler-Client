@@ -1,8 +1,10 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
     <x:String x:Key="TxtSettingsTitle">Ajustes</x:String>
+    <x:String x:Key="TxtGamepadConnected">Gamepad conectado</x:String>
+    <x:String x:Key="TxtGamepadDisconnected">Gamepad desconectado</x:String>
     <x:String x:Key="TxtSettingsDesc">Administrar las preferencias de la aplicación</x:String>
     <x:String x:Key="TxtAppPrefs">Preferencias de la aplicación</x:String>
     <x:String x:Key="TxtCacheMgmt">Caché local y versiones predeterminadas</x:String>

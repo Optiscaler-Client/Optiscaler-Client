@@ -35,7 +35,7 @@
             <Setter Property="FontSize" Value="20"/>
             <Setter Property="Template">
                 <ControlTemplate>
-                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                    <Border Name="RootBorder" Background="{TemplateBinding Background}" CornerRadius="8">
                         <Grid>
                             <Border Name="Indicator" Width="3" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource BrAccent}" IsVisible="False" CornerRadius="1.5" Margin="2,0,0,0"/>
                             <TextBlock Text="{TemplateBinding Content}" FontFamily="{StaticResource FontIcons}" FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip.Tip="{TemplateBinding ToolTip.Tip}"/>
@@ -54,6 +54,15 @@
         <Style Selector="RadioButton.NavBtnStyle:pointerover">
             <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+        </Style>
+        <!-- Gamepad / keyboard focus ring for sidebar nav buttons.
+             Inset BoxShadow is never clipped by parent containers. -->
+        <Style Selector="RadioButton.NavBtnStyle:focus /template/ Border#RootBorder">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #8B73F8"/>
+        </Style>
+        <Style Selector="RadioButton.NavBtnStyle:checked:focus /template/ Border#RootBorder">
+            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #9D88FF"/>
         </Style>
 
         <!-- Organize mode: hide action buttons, show edit controls via ListBox class -->
@@ -281,8 +290,26 @@
                                         Margin="34,0,0,0"/>
                          </Grid>
 
-                         <!-- Right: GPU chip + Nukem updates -->
+                         <!-- Right: GPU chip + Gamepad + View Modes -->
                          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                             
+                             <Border Background="{StaticResource BrBgSurface}"
+                                     BorderBrush="{StaticResource BrBorderSubtle}"
+                                     BorderThickness="1"
+                                     CornerRadius="{StaticResource RadiusMedium}"
+                                     Padding="12,5"
+                                     Margin="0,0,10,0">
+                                 <Path Name="TxtGamepadIcon"
+                                       Data="M21.58,9.39C21.32,7.63 19.86,6.34 18.06,6.34H5.94C4.14,6.34 2.68,7.63 2.42,9.39L1.08,18.08C0.84,19.64 2.05,21 3.63,21C4.42,21 5.16,20.65 5.66,20.04L8.35,16.85H15.65L18.34,20.04C18.84,20.65 19.58,21 20.37,21C21.95,21 23.16,19.64 22.92,18.08L21.58,9.39M8.5,13.5H6.5V15.5H5V13.5H3V12H5V10H6.5V12H8.5V13.5M16,14C15.17,14 14.5,13.33 14.5,12.5C14.5,11.67 15.17,11 16,11C16.83,11 17.5,11.67 17.5,12.5C17.5,13.33 16.83,14 16,14M19,11C18.17,11 17.5,10.33 17.5,9.5C17.5,8.67 18.17,8 19,8C19.83,8 20.5,8.67 20.5,9.5C20.5,10.33 19.83,11 19,11Z"
+                                       Fill="{StaticResource BrTextSecondary}"
+                                       Stretch="Uniform"
+                                       Width="18"
+                                       Height="18"
+                                       Margin="0,2,0,0"
+                                       VerticalAlignment="Center"
+                                       ToolTip.Tip="{DynamicResource TxtGamepadDisconnected}" />
+                             </Border>
+
                              <Border Background="{StaticResource BrBgSurface}"
                                      BorderBrush="{StaticResource BrBorderSubtle}"
                                      BorderThickness="1"

@@ -67,8 +67,10 @@ namespace OptiscalerClient.Views
         private readonly GameAnalyzerService _analyzerService = new();
         private GameMetadataService _metadataService = null!;
         private readonly HelpPageService _helpPageService = new();
+        private GamepadNavigationHelper? _gamepadHelper;
         private string _currentHelpPageId = "about";
         private double? _currentPageFontSize;
+        private bool _isCursorHiddenByGamepad;
 
         private ListBox? _lstGames;
         private ListBox? _lstGamesGrid;
@@ -83,6 +85,7 @@ namespace OptiscalerClient.Views
         private TextBox? _txtSearch;
         private TextBlock? _txtSearchPlaceholder;
         private TextBlock? _txtGpuInfo;
+        private Avalonia.Controls.Shapes.Path? _txtGamepadIcon;
         private Border? _pnlNoUpscalersFound;
         private bool _hasScanned = false;
         private bool _isEditMode = false;
@@ -159,6 +162,7 @@ namespace OptiscalerClient.Views
             this.PositionChanged += (s, e) => SaveWindowState();
             this.SizeChanged += MainWindow_SizeChanged;
             this.KeyDown += HandleEditorKeyCapture;
+            this.AddHandler(InputElement.PointerMovedEvent, MainWindow_PointerMoved, handledEventsToo: true);
         }
 
         private void ComponentStatusChanged()
@@ -170,6 +174,16 @@ namespace OptiscalerClient.Views
         {
             // Save final window state before closing
             SaveWindowState();
+
+            this.RemoveHandler(InputElement.PointerMovedEvent, MainWindow_PointerMoved);
+
+            if (_gamepadHelper != null)
+            {
+                _gamepadHelper.GamepadConnectionChanged -= GamepadHelper_GamepadConnectionChanged;
+                _gamepadHelper.GamepadActivity -= GamepadHelper_GamepadActivity;
+            }
+
+            _gamepadHelper?.Dispose();
 
             if (!_windowLifetimeCts.IsCancellationRequested)
             {
@@ -200,6 +214,7 @@ namespace OptiscalerClient.Views
                 _txtSearch = this.FindControl<TextBox>("TxtSearch");
                 _txtSearchPlaceholder = this.FindControl<TextBlock>("TxtSearchPlaceholder");
                 _txtGpuInfo = this.FindControl<TextBlock>("TxtGpuInfo");
+                _txtGamepadIcon = this.FindControl<Avalonia.Controls.Shapes.Path>("TxtGamepadIcon");
                 _pnlNoUpscalersFound = this.FindControl<Border>("PnlNoUpscalersFound");
 
                 if (_lstGames != null) _lstGames.ItemsSource = _games;
@@ -217,6 +232,11 @@ namespace OptiscalerClient.Views
                     linuxNotice.IsVisible = OperatingSystem.IsLinux();
 
                 UpdateAnimationsState(_componentService.Config.AnimationsEnabled);
+
+                var gamepadService = PlatformServiceFactory.CreateGamepadDetectionService();
+                _gamepadHelper = new GamepadNavigationHelper(this, gamepadService);
+                _gamepadHelper.GamepadConnectionChanged += GamepadHelper_GamepadConnectionChanged;
+                _gamepadHelper.GamepadActivity += GamepadHelper_GamepadActivity;
 
                 // Show welcome/changelog popup when the app version changes (or on first run)
                 if (_componentService.Config.LastSeenAppVersion != App.AppVersion)
@@ -254,6 +274,87 @@ namespace OptiscalerClient.Views
                 // Scans should only run when the user explicitly clicks Scan Games.
             }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Loaded handler failed: {ex.Message}"); }
+        }
+
+        private void GamepadHelper_GamepadConnectionChanged(object? sender, bool isConnected)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_txtGamepadIcon != null)
+                {
+                    _txtGamepadIcon.Fill = isConnected ? 
+                        (this.FindResource("BrAccent") as IBrush ?? Brushes.Purple) : 
+                        (this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray);
+
+                    ToolTip.SetTip(_txtGamepadIcon, isConnected ? 
+                        (this.FindResource("TxtGamepadConnected") as string ?? "Gamepad connected") : 
+                        (this.FindResource("TxtGamepadDisconnected") as string ?? "Gamepad disconnected"));
+                }
+
+                if (!isConnected)
+                {
+                    ShowMouseCursor();
+                    _gamepadHelper?.SwitchToMouseMode();
+                }
+            });
+        }
+
+        private void GamepadHelper_GamepadActivity(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Post(HideMouseCursorForGamepad);
+        }
+
+        private void MainWindow_PointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_isCursorHiddenByGamepad) return;
+            ShowMouseCursor();
+            _gamepadHelper?.SwitchToMouseMode();
+        }
+
+        private void HideMouseCursorForGamepad()
+        {
+            if (_isCursorHiddenByGamepad) return;
+
+            // If the pointer was resting over a card before controller input,
+            // clear stale hover visuals so UI reflects controller mode.
+            if (!IsFocusInsideGridHoverActions())
+            {
+                ClearGridCardHoverVisuals();
+            }
+
+            Cursor = new Cursor(StandardCursorType.None);
+            _isCursorHiddenByGamepad = true;
+        }
+
+        private void ShowMouseCursor()
+        {
+            if (!_isCursorHiddenByGamepad) return;
+            Cursor = new Cursor(StandardCursorType.Arrow);
+            _isCursorHiddenByGamepad = false;
+        }
+
+        private bool IsFocusInsideGridHoverActions()
+        {
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            if (focused is not Visual visual) return false;
+
+            return visual.GetVisualAncestors()
+                .OfType<Panel>()
+                .Any(p => string.Equals(p.Name, "GridCardHoverActions", StringComparison.Ordinal));
+        }
+
+        private void ClearGridCardHoverVisuals()
+        {
+            if (_lstGamesGrid == null) return;
+
+            var cards = _lstGamesGrid.GetVisualDescendants()
+                .OfType<Border>()
+                .Where(x => x.Classes.Contains("GameGridCard"));
+
+            foreach (var card in cards)
+            {
+                ToggleGridCardHover(card, false);
+            }
         }
 
         private void MainWindow_SizeChanged(object? sender, SizeChangedEventArgs e)
@@ -434,6 +535,7 @@ namespace OptiscalerClient.Views
         private void GameGridCard_PointerEntered(object? sender, PointerEventArgs e)
         {
             if (_isEditMode) return;
+            if (_isCursorHiddenByGamepad) return;
             if (sender is Border card)
             {
                 ToggleGridCardHover(card, true);

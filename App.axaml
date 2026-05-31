@@ -290,7 +290,49 @@
             <Setter Property="Background" Value="{StaticResource BrAccent}"/>
         </Style>
 
+        <!-- ════════════════════════════════════════════════════════
+             FOCUS RING — keyboard / gamepad navigation
+             Uses :focus pseudo-class (always fires when focus moves,
+             regardless of ShowKeyboardCues — required for simulated
+             key events raised by GamepadNavigationHelper).
+             ════════════════════════════════════════════════════════ -->
 
+        <!-- Disable adorner on controls that have inline :focus styles -->
+        <Style Selector="Button, RadioButton, ListBoxItem">
+            <Setter Property="FocusAdorner">
+                <FocusAdornerTemplate>
+                    <Border Background="Transparent"/>
+                </FocusAdornerTemplate>
+            </Setter>
+        </Style>
+
+        <!-- Button: accent border ring -->
+        <Style Selector="Button:focus /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <!-- ListBoxItem: background lift + accent border ring -->
+        <Style Selector="ListBoxItem:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- TextBox / ComboBox: adorner ring with hardcoded color
+             (StaticResource lookups are unreliable inside FocusAdornerTemplate;
+             the negative Margin renders the ring outside the control bounds) -->
+        <Style Selector="TextBox, ComboBox">
+            <Setter Property="FocusAdorner">
+                <FocusAdornerTemplate>
+                    <Border BorderBrush="#8B73F8"
+                            BorderThickness="2"
+                            CornerRadius="8"
+                            Background="Transparent"
+                            Margin="-3"/>
+                </FocusAdornerTemplate>
+            </Setter>
+        </Style>
 
     </Application.Styles>
 </Application>

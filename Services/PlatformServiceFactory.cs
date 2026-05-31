@@ -46,6 +46,17 @@ public static class PlatformServiceFactory
         return null;
     }
 
+    /// <summary>Returns the <see cref="IGamepadDetectionService"/> for the current OS,
+    /// or <c>null</c> on unsupported platforms.</summary>
+    public static IGamepadDetectionService? CreateGamepadDetectionService()
+    {
+        if (OperatingSystem.IsWindows())
+            return new WindowsGamepadDetectionService();
+        if (OperatingSystem.IsLinux())
+            return new LinuxGamepadDetectionService();
+        return null;
+    }
+
     // ── Private implementations ────────────────────────────────────────────
 
     [SupportedOSPlatform("windows")]
