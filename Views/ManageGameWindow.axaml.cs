@@ -38,6 +38,7 @@ using Avalonia.Platform.Storage;
 using System.Collections.Generic;
 using OptiscalerClient.Helpers;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace OptiscalerClient.Views
 {
@@ -58,6 +59,9 @@ namespace OptiscalerClient.Views
         private bool _isUpdatingProfiles;
         private string? _lastSelectedProfileName;
         private string? _defaultProfileName;
+        private IGamepadDetectionService? _gamepadService;
+        private DateTime _ignoreGamepadInputUntilUtc;
+        private bool _isControllerModeActive;
 
         public bool NeedsScan { get; private set; }
 
@@ -194,8 +198,13 @@ namespace OptiscalerClient.Views
             }
 
             _gpuService = PlatformServiceFactory.CreateGpuDetectionService();
+            _gamepadService = PlatformServiceFactory.CreateGamepadDetectionService();
+            _ignoreGamepadInputUntilUtc = DateTime.UtcNow.AddMilliseconds(350);
 
             SetupUI();
+            InitializeGamepadNavigation();
+            this.Closed += ManageGameWindow_Closed;
+            this.AddHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved, handledEventsToo: true);
 
             // Re-bind TitleBar dragging and Close button
             var titleBar = this.FindControl<Border>("TitleBar");
@@ -216,6 +225,679 @@ namespace OptiscalerClient.Views
             };
 
             _ = LoadVersionsAsync();
+        }
+
+        private void InitializeGamepadNavigation()
+        {
+            if (_gamepadService == null) return;
+
+            _gamepadService.GamepadInputReceived += OnGamepadInputReceived;
+            _gamepadService.GamepadConnectionChanged += OnGamepadConnectionChanged;
+            _gamepadService.StartListening();
+        }
+
+        private void ManageGameWindow_Closed(object? sender, EventArgs e)
+        {
+            this.RemoveHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved);
+
+            if (_gamepadService == null) return;
+
+            _gamepadService.GamepadInputReceived -= OnGamepadInputReceived;
+            _gamepadService.GamepadConnectionChanged -= OnGamepadConnectionChanged;
+            _gamepadService.StopListening();
+            _gamepadService = null;
+        }
+
+        private void OnGamepadConnectionChanged(object? sender, bool isConnected)
+        {
+            if (!isConnected) return;
+
+            // Avoid processing the same held button that opened this dialog.
+            _ignoreGamepadInputUntilUtc = DateTime.UtcNow.AddMilliseconds(200);
+        }
+
+        private void OnGamepadInputReceived(object? sender, GamepadEventArgs e)
+        {
+            if (!e.IsPressed) return;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!IsActive) return;
+                if (DateTime.UtcNow < _ignoreGamepadInputUntilUtc) return;
+
+                _isControllerModeActive = true;
+
+                if (HandleOpenComboBoxInput(e.Button))
+                    return;
+
+                EnsureGamepadFocus();
+
+                switch (e.Button)
+                {
+                    case GamepadButton.DPadUp:
+                    case GamepadButton.ThumbLeftUp:
+                        MoveFocusInActiveSurface(NavigationDirection.Up);
+                        break;
+
+                    case GamepadButton.DPadDown:
+                    case GamepadButton.ThumbLeftDown:
+                        MoveFocusInActiveSurface(NavigationDirection.Down);
+                        break;
+
+                    case GamepadButton.DPadLeft:
+                    case GamepadButton.ThumbLeftLeft:
+                        MoveFocusInActiveSurface(NavigationDirection.Left);
+                        break;
+
+                    case GamepadButton.DPadRight:
+                    case GamepadButton.ThumbLeftRight:
+                        MoveFocusInActiveSurface(NavigationDirection.Right);
+                        break;
+
+                    case GamepadButton.A:
+                        ActivateFocusedElement();
+                        break;
+
+                    case GamepadButton.B:
+                    case GamepadButton.ThumbRightLeft:
+                        HandleBackAction();
+                        break;
+                }
+            });
+        }
+
+        private void ManageGameWindow_PointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_isControllerModeActive) return;
+
+            _isControllerModeActive = false;
+            TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+        }
+
+        private void EnsureGamepadFocus()
+        {
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            if (focused is Visual focusedVisual && IsInsideActiveSurface(focusedVisual))
+                return;
+
+            FocusFirstActiveElement();
+        }
+
+        private bool IsInsideActiveSurface(Visual focused)
+        {
+            var surface = GetActiveSurface();
+            if (surface == null) return false;
+            return focused == surface || focused.GetVisualAncestors().Contains(surface);
+        }
+
+        private Visual? GetActiveSurface()
+        {
+            var coverModal = this.FindControl<Grid>("BdCoverModal");
+            if (coverModal?.IsVisible == true) return coverModal;
+
+            var corruptModal = this.FindControl<Grid>("BdConfirmCorruptInstall");
+            if (corruptModal?.IsVisible == true) return corruptModal;
+
+            var cleanupModal = this.FindControl<Grid>("BdConfirmFolderCleanup");
+            if (cleanupModal?.IsVisible == true) return cleanupModal;
+
+            var uninstallModal = this.FindControl<Grid>("BdConfirmUninstall");
+            if (uninstallModal?.IsVisible == true) return uninstallModal;
+
+            return (Visual?)this.FindControl<Panel>("RootPanel") ?? this;
+        }
+
+        private enum NavigationDirection { Up, Down, Left, Right }
+
+        private sealed class NavigationNode
+        {
+            public string Name { get; }
+            public Control Control { get; }
+            public int Row { get; }
+            public int Col { get; }
+
+            public NavigationNode(string name, Control control, int row, int col)
+            {
+                Name = name;
+                Control = control;
+                Row = row;
+                Col = col;
+            }
+        }
+
+        private bool MoveFocusInActiveSurface(NavigationDirection direction)
+        {
+            if (!IsAnyModalVisible())
+                return MoveFocusInRootGrid(direction);
+
+            return MoveFocusInVisualSurface(direction);
+        }
+
+        private bool MoveFocusInRootGrid(NavigationDirection direction)
+        {
+            var nodes = GetRootNavigationNodes();
+            if (nodes.Count == 0) return false;
+
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            var currentNode = ResolveFocusedNode(focused, nodes);
+            if (currentNode == null)
+            {
+                var first = nodes
+                    .OrderBy(n => n.Row)
+                    .ThenBy(n => n.Col)
+                    .First();
+                FocusControl(first.Control);
+                return true;
+            }
+
+            var target = FindGridDirectionTarget(currentNode, nodes, direction);
+            if (target == null) return false;
+
+            FocusControl(target.Control);
+            return true;
+        }
+
+        private List<NavigationNode> GetRootNavigationNodes()
+        {
+            var nodes = new List<NavigationNode>();
+
+            AddRootNode(nodes, "BtnEditImage", 1, 1);
+            AddRootNode(nodes, "BtnOptiStable", 1, 2);
+            AddRootNode(nodes, "BtnOptiBeta", 1, 3);
+            AddRootNode(nodes, "BtnClose", 1, 5);
+
+            AddRootNode(nodes, "BtnEditTitle", 2, 1);
+            AddRootNode(nodes, "CmbOptiVersion", 2, 2);
+            AddRootNode(nodes, "CmbExtrasVersion", 2, 4);
+            AddRootNode(nodes, "CmbFakenvapiVersion", 2, 5);
+
+            AddRootNode(nodes, "CmbInjectionMethod", 3, 3);
+            AddRootNode(nodes, "CmbOptiPatcherVersion", 3, 4);
+            AddRootNode(nodes, "CmbNukemFGVersion", 3, 5);
+
+            AddRootNode(nodes, "CmbProfile", 4, 3);
+            AddRootNode(nodes, "BtnUninstall", 4, 5);
+
+            AddRootNode(nodes, "BtnOpenFolder", 5, 1);
+            AddRootNode(nodes, "BtnFolderCleanup", 5, 3);
+            AddRootNode(nodes, "BtnInstallManual", 5, 4);
+            AddRootNode(nodes, "BtnInstall", 5, 5);
+
+            return nodes;
+        }
+
+        private void AddRootNode(List<NavigationNode> nodes, string controlName, int row, int col)
+        {
+            var control = this.FindControl<Control>(controlName);
+            if (control == null || !control.IsVisible || !control.IsEnabled || !control.Focusable)
+                return;
+
+            nodes.Add(new NavigationNode(controlName, control, row, col));
+        }
+
+        private NavigationNode? ResolveFocusedNode(IInputElement? focused, List<NavigationNode> nodes)
+        {
+            if (focused is not Visual focusedVisual) return null;
+
+            foreach (var node in nodes)
+            {
+                var candidate = node.Control;
+                if (focusedVisual == candidate || focusedVisual.GetVisualAncestors().Contains(candidate))
+                    return node;
+            }
+
+            return null;
+        }
+
+        private NavigationNode? FindGridDirectionTarget(NavigationNode current, List<NavigationNode> nodes, NavigationDirection direction)
+        {
+            var explicitCandidates = GetRootNeighborCandidates(current.Name, direction);
+            foreach (var targetName in explicitCandidates)
+            {
+                var explicitTarget = nodes.FirstOrDefault(n => string.Equals(n.Name, targetName, StringComparison.Ordinal));
+                if (explicitTarget != null)
+                    return explicitTarget;
+            }
+
+            NavigationNode? best = null;
+            int bestScore = int.MaxValue;
+
+            foreach (var candidate in nodes)
+            {
+                if (ReferenceEquals(candidate.Control, current.Control))
+                    continue;
+
+                if (IsOptiTabButton(candidate.Name)
+                    && !IsOptiTabButton(current.Name)
+                    && !string.Equals(current.Name, "CmbOptiVersion", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                int rowDelta = candidate.Row - current.Row;
+                int colDelta = candidate.Col - current.Col;
+
+                int primary;
+                int secondary;
+
+                switch (direction)
+                {
+                    case NavigationDirection.Right:
+                        primary = colDelta;
+                        secondary = Math.Abs(rowDelta);
+                        break;
+
+                    case NavigationDirection.Left:
+                        primary = -colDelta;
+                        secondary = Math.Abs(rowDelta);
+                        break;
+
+                    case NavigationDirection.Down:
+                        primary = rowDelta;
+                        secondary = Math.Abs(colDelta);
+                        break;
+
+                    default:
+                        primary = -rowDelta;
+                        secondary = Math.Abs(colDelta);
+                        break;
+                }
+
+                if (primary <= 0)
+                    continue;
+
+                int score = primary * 10 + secondary;
+                if (score < bestScore)
+                {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
+        private static bool IsOptiTabButton(string controlName)
+        {
+            return string.Equals(controlName, "BtnOptiStable", StringComparison.Ordinal)
+                   || string.Equals(controlName, "BtnOptiBeta", StringComparison.Ordinal);
+        }
+
+        private IEnumerable<string> GetRootNeighborCandidates(string currentName, NavigationDirection direction)
+        {
+            if (string.Equals(currentName, "CmbOptiVersion", StringComparison.Ordinal)
+                && direction == NavigationDirection.Up)
+            {
+                var preferred = GetPreferredOptiTabButtonName();
+                if (!string.IsNullOrEmpty(preferred))
+                    return new[] { preferred };
+            }
+
+            return (currentName, direction) switch
+            {
+                ("BtnEditTitle", NavigationDirection.Down) => new[] { "BtnOpenFolder" },
+
+                ("CmbOptiVersion", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("CmbOptiVersion", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                ("CmbOptiVersion", NavigationDirection.Down) => new[] { "CmbInjectionMethod", "CmbProfile" },
+
+                ("BtnOptiStable", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
+                ("BtnOptiStable", NavigationDirection.Right) => new[] { "BtnOptiBeta", "CmbExtrasVersion" },
+
+                ("BtnOptiBeta", NavigationDirection.Left) => new[] { "BtnOptiStable" },
+                ("BtnOptiBeta", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("BtnOptiBeta", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
+
+                ("CmbExtrasVersion", NavigationDirection.Left) => new[] { "CmbOptiVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Up) => new[] { "BtnOptiBeta", "BtnOptiStable" },
+                ("CmbExtrasVersion", NavigationDirection.Right) => new[] { "CmbFakenvapiVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Down) => new[] { "CmbOptiPatcherVersion" },
+
+                ("CmbFakenvapiVersion", NavigationDirection.Left) => new[] { "CmbExtrasVersion" },
+                ("CmbFakenvapiVersion", NavigationDirection.Down) => new[] { "CmbNukemFGVersion", "BtnInstall" },
+
+                ("CmbInjectionMethod", NavigationDirection.Up) => new[] { "CmbOptiVersion" },
+                ("CmbInjectionMethod", NavigationDirection.Down) => new[] { "CmbProfile", "BtnFolderCleanup" },
+                ("CmbInjectionMethod", NavigationDirection.Right) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbInjectionMethod", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+
+                ("CmbOptiPatcherVersion", NavigationDirection.Left) => new[] { "CmbInjectionMethod" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Right) => new[] { "CmbNukemFGVersion" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Up) => new[] { "CmbExtrasVersion" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnFolderCleanup" },
+
+                ("CmbNukemFGVersion", NavigationDirection.Left) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbNukemFGVersion", NavigationDirection.Up) => new[] { "CmbFakenvapiVersion" },
+                ("CmbNukemFGVersion", NavigationDirection.Down) => new[] { "BtnInstall", "BtnInstallManual" },
+
+                ("CmbProfile", NavigationDirection.Up) => new[] { "CmbInjectionMethod" },
+                ("CmbProfile", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
+                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnUninstall", "BtnInstallManual" },
+                ("CmbProfile", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+
+                ("BtnUninstall", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("BtnUninstall", NavigationDirection.Down) => new[] { "BtnInstall" },
+                ("BtnUninstall", NavigationDirection.Up) => new[] { "CmbNukemFGVersion" },
+
+                ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
+                ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup" },
+
+                ("BtnFolderCleanup", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
+                ("BtnFolderCleanup", NavigationDirection.Right) => new[] { "BtnInstallManual" },
+                ("BtnFolderCleanup", NavigationDirection.Up) => new[] { "CmbProfile", "CmbInjectionMethod" },
+
+                ("BtnInstallManual", NavigationDirection.Left) => new[] { "BtnFolderCleanup" },
+                ("BtnInstallManual", NavigationDirection.Right) => new[] { "BtnInstall" },
+                ("BtnInstallManual", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion" },
+
+                ("BtnInstall", NavigationDirection.Left) => new[] { "BtnInstallManual" },
+                ("BtnInstall", NavigationDirection.Up) => new[] { "BtnUninstall", "CmbNukemFGVersion" },
+
+                _ => Array.Empty<string>()
+            };
+        }
+
+        private string GetPreferredOptiTabButtonName()
+        {
+            var stable = this.FindControl<Button>("BtnOptiStable");
+            var beta = this.FindControl<Button>("BtnOptiBeta");
+
+            if (beta?.IsVisible == true && beta.IsEnabled && beta.Classes.Contains("BtnPrimary"))
+                return "BtnOptiBeta";
+
+            if (stable?.IsVisible == true && stable.IsEnabled)
+                return "BtnOptiStable";
+
+            if (beta?.IsVisible == true && beta.IsEnabled)
+                return "BtnOptiBeta";
+
+            return string.Empty;
+        }
+
+        private bool MoveFocusInVisualSurface(NavigationDirection direction)
+        {
+            var focusables = GetFocusableElementsInActiveSurface();
+            if (focusables.Count == 0) return false;
+
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+
+            var current = ResolveFocusedControl(focused, focusables);
+            if (current == null)
+            {
+                FocusControl(focusables[0]);
+                return true;
+            }
+
+            var strict = FindDirectionalCandidate(current, focusables, direction, strictCone: true);
+            var target = strict ?? FindDirectionalCandidate(current, focusables, direction, strictCone: false);
+            if (target == null) return false;
+
+            FocusControl(target);
+            return true;
+        }
+
+        private Control? ResolveFocusedControl(IInputElement? focused, List<Control> focusables)
+        {
+            if (focused is not Visual focusedVisual) return null;
+
+            foreach (var candidate in focusables)
+            {
+                if (focusedVisual == candidate || focusedVisual.GetVisualAncestors().Contains(candidate))
+                    return candidate;
+            }
+
+            return null;
+        }
+
+        private Control? FindDirectionalCandidate(Control current, List<Control> focusables, NavigationDirection direction, bool strictCone)
+        {
+            var currentCenter = GetControlCenter(current);
+            if (currentCenter == null) return null;
+
+            Control? best = null;
+            double bestScore = double.MaxValue;
+            double coneRatio = strictCone ? 1.2 : 4.0;
+
+            foreach (var candidate in focusables)
+            {
+                if (ReferenceEquals(candidate, current))
+                    continue;
+
+                var candidateCenter = GetControlCenter(candidate);
+                if (candidateCenter == null)
+                    continue;
+
+                double dx = candidateCenter.Value.X - currentCenter.Value.X;
+                double dy = candidateCenter.Value.Y - currentCenter.Value.Y;
+
+                double primary;
+                double secondary;
+
+                switch (direction)
+                {
+                    case NavigationDirection.Right:
+                        primary = dx;
+                        secondary = Math.Abs(dy);
+                        break;
+
+                    case NavigationDirection.Left:
+                        primary = -dx;
+                        secondary = Math.Abs(dy);
+                        break;
+
+                    case NavigationDirection.Down:
+                        primary = dy;
+                        secondary = Math.Abs(dx);
+                        break;
+
+                    default:
+                        primary = -dy;
+                        secondary = Math.Abs(dx);
+                        break;
+                }
+
+                if (primary <= 2)
+                    continue;
+
+                if (secondary > primary * coneRatio)
+                    continue;
+
+                // Strongly favor controls aligned with the requested axis.
+                double score = (primary * 1.0) + (secondary * 4.0);
+                if (score < bestScore)
+                {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
+        private Point? GetControlCenter(Control control)
+        {
+            var localCenter = new Point(control.Bounds.Width / 2.0, control.Bounds.Height / 2.0);
+            return control.TranslatePoint(localCenter, this);
+        }
+
+        private void FocusFirstActiveElement()
+        {
+            var focusables = GetFocusableElementsInActiveSurface();
+            if (focusables.Count == 0) return;
+            FocusControl(focusables[0]);
+        }
+
+        private List<Control> GetFocusableElementsInActiveSurface()
+        {
+            var surface = GetActiveSurface();
+            if (surface == null) return new List<Control>();
+
+            return surface.GetVisualDescendants()
+                .OfType<Control>()
+                .Where(control => control.IsVisible
+                                  && control.IsEnabled
+                                  && control.Focusable
+                                  && control is not ScrollViewer
+                                  && control is not ScrollBar)
+                .ToList();
+        }
+
+        private static void FocusControl(Control control)
+        {
+            control.Focus(NavigationMethod.Directional);
+        }
+
+        private bool HandleOpenComboBoxInput(GamepadButton button)
+        {
+            var openCombo = GetOpenedComboBox();
+
+            if (openCombo == null) return false;
+
+            switch (button)
+            {
+                case GamepadButton.DPadDown:
+                case GamepadButton.ThumbLeftDown:
+                    SimulateKey(Key.Down);
+                    return true;
+
+                case GamepadButton.DPadUp:
+                case GamepadButton.ThumbLeftUp:
+                    SimulateKey(Key.Up);
+                    return true;
+
+                case GamepadButton.A:
+                    SimulateKey(Key.Enter);
+                    return true;
+
+                case GamepadButton.B:
+                case GamepadButton.ThumbRightLeft:
+                    openCombo.IsDropDownOpen = false;
+                    SimulateKey(Key.Escape);
+                    return true;
+            }
+
+            return true;
+        }
+
+        private ComboBox? GetOpenedComboBox()
+        {
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+
+            if (focused is ComboBox focusedCombo
+                && focusedCombo.IsVisible
+                && focusedCombo.IsEnabled
+                && focusedCombo.IsDropDownOpen)
+            {
+                return focusedCombo;
+            }
+
+            if (focused is Visual focusedVisual)
+            {
+                var ancestorCombo = focusedVisual.GetVisualAncestors()
+                    .OfType<ComboBox>()
+                    .FirstOrDefault(c => c.IsVisible && c.IsEnabled && c.IsDropDownOpen);
+                if (ancestorCombo != null)
+                    return ancestorCombo;
+            }
+
+            var comboNames = new[]
+            {
+                "CmbOptiVersion",
+                "CmbExtrasVersion",
+                "CmbFakenvapiVersion",
+                "CmbInjectionMethod",
+                "CmbOptiPatcherVersion",
+                "CmbNukemFGVersion",
+                "CmbProfile"
+            };
+
+            foreach (var name in comboNames)
+            {
+                var combo = this.FindControl<ComboBox>(name);
+                if (combo?.IsVisible == true && combo.IsEnabled && combo.IsDropDownOpen)
+                    return combo;
+            }
+
+            return null;
+        }
+
+        private void HandleBackAction()
+        {
+            if (!IsAnyModalVisible())
+            {
+                _ = CloseAnimated();
+                return;
+            }
+
+            if (TryActivateButton("BtnCoverCancel")) return;
+            if (TryActivateButton("BtnCorruptCancel")) return;
+            if (TryActivateButton("BtnConfirmFolderCleanupNo")) return;
+            if (TryActivateButton("BtnConfirmUninstallNo")) return;
+
+            _ = CloseAnimated();
+        }
+
+        private bool IsAnyModalVisible()
+        {
+            return this.FindControl<Grid>("BdCoverModal")?.IsVisible == true
+                   || this.FindControl<Grid>("BdConfirmCorruptInstall")?.IsVisible == true
+                   || this.FindControl<Grid>("BdConfirmFolderCleanup")?.IsVisible == true
+                   || this.FindControl<Grid>("BdConfirmUninstall")?.IsVisible == true;
+        }
+
+        private bool TryActivateButton(string name)
+        {
+            var button = this.FindControl<Button>(name);
+            if (button == null || !button.IsVisible || !button.IsEnabled) return false;
+
+            button.Focus(NavigationMethod.Directional);
+            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            return true;
+        }
+
+        private void ActivateFocusedElement()
+        {
+            var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            if (focused == null) return;
+
+            if (focused is ComboBox combo)
+            {
+                combo.IsDropDownOpen = !combo.IsDropDownOpen;
+                return;
+            }
+
+            if (focused is Button button)
+            {
+                button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                return;
+            }
+
+            if (focused is Visual focusedVisual)
+            {
+                var ancestorButton = focusedVisual.GetVisualAncestors().OfType<Button>().FirstOrDefault();
+                if (ancestorButton != null)
+                {
+                    ancestorButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    return;
+                }
+            }
+
+            SimulateKey(Key.Enter);
+        }
+
+        private void SimulateKey(Key key, KeyModifiers modifiers = KeyModifiers.None)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            var focused = topLevel?.FocusManager?.GetFocusedElement();
+            var target = (focused as Interactive) ?? this;
+
+            target.RaiseEvent(new KeyEventArgs
+            {
+                RoutedEvent = InputElement.KeyDownEvent,
+                Key = key,
+                Source = target,
+                KeyModifiers = modifiers
+            });
         }
 
         private static ComboBoxItem BuildVersionItem(string ver, bool isBeta, bool isLatest)

@@ -34,6 +34,8 @@ public enum GamepadNavigationMode { Sidebar, Content }
 /// </summary>
 public class GamepadNavigationHelper : IDisposable
 {
+        private enum RightStickScrollTarget { None, Games, Help }
+
     private readonly IGamepadDetectionService? _gamepadService;
     private readonly Window _window;
     private bool _isDisposed;
@@ -53,6 +55,12 @@ public class GamepadNavigationHelper : IDisposable
     private int _gamesActionItemIndex = -1;
     private int _gamesActionButtonIndex;
 
+    // Right stick vertical hold state for smooth continuous scroll on Games view.
+    private readonly DispatcherTimer _gamesScrollTimer;
+    private bool _isRightStickUpHeld;
+    private bool _isRightStickDownHeld;
+    private double _gamesScrollVelocity;
+
     // Sidebar button names in visual top-to-bottom order
     private static readonly string[] SidebarButtonNames =
         { "NavGames", "NavProfiles", "NavHelp", "NavSettings" };
@@ -68,6 +76,8 @@ public class GamepadNavigationHelper : IDisposable
     {
         _window = window;
         _gamepadService = gamepadService;
+        _gamesScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        _gamesScrollTimer.Tick += GamesScrollTimer_Tick;
 
         if (_gamepadService != null)
         {
@@ -112,10 +122,12 @@ public class GamepadNavigationHelper : IDisposable
 
     private void OnGamepadInput(object? sender, GamepadEventArgs e)
     {
-        if (!e.IsPressed) return;
-
         Dispatcher.UIThread.Post(() =>
         {
+            if (HandleRightStickVerticalInput(e))
+                return;
+
+            if (!e.IsPressed) return;
             if (!_window.IsActive) return;
 
             GamepadActivity?.Invoke(this, EventArgs.Empty);
@@ -135,6 +147,85 @@ public class GamepadNavigationHelper : IDisposable
             else
                 HandleContentInput(e.Button);
         });
+    }
+
+    private bool HandleRightStickVerticalInput(GamepadEventArgs e)
+    {
+        if (e.Button != GamepadButton.ThumbRightUp && e.Button != GamepadButton.ThumbRightDown)
+            return false;
+
+        if (e.Button == GamepadButton.ThumbRightUp)
+            _isRightStickUpHeld = e.IsPressed;
+        else
+            _isRightStickDownHeld = e.IsPressed;
+
+        if (e.IsPressed)
+            GamepadActivity?.Invoke(this, EventArgs.Empty);
+
+        UpdateGamesScrollTimerState();
+        return true;
+    }
+
+    private void GamesScrollTimer_Tick(object? sender, EventArgs e)
+    {
+        var scrollTarget = GetRightStickScrollTarget();
+        if (scrollTarget == RightStickScrollTarget.None || _isRightStickUpHeld == _isRightStickDownHeld)
+        {
+            UpdateGamesScrollTimerState();
+            return;
+        }
+
+        // Accelerate while holding stick for a smoother, analog-like scroll feel.
+        _gamesScrollVelocity = Math.Min(28.0, _gamesScrollVelocity + 1.5);
+        double delta = 6.0 + _gamesScrollVelocity;
+
+        if (_isRightStickUpHeld)
+            delta = -delta;
+
+        ScrollRightStickViewport(scrollTarget, delta);
+    }
+
+    private void UpdateGamesScrollTimerState()
+    {
+        bool hasDirection = _isRightStickUpHeld ^ _isRightStickDownHeld;
+        var scrollTarget = GetRightStickScrollTarget();
+        bool shouldScroll = hasDirection && scrollTarget != RightStickScrollTarget.None;
+
+        if (shouldScroll)
+        {
+            if (!_gamesScrollTimer.IsEnabled)
+            {
+                _gamesScrollVelocity = 0;
+                _gamesScrollTimer.Start();
+
+                // Immediate tiny move so scrolling feels responsive on first press.
+                ScrollRightStickViewport(scrollTarget, _isRightStickUpHeld ? -10.0 : 10.0);
+            }
+            return;
+        }
+
+        if (_gamesScrollTimer.IsEnabled)
+            _gamesScrollTimer.Stop();
+
+        _gamesScrollVelocity = 0;
+    }
+
+    private RightStickScrollTarget GetRightStickScrollTarget()
+    {
+        if (!_window.IsActive || _mode != GamepadNavigationMode.Content)
+            return RightStickScrollTarget.None;
+
+        if (_sidebarIndex == 0 && !_isGamesActionMode)
+            return RightStickScrollTarget.Games;
+
+        if (_sidebarIndex == 2)
+        {
+            var helpScroll = _window.FindControl<ScrollViewer>("HelpContentScrollViewer");
+            if (helpScroll?.IsVisible == true && helpScroll.IsHitTestVisible)
+                return RightStickScrollTarget.Help;
+        }
+
+        return RightStickScrollTarget.None;
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -169,10 +260,9 @@ public class GamepadNavigationHelper : IDisposable
                 ActivateSidebarItem();
                 break;
 
-            // Right / RStick-Right resumes the currently open tab
+            // Right resumes the currently open tab
             // without changing which tab is active
             case GamepadButton.DPadRight:
-            case GamepadButton.ThumbRightRight:
                 ReturnToContent();
                 break;
 
@@ -248,14 +338,14 @@ public class GamepadNavigationHelper : IDisposable
         // (not to sidebar), keeping the user on the current game card.
         if (_sidebarIndex == 0
             && _isGamesActionMode
-            && (button == GamepadButton.B || button == GamepadButton.ThumbRightLeft))
+            && button == GamepadButton.B)
         {
             ExitGamesActionMode();
             return;
         }
 
         // B always returns to sidebar regardless of sub-zone
-        if (button == GamepadButton.B || button == GamepadButton.ThumbRightLeft)
+        if (button == GamepadButton.B)
         {
             GoToSidebar();
             return;
@@ -495,10 +585,50 @@ public class GamepadNavigationHelper : IDisposable
                 break;
 
             case GamepadButton.B:
-            case GamepadButton.ThumbRightLeft:
                 ExitGamesActionMode();
                 break;
         }
+    }
+
+    private void ScrollRightStickViewport(RightStickScrollTarget target, double deltaY)
+    {
+        switch (target)
+        {
+            case RightStickScrollTarget.Games:
+                ScrollGamesViewport(deltaY);
+                break;
+
+            case RightStickScrollTarget.Help:
+                ScrollHelpViewport(deltaY);
+                break;
+        }
+    }
+
+    private void ScrollGamesViewport(double deltaY)
+    {
+        var scroll = IsGridViewActive()
+            ? _window.FindControl<ScrollViewer>("GameGridScrollViewer")
+            : _window.FindControl<ScrollViewer>("GameListScrollViewer");
+
+        ScrollViewport(scroll, deltaY);
+    }
+
+    private void ScrollHelpViewport(double deltaY)
+    {
+        var scroll = _window.FindControl<ScrollViewer>("HelpContentScrollViewer");
+        ScrollViewport(scroll, deltaY);
+    }
+
+    private static void ScrollViewport(ScrollViewer? scroll, double deltaY)
+    {
+        if (scroll == null || !scroll.IsVisible)
+            return;
+
+        double currentY = scroll.Offset.Y;
+        double maxY = Math.Max(0, scroll.Extent.Height - scroll.Viewport.Height);
+        double targetY = Math.Clamp(currentY + deltaY, 0, maxY);
+
+        scroll.Offset = new Vector(scroll.Offset.X, targetY);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -995,6 +1125,9 @@ public class GamepadNavigationHelper : IDisposable
     {
         Dispatcher.UIThread.Post(() =>
         {
+            _isRightStickUpHeld = false;
+            _isRightStickDownHeld = false;
+            UpdateGamesScrollTimerState();
             ExitGamesActionMode(restoreGameFocus: false);
             TopLevel.GetTopLevel(_window)?.FocusManager?.ClearFocus();
         });
@@ -1004,6 +1137,9 @@ public class GamepadNavigationHelper : IDisposable
     {
         if (_isDisposed) return;
         _isDisposed = true;
+
+        _gamesScrollTimer.Stop();
+        _gamesScrollTimer.Tick -= GamesScrollTimer_Tick;
 
         if (_gamepadService != null)
         {
