@@ -11,6 +11,38 @@
         CanResize="False"
         ShowInTaskbar="False">
 
+    <Window.Styles>
+        <!-- Completely disable Avalonia's default FocusAdorner for all controls to prevent ugly boxes/lines -->
+        <Style Selector=":is(Control)">
+            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+        </Style>
+
+        <!-- Make interactive borders focusable and highlight them natively when focused -->
+        <Style Selector="Border.InteractiveOption">
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Use CardOption for items that should have a background even when not focused -->
+        <Style Selector="Border.CardOption">
+            <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+        </Style>
+
+        <Style Selector="Border.InteractiveOption:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+        </Style>
+    </Window.Styles>
+
     <Panel Margin="16" Name="RootPanel" Opacity="0">
         <Border CornerRadius="12"
                 Background="{StaticResource BrBgBase}"
@@ -50,13 +82,11 @@
                         </Border>
 
                         <!-- Content -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="24,20">
 
                                 <!-- Refresh missing covers only -->
-                                <Border Background="{StaticResource BrBgCard}"
-                                        BorderBrush="{StaticResource BrBorderSubtle}"
-                                        BorderThickness="1"
+                                <Border Classes="InteractiveOption CardOption"
                                         CornerRadius="{StaticResource RadiusMedium}"
                                         Padding="16,12"
                                         Margin="0,0,0,20">
@@ -75,6 +105,7 @@
                                                       Name="TglRefreshCoversOnly"
                                                       OnContent="" OffContent=""
                                                       IsChecked="False"
+                                                      Focusable="False"
                                                       IsCheckedChanged="TglRefreshCoversOnly_IsCheckedChanged"/>
                                     </Grid>
                                 </Border>
@@ -89,9 +120,7 @@
                                                Margin="0,0,0,4"/>
 
                                     <!-- Option 1: Show All -->
-                                    <Border Background="{StaticResource BrBgCard}"
-                                            BorderBrush="{StaticResource BrBorderSubtle}"
-                                            BorderThickness="1"
+                                    <Border Classes="InteractiveOption CardOption"
                                             CornerRadius="{StaticResource RadiusMedium}"
                                             Padding="14,10">
                                         <Grid ColumnDefinitions="Auto,*">
@@ -100,6 +129,7 @@
                                                          GroupName="UpscalerFilterScan"
                                                          IsChecked="True"
                                                          VerticalAlignment="Top"
+                                                         Focusable="False"
                                                          Margin="0,2,12,0"/>
                                             <StackPanel Grid.Column="1">
                                                 <TextBlock Text="{DynamicResource TxtFilterShowAllTitle}"
@@ -116,9 +146,7 @@
                                     </Border>
 
                                     <!-- Option 2: Hide without upscaler -->
-                                    <Border Background="{StaticResource BrBgCard}"
-                                            BorderBrush="{StaticResource BrBorderSubtle}"
-                                            BorderThickness="1"
+                                    <Border Classes="InteractiveOption CardOption"
                                             CornerRadius="{StaticResource RadiusMedium}"
                                             Padding="14,10">
                                         <Grid ColumnDefinitions="Auto,*">
@@ -127,6 +155,7 @@
                                                          GroupName="UpscalerFilterScan"
                                                          IsChecked="False"
                                                          VerticalAlignment="Top"
+                                                         Focusable="False"
                                                          Margin="0,2,12,0"/>
                                             <StackPanel Grid.Column="1">
                                                 <TextBlock Text="{DynamicResource TxtFilterHideTitle}"
@@ -143,9 +172,7 @@
                                     </Border>
 
                                     <!-- Option 3: Skip without upscaler -->
-                                    <Border Background="{StaticResource BrBgCard}"
-                                            BorderBrush="{StaticResource BrBorderSubtle}"
-                                            BorderThickness="1"
+                                    <Border Classes="InteractiveOption CardOption"
                                             CornerRadius="{StaticResource RadiusMedium}"
                                             Padding="14,10">
                                         <Grid ColumnDefinitions="Auto,*">
@@ -154,6 +181,7 @@
                                                          GroupName="UpscalerFilterScan"
                                                          IsChecked="False"
                                                          VerticalAlignment="Top"
+                                                         Focusable="False"
                                                          Margin="0,2,12,0"/>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <TextBlock Text="{DynamicResource TxtFilterSkipTitle}"
@@ -224,35 +252,49 @@
                                         CornerRadius="{StaticResource RadiusMedium}"
                                         Padding="16,12">
                                     <StackPanel Spacing="12">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Steam" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglSteam" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
-                                        <Grid Name="GridHeroic" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Heroic" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglHeroic" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
+                                        <Border Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Steam" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglSteam" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
+                                        <Border Name="GridHeroic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Heroic" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglHeroic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
                                         <!-- Windows-only sources; visibility set from code-behind -->
-                                        <Grid Name="GridEpic" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Epic Games" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglEpic" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
-                                        <Grid Name="GridGOG" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="GOG Galaxy" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglGOG" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
-                                        <Grid Name="GridXbox" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Xbox (Microsoft Store)" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglXbox" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
-                                        <Grid Name="GridEA" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="EA App" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglEA" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
-                                        <Grid Name="GridUbisoft" ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Ubisoft Connect" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                            <ToggleSwitch Grid.Column="1" Name="TglUbisoft" OnContent="" OffContent="" IsChecked="True"/>
-                                        </Grid>
+                                        <Border Name="GridEpic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Epic Games" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglEpic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
+                                        <Border Name="GridGOG" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="GOG Galaxy" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglGOG" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
+                                        <Border Name="GridXbox" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Xbox (Microsoft Store)" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglXbox" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
+                                        <Border Name="GridEA" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="EA App" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglEA" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
+                                        <Border Name="GridUbisoft" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Ubisoft Connect" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglUbisoft" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
 

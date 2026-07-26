@@ -31,11 +31,14 @@ namespace OptiscalerClient.Views
         }
     }
 
-    public partial class InitialScanPromptWindow : Window
+    public partial class InitialScanPromptWindow : Window, IGamepadInputHost
     {
         private readonly ComponentManagementService _componentService;
         private readonly List<DriveToggle> _driveToggles = new();
         private readonly List<string> _customFolders = new();
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
         public InitialScanPromptWindow()
         {
@@ -67,6 +70,16 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("MainScrollViewer"));
+                }
+            };
+
+            this.Closed += (s, e) =>
+            {
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             ApplyTitleText(isFirstTime);
@@ -101,11 +114,11 @@ namespace OptiscalerClient.Views
             if (tglUbisoft != null) tglUbisoft.IsChecked = config.ScanUbisoft;
 
             var isWindows = OperatingSystem.IsWindows();
-            var gridEpic = this.FindControl<Grid>("GridEpic");
-            var gridGOG = this.FindControl<Grid>("GridGOG");
-            var gridXbox = this.FindControl<Grid>("GridXbox");
-            var gridEA = this.FindControl<Grid>("GridEA");
-            var gridUbisoft = this.FindControl<Grid>("GridUbisoft");
+            var gridEpic = this.FindControl<Border>("GridEpic");
+            var gridGOG = this.FindControl<Border>("GridGOG");
+            var gridXbox = this.FindControl<Border>("GridXbox");
+            var gridEA = this.FindControl<Border>("GridEA");
+            var gridUbisoft = this.FindControl<Border>("GridUbisoft");
             if (gridEpic != null) gridEpic.IsVisible = isWindows;
             if (gridGOG != null) gridGOG.IsVisible = isWindows;
             if (gridXbox != null) gridXbox.IsVisible = isWindows;
@@ -290,7 +303,8 @@ namespace OptiscalerClient.Views
                 {
                     IsChecked = true,
                     OnContent = "",
-                    OffContent = ""
+                    OffContent = "",
+                    Focusable = false
                 };
 
                 var row = new Grid
@@ -311,7 +325,16 @@ namespace OptiscalerClient.Views
                 row.Children.Add(toggle);
                 Grid.SetColumn(toggle, 1);
 
-                pnlDriveList.Children.Add(row);
+                var border = new Border
+                {
+                    Classes = { "InteractiveOption" },
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(8, 4),
+                    Margin = new Thickness(-8, 0),
+                    Child = row
+                };
+
+                pnlDriveList.Children.Add(border);
                 _driveToggles.Add(new DriveToggle(drivePath, toggle));
             }
         }
