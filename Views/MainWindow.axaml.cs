@@ -45,7 +45,7 @@ using System.Globalization;
 
 namespace OptiscalerClient.Views
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IGamepadInputHost
     {
         private readonly GameScannerService _scannerService;
         private readonly GamePersistenceService _persistenceService;
@@ -68,9 +68,12 @@ namespace OptiscalerClient.Views
         private GameMetadataService _metadataService = null!;
         private readonly HelpPageService _helpPageService = new();
         private GamepadNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
         private string _currentHelpPageId = "about";
         private double? _currentPageFontSize;
         private bool _isCursorHiddenByGamepad;
+        private Point? _lastPointerPosition;
 
         private ListBox? _lstGames;
         private ListBox? _lstGamesGrid;
@@ -99,6 +102,7 @@ namespace OptiscalerClient.Views
         private Point _dragStartPos;
         private Point _ghostOffset;
         private int _currentDropIndex = -1;
+        private int _originalGamepadDragIndex = -1;
         private int _lastAnimatedDropIndex = -2;
         private Control? _dragCaptureControl;
         private ListBoxItem? _dragSourceContainer;
@@ -113,6 +117,154 @@ namespace OptiscalerClient.Views
         private double _gridVGap = 0;
         private double _gridOriginX = 0;
         private double _gridOriginY = 0;
+
+        // OSK Virtual Keyboard state
+        public bool IsVirtualKeyboardOpen { get; private set; }
+        private readonly string[] _oskKeys = new string[]
+        {
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
+            "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P",
+            "A", "S", "D", "F", "G", "H", "J", "K", "L", "-",
+            "Z", "X", "C", "V", "B", "N", "M", ",", ".", "_"
+        };
+        private int _oskCol = 0;
+        private int _oskRow = 0;
+        private TextBox? _oskTargetTextBox = null;
+
+        private void InitializeOsk()
+        {
+            var grid = this.FindControl<Avalonia.Controls.Primitives.UniformGrid>("OskGrid");
+            if (grid == null) return;
+
+            for (int i = 0; i < _oskKeys.Length; i++)
+            {
+                var border = new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#1AFFFFFF")),
+                    CornerRadius = new CornerRadius(8),
+                    Margin = new Thickness(4),
+                    Width = 48,
+                    Height = 48,
+                    Child = new TextBlock
+                    {
+                        Text = _oskKeys[i],
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                        FontSize = 20,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = Brushes.White
+                    }
+                };
+                grid.Children.Add(border);
+            }
+        }
+
+        public void OpenVirtualKeyboard(string targetTextBoxName = "TxtSearch")
+        {
+            IsVirtualKeyboardOpen = true;
+            _oskTargetTextBox = this.FindControl<TextBox>(targetTextBoxName);
+            var overlay = this.FindControl<Border>("VirtualKeyboardOverlay");
+            if (overlay != null) overlay.IsVisible = true;
+            UpdateOskPreview();
+            UpdateOskSelection();
+        }
+
+        public void CloseVirtualKeyboard()
+        {
+            IsVirtualKeyboardOpen = false;
+            _oskTargetTextBox = null;
+            var overlay = this.FindControl<Border>("VirtualKeyboardOverlay");
+            if (overlay != null) overlay.IsVisible = false;
+        }
+
+        private void UpdateOskPreview()
+        {
+            var txtPreview = this.FindControl<TextBlock>("TxtOskPreview");
+            if (txtPreview != null && _oskTargetTextBox != null)
+            {
+                txtPreview.Text = _oskTargetTextBox.Text ?? "";
+            }
+        }
+
+        private void UpdateOskSelection()
+        {
+            var grid = this.FindControl<Avalonia.Controls.Primitives.UniformGrid>("OskGrid");
+            if (grid == null) return;
+
+            int index = _oskRow * 10 + _oskCol;
+            for (int i = 0; i < grid.Children.Count; i++)
+            {
+                var border = grid.Children[i] as Border;
+                if (border == null) continue;
+
+                if (i == index)
+                {
+                    border.Background = new SolidColorBrush(Color.Parse("#8B73F8")); // Accent color
+                    border.BorderBrush = new SolidColorBrush(Color.Parse("#FFFFFF"));
+                    border.BorderThickness = new Thickness(2);
+                }
+                else
+                {
+                    border.Background = new SolidColorBrush(Color.Parse("#1AFFFFFF"));
+                    border.BorderBrush = null;
+                    border.BorderThickness = new Thickness(0);
+                }
+            }
+        }
+
+        public void HandleVirtualKeyboardInput(GamepadButton button)
+        {
+            if (_oskTargetTextBox == null) return;
+
+            switch (button)
+            {
+                case GamepadButton.DPadUp:
+                case GamepadButton.ThumbLeftUp:
+                    _oskRow = Math.Max(0, _oskRow - 1);
+                    UpdateOskSelection();
+                    break;
+                case GamepadButton.DPadDown:
+                case GamepadButton.ThumbLeftDown:
+                    _oskRow = Math.Min(3, _oskRow + 1);
+                    UpdateOskSelection();
+                    break;
+                case GamepadButton.DPadLeft:
+                case GamepadButton.ThumbLeftLeft:
+                    _oskCol = Math.Max(0, _oskCol - 1);
+                    UpdateOskSelection();
+                    break;
+                case GamepadButton.DPadRight:
+                case GamepadButton.ThumbLeftRight:
+                    _oskCol = Math.Min(9, _oskCol + 1);
+                    UpdateOskSelection();
+                    break;
+                case GamepadButton.A:
+                    int index = _oskRow * 10 + _oskCol;
+                    if (index >= 0 && index < _oskKeys.Length)
+                    {
+                        _oskTargetTextBox.Text = (_oskTargetTextBox.Text ?? "") + _oskKeys[index];
+                        _oskTargetTextBox.CaretIndex = _oskTargetTextBox.Text.Length;
+                        UpdateOskPreview();
+                    }
+                    break;
+                case GamepadButton.B:
+                    CloseVirtualKeyboard();
+                    break;
+                case GamepadButton.X:
+                    if (!string.IsNullOrEmpty(_oskTargetTextBox.Text))
+                    {
+                        _oskTargetTextBox.Text = _oskTargetTextBox.Text.Substring(0, _oskTargetTextBox.Text.Length - 1);
+                        _oskTargetTextBox.CaretIndex = _oskTargetTextBox.Text.Length;
+                        UpdateOskPreview();
+                    }
+                    break;
+                case GamepadButton.Y:
+                    _oskTargetTextBox.Text = (_oskTargetTextBox.Text ?? "") + " ";
+                    _oskTargetTextBox.CaretIndex = _oskTargetTextBox.Text.Length;
+                    UpdateOskPreview();
+                    break;
+            }
+        }
 
         private void InitializeComponent()
         {
@@ -134,6 +286,7 @@ namespace OptiscalerClient.Views
         public MainWindow()
         {
             InitializeComponent();
+            InitializeOsk();
             _scannerService = new GameScannerService();
             _persistenceService = new GamePersistenceService();
             _componentService = new ComponentManagementService();
@@ -282,12 +435,12 @@ namespace OptiscalerClient.Views
             {
                 if (_txtGamepadIcon != null)
                 {
-                    _txtGamepadIcon.Fill = isConnected ? 
-                        (this.FindResource("BrAccent") as IBrush ?? Brushes.Purple) : 
+                    _txtGamepadIcon.Fill = isConnected ?
+                        (this.FindResource("BrAccent") as IBrush ?? Brushes.Purple) :
                         (this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray);
 
-                    ToolTip.SetTip(_txtGamepadIcon, isConnected ? 
-                        (this.FindResource("TxtGamepadConnected") as string ?? "Gamepad connected") : 
+                    ToolTip.SetTip(_txtGamepadIcon, isConnected ?
+                        (this.FindResource("TxtGamepadConnected") as string ?? "Gamepad connected") :
                         (this.FindResource("TxtGamepadDisconnected") as string ?? "Gamepad disconnected"));
                 }
 
@@ -306,7 +459,27 @@ namespace OptiscalerClient.Views
 
         private void MainWindow_PointerMoved(object? sender, PointerEventArgs e)
         {
-            if (!_isCursorHiddenByGamepad) return;
+            var position = e.GetPosition(this);
+
+            if (!_isCursorHiddenByGamepad)
+            {
+                _lastPointerPosition = position;
+                return;
+            }
+
+            // Avalonia re-hit-tests under a stationary cursor whenever a Popup
+            // appears (e.g. opening a ComboBox dropdown with the gamepad),
+            // which raises a synthetic PointerMoved with no real mouse motion.
+            // Only genuine movement should switch back to mouse mode —
+            // otherwise opening a dropdown via gamepad immediately closes it.
+            if (_lastPointerPosition is { } last)
+            {
+                var delta = position - last;
+                if (Math.Abs(delta.X) < 1.0 && Math.Abs(delta.Y) < 1.0)
+                    return;
+            }
+
+            _lastPointerPosition = position;
             ShowMouseCursor();
             _gamepadHelper?.SwitchToMouseMode();
         }
@@ -921,6 +1094,136 @@ namespace OptiscalerClient.Views
             }
         }
 
+        public bool IsEditMode => _isEditMode;
+        public bool IsGamepadDragging => _isDragging && _draggedGame != null;
+
+        public void GamepadBeginDrag(int itemIndex)
+        {
+            if (!_isEditMode || itemIndex < 0 || itemIndex >= _games.Count) return;
+
+            var list = _isGridView ? _lstGamesGrid : _lstGames;
+            if (list == null) return;
+
+            var container = list.ContainerFromIndex(itemIndex) as ListBoxItem;
+            if (container == null) return;
+
+            if (_isGridView) MeasureGridLayout();
+            else _itemLayoutHeight = container.Bounds.Height;
+
+            _draggedGame = _allGames[itemIndex];
+            _isDragging = true;
+            _currentDropIndex = itemIndex;
+            _originalGamepadDragIndex = itemIndex;
+            _dragSourceContainer = container;
+
+            container.Opacity = 0.4;
+            container.ZIndex = 100;
+        }
+
+        public void GamepadMoveDrag(int deltaRow, int deltaCol)
+        {
+            if (!_isDragging || _draggedGame == null) return;
+
+            int newIndex = _currentDropIndex;
+            if (_isGridView)
+            {
+                int cols = _gridColCount > 0 ? _gridColCount : 1;
+                int r = _currentDropIndex / cols;
+                int c = _currentDropIndex % cols;
+
+                c = Math.Clamp(c + deltaCol, 0, cols - 1);
+                r += deltaRow;
+
+                newIndex = Math.Clamp(r * cols + c, 0, _games.Count - 1);
+            }
+            else
+            {
+                newIndex = Math.Clamp(_currentDropIndex + deltaRow, 0, _games.Count - 1);
+            }
+
+            if (newIndex != _currentDropIndex)
+            {
+                _currentDropIndex = newIndex;
+
+                var list = _isGridView ? _lstGamesGrid : _lstGames;
+                if (list != null)
+                {
+                    if (_isGridView)
+                        AnimateGridGap(_originalGamepadDragIndex, _currentDropIndex, true);
+                    else
+                        AnimateListGap(_originalGamepadDragIndex, _currentDropIndex, true);
+
+                    list.ScrollIntoView(_currentDropIndex);
+                }
+            }
+        }
+
+        public void GamepadEndDrag(bool commit)
+        {
+            if (!_isDragging || _draggedGame == null) return;
+
+            var gameToSave = _draggedGame;
+            int finalIndex = _currentDropIndex;
+            int originalIndex = _originalGamepadDragIndex;
+
+            CleanupDragState();
+            _originalGamepadDragIndex = -1;
+
+            _gamepadHelper?.SuppressVisibilityJump(800);
+
+            if (commit && originalIndex >= 0 && finalIndex != originalIndex)
+            {
+                int srcIdx = _allGames.IndexOf(gameToSave);
+                if (srcIdx >= 0)
+                {
+                    _allGames.RemoveAt(srcIdx);
+                    _allGames.Insert(finalIndex, gameToSave);
+                    _games.Move(originalIndex, finalIndex);
+
+                    var list = _isGridView ? _lstGamesGrid : _lstGames;
+                    if (list != null)
+                    {
+                        list.SelectedIndex = finalIndex;
+                        list.ScrollIntoView(finalIndex);
+
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            var newContainer = list.ContainerFromIndex(finalIndex) as ListBoxItem;
+                            newContainer?.Focus();
+                        }, DispatcherPriority.Loaded);
+                    }
+                }
+                ApplyFilter(_txtSearch?.Text);
+                Dispatcher.UIThread.Post(() => ApplyEditModeToCards(true), DispatcherPriority.Loaded);
+            }
+            else
+            {
+                var list = _isGridView ? _lstGamesGrid : _lstGames;
+                if (list != null && originalIndex >= 0)
+                {
+                    list.ScrollIntoView(originalIndex);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        var originalContainer = list.ContainerFromIndex(originalIndex) as ListBoxItem;
+                        originalContainer?.Focus();
+                    }, DispatcherPriority.Loaded);
+                }
+                if (commit)
+                {
+                    ApplyFilter(_txtSearch?.Text);
+                    Dispatcher.UIThread.Post(() => ApplyEditModeToCards(true), DispatcherPriority.Loaded);
+                }
+            }
+        }
+
+        public void GamepadToggleHide(int itemIndex)
+        {
+            if (!_isEditMode || _isDragging || itemIndex < 0 || itemIndex >= _games.Count) return;
+            var game = _games[itemIndex];
+            game.IsHidden = !game.IsHidden;
+            Dispatcher.UIThread.Post(() => ApplyEditModeToCards(true), DispatcherPriority.Loaded);
+        }
+
         private void StartDragVisuals()
         {
             if (_dragGhostCanvas == null || _dragSourceContainer == null || _draggedGame == null) return;
@@ -1150,7 +1453,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private void AnimateGridGap(int srcIndex, int dropIndex)
+        private void AnimateGridGap(int srcIndex, int dropIndex, bool animateSource = false)
         {
             if (_lstGamesGrid == null || _gridColCount == 0) return;
             int n = _games.Count;
@@ -1161,11 +1464,16 @@ namespace OptiscalerClient.Views
             for (int i = 0; i < n; i++)
             {
                 var container = _lstGamesGrid.ContainerFromIndex(i) as ListBoxItem;
-                if (container == null || i == srcIndex) continue;
+                if (container == null) continue;
+                if (!animateSource && i == srcIndex) continue;
 
                 // Virtual index: where this item ends up if src is removed and re-inserted at dropIndex
                 int vIdx;
-                if (dropIndex <= srcIndex)
+                if (i == srcIndex)
+                {
+                    vIdx = dropIndex;
+                }
+                else if (dropIndex <= srcIndex)
                 {
                     if      (i < dropIndex)  vIdx = i;     // before gap: stay
                     else if (i < srcIndex)   vIdx = i + 1; // between drop and src: shift right
@@ -1173,8 +1481,8 @@ namespace OptiscalerClient.Views
                 }
                 else
                 {
-                    if      (i > srcIndex && i < dropIndex) vIdx = i - 1; // between src and drop: shift left
-                    else                                    vIdx = i;     // outside range: stay
+                    if      (i > srcIndex && i <= dropIndex) vIdx = i - 1; // between src and drop: shift left
+                    else                                     vIdx = i;     // outside range: stay
                 }
 
                 // Natural grid position (based on original index)
@@ -1189,6 +1497,8 @@ namespace OptiscalerClient.Views
                 double dy = tgtY - natY;
 
                 EnsureTransformTransition(container);
+                if (animateSource && i == srcIndex) container.ZIndex = 100;
+
                 if (Math.Abs(dx) < 0.5 && Math.Abs(dy) < 0.5)
                     container.RenderTransform = TransformOperations.Parse("translateX(0px) translateY(0px)");
                 else
@@ -1207,28 +1517,44 @@ namespace OptiscalerClient.Views
                 if (container?.RenderTransform == null) continue;
                 EnsureTransformTransition(container);
                 container.RenderTransform = TransformOperations.Parse("translateX(0px) translateY(0px)");
+                container.ZIndex = 0;
             }
             _gridColCount = 0;
         }
 
-        private void AnimateListGap(int srcIndex, int dropIndex)
+        private void AnimateListGap(int srcIndex, int dropIndex, bool animateSource = false)
         {
             if (_lstGames == null) return;
             double gap = _itemLayoutHeight + 8;
+            var ic = System.Globalization.CultureInfo.InvariantCulture;
 
             for (int i = 0; i < _games.Count; i++)
             {
                 var container = _lstGames.ContainerFromIndex(i) as ListBoxItem;
-                if (container == null || i == srcIndex) continue;
+                if (container == null) continue;
+                if (!animateSource && i == srcIndex) continue;
 
-                double shift;
-                if (dropIndex <= srcIndex)
+                double shift = 0;
+                if (i == srcIndex)
+                {
+                    shift = (dropIndex - srcIndex) * gap;
+                }
+                else if (dropIndex <= srcIndex)
+                {
                     shift = (i >= dropIndex && i < srcIndex) ? gap : 0;
+                }
                 else
-                    shift = (i > srcIndex && i < dropIndex) ? -gap : 0;
+                {
+                    shift = (i > srcIndex && i <= dropIndex) ? -gap : 0;
+                }
 
                 EnsureTransformTransition(container);
-                container.RenderTransform = TransformOperations.Parse($"translateY({shift}px)");
+                if (animateSource && i == srcIndex) container.ZIndex = 100;
+
+                if (Math.Abs(shift) < 0.5)
+                    container.RenderTransform = TransformOperations.Parse("translateY(0px)");
+                else
+                    container.RenderTransform = TransformOperations.Parse($"translateY({shift.ToString("F1", ic)}px)");
             }
         }
 
@@ -1255,6 +1581,7 @@ namespace OptiscalerClient.Views
                 var container = _lstGames.ContainerFromIndex(i) as ListBoxItem;
                 if (container?.RenderTransform == null) continue;
                 container.RenderTransform = TransformOperations.Parse("translateY(0px)");
+                container.ZIndex = 0;
             }
             _lastAnimatedDropIndex = -2;
             _itemLayoutTops.Clear();
@@ -1327,6 +1654,15 @@ namespace OptiscalerClient.Views
 
         private void SwitchToView(string viewName)
         {
+            if (viewName != "ViewProfileEditor")
+            {
+                IsProfileEditorOpen = false;
+            }
+            else
+            {
+                IsProfileEditorOpen = true;
+            }
+
             foreach (var name in _viewNames)
             {
                 var grid = this.FindControl<Grid>(name);
@@ -1497,6 +1833,7 @@ namespace OptiscalerClient.Views
         private OptiScalerProfile? _selectedProfileView;
         private string _profileSearchTextView = string.Empty;
         private readonly ProfileManagementService _profileService = new ProfileManagementService();
+        public bool IsProfileEditorOpen { get; private set; }
 
         private void LoadProfilesView(bool forceRefresh = true)
         {
@@ -1602,9 +1939,11 @@ namespace OptiscalerClient.Views
                 Padding = new Thickness(16, 10),
                 Child = stack,
                 Tag = profile,
-                Cursor = new Cursor(StandardCursorType.Hand)
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true
             };
-            border.PointerPressed += (s, e) =>
+
+            void SelectCard(object? s)
             {
                 if (s is Border b && b.Tag is OptiScalerProfile p)
                 {
@@ -1613,7 +1952,21 @@ namespace OptiscalerClient.Views
                     UpdateProfileViewButtons(def);
                     HighlightProfileCardView();
                 }
+            }
+
+            border.PointerPressed += (s, e) => SelectCard(s);
+            border.KeyUp += (s, e) =>
+            {
+                if (e.Key == Key.Enter)
+                    SelectCard(s);
             };
+            border.GotFocus += (s, e) =>
+            {
+                if (s is Border b)
+                    b.BorderBrush = Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.White;
+            };
+            border.LostFocus += (s, e) => HighlightProfileCardView();
+
             return border;
         }
 
@@ -1857,6 +2210,7 @@ namespace OptiscalerClient.Views
 
         private void OpenProfileEditor(OptiScalerProfile profile, bool isNewProfile, bool wasDefault = false)
         {
+            IsProfileEditorOpen = true;
             _editorProfile = profile;
             _editorIsNewProfile = isNewProfile;
             _editorWasDefault = wasDefault;
@@ -1885,10 +2239,12 @@ namespace OptiscalerClient.Views
             if (txtSearch != null) txtSearch.Text = string.Empty;
 
             UpdateEditorModeButtons();
-            // Populate easy-mode virtual sections from canonical sections before building the UI
             EditorSyncSchemaValues(fromEasyToAdvanced: false);
             BuildEditorSettingsUI();
             SwitchToView("ViewProfileEditor");
+
+            // Explicitly focus the first item so the Gamepad has an immediate anchor
+            txtName?.Focus();
         }
 
         private void BuildEditorSettingsUI()
@@ -2169,6 +2525,17 @@ namespace OptiscalerClient.Views
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Editor nav scroll failed: {ex.Message}"); }
         }
 
+        public Control? GetFirstSettingControlForSection(string sectionName)
+        {
+            if (_editorSectionBorders.TryGetValue(sectionName, out var sectionBorder))
+            {
+                return sectionBorder.GetVisualDescendants()
+                    .OfType<Control>()
+                    .FirstOrDefault(c => c.Focusable && c.IsVisible && (c is TextBox || c is ComboBox || c is Button));
+            }
+            return null;
+        }
+
         private void TxtSettingsSearchEd_TextChanged(object? sender, TextChangedEventArgs e)
         {
             if (sender is TextBox tb)
@@ -2322,7 +2689,9 @@ namespace OptiscalerClient.Views
         private void BtnEditorBack_Click(object? sender, RoutedEventArgs e)
         {
             _editorKeyCaptureButton = null;
+            IsProfileEditorOpen = false;
             SwitchToView("ViewProfiles");
+            this.FindControl<Button>("BtnNewProfileView")?.Focus();
         }
 
         private void BtnEditorSave_Click(object? sender, RoutedEventArgs e)
@@ -2350,8 +2719,10 @@ namespace OptiscalerClient.Views
                     _componentService.SaveConfiguration();
                 }
                 _editorKeyCaptureButton = null;
+                IsProfileEditorOpen = false;
                 SwitchToView("ViewProfiles");
                 LoadProfilesView();
+                this.FindControl<Button>("BtnNewProfileView")?.Focus();
             }
             catch (Exception ex)
             {

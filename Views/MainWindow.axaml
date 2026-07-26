@@ -159,6 +159,80 @@
                 </Animation>
             </Style.Animations>
         </Style>
+
+        <!-- Focusable card wrapper for gamepad-navigable settings rows whose
+             interactive control (e.g. ToggleSwitch) doesn't reliably report
+             IsFocused on itself when reached via simulated Tab — see
+             gamepad_implementation_log.md, section 13/20. Scoped to the class
+             (not :is(Control)) to avoid touching the window's existing
+             Button/RadioButton/ListBoxItem focus-ring styles. -->
+        <Style Selector="Border.InteractiveOption">
+            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Use CardOption for items that should have a background even when not focused -->
+        <Style Selector="Border.CardOption">
+            <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+        </Style>
+
+        <Style Selector="Border.InteractiveOption:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+        </Style>
+
+        <!-- Game card gamepad focus ring — v2.
+             The generic "ListBoxItem:focus /template/ ContentPresenter" rule in
+             App.axaml paints its highlight across the FULL ListBoxItem cell —
+             including the item's own bottom/right spacing padding used to gap
+             cards apart (Padding="0,0,0,8" for the list, "0,0,12,12" for the
+             grid) — not just the visible card sitting inside it. That's why a
+             CornerRadius-only fix (v1) still looked oversized/offset: the ring
+             was bigger than the card and the card sat off-center inside it.
+             Fix: neutralize that generic ring for these two ListBoxes and
+             paint the highlight directly on Border.GameCard/GameGridCard
+             instead, via BoxShadow. BoxShadow is a pure paint effect (it does
+             NOT participate in layout, unlike BorderThickness), so it always
+             traces the card's own rounded silhouette exactly — there is no
+             separate overlay rectangle left to go out of sync.
+             The shadow must be INSET, not a plain outward spread: the item's
+             own spacing padding is asymmetric (slack room only on the
+             bottom/right, none on the top/left — see above), so an outward
+             ring would have room to render on those two sides but get
+             clipped on the top/left, where the card sits flush against the
+             ListBoxItem's own bounds. Same reasoning already documented for
+             the sidebar nav buttons' focus ring above ("Inset BoxShadow is
+             never clipped by parent containers"). -->
+        <Style Selector="ListBox#LstGames ListBoxItem:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ListBox#LstGamesGrid ListBoxItem:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ListBox#LstGames ListBoxItem:focus Border.GameCard">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #8B73F8"/>
+        </Style>
+        <Style Selector="ListBox#LstGamesGrid ListBoxItem:focus Border.GameGridCard">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #8B73F8"/>
+        </Style>
     </Window.Styles>
 
     <Grid>
@@ -427,7 +501,8 @@
                                         FontSize="11"
                                         VerticalAlignment="Center"/>
                          </StackPanel>
-                         <Button Grid.Column="1"
+                         <Button x:Name="BtnEditModeDone"
+                                 Grid.Column="1"
                                  Content="{DynamicResource TxtOrganizeModeDone}"
                                  Classes="BtnBase"
                                  Padding="18,5"
@@ -1566,9 +1641,7 @@
                             </Border>
 
                             <!-- Auto Scan -->
-                            <Border Background="{StaticResource BrBgCard}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1"
+                            <Border Classes="InteractiveOption CardOption"
                                     CornerRadius="{StaticResource RadiusLarge}"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
@@ -1593,14 +1666,13 @@
                                                   VerticalAlignment="Center"
                                                   OnContent="" OffContent=""
                                                   IsChecked="True"
+                                                  Focusable="False"
                                                   IsCheckedChanged="TglAutoScan_IsCheckedChanged"/>
                                 </Grid>
                             </Border>
 
                             <!-- Animations -->
-                            <Border Background="{StaticResource BrBgCard}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1"
+                            <Border Classes="InteractiveOption CardOption"
                                     CornerRadius="{StaticResource RadiusLarge}"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
@@ -1625,6 +1697,7 @@
                                                   VerticalAlignment="Center"
                                                   OnContent="" OffContent=""
                                                   IsChecked="True"
+                                                  Focusable="False"
                                                   IsCheckedChanged="TglAnimations_IsCheckedChanged"/>
                                 </Grid>
                             </Border>
@@ -1916,6 +1989,77 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- VIRTUAL KEYBOARD OVERLAY -->
+        <Border Name="VirtualKeyboardOverlay"
+                Grid.ColumnSpan="2"
+                Background="#C0000000"
+                IsVisible="False"
+                ZIndex="9998">
+            <Border Background="{StaticResource BrBgElevated}"
+                    CornerRadius="16"
+                    BorderThickness="1"
+                    BorderBrush="{StaticResource BrBorder}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="24"
+                    BoxShadow="0 16 64 0 #C0000000">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="VIRTUAL KEYBOARD"
+                               FontFamily="{StaticResource FontPrimary}"
+                               Foreground="{StaticResource BrTextSecondary}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               LetterSpacing="3"
+                               HorizontalAlignment="Center"/>
+                    <Border Background="{StaticResource BrBgBase}"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{StaticResource BrBorder}"
+                            Padding="12,8"
+                            Margin="0,0,0,8"
+                            Height="40">
+                        <TextBlock Name="TxtOskPreview"
+                                   Text=""
+                                   Foreground="{StaticResource BrTextPrimary}"
+                                   FontSize="16"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                    </Border>
+
+                    <UniformGrid Name="OskGrid" Columns="10" Rows="4">
+                        <!-- Populated in code-behind -->
+                    </UniformGrid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="32" Margin="0,16,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="{StaticResource BrAccent}" CornerRadius="12" Width="24" Height="24">
+                                <TextBlock Text="A" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"/>
+                            </Border>
+                            <TextBlock Text="Select" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center" FontSize="14"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="#E05252" CornerRadius="12" Width="24" Height="24">
+                                <TextBlock Text="B" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"/>
+                            </Border>
+                            <TextBlock Text="Close" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center" FontSize="14"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="#4DA6FF" CornerRadius="12" Width="24" Height="24">
+                                <TextBlock Text="X" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"/>
+                            </Border>
+                            <TextBlock Text="Backspace" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center" FontSize="14"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Background="#FFB347" CornerRadius="12" Width="24" Height="24">
+                                <TextBlock Text="Y" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"/>
+                            </Border>
+                            <TextBlock Text="Space" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center" FontSize="14"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
 
         <!-- Dim backdrop shown behind child dialogs -->
         <Border Name="DimOverlay"
