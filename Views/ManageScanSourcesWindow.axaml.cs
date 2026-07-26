@@ -15,10 +15,13 @@ using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Views
 {
-    public partial class ManageScanSourcesWindow : Window
+    public partial class ManageScanSourcesWindow : Window, IGamepadInputHost
     {
         private readonly ComponentManagementService _componentService;
         private readonly List<string> _customFolders = new();
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
         public ManageScanSourcesWindow()
         {
@@ -50,6 +53,22 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("MainScrollViewer"));
+                }
+
+                if (owner is IGamepadInputHost host)
+                    host.GamepadHelper?.SuspendInput();
+            };
+
+            this.Closed += (s, e) =>
+            {
+                if (owner is IGamepadInputHost closedHost)
+                    closedHost.GamepadHelper?.ResumeInput();
+
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             LoadCurrentSettings();
@@ -83,11 +102,11 @@ namespace OptiscalerClient.Views
             SetFilterMode(config.UpscalerFilter);
 
             var isWindows = OperatingSystem.IsWindows();
-            var gridEpic = this.FindControl<Grid>("GridEpic");
-            var gridGOG = this.FindControl<Grid>("GridGOG");
-            var gridXbox = this.FindControl<Grid>("GridXbox");
-            var gridEA = this.FindControl<Grid>("GridEA");
-            var gridUbisoft = this.FindControl<Grid>("GridUbisoft");
+            var gridEpic = this.FindControl<Border>("GridEpic");
+            var gridGOG = this.FindControl<Border>("GridGOG");
+            var gridXbox = this.FindControl<Border>("GridXbox");
+            var gridEA = this.FindControl<Border>("GridEA");
+            var gridUbisoft = this.FindControl<Border>("GridUbisoft");
             if (gridEpic != null) gridEpic.IsVisible = isWindows;
             if (gridGOG != null) gridGOG.IsVisible = isWindows;
             if (gridXbox != null) gridXbox.IsVisible = isWindows;
