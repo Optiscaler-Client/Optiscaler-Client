@@ -3,6 +3,8 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
     <x:String x:Key="TxtSettingsTitle">Impostazioni</x:String>
+    <x:String x:Key="TxtGamepadConnected">Gamepad connesso</x:String>
+    <x:String x:Key="TxtGamepadDisconnected">Gamepad disconnesso</x:String>
     <x:String x:Key="TxtSettingsDesc">Gestisci le preferenze dell'applicazione</x:String>
     <x:String x:Key="TxtAppPrefs">Preferenze app</x:String>
     <x:String x:Key="TxtCacheMgmt">Cache locale &amp; Gestione versioni predefinite</x:String>

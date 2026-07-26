@@ -3,6 +3,8 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <x:String x:Key="TxtSettingsTitle">设置</x:String>
+    <x:String x:Key="TxtGamepadConnected">手柄已连接</x:String>
+    <x:String x:Key="TxtGamepadDisconnected">手柄已断开</x:String>
     <x:String x:Key="TxtSettingsDesc">管理应用程序首选项</x:String>
     <x:String x:Key="TxtAppPrefs">应用首选项</x:String>
     <x:String x:Key="TxtCacheMgmt">本地缓存 &amp; 默认版本管理</x:String>

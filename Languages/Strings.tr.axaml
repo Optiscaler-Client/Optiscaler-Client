@@ -3,6 +3,8 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
     <x:String x:Key="TxtSettingsTitle">Ayarlar</x:String>
+    <x:String x:Key="TxtGamepadConnected">Gamepad bağlı</x:String>
+    <x:String x:Key="TxtGamepadDisconnected">Gamepad bağlantısı kesildi</x:String>
     <x:String x:Key="TxtSettingsDesc">Uygulama tercihlerini yönet</x:String>
     <x:String x:Key="TxtAppPrefs">Uygulama Tercihleri</x:String>
     <x:String x:Key="TxtCacheMgmt">Yerel önbellek &amp; Varsayılan sürüm yönetimi</x:String>

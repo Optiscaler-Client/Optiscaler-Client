@@ -3,6 +3,8 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
     <x:String x:Key="TxtSettingsTitle">設定</x:String>
+    <x:String x:Key="TxtGamepadConnected">ゲームパッド接続済み</x:String>
+    <x:String x:Key="TxtGamepadDisconnected">ゲームパッド未接続</x:String>
     <x:String x:Key="TxtSettingsDesc">アプリケーションの設定を管理</x:String>
     <x:String x:Key="TxtAppPrefs">アプリ設定</x:String>
     <x:String x:Key="TxtCacheMgmt">ローカルキャッシュ &amp; デフォルトバージョン管理</x:String>
