@@ -10,8 +10,12 @@ using System.Threading.Tasks;
 
 namespace OptiscalerClient.Views
 {
-    public partial class SteamGridApiGuideWindow : Window
+    public partial class SteamGridApiGuideWindow : Window, IGamepadInputHost
     {
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
+
         public SteamGridApiGuideWindow()
         {
             InitializeComponent();
@@ -55,6 +59,23 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("MainScrollViewer"));
+                }
+
+                if (owner is IGamepadInputHost host)
+                    host.GamepadHelper?.SuspendInput();
+            };
+
+            Closed += (s, e) =>
+            {
+                if (owner is IGamepadInputHost closedHost)
+                    closedHost.GamepadHelper?.ResumeInput();
+
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
         }
 

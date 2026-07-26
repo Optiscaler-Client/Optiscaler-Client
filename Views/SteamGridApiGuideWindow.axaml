@@ -57,7 +57,7 @@
                             </StackPanel>
                         </Border>
 
-                        <ScrollViewer Grid.Row="1">
+                        <ScrollViewer Grid.Row="1" Name="MainScrollViewer">
                             <StackPanel Margin="24,18" Spacing="12">
                                 <Border Background="{StaticResource BrBgCard}"
                                         BorderBrush="{StaticResource BrBorderSubtle}"
