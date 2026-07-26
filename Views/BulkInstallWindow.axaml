@@ -21,6 +21,35 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
     </Window.Resources>
 
+    <Window.Styles>
+        <Style Selector=":is(Control)">
+            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+        </Style>
+
+        <Style Selector="Border.InteractiveOption">
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.GameItemOption">
+            <Setter Property="Background" Value="{StaticResource BrBgSurface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+        </Style>
+
+        <Style Selector="Border.InteractiveOption:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+        </Style>
+    </Window.Styles>
+
     <Panel Margin="15" Name="RootPanel" Opacity="0">
         <!-- Main Container with Shadow -->
         <Border CornerRadius="12"
@@ -61,10 +90,32 @@
 
                         <Button Grid.Column="1"
                                 Name="BtnClose"
-                                Content="✕"
                                 Classes="BtnBase"
+                                Focusable="False"
+                                IsTabStop="False"
                                 Padding="10,5"
-                                Click="BtnClose_Click"/>
+                                Click="BtnClose_Click"
+                                ToolTip.Tip="Close">
+                            <Panel>
+                                <TextBlock Name="TxtCloseIconX" Text="✕"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                                <Border Name="BadgeCloseGamepadB"
+                                        Background="#E05252"
+                                        CornerRadius="10"
+                                        Width="20" Height="20"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        IsVisible="False">
+                                    <TextBlock Text="B"
+                                               Foreground="White"
+                                               FontWeight="Bold"
+                                               FontSize="11"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Panel>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -83,13 +134,15 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <CheckBox Grid.Column="0"
-                                  Name="ChkSelectAll"
-                                  Content="{DynamicResource TxtSelectAll}"
-                                  FontWeight="Medium"
-                                  Foreground="{StaticResource BrTextPrimary}"
-                                  FontSize="12"
-                                  Click="ChkSelectAll_Click"/>
+                        <Border Grid.Column="0" Name="BorderSelectAll" Classes="InteractiveOption" CornerRadius="4" Padding="4">
+                            <CheckBox Name="ChkSelectAll"
+                                      Content="{DynamicResource TxtSelectAll}"
+                                      FontWeight="Medium"
+                                      Foreground="{StaticResource BrTextPrimary}"
+                                      FontSize="12"
+                                      Focusable="False"
+                                      Click="ChkSelectAll_Click"/>
+                        </Border>
 
                         <TextBox Grid.Column="1"
                                  Name="TxtSearch"
@@ -434,14 +487,14 @@
                          GAMES LIST (Scrollable)
                          ──────────────────────────────────────────────────── -->
                     <ScrollViewer Grid.Column="1"
+                                  Name="GamesScrollViewer"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
                                   Padding="0">
                         <ItemsControl Name="GamesList" Padding="12">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource BrBgSurface}"
-                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                    <Border Classes="InteractiveOption GameItemOption"
                                             BorderThickness="1"
                                             CornerRadius="6"
                                             Padding="10,6"
@@ -458,6 +511,7 @@
                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                       IsEnabled="{Binding CanInstall}"
                                                       Margin="0,0,10,0"
+                                                      Focusable="False"
                                                       VerticalAlignment="Center"/>
 
                                             <Image Grid.Column="1"

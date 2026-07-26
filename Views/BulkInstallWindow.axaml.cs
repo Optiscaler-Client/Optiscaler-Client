@@ -17,7 +17,7 @@ using System.Text.RegularExpressions;
 
 namespace OptiscalerClient.Views;
 
-public partial class BulkInstallWindow : Window
+public partial class BulkInstallWindow : Window, IGamepadInputHost
 {
     private readonly ComponentManagementService _componentService;
     private readonly GameInstallationService _installService;
@@ -34,6 +34,9 @@ public partial class BulkInstallWindow : Window
     private bool _optiShowingBeta;
     private bool _optiShowingCustom;
     private bool _optiTabInitialized;
+    private BulkGamepadNavigationHelper? _gamepadHelper;
+
+    GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
     public BulkInstallWindow()
     {
@@ -155,6 +158,34 @@ public partial class BulkInstallWindow : Window
                 rootPanel.Opacity = 1;
             }, DispatcherPriority.Render);
         }
+
+        this.Opened += (s, e) =>
+        {
+            if (_gamepadHelper == null)
+            {
+                _gamepadHelper = new BulkGamepadNavigationHelper(this, this.FindControl<ScrollViewer>("GamesScrollViewer"));
+                _gamepadHelper.GamepadModeActiveChanged += OnGamepadModeActiveChanged;
+
+                if (Owner is IGamepadInputHost seedHost)
+                    _gamepadHelper.SeedGamepadModeActive(seedHost.IsGamepadModeActive);
+            }
+        };
+
+        this.Closed += (s, e) =>
+        {
+            if (_gamepadHelper != null)
+                _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;
+            _gamepadHelper?.Dispose();
+            _gamepadHelper = null;
+        };
+    }
+
+    private void OnGamepadModeActiveChanged(object? sender, bool isGamepadModeActive)
+    {
+        var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+        var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
+        if (txtX != null) txtX.IsVisible = !isGamepadModeActive;
+        if (badgeB != null) badgeB.IsVisible = isGamepadModeActive;
     }
 
     private void InitializeComponent()
