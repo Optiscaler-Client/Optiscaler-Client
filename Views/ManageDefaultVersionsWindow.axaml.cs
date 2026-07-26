@@ -13,12 +13,15 @@ using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Views
 {
-    public partial class ManageDefaultVersionsWindow : Window
+    public partial class ManageDefaultVersionsWindow : Window, IGamepadInputHost
     {
         private readonly ComponentManagementService _componentService;
         private readonly IGpuDetectionService? _gpuService;
         private bool _optiDefaultShowingBeta;
         private bool _optiDefaultShowingCustom;
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
         public ManageDefaultVersionsWindow()
         {
@@ -52,6 +55,16 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("MainScrollViewer"));
+                }
+            };
+
+            this.Closed += (s, e) =>
+            {
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             LoadCurrentSettings();

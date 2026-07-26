@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="OptiscalerClient.Views.ManageDefaultVersionsWindow"
         Title="Manage Default Versions"
@@ -50,7 +50,7 @@
                         </Border>
 
                         <!-- Content -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="24,20" Spacing="20">
                                 
                                 <!-- Default OptiScaler Version -->
