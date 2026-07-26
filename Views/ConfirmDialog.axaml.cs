@@ -14,6 +14,8 @@ namespace OptiscalerClient.Views
 {
     public partial class ConfirmDialog : Window
     {
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
         public ConfirmDialog()
         {
             InitializeComponent();
@@ -94,12 +96,58 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, null);
+                    _gamepadHelper.GamepadModeActiveChanged += OnGamepadModeActiveChanged;
+
+                    // Start already in whatever mode the owner window was in,
+                    // instead of always defaulting to mouse mode until the
+                    // user presses something inside this new dialog — see
+                    // gamepad_implementation_log.md, section 25.
+                    if (owner is IGamepadInputHost seedHost)
+                        _gamepadHelper.SeedGamepadModeActive(seedHost.IsGamepadModeActive);
+                }
+
+                // Give an explicit starting focus so the first D-Pad/A press
+                // has a predictable target instead of relying on whatever
+                // (if anything) Avalonia auto-focused on open.
+                (btnConfirm ?? btnCancel)?.Focus(NavigationMethod.Directional);
+
+                // Deterministically stop the owner window's own gamepad helper
+                // from reacting while this dialog is open. Two independent
+                // polling loops (owner's + this dialog's) both see the same
+                // physical button press; without this, whichever one's queued
+                // callback happens to run last after the dialog closes itself
+                // can still process that same press (e.g. 'B' closing the
+                // owner too). See gamepad_implementation_log.md, section 18.
+                if (owner is IGamepadInputHost host)
+                    host.GamepadHelper?.SuspendInput();
+            };
+
+            this.Closed += (s, e) =>
+            {
+                if (owner is IGamepadInputHost closedHost)
+                    closedHost.GamepadHelper?.ResumeInput();
+
+                if (_gamepadHelper != null)
+                    _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
         }
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
+        }
+
+        private void OnGamepadModeActiveChanged(object? sender, bool isGamepadModeActive)
+        {
+            var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+            var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
+            if (txtX != null) txtX.IsVisible = !isGamepadModeActive;
+            if (badgeB != null) badgeB.IsVisible = isGamepadModeActive;
         }
 
         private bool _isAnimatingClose = false;

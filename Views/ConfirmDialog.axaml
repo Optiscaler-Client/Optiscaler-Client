@@ -57,9 +57,28 @@
                                 BorderThickness="0"
                                 CornerRadius="0,12,0,0"
                                 Click="BtnCancel_Click">
-                            <TextBlock Text="{OnPlatform '&#xE711;', Linux='✕'}"
-                                       FontFamily="{OnPlatform 'Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI', Linux='sans-serif'}"
-                                       FontSize="12"/>
+                            <Panel>
+                                <TextBlock Name="TxtCloseIconX"
+                                           Text="{OnPlatform '&#xE711;', Linux='✕'}"
+                                           FontFamily="{OnPlatform 'Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI', Linux='sans-serif'}"
+                                           FontSize="12"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                                <Border Name="BadgeCloseGamepadB"
+                                        Background="#E05252"
+                                        CornerRadius="10"
+                                        Width="20" Height="20"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        IsVisible="False">
+                                    <TextBlock Text="B"
+                                               Foreground="White"
+                                               FontWeight="Bold"
+                                               FontSize="11"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Panel>
                         </Button>
                     </Grid>
                 </Border>
