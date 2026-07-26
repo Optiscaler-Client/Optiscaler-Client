@@ -175,7 +175,7 @@ namespace OptiscalerClient.Views
 
                 if (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    using var archive = ArchiveFactory.Open(path);
+                    using var archive = ArchiveFactory.OpenArchive(path);
                     bool found = archive.Entries.Any(e =>
                         !e.IsDirectory &&
                         Path.GetFileName(e.Key ?? "").Equals(RequiredDllName, StringComparison.OrdinalIgnoreCase));
@@ -214,7 +214,7 @@ namespace OptiscalerClient.Views
                 }
                 else if (SelectedPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    using var archive = ArchiveFactory.Open(SelectedPath);
+                    using var archive = ArchiveFactory.OpenArchive(SelectedPath);
                     var entry = archive.Entries.FirstOrDefault(e =>
                         !e.IsDirectory &&
                         Path.GetFileName(e.Key ?? "").Equals(RequiredDllName, StringComparison.OrdinalIgnoreCase));

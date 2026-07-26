@@ -3,9 +3,9 @@
     <OutputType Condition="$([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
     <OutputType Condition="!$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <Version>1.0.5</Version>
-    <FileVersion>1.0.5</FileVersion>
-    <AssemblyVersion>1.0.5</AssemblyVersion>
+    <Version>1.0.6</Version>
+    <FileVersion>1.0.6</FileVersion>
+    <AssemblyVersion>1.0.6</AssemblyVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
@@ -59,7 +59,7 @@
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.12" Condition="'$(Configuration)'=='Debug'" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
-    <PackageReference Include="SharpCompress" Version="0.44.5" />
+    <PackageReference Include="SharpCompress" Version="0.49.1" />
     <PackageReference Include="System.Management" Version="10.0.0" />
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
   </ItemGroup>

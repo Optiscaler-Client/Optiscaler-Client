@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -194,7 +194,7 @@ public class OptiscalerManagementService
         // Extract with path traversal validation
         try
         {
-            using (var archive = ArchiveFactory.Open(archivePath))
+            using (var archive = ArchiveFactory.OpenArchive(archivePath))
             {
                 foreach (var entry in archive.Entries)
                 {
