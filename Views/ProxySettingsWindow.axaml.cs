@@ -25,10 +25,13 @@ using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Views
 {
-    public partial class ProxySettingsWindow : Window
+    public partial class ProxySettingsWindow : Window, IGamepadInputHost
     {
         private readonly ComponentManagementService _componentService;
         private bool _isLoading;
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
         public ProxySettingsWindow()
         {
@@ -58,6 +61,23 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, null);
+                }
+
+                if (owner is IGamepadInputHost host)
+                    host.GamepadHelper?.SuspendInput();
+            };
+
+            this.Closed += (s, e) =>
+            {
+                if (owner is IGamepadInputHost closedHost)
+                    closedHost.GamepadHelper?.ResumeInput();
+
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             LoadCurrentSettings();
