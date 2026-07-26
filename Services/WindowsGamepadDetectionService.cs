@@ -18,6 +18,14 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
     private ushort _lastButtons = 0;
     private bool _isConnected = false;
 
+    // True once we've captured a real baseline reading. Until then, whatever
+    // is already held is absorbed silently instead of firing a synthetic
+    // "just pressed" event — otherwise a fresh service instance (one gets
+    // created per window/dialog) treats a button still physically held from
+    // the interaction that opened it (e.g. holding 'A' while a ConfirmDialog
+    // appears) as a brand new press, auto-triggering whatever is focused.
+    private bool _hasBaseline = false;
+
     // Thumbstick state tracking — one bool per direction, set when axis crosses deadzone
     private const short ThumbDeadzone = 10000;
     private bool _tlUp, _tlDown, _tlLeft, _tlRight;   // left stick
@@ -99,34 +107,46 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
                 }
 
                 ushort currentButtons = state.Gamepad.wButtons;
-                
-                // Compare with last state
-                if (currentButtons != _lastButtons)
-                {
-                    CheckButton(currentButtons, _lastButtons, 0x0001, GamepadButton.DPadUp);
-                    CheckButton(currentButtons, _lastButtons, 0x0002, GamepadButton.DPadDown);
-                    CheckButton(currentButtons, _lastButtons, 0x0004, GamepadButton.DPadLeft);
-                    CheckButton(currentButtons, _lastButtons, 0x0008, GamepadButton.DPadRight);
-                    CheckButton(currentButtons, _lastButtons, 0x0010, GamepadButton.Start);
-                    CheckButton(currentButtons, _lastButtons, 0x0020, GamepadButton.Back);
-                    CheckButton(currentButtons, _lastButtons, 0x0100, GamepadButton.L1);
-                    CheckButton(currentButtons, _lastButtons, 0x0200, GamepadButton.R1);
-                    CheckButton(currentButtons, _lastButtons, 0x1000, GamepadButton.A);
-                    CheckButton(currentButtons, _lastButtons, 0x2000, GamepadButton.B);
-                    CheckButton(currentButtons, _lastButtons, 0x4000, GamepadButton.X);
-                    CheckButton(currentButtons, _lastButtons, 0x8000, GamepadButton.Y);
-                    
-                    _lastButtons = currentButtons;
-                }
 
-                // Thumbstick axes are always checked (deadzone filtering inside)
-                CheckThumbSticks(state.Gamepad);
+                if (!_hasBaseline)
+                {
+                    // First reading after StartListening()/reconnect: absorb
+                    // whatever is currently held as the baseline, silently.
+                    _lastButtons = currentButtons;
+                    PrimeThumbSticks(state.Gamepad);
+                    _hasBaseline = true;
+                }
+                else
+                {
+                    // Compare with last state
+                    if (currentButtons != _lastButtons)
+                    {
+                        CheckButton(currentButtons, _lastButtons, 0x0001, GamepadButton.DPadUp);
+                        CheckButton(currentButtons, _lastButtons, 0x0002, GamepadButton.DPadDown);
+                        CheckButton(currentButtons, _lastButtons, 0x0004, GamepadButton.DPadLeft);
+                        CheckButton(currentButtons, _lastButtons, 0x0008, GamepadButton.DPadRight);
+                        CheckButton(currentButtons, _lastButtons, 0x0010, GamepadButton.Start);
+                        CheckButton(currentButtons, _lastButtons, 0x0020, GamepadButton.Back);
+                        CheckButton(currentButtons, _lastButtons, 0x0100, GamepadButton.L1);
+                        CheckButton(currentButtons, _lastButtons, 0x0200, GamepadButton.R1);
+                        CheckButton(currentButtons, _lastButtons, 0x1000, GamepadButton.A);
+                        CheckButton(currentButtons, _lastButtons, 0x2000, GamepadButton.B);
+                        CheckButton(currentButtons, _lastButtons, 0x4000, GamepadButton.X);
+                        CheckButton(currentButtons, _lastButtons, 0x8000, GamepadButton.Y);
+
+                        _lastButtons = currentButtons;
+                    }
+
+                    // Thumbstick axes are always checked (deadzone filtering inside)
+                    CheckThumbSticks(state.Gamepad);
+                }
             }
             else
             {
                 if (_isConnected)
                 {
                     _isConnected = false;
+                    _hasBaseline = false; // re-prime on reconnect
                     GamepadConnectionChanged?.Invoke(this, false);
                 }
             }
@@ -144,6 +164,21 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
             GamepadInputReceived?.Invoke(this, new GamepadEventArgs { Button = button, IsPressed = true });
         else if (!isCurrentlyPressed && wasPressed)
             GamepadInputReceived?.Invoke(this, new GamepadEventArgs { Button = button, IsPressed = false });
+    }
+
+    // Sets the held-direction flags to match the current axis reading without
+    // firing any events — used for the initial baseline (see _hasBaseline).
+    private void PrimeThumbSticks(XINPUT_GAMEPAD gamepad)
+    {
+        _tlRight = gamepad.sThumbLX > ThumbDeadzone;
+        _tlLeft  = gamepad.sThumbLX < -ThumbDeadzone;
+        _tlUp    = gamepad.sThumbLY > ThumbDeadzone;
+        _tlDown  = gamepad.sThumbLY < -ThumbDeadzone;
+
+        _trRight = gamepad.sThumbRX > ThumbDeadzone;
+        _trLeft  = gamepad.sThumbRX < -ThumbDeadzone;
+        _trUp    = gamepad.sThumbRY > ThumbDeadzone;
+        _trDown  = gamepad.sThumbRY < -ThumbDeadzone;
     }
 
     private void CheckThumbSticks(XINPUT_GAMEPAD gamepad)
