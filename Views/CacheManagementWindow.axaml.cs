@@ -10,12 +10,14 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using OptiscalerClient.Helpers;
+using OptiscalerClient.Models;
 using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Views
 {
-    public partial class CacheManagementWindow : Window
+    public partial class CacheManagementWindow : Window, IGamepadInputHost
     {
         private static readonly FontFamily IconFont = new("avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular");
         private readonly ComponentManagementService _componentService;
@@ -23,6 +25,9 @@ namespace OptiscalerClient.Views
         private string _currentSection = "opti-stable";
         private string? _selectedVersion;
         private Button? _setDefaultButton;
+        private GamepadDialogNavigationHelper? _gamepadHelper;
+
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
         public CacheManagementWindow()
         {
@@ -52,12 +57,98 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("CacheContentScrollViewer"));
+                    _gamepadHelper.CustomNavigationHandler = OnGamepadNavigation;
+                    _gamepadHelper.GamepadModeActiveChanged += OnGamepadModeActiveChanged;
+
+                    if (Owner is IGamepadInputHost seedHost)
+                        _gamepadHelper.SeedGamepadModeActive(seedHost.IsGamepadModeActive);
+                }
+            };
+
+            this.Closed += (s, e) =>
+            {
+                if (_gamepadHelper != null)
+                    _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             BuildSidebar();
             ShowSection(_currentSection);
             UpdateSidebarSelection(_currentSection);
             UpdateCacheInfo();
+        }
+
+        private void OnGamepadModeActiveChanged(object? sender, bool isGamepadModeActive)
+        {
+            var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+            var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
+            if (txtX != null) txtX.IsVisible = !isGamepadModeActive;
+            if (badgeB != null) badgeB.IsVisible = isGamepadModeActive;
+        }
+
+        private bool OnGamepadNavigation(GamepadButton button)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            var focused = topLevel?.FocusManager?.GetFocusedElement() as Visual;
+            if (focused == null) return false;
+
+            var sidebar = this.FindControl<StackPanel>("CacheSidebar");
+            var contentArea = this.FindControl<StackPanel>("CacheContentArea");
+
+            bool isInSidebar = sidebar != null && focused.GetVisualAncestors().Contains(sidebar);
+            bool isInContent = contentArea != null && focused.GetVisualAncestors().Contains(contentArea);
+
+            if (button == GamepadButton.DPadRight || button == GamepadButton.ThumbLeftRight)
+            {
+                if (isInSidebar && contentArea != null)
+                {
+                    var firstFocusable = contentArea.GetVisualDescendants().OfType<InputElement>().FirstOrDefault(x => x.Focusable && x.IsEffectivelyVisible);
+                    if (firstFocusable != null)
+                    {
+                        firstFocusable.Focus(NavigationMethod.Directional);
+                        return true;
+                    }
+                }
+            }
+            else if (button == GamepadButton.DPadLeft || button == GamepadButton.ThumbLeftLeft)
+            {
+                if (isInContent && sidebar != null)
+                {
+                    // Focus the currently selected sidebar button, or just the first button
+                    var selectedBtn = sidebar.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Tag as string == _currentSection);
+                    if (selectedBtn != null)
+                    {
+                        selectedBtn.Focus(NavigationMethod.Directional);
+                        return true;
+                    }
+                }
+            }
+            else if (button == GamepadButton.A)
+            {
+                if (isInSidebar && focused is Button btn)
+                {
+                    bool alreadyActive = btn.Tag as string == _currentSection;
+
+                    btn.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+                    // First 'A' on a section only switches to it, keeping
+                    // focus in the sidebar (matches the rest of the app's
+                    // sidebar convention). Only jump into content if this
+                    // section was already the active one — same as DPadRight.
+                    if (alreadyActive && contentArea != null)
+                    {
+                        var firstFocusable = contentArea.GetVisualDescendants().OfType<InputElement>().FirstOrDefault(x => x.Focusable && x.IsEffectivelyVisible);
+                        firstFocusable?.Focus(NavigationMethod.Directional);
+                    }
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public CacheManagementWindow(Window owner, string initialSection = "opti-stable")
@@ -82,6 +173,23 @@ namespace OptiscalerClient.Views
                     AnimationHelper.SetupPanelTransition(rootPanel);
                     rootPanel.Opacity = 1;
                 }
+                if (_gamepadHelper == null)
+                {
+                    _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("CacheContentScrollViewer"));
+                    _gamepadHelper.CustomNavigationHandler = OnGamepadNavigation;
+                    _gamepadHelper.GamepadModeActiveChanged += OnGamepadModeActiveChanged;
+
+                    if (Owner is IGamepadInputHost seedHost)
+                        _gamepadHelper.SeedGamepadModeActive(seedHost.IsGamepadModeActive);
+                }
+            };
+
+            this.Closed += (s, e) =>
+            {
+                if (_gamepadHelper != null)
+                    _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;
+                _gamepadHelper?.Dispose();
+                _gamepadHelper = null;
             };
 
             BuildSidebar();
