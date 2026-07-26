@@ -42,8 +42,15 @@ using Avalonia.VisualTree;
 
 namespace OptiscalerClient.Views
 {
-    public partial class ManageGameWindow : Window
+    public partial class ManageGameWindow : Window, IGamepadInputHost
     {
+        // This window predates GamepadHelperBase and manages its own gamepad
+        // polling directly (see InitializeGamepadNavigation), so there is no
+        // real helper instance to expose here — only IsGamepadModeActive is
+        // overridden below, sourced from _isControllerModeActive instead.
+        GamepadHelperBase? IGamepadInputHost.GamepadHelper => null;
+        bool IGamepadInputHost.IsGamepadModeActive => _isControllerModeActive;
+
         private readonly Game _game;
         private readonly IGpuDetectionService? _gpuService;
         private Window? _ownerWindow;
@@ -203,6 +210,14 @@ namespace OptiscalerClient.Views
 
             SetupUI();
             InitializeGamepadNavigation();
+
+            // Start already in whatever mode the owner window was in, instead
+            // of always defaulting to mouse mode until the user presses
+            // something inside this new dialog — see
+            // gamepad_implementation_log.md, section 25.
+            if (owner is IGamepadInputHost ownerHost)
+                SetControllerModeActive(ownerHost.IsGamepadModeActive);
+
             this.Closed += ManageGameWindow_Closed;
             this.AddHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved, handledEventsToo: true);
 
@@ -265,7 +280,7 @@ namespace OptiscalerClient.Views
                 if (!IsActive) return;
                 if (DateTime.UtcNow < _ignoreGamepadInputUntilUtc) return;
 
-                _isControllerModeActive = true;
+                SetControllerModeActive(true);
 
                 if (HandleOpenComboBoxInput(e.Button))
                     return;
@@ -310,8 +325,19 @@ namespace OptiscalerClient.Views
         {
             if (!_isControllerModeActive) return;
 
-            _isControllerModeActive = false;
+            SetControllerModeActive(false);
             TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+        }
+
+        private void SetControllerModeActive(bool active)
+        {
+            if (_isControllerModeActive == active) return;
+            _isControllerModeActive = active;
+
+            var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+            var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
+            if (txtX != null) txtX.IsVisible = !active;
+            if (badgeB != null) badgeB.IsVisible = active;
         }
 
         private void EnsureGamepadFocus()
