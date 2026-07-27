@@ -454,9 +454,12 @@ namespace OptiscalerClient.Services
                         nukemFileCount++;
                         DebugWindow.Log($"[Install] Installed NukemFG file: {fileName}");
 
-                        // Modify OptiScaler.ini to set FGType=nukems
-                        ModifyOptiScalerIni(gameDir, "FGType", "nukems");
-                        DebugWindow.Log($"[Install] Modified OptiScaler.ini for NukemFG");
+                        // Wire NukemFG as both the FG input and output in [FrameGen] and enable it,
+                        // otherwise the DLL is deployed but Frame Generation never actually engages.
+                        ModifyOptiScalerIni(gameDir, "Enabled", "true", "FrameGen");
+                        ModifyOptiScalerIni(gameDir, "FGInput", "nukems", "FrameGen");
+                        ModifyOptiScalerIni(gameDir, "FGOutput", "nukems", "FrameGen");
+                        DebugWindow.Log($"[Install] Modified OptiScaler.ini [FrameGen] for NukemFG");
                     }
                 }
 
@@ -1695,16 +1698,18 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Modifies a setting in OptiScaler.ini
+        /// Modifies a setting within the given section of OptiScaler.ini, inserting the section
+        /// and/or key if either is missing.
         /// </summary>
-        private void ModifyOptiScalerIni(string gameDir, string key, string value)
+        private void ModifyOptiScalerIni(string gameDir, string key, string value, string section = "General")
         {
             var iniPath = Path.Combine(gameDir, "OptiScaler.ini");
+            var sectionHeader = $"[{section}]";
 
             if (!File.Exists(iniPath))
             {
                 // Create a basic ini file if it doesn't exist
-                File.WriteAllText(iniPath, $"[General]\n{key}={value}\n");
+                File.WriteAllText(iniPath, $"{sectionHeader}\n{key}={value}\n");
                 return;
             }
 
@@ -1712,34 +1717,34 @@ namespace OptiscalerClient.Services
             {
                 var lines = File.ReadAllLines(iniPath).ToList();
                 bool keyFound = false;
-                bool inGeneralSection = false;
+                bool inTargetSection = false;
 
                 for (int i = 0; i < lines.Count; i++)
                 {
                     var line = lines[i].Trim();
 
-                    // Check if we're in [General] section
-                    if (line.Equals("[General]", StringComparison.OrdinalIgnoreCase))
+                    // Check if we're in the target section
+                    if (line.Equals(sectionHeader, StringComparison.OrdinalIgnoreCase))
                     {
-                        inGeneralSection = true;
+                        inTargetSection = true;
                         continue;
                     }
 
                     // Check if we've moved to another section
-                    if (line.StartsWith("[") && !line.Equals("[General]", StringComparison.OrdinalIgnoreCase))
+                    if (line.StartsWith("[") && !line.Equals(sectionHeader, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (inGeneralSection && !keyFound)
+                        if (inTargetSection && !keyFound)
                         {
                             // Insert the key before the next section
                             lines.Insert(i, $"{key}={value}");
                             keyFound = true;
                             break;
                         }
-                        inGeneralSection = false;
+                        inTargetSection = false;
                     }
 
-                    // If we're in General section and found the key, update it
-                    if (inGeneralSection && line.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase))
+                    // If we're in the target section and found the key, update it
+                    if (inTargetSection && line.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase))
                     {
                         lines[i] = $"{key}={value}";
                         keyFound = true;
@@ -1747,17 +1752,17 @@ namespace OptiscalerClient.Services
                     }
                 }
 
-                // If key wasn't found, add it to the end of [General] section or create it
+                // If key wasn't found, add it to the end of the target section or create it
                 if (!keyFound)
                 {
-                    if (inGeneralSection)
+                    if (inTargetSection)
                     {
                         lines.Add($"{key}={value}");
                     }
                     else
                     {
-                        // Add [General] section if it doesn't exist
-                        lines.Add("[General]");
+                        // Add the section if it doesn't exist
+                        lines.Add(sectionHeader);
                         lines.Add($"{key}={value}");
                     }
                 }
@@ -1767,7 +1772,7 @@ namespace OptiscalerClient.Services
             catch (Exception ex)
             {
                 DebugWindow.Log($"[Install] Failed to modify OptiScaler.ini, creating new: {ex.Message}");
-                File.WriteAllText(iniPath, $"[General]\n{key}={value}\n");
+                File.WriteAllText(iniPath, $"{sectionHeader}\n{key}={value}\n");
             }
         }
     }
