@@ -616,7 +616,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     await Task.Run(() =>
                     {
                         var gameDir = _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
-                        var destPath = System.IO.Path.Combine(gameDir, "amd_fidelityfx_upscaler_dx12.dll");
+                        var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                         System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
                         DebugWindow.Log($"[BulkInstall] Copied FSR4 INT8 DLL to {destPath} for {gameItem.Name}");

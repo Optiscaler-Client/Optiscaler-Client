@@ -2162,7 +2162,7 @@ namespace OptiscalerClient.Views
                         {
                             var installSvc = new GameInstallationService();
                             var gameDir = installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
-                            var destPath = System.IO.Path.Combine(gameDir, "amd_fidelityfx_upscaler_dx12.dll");
+                            var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
                             File.Copy(extrasDllPath, destPath, overwrite: true);
@@ -2704,7 +2704,7 @@ namespace OptiscalerClient.Views
                 if (File.Exists(System.IO.Path.Combine(_game.InstallPath, "dlssg_to_fsr3_amd_is_better.dll")))
                     components.Add("NukemFG: installed");
 
-                bool fsr4DllExists = File.Exists(System.IO.Path.Combine(_game.InstallPath, "amd_fidelityfx_upscaler_dx12.dll"));
+                bool fsr4DllExists = Fsr4Int8DllHelper.ExistsIn(_game.InstallPath);
                 if (fsr4DllExists && !string.IsNullOrEmpty(_game.Fsr4ExtraVersion))
                 {
                     components.Add($"FSR 4 INT8 mod: {_game.Fsr4ExtraVersion}");

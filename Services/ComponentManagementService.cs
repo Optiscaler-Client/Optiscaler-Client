@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
 
@@ -1058,21 +1059,22 @@ namespace OptiscalerClient.Services
         /// Returns true if the DLL for the given Extras version is already cached.
         /// </summary>
         public bool IsExtrasDllCached(string version)
-            => File.Exists(Path.Combine(GetExtrasDllCachePath(version), "amd_fidelityfx_upscaler_dx12.dll"));
+            => Fsr4Int8DllHelper.ExistsIn(GetExtrasDllCachePath(version));
 
         /// <summary>
-        /// Downloads the Extras zip for the given version and extracts amd_fidelityfx_upscaler_dx12.dll
-        /// into the per-version cache folder. Returns the path to the DLL file.
+        /// Downloads the Extras zip for the given version and extracts the FSR4 INT8 DLL
+        /// (amd_fidelityfx_upscaler_dx12.dll or its newer name, amdxcffx64.dll) into the
+        /// per-version cache folder. Returns the path to the extracted DLL file.
         /// </summary>
         public async Task<string> DownloadExtrasDllAsync(string version, IProgress<double>? progress = null)
         {
             var extractDir = GetExtrasDllCachePath(version);
-            var dllPath = Path.Combine(extractDir, "amd_fidelityfx_upscaler_dx12.dll");
+            var cachedDllPath = Fsr4Int8DllHelper.FindIn(extractDir);
 
-            if (File.Exists(dllPath))
+            if (cachedDllPath != null)
             {
-                DebugWindow.Log($"[ExtrasDownload] DLL for v{version} already cached at {dllPath}");
-                return dllPath;
+                DebugWindow.Log($"[ExtrasDownload] DLL for v{version} already cached at {cachedDllPath}");
+                return cachedDllPath;
             }
 
             // Resolve download URL (cache first, then API)
@@ -1136,10 +1138,10 @@ namespace OptiscalerClient.Services
                     using var archive = SharpCompress.Archives.ArchiveFactory.OpenArchive(tempZip);
                     foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
                     {
-                        if (Path.GetFileName(entry.Key ?? "").Equals("amd_fidelityfx_upscaler_dx12.dll",
-                            StringComparison.OrdinalIgnoreCase))
+                        var entryFileName = Path.GetFileName(entry.Key ?? "");
+                        if (Fsr4Int8DllHelper.IsKnownFileName(entryFileName))
                         {
-                            var dest = SafeDestinationPath(extractDir, "amd_fidelityfx_upscaler_dx12.dll");
+                            var dest = SafeDestinationPath(extractDir, entryFileName);
                             using var entryStream = entry.OpenEntryStream();
                             using var outStream = File.Create(dest);
                             entryStream.CopyTo(outStream, 81920);
@@ -1154,8 +1156,9 @@ namespace OptiscalerClient.Services
                 try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
             }
 
-            if (!File.Exists(dllPath))
-                throw new Exception("amd_fidelityfx_upscaler_dx12.dll not found inside the downloaded archive.");
+            var dllPath = Fsr4Int8DllHelper.FindIn(extractDir);
+            if (dllPath == null)
+                throw new Exception("FSR4 INT8 DLL not found inside the downloaded archive.");
 
             return dllPath;
         }
@@ -2299,7 +2302,7 @@ namespace OptiscalerClient.Services
                 foreach (var dir in Directory.GetDirectories(cachePath))
                 {
                     var dirName = Path.GetFileName(dir);
-                    if (File.Exists(Path.Combine(dir, "amd_fidelityfx_upscaler_dx12.dll")))
+                    if (Fsr4Int8DllHelper.ExistsIn(dir))
                         versions.Add(dirName);
                 }
             }

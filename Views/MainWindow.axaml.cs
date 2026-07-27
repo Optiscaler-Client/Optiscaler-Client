@@ -5072,7 +5072,7 @@ namespace OptiscalerClient.Views
                                 // Copy into game directory
                                 var installSvc = new GameInstallationService();
                                 var gameDir = installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
-                                var destPath = System.IO.Path.Combine(gameDir, "amd_fidelityfx_upscaler_dx12.dll");
+                                var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);

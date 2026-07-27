@@ -20,6 +20,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text.Json;
+using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
 
@@ -45,8 +46,9 @@ namespace OptiscalerClient.Services
             "nvapi64.dll", "fakenvapi.ini", "fakenvapi.log", "fakenvapi.dll",
             // NukemFG
             "dlssg_to_fsr3_amd_is_better.dll",
-            // FSR 4 INT8 mod
-            "amd_fidelityfx_upscaler_dx12.dll",
+            // FSR 4 INT8 mod (name changed between releases: legacy + current)
+            Fsr4Int8DllHelper.LegacyFileName,
+            Fsr4Int8DllHelper.CurrentFileName,
             // OptiPatcher
             @"plugins\OptiPatcher.asi"
         };
@@ -894,7 +896,8 @@ namespace OptiscalerClient.Services
                 "OptiScaler.ini",
                 "nvapi64.dll",
                 "dlssg_to_fsr3_amd_is_better.dll",
-                "amd_fidelityfx_upscaler_dx12.dll"
+                Fsr4Int8DllHelper.LegacyFileName,
+                Fsr4Int8DllHelper.CurrentFileName
             };
 
             var snapshots = new List<KeyFileSnapshot>();

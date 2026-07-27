@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
 using System.Collections.Generic;
@@ -32,7 +33,8 @@ public class GameAnalyzerService
     private static readonly string[] _fsrNames = new[] {
         "amd_fidelityfx_dx12.dll",
         "amd_fidelityfx_vk.dll",
-        "amd_fidelityfx_upscaler_dx12.dll",
+        Fsr4Int8DllHelper.LegacyFileName,
+        Fsr4Int8DllHelper.CurrentFileName,
         "amd_fidelityfx_loader_dx12.dll",
         "ffx_fsr2_api_x64.dll",
         "ffx_fsr2_api_dx12_x64.dll",
