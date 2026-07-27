@@ -25,6 +25,7 @@ public enum GamePlatform
     EA,
     BattleNet,
     Ubisoft,
+    Lutris,
     Manual,
     Custom
 }

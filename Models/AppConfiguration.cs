@@ -77,6 +77,7 @@ namespace OptiscalerClient.Models
         public bool ScanXbox { get; set; } = true;
         public bool ScanEA { get; set; } = true;
         public bool ScanUbisoft { get; set; } = true;
+        public bool ScanLutris { get; set; } = true;
         public List<string> CustomFolders { get; set; } = new();
         public UpscalerFilterMode UpscalerFilter { get; set; } = UpscalerFilterMode.ShowAll;
     }

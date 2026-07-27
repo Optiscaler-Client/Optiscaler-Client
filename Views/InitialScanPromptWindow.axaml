@@ -295,6 +295,13 @@
                                                 <ToggleSwitch Grid.Column="1" Name="TglUbisoft" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
                                             </Grid>
                                         </Border>
+                                        <!-- Lutris (Linux-only); visibility set from code-behind -->
+                                        <Border Name="GridLutris" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Lutris" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                <ToggleSwitch Grid.Column="1" Name="TglLutris" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                            </Grid>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
 

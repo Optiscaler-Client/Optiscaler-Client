@@ -90,6 +90,7 @@ namespace OptiscalerClient.Views
             var tglXbox = this.FindControl<ToggleSwitch>("TglXbox");
             var tglEA = this.FindControl<ToggleSwitch>("TglEA");
             var tglUbisoft = this.FindControl<ToggleSwitch>("TglUbisoft");
+            var tglLutris = this.FindControl<ToggleSwitch>("TglLutris");
 
             if (tglSteam != null) tglSteam.IsChecked = config.ScanSteam;
             if (tglHeroic != null) tglHeroic.IsChecked = config.ScanHeroic;
@@ -98,6 +99,7 @@ namespace OptiscalerClient.Views
             if (tglXbox != null) tglXbox.IsChecked = config.ScanXbox;
             if (tglEA != null) tglEA.IsChecked = config.ScanEA;
             if (tglUbisoft != null) tglUbisoft.IsChecked = config.ScanUbisoft;
+            if (tglLutris != null) tglLutris.IsChecked = config.ScanLutris;
 
             SetFilterMode(config.UpscalerFilter);
 
@@ -107,11 +109,13 @@ namespace OptiscalerClient.Views
             var gridXbox = this.FindControl<Border>("GridXbox");
             var gridEA = this.FindControl<Border>("GridEA");
             var gridUbisoft = this.FindControl<Border>("GridUbisoft");
+            var gridLutris = this.FindControl<Border>("GridLutris");
             if (gridEpic != null) gridEpic.IsVisible = isWindows;
             if (gridGOG != null) gridGOG.IsVisible = isWindows;
             if (gridXbox != null) gridXbox.IsVisible = isWindows;
             if (gridEA != null) gridEA.IsVisible = isWindows;
             if (gridUbisoft != null) gridUbisoft.IsVisible = isWindows;
+            if (gridLutris != null) gridLutris.IsVisible = !isWindows; // Lutris is Linux-only
 
             _customFolders.Clear();
             _customFolders.AddRange(config.CustomFolders);
@@ -254,6 +258,7 @@ namespace OptiscalerClient.Views
             var tglXbox = this.FindControl<ToggleSwitch>("TglXbox");
             var tglEA = this.FindControl<ToggleSwitch>("TglEA");
             var tglUbisoft = this.FindControl<ToggleSwitch>("TglUbisoft");
+            var tglLutris = this.FindControl<ToggleSwitch>("TglLutris");
 
             _componentService.Config.ScanSources.ScanSteam = tglSteam?.IsChecked ?? true;
             _componentService.Config.ScanSources.ScanHeroic = tglHeroic?.IsChecked ?? true;
@@ -262,6 +267,7 @@ namespace OptiscalerClient.Views
             _componentService.Config.ScanSources.ScanXbox = tglXbox?.IsChecked ?? true;
             _componentService.Config.ScanSources.ScanEA = tglEA?.IsChecked ?? true;
             _componentService.Config.ScanSources.ScanUbisoft = tglUbisoft?.IsChecked ?? true;
+            _componentService.Config.ScanSources.ScanLutris = tglLutris?.IsChecked ?? true;
             _componentService.Config.ScanSources.CustomFolders = _customFolders.ToList();
             _componentService.Config.ScanSources.UpscalerFilter = GetSelectedFilterMode();
 

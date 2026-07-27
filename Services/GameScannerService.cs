@@ -31,6 +31,7 @@ public class GameScannerService
     private readonly IGameScanner? _eaScanner;
     private readonly IGameScanner? _battleNetScanner;
     private readonly IGameScanner? _ubisoftScanner;
+    private readonly IGameScanner? _lutrisScanner;
     private readonly ExclusionService _exclusions;
 
     public GameScannerService()
@@ -46,6 +47,11 @@ public class GameScannerService
             _eaScanner = new EaScanner();
             _battleNetScanner = new BattleNetScanner();
             _ubisoftScanner = new UbisoftScanner();
+        }
+        else
+        {
+            // Lutris has no Windows client — only relevant when scanning a Linux game library.
+            _lutrisScanner = new LutrisScanner();
         }
 
         // config.json lives next to the executable (copied by the build)
@@ -95,6 +101,8 @@ public class GameScannerService
                 platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Battle.net library..."); return _battleNetScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Battle.net scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanUbisoft && _ubisoftScanner != null)
                 platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Ubisoft Connect library..."); return _ubisoftScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Ubisoft scan error: {ex.Message}"); return new List<Game>(); } }));
+            if (scanConfig.ScanLutris && _lutrisScanner != null)
+                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Lutris library..."); return _lutrisScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Lutris scan error: {ex.Message}"); return new List<Game>(); } }));
 
             var platformResults = await Task.WhenAll(platformTasks);
 

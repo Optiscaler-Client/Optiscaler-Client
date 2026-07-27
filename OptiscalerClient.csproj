@@ -62,6 +62,7 @@
     <PackageReference Include="SharpCompress" Version="0.49.1" />
     <PackageReference Include="System.Management" Version="10.0.0" />
     <PackageReference Include="ValveKeyValue" Version="0.70.0.499" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <!-- Expose internals to the test project so tests can use the injectable constructor -->
