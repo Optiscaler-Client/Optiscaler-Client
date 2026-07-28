@@ -4920,7 +4920,7 @@ namespace OptiscalerClient.Views
                         // Determine version to install: use configured default, fall back to latest per channel
                         string versionToInstall;
 
-                        var configuredDefault = _componentService.Config.DefaultOptiScalerVersion;
+                        var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
                         if (!string.IsNullOrEmpty(configuredDefault))
                         {
                             versionToInstall = configuredDefault;

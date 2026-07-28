@@ -628,6 +628,9 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
+        private static bool IsOptiSection(string sectionId) =>
+            sectionId is "opti-stable" or "opti-beta" or "opti-custom";
+
         private string? GetCurrentDefault()
         {
             return _currentSection switch
@@ -669,8 +672,10 @@ namespace OptiscalerClient.Views
             // }
 
             // Show DEFAULT badge if this version is the configured default
+            // (suppressed for OptiScaler while auto-latest is active — the pinned value is ignored then)
             var currentDefault = GetCurrentDefault();
-            if (!string.IsNullOrEmpty(currentDefault) &&
+            bool autoLatestActive = IsOptiSection(_currentSection) && _componentService.Config.AutoLatestOptiScalerDefault;
+            if (!autoLatestActive && !string.IsNullOrEmpty(currentDefault) &&
                 currentDefault.Equals(version, StringComparison.OrdinalIgnoreCase))
             {
                 stack.Children.Add(new Border
@@ -735,15 +740,47 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
-        /// Creates the "Set Default" header row shown at the top of each section.
+        /// Creates the "Set Default" header block shown at the top of each section.
+        /// For the OptiScaler sections, also includes the "always use latest available version" toggle.
         /// </summary>
-        private Grid CreateSetDefaultRow()
+        private Control CreateSetDefaultRow()
         {
-            var row = new Grid
+            bool isOptiSection = IsOptiSection(_currentSection);
+            bool autoLatest = isOptiSection && _componentService.Config.AutoLatestOptiScalerDefault;
+
+            var container = new StackPanel { Spacing = 8, Margin = new Thickness(0, 0, 0, 12) };
+
+            if (isOptiSection)
             {
-                ColumnDefinitions = new ColumnDefinitions("*, Auto"),
-                Margin = new Thickness(0, 0, 0, 12)
-            };
+                var toggleRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto") };
+
+                var toggleLabel = new TextBlock
+                {
+                    Text = Application.Current?.FindResource("TxtAutoLatestOptiDefault") as string
+                           ?? "Always use latest available version as default",
+                    FontSize = 11,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = this.FindResource("BrTextSecondary") as IBrush
+                };
+                toggleRow.Children.Add(toggleLabel);
+                Grid.SetColumn(toggleLabel, 0);
+
+                var tglAutoLatest = new ToggleSwitch
+                {
+                    OnContent = "",
+                    OffContent = "",
+                    IsChecked = autoLatest,
+                    Focusable = false,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                tglAutoLatest.IsCheckedChanged += TglAutoLatestOpti_IsCheckedChanged;
+                toggleRow.Children.Add(tglAutoLatest);
+                Grid.SetColumn(tglAutoLatest, 1);
+
+                container.Children.Add(toggleRow);
+            }
+
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto") };
 
             var currentDefault = GetCurrentDefault();
             var defaultLabel = new TextBlock
@@ -753,7 +790,15 @@ namespace OptiscalerClient.Views
                 Foreground = this.FindResource("BrTextSecondary") as IBrush
             };
 
-            if (!string.IsNullOrEmpty(currentDefault) &&
+            if (autoLatest)
+            {
+                var latest = _componentService.LatestStableVersion;
+                var fmt = Application.Current?.FindResource("TxtAutoLatestCurrentFormat") as string ?? "Auto: latest available (v{0})";
+                defaultLabel.Text = string.IsNullOrEmpty(latest)
+                    ? (Application.Current?.FindResource("TxtNoDefaultSet") as string ?? "No default set")
+                    : string.Format(fmt, latest);
+            }
+            else if (!string.IsNullOrEmpty(currentDefault) &&
                 !currentDefault.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
                 var fmt = Application.Current?.FindResource("TxtCurrentDefaultFormat") as string ?? "Current default: {0}";
@@ -775,7 +820,8 @@ namespace OptiscalerClient.Views
                 Content = Application.Current?.FindResource("TxtClearDefault") as string ?? "Clear",
                 Padding = new Thickness(10, 5),
                 FontSize = 11,
-                IsEnabled = !string.IsNullOrEmpty(currentDefault) &&
+                IsEnabled = !autoLatest &&
+                            !string.IsNullOrEmpty(currentDefault) &&
                             !currentDefault.Equals("none", StringComparison.OrdinalIgnoreCase)
             };
             btnClear.Classes.Add("BtnSecondary");
@@ -788,7 +834,7 @@ namespace OptiscalerClient.Views
                 Content = Application.Current?.FindResource("TxtSetDefault") as string ?? "Set Default",
                 Padding = new Thickness(12, 5),
                 FontSize = 11,
-                IsEnabled = _selectedVersion != null
+                IsEnabled = !autoLatest && _selectedVersion != null
             };
             btnSetDefault.Classes.Add("BtnBase");
             btnSetDefault.Click += BtnSetDefault_Click;
@@ -798,7 +844,18 @@ namespace OptiscalerClient.Views
             row.Children.Add(btnStack);
             Grid.SetColumn(btnStack, 1);
 
-            return row;
+            container.Children.Add(row);
+            return container;
+        }
+
+        private void TglAutoLatestOpti_IsCheckedChanged(object? sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleSwitch tgl)
+            {
+                _componentService.Config.AutoLatestOptiScalerDefault = tgl.IsChecked ?? true;
+                _componentService.SaveConfiguration();
+                ShowSection(_currentSection);
+            }
         }
 
         private TextBlock MakeEmptyLabel(string text) => new TextBlock

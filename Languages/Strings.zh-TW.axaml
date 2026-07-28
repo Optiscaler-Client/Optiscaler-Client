@@ -542,6 +542,9 @@
     <x:String x:Key="TxtDefaultBadge">預設</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">目前預設: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">未設定預設版本</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">預設一律使用最新可用版本</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">自動：最新可用版本 (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">由「管理本機版本」自動管理 — 請在該處關閉此選項以選擇特定版本。</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">網路與 Proxy</x:String>
     <x:String x:Key="TxtNetworkDesc">為 GitHub API 與下載連線配置 HTTP(S) 代理。</x:String>

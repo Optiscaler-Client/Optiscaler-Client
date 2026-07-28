@@ -544,6 +544,9 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDefaultBadge">PREDEFINITO</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Predefinito attuale: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Nessun predefinito impostato</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Usa sempre l'ultima versione disponibile come predefinita</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Automatico: ultima disponibile (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Gestito automaticamente da Gestisci versioni locali — disattiva l'opzione lì per scegliere una versione specifica.</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">Rete e Proxy</x:String>
     <x:String x:Key="TxtNetworkDesc">Configura un proxy HTTP(S) per l'API GitHub e le connessioni di download.</x:String>

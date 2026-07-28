@@ -91,6 +91,13 @@ namespace OptiscalerClient.Services
             }
         }
         public System.Collections.Generic.HashSet<string> BetaVersions => _cachedBetaVersions;
+
+        /// <summary>
+        /// Effective OptiScaler default: null when auto-latest is on (callers already fall back to the
+        /// latest version in whichever channel is showing), otherwise the explicitly pinned version.
+        /// </summary>
+        public string? EffectiveDefaultOptiScalerVersion =>
+            Config.AutoLatestOptiScalerDefault ? null : Config.DefaultOptiScalerVersion;
         public string? LatestBetaVersion => _cachedLatestBetaVersion;
         public string? LatestStableVersion => _cachedLatestStableVersion;
 

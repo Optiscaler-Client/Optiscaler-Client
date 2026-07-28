@@ -77,12 +77,14 @@ namespace OptiscalerClient.Views
 
         private void LoadCurrentSettings()
         {
-            // Determine if saved OptiScaler default is beta or custom
+            bool autoLatest = _componentService.Config.AutoLatestOptiScalerDefault;
+
+            // Determine if saved OptiScaler default is beta or custom (irrelevant while auto-latest is on)
             var savedOptiDefault = _componentService.Config.DefaultOptiScalerVersion;
             var customVersions = _componentService.CustomVersions;
-            bool savedIsBeta = !string.IsNullOrEmpty(savedOptiDefault) &&
+            bool savedIsBeta = !autoLatest && !string.IsNullOrEmpty(savedOptiDefault) &&
                                _componentService.BetaVersions.Contains(savedOptiDefault);
-            bool savedIsCustom = !string.IsNullOrEmpty(savedOptiDefault) &&
+            bool savedIsCustom = !autoLatest && !string.IsNullOrEmpty(savedOptiDefault) &&
                                  customVersions.Contains(savedOptiDefault);
             if (savedIsCustom) savedIsBeta = false;
             _optiDefaultShowingBeta = savedIsBeta;
@@ -99,9 +101,31 @@ namespace OptiscalerClient.Views
                     : new ColumnDefinitions("*,*");
 
             UpdateOptiDefaultChannelButtons();
-            PopulateDefaultOptiScalerVersionCombo(showBeta: savedIsBeta, showCustom: savedIsCustom, restoreSaved: true);
+            PopulateDefaultOptiScalerVersionCombo(showBeta: savedIsBeta, showCustom: savedIsCustom, restoreSaved: !autoLatest);
             PopulateDefaultExtrasCombo();
             PopulateDefaultOptiPatcherCombo();
+            UpdateOptiAutoLockState();
+        }
+
+        /// <summary>
+        /// Locks the OptiScaler default controls (channel tabs + version combo) while
+        /// AutoLatestOptiScalerDefault is on — that toggle lives in Manage Local Versions.
+        /// </summary>
+        private void UpdateOptiAutoLockState()
+        {
+            bool autoLatest = _componentService.Config.AutoLatestOptiScalerDefault;
+
+            var cmb = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
+            var btnStable = this.FindControl<Button>("BtnOptiDefaultStable");
+            var btnBeta = this.FindControl<Button>("BtnOptiDefaultBeta");
+            var btnCustom = this.FindControl<Button>("BtnOptiDefaultCustom");
+            var txtNote = this.FindControl<TextBlock>("TxtOptiAutoLatestNote");
+
+            if (cmb != null) cmb.IsEnabled = !autoLatest;
+            if (btnStable != null) btnStable.IsEnabled = !autoLatest;
+            if (btnBeta != null) btnBeta.IsEnabled = !autoLatest;
+            if (btnCustom != null) btnCustom.IsEnabled = !autoLatest;
+            if (txtNote != null) txtNote.IsVisible = autoLatest;
         }
 
         // ── OptiScaler Version ──────────────────────────────────────────────
@@ -433,9 +457,9 @@ namespace OptiscalerClient.Views
 
         private void BtnSave_Click(object? sender, RoutedEventArgs e)
         {
-            // Save OptiScaler version
+            // Save OptiScaler version (skipped while auto-latest is on — the pinned value is preserved untouched)
             var cmbOpti = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
-            if (cmbOpti?.SelectedItem is ComboBoxItem optiItem)
+            if (!_componentService.Config.AutoLatestOptiScalerDefault && cmbOpti?.SelectedItem is ComboBoxItem optiItem)
             {
                 var ver = optiItem.Tag?.ToString();
                 _componentService.Config.DefaultOptiScalerVersion = string.IsNullOrEmpty(ver) ? null : ver;

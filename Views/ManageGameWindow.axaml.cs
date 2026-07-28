@@ -1017,7 +1017,7 @@ namespace OptiscalerClient.Views
             // Determine initial tab only on the first load
             if (!_optiTabInitialized)
             {
-                var configDefault = componentService.Config.DefaultOptiScalerVersion;
+                var configDefault = componentService.EffectiveDefaultOptiScalerVersion;
                 _optiShowingBeta = !string.IsNullOrEmpty(configDefault) && _betaVersions.Contains(configDefault);
                 _optiShowingCustom = !string.IsNullOrEmpty(configDefault) && _customVersions.Contains(configDefault);
                 if (_optiShowingCustom) _optiShowingBeta = false;
@@ -1111,7 +1111,7 @@ namespace OptiscalerClient.Views
 
             // Select version: try to match config default if it's in this channel, else select first (latest)
             int selectedIndex = 0;
-            var configDefault = componentService.Config.DefaultOptiScalerVersion;
+            var configDefault = componentService.EffectiveDefaultOptiScalerVersion;
             bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
                 (_optiShowingCustom
                     ? customVersions.Contains(configDefault)

@@ -544,6 +544,9 @@
     <x:String x:Key="TxtDefaultBadge">ПО УМОЛЧАНИЮ</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Текущее по умолчанию: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Не установлено</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Всегда использовать последнюю доступную версию по умолчанию</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Авто: последняя доступная (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Управляется автоматически в разделе «Управление локальными версиями» — отключите этот переключатель там, чтобы выбрать конкретную версию.</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">Сеть и прокси</x:String>
     <x:String x:Key="TxtNetworkDesc">Настройте HTTP(S)-прокси для GitHub API и подключений загрузки.</x:String>

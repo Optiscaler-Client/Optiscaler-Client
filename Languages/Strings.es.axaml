@@ -568,6 +568,9 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtDefaultBadge">PREDETERMINADO</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Predeterminado actual: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Sin versión predeterminada</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Usar siempre la última versión disponible como predeterminada</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Automático: última disponible (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Se administra automáticamente desde Administrar versiones locales — desactivá esa opción para elegir una versión específica.</x:String>
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Historial de Cambios</x:String>

@@ -122,6 +122,11 @@ namespace OptiscalerClient.Models
         /// </summary>
         public string? DefaultOptiScalerVersion { get; set; } = null;
         /// <summary>
+        /// When true (default), the OptiScaler version pre-selected everywhere always tracks the latest
+        /// available release (even if not downloaded yet) instead of a pinned DefaultOptiScalerVersion.
+        /// </summary>
+        public bool AutoLatestOptiScalerDefault { get; set; } = true;
+        /// <summary>
         /// The default OptiPatcher version to pre-select in ManageGameWindow / Quick Install.
         /// Null or "none" means "do not install".
         /// </summary>

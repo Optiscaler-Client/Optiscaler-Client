@@ -544,6 +544,9 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtDefaultBadge">STANDAARD</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Huidige standaard: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Geen standaard ingesteld</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Altijd de nieuwste beschikbare versie als standaard gebruiken</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Automatisch: nieuwste beschikbaar (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Wordt automatisch beheerd via Lokale versies beheren — schakel de optie daar uit om een specifieke versie te kiezen.</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">Netwerk &amp; Proxy</x:String>
     <x:String x:Key="TxtNetworkDesc">Configureer een HTTP(S)-proxy voor de GitHub API en downloadverbindingen.</x:String>

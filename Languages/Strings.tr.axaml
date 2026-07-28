@@ -542,6 +542,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDefaultBadge">VARSAYILAN</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Mevcut varsayılan: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Varsayılan ayarlanmadı</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Varsayılan olarak her zaman en son sürümü kullan</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Otomatik: en son sürüm (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Yerel Sürümleri Yönet bölümünden otomatik olarak yönetilir — belirli bir sürüm seçmek için oradaki seçeneği kapatın.</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">Ağ ve Proxy</x:String>
     <x:String x:Key="TxtNetworkDesc">GitHub API ve indirme bağlantıları için HTTP(S) proxy yapılandırın.</x:String>

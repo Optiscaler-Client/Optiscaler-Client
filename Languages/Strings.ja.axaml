@@ -544,6 +544,9 @@
     <x:String x:Key="TxtDefaultBadge">デフォルト</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">現在のデフォルト: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">デフォルト未設定</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">常に利用可能な最新バージョンをデフォルトとして使用</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">自動: 最新版 (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">「ローカルバージョンの管理」から自動的に管理されています。特定のバージョンを選択するには、そこでこのオプションをオフにしてください。</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">ネットワークとプロキシ</x:String>
     <x:String x:Key="TxtNetworkDesc">GitHub API とダウンロード接続のための HTTP(S) プロキシを設定します。</x:String>

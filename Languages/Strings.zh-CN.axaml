@@ -545,6 +545,9 @@
     <x:String x:Key="TxtDefaultBadge">默认</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">当前默认: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">未设置默认版本</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">默认始终使用最新可用版本</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">自动：最新可用版本 (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">由"管理本地版本"自动管理 — 请在该处关闭此选项以选择特定版本。</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">网络 &amp; 代理</x:String>
     <x:String x:Key="TxtNetworkDesc">为 GitHub API 和下载连接配置 HTTP(S) 代理</x:String>

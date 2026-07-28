@@ -99,6 +99,14 @@
                                         </Grid>
                                         <ComboBox Name="CmbDefaultOptiScalerVersion"
                                                   HorizontalAlignment="Stretch"/>
+                                        <TextBlock Name="TxtOptiAutoLatestNote"
+                                                   Text="{DynamicResource TxtAutoLatestManagedNote}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   FontStyle="Italic"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,0,0"
+                                                   IsVisible="False"/>
                                     </StackPanel>
                                 </StackPanel>
 

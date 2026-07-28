@@ -570,6 +570,9 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtDefaultBadge">DEFAULT</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Current default: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">No default set</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Always use latest available version as default</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Auto: latest available (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Managed automatically from Manage Local Versions — turn off the toggle there to pick a specific version.</x:String>
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Changelog</x:String>

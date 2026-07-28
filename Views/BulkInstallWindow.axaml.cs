@@ -219,7 +219,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             // Determine initial tab on first load
             if (!_optiTabInitialized)
             {
-                var configDefault = _componentService.Config.DefaultOptiScalerVersion;
+                var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
                 _optiShowingBeta = !string.IsNullOrEmpty(configDefault) &&
                                    _componentService.BetaVersions.Contains(configDefault);
                 _optiShowingCustom = !string.IsNullOrEmpty(configDefault) &&
@@ -303,7 +303,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         }
 
         int selectedIndex = 0;
-        var configDefault = _componentService.Config.DefaultOptiScalerVersion;
+        var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
         bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
             (_optiShowingCustom
                 ? customVersions.Contains(configDefault)

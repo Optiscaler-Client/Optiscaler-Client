@@ -544,6 +544,9 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtDefaultBadge">DOMYŚLNY</x:String>
     <x:String x:Key="TxtCurrentDefaultFormat">Obecny domyślny: {0}</x:String>
     <x:String x:Key="TxtNoDefaultSet">Brak domyślnej wersji</x:String>
+    <x:String x:Key="TxtAutoLatestOptiDefault">Zawsze używaj najnowszej dostępnej wersji jako domyślnej</x:String>
+    <x:String x:Key="TxtAutoLatestCurrentFormat">Automatycznie: najnowsza dostępna (v{0})</x:String>
+    <x:String x:Key="TxtAutoLatestManagedNote">Zarządzane automatycznie w Zarządzaniu lokalnymi wersjami — wyłącz tam tę opcję, aby wybrać konkretną wersję.</x:String>
     <!-- Network / Proxy Settings -->
     <x:String x:Key="TxtNetworkTitle">Sieć i Proxy</x:String>
     <x:String x:Key="TxtNetworkDesc">Skonfiguruj serwer proxy HTTP(S) dla API GitHub i połączeń pobierania.</x:String>
