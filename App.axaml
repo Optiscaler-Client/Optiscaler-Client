@@ -297,11 +297,15 @@
              key events raised by GamepadNavigationHelper).
              ════════════════════════════════════════════════════════ -->
 
-        <!-- Disable adorner on controls that have inline :focus styles -->
+        <!-- Disable adorner on controls that have inline :focus styles.
+             IsHitTestVisible="False" is required here: a Border with Background="Transparent"
+             is still a real (non-null) brush, so without this the adorner sits on top of the
+             control in hit-test order and silently swallows every pointer event (hover cursor
+             never changes, clicks never reach the control) for as long as it stays focused. -->
         <Style Selector="Button, RadioButton, ListBoxItem">
             <Setter Property="FocusAdorner">
                 <FocusAdornerTemplate>
-                    <Border Background="Transparent"/>
+                    <Border Background="Transparent" IsHitTestVisible="False"/>
                 </FocusAdornerTemplate>
             </Setter>
         </Style>
@@ -329,7 +333,8 @@
                             BorderThickness="2"
                             CornerRadius="8"
                             Background="Transparent"
-                            Margin="-3"/>
+                            Margin="-3"
+                            IsHitTestVisible="False"/>
                 </FocusAdornerTemplate>
             </Setter>
         </Style>

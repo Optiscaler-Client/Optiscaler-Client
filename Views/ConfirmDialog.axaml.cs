@@ -89,6 +89,14 @@ namespace OptiscalerClient.Views
 
             this.Opened += (s, e) =>
             {
+                // Force OS-level activation for this borderless (SystemDecorations="None")
+                // window. Without it, the very first click after the dialog appears can be
+                // consumed by Windows just to activate the window instead of reaching the
+                // button underneath the cursor — most noticeable on BtnConfirm, since the
+                // dialog opens centered over the owner where the mouse already sits after
+                // clicking the triggering action.
+                this.Activate();
+
                 this.Opacity = 1;
                 var rootPanel = this.FindControl<Panel>("RootPanel");
                 if (rootPanel != null)
