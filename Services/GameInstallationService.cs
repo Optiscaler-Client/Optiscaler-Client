@@ -156,6 +156,37 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Update mode — preserving {priorBackedUpOriginals.Count} original game file backup(s), tracking {priorCreatedByOptiScaler.Count} OptiScaler-created file(s)");
             }
 
+            // ── Auto-preserve existing OptiScaler.ini settings across updates ─────────
+            // Step 2 below copies the new version's OptiScaler.ini over the game folder
+            // unconditionally: it's classified as "OptiScaler-created" (priorCreatedByOptiScaler),
+            // so the normal backup-before-overwrite guard skips it — correct for DLLs (nothing to
+            // restore), wrong for a hand-edited config file (silently destroys user settings with
+            // no backup at all). If the caller didn't provide a profile with real overrides, snapshot
+            // the current on-disk ini now, before it gets overwritten, so Step 2.5 can merge those
+            // values back onto the new template instead of letting the fresh defaults win.
+            var effectiveProfile = profile;
+            if (priorManifest != null && (effectiveProfile == null || effectiveProfile.IniSettings.Count == 0))
+            {
+                var existingIniPath = Path.Combine(gameDir, "OptiScaler.ini");
+                if (File.Exists(existingIniPath))
+                {
+                    try
+                    {
+                        var profileService = new ProfileManagementService();
+                        var autoProfile = profileService.CreateProfileFromIni(existingIniPath, "__AutoPreservedOnUpdate");
+                        if (autoProfile.IniSettings.Count > 0)
+                        {
+                            effectiveProfile = autoProfile;
+                            DebugWindow.Log($"[Install] Auto-captured {autoProfile.IniSettings.Sum(s => s.Value.Count)} existing OptiScaler.ini setting(s) to preserve across update");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[Install] Could not auto-capture existing OptiScaler.ini before update: {ex.Message}");
+                    }
+                }
+            }
+
             // ── Pre-install: detect and remove residues from previous dirty installs ──
             // If there is no valid external backup for this gameDir, any known OptiScaler
             // artifacts found in the game folder are residues (orphaned files from a previous
@@ -338,20 +369,20 @@ namespace OptiscalerClient.Services
             DebugWindow.Log($"[Install] Copied {additionalFileCount} additional files");
 
             // Step 2.5: Generate OptiScaler.ini from profile if provided (skip for Default profile)
-            if (profile != null && profile.IniSettings.Count > 0)
+            if (effectiveProfile != null && effectiveProfile.IniSettings.Count > 0)
             {
                 try
                 {
                     var profileService = new ProfileManagementService();
-                    profileService.WriteOptiScalerIniToFile(gameDir, profile);
-                    DebugWindow.Log($"[Install] Generated OptiScaler.ini from profile: {profile.Name}");
+                    profileService.WriteOptiScalerIniToFile(gameDir, effectiveProfile);
+                    DebugWindow.Log($"[Install] Generated OptiScaler.ini from profile: {effectiveProfile.Name}");
                 }
                 catch (Exception ex)
                 {
                     DebugWindow.Log($"[Install] Warning: Failed to generate OptiScaler.ini from profile: {ex.Message}");
                 }
             }
-            else if (profile != null && profile.Name == "Default")
+            else if (effectiveProfile != null && effectiveProfile.Name == "Default")
             {
                 DebugWindow.Log($"[Install] Using Default profile - OptiScaler will use its default configuration");
             }
@@ -1531,17 +1562,6 @@ namespace OptiscalerClient.Services
                 return null;
             }
 
-            // Rule 2: If Phoenix folder is present, ignore step 1 and search inside Phoenix/Binaries/Win64
-            var phoenixPath = Path.Combine(game.InstallPath, "Phoenix", "Binaries", "Win64");
-            if (Directory.Exists(phoenixPath))
-            {
-                var phoenixExes = Directory.GetFiles(phoenixPath, "*.exe", SearchOption.TopDirectoryOnly);
-                if (phoenixExes.Length > 0)
-                {
-                    return phoenixPath;
-                }
-            }
-
             // Rule 1: Try to extract in the same folder as the main .exe, scan to find it.
             string[] allExes = Array.Empty<string>();
             try
@@ -1553,9 +1573,21 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Could not enumerate executables in '{game.InstallPath}': {ex.Message}");
             }
 
+            // Rule 2: Unreal Engine always ships its real executables under "<Project>\Binaries\Win64"
+            // (including split-project layouts such as UE5's "Phoenix" template — Phoenix\Binaries\Win64
+            // is just a special case of this same pattern). When such a folder exists, restrict the
+            // candidate pool to only those executables — this is a structural, engine-mandated
+            // convention, unlike the name/size/DLL heuristic below, which can be flipped by files that
+            // come and go (e.g. a native upscaler DLL removed by Folder Cleanup) and is therefore not
+            // reliable enough on its own to pick between a root launcher stub and the real shipping exe.
+            var binariesWin64Exes = allExes
+                .Where(x => x.Contains(@"Binaries\Win64", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            var candidateExes = binariesWin64Exes.Length > 0 ? binariesWin64Exes : allExes;
+
             string? bestMatchDir = null;
 
-            if (allExes.Length > 0)
+            if (candidateExes.Length > 0)
             {
                 // Try to match by name or context
                 int bestScore = -1;
@@ -1563,7 +1595,7 @@ namespace OptiscalerClient.Services
 
                 var gameNameLetters = new string(game.Name.Where(char.IsLetterOrDigit).ToArray());
 
-                foreach (var exePath in allExes)
+                foreach (var exePath in candidateExes)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(exePath);
 
@@ -1648,13 +1680,9 @@ namespace OptiscalerClient.Services
                     {
                         bestMatchDir = Path.GetDirectoryName(game.ExecutablePath);
                     }
-                    else
+                    else if (binariesWin64Exes.Length == 1)
                     {
-                        var binariesExes = allExes.Where(x => x.Contains(@"Binaries\Win64", StringComparison.OrdinalIgnoreCase)).ToList();
-                        if (binariesExes.Count == 1)
-                        {
-                            bestMatchDir = Path.GetDirectoryName(binariesExes[0]);
-                        }
+                        bestMatchDir = Path.GetDirectoryName(binariesWin64Exes[0]);
                     }
                 }
             }
