@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">Возникла проблема при проверке обновлений. Пожалуйста, попробуйте позже.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Массовая установка</x:String>
+    <x:String x:Key="TxtBtnFilters">Фильтры</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Массовая установка OptiScaler</x:String>
@@ -528,6 +529,10 @@
     <x:String x:Key="TxtHideShowGame">Показать/скрыть игру</x:String>
     <x:String x:Key="TxtHideGame">Скрыть</x:String>
     <x:String x:Key="TxtShowGame">Показать</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Переключить избранное</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Скрыть игры без поддержки апскейлера</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Только с установленным OptiScaler</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Только избранное</x:String>
     <x:String x:Key="TxtRefreshingCovers">Обновление отсутствующих обложек...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Обновление обложек завершено. Найдено {0}/{1} отсутствующих обложек.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Обновление обложек завершено — найдено {0}/{1} обложек.</x:String>

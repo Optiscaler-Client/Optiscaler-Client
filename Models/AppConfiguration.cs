@@ -100,6 +100,11 @@ namespace OptiscalerClient.Models
         public bool AutoScan { get; set; } = true;
         public bool AnimationsEnabled { get; set; } = true;
         public bool PreferGridView { get; set; } = true;
+
+        // Live game-list filters (main view, persisted across sessions)
+        public bool HideGamesWithoutUpscaler { get; set; } = false;
+        public bool ShowOnlyInstalled { get; set; } = false;
+        public bool ShowOnlyFavorites { get; set; } = false;
         public string? DefaultGpuId { get; set; } = null;
         public bool HasShownInitialScanPrompt { get; set; } = false;
         public bool HasCompletedInitialScan { get; set; } = false;

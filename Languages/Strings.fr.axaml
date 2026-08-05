@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">Un problème est survenu lors de la vérification des mises à jour. Veuillez réessayer plus tard.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Installation groupée</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtres</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Installation groupée d'OptiScaler</x:String>
@@ -528,6 +529,10 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtHideShowGame">Afficher/masquer le jeu</x:String>
     <x:String x:Key="TxtHideGame">Masquer</x:String>
     <x:String x:Key="TxtShowGame">Afficher</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Basculer favori</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Masquer les jeux sans prise en charge de l'upscaling</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Uniquement avec OptiScaler installé</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Favoris uniquement</x:String>
     <x:String x:Key="TxtRefreshingCovers">Actualisation des pochettes manquantes...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Actualisation des pochettes terminee. {0}/{1} pochettes manquantes trouvees.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Actualisation des pochettes terminee — {0}/{1} pochettes trouvees.</x:String>

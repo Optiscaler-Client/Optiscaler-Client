@@ -237,6 +237,7 @@
     <x:String x:Key="TxtUpdateCheckError">Houve um problema ao verificar atualizações. Tente novamente mais tarde.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Instalação em massa</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtros</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Instalação em massa do OptiScaler</x:String>
@@ -528,6 +529,10 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtHideShowGame">Mostrar/ocultar jogo</x:String>
     <x:String x:Key="TxtHideGame">Ocultar</x:String>
     <x:String x:Key="TxtShowGame">Mostrar</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Alternar favorito</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Ocultar jogos sem suporte a upscaler</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Somente com OptiScaler instalado</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Somente favoritos</x:String>
     <x:String x:Key="TxtRefreshingCovers">Atualizando capas faltantes...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Atualizacao de capas concluida. {0}/{1} capas faltantes encontradas.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Atualizacao de capas concluida — {0}/{1} capas encontradas.</x:String>

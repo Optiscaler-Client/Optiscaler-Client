@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">Güncellemeler kontrol edilirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Toplu Yükleme</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtreler</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler Toplu Yükleme</x:String>
@@ -526,6 +527,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHideShowGame">Oyunu goster/gizle</x:String>
     <x:String x:Key="TxtHideGame">Gizle</x:String>
     <x:String x:Key="TxtShowGame">Göster</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Favoriyi değiştir</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Yükseltici desteği olmayan oyunları gizle</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Yalnızca OptiScaler kurulu olanlar</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Yalnızca favoriler</x:String>
     <x:String x:Key="TxtRefreshingCovers">Eksik kapaklar yenileniyor...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Kapak yenileme tamamlandi. {0}/{1} eksik kapak bulundu.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Kapak yenileme tamamlandi — {0}/{1} kapak bulundu.</x:String>

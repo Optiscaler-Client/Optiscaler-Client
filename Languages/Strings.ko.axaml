@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">업데이트를 확인하는 데 문제가 발생했습니다. 나중에 다시 시도하세요.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  일괄 설치</x:String>
+    <x:String x:Key="TxtBtnFilters">필터</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler 일괄 설치</x:String>
@@ -528,6 +529,10 @@
     <x:String x:Key="TxtHideShowGame">게임 표시/숨기기</x:String>
     <x:String x:Key="TxtHideGame">숨기기</x:String>
     <x:String x:Key="TxtShowGame">표시</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">즐겨찾기 전환</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">업스케일러를 지원하지 않는 게임 숨기기</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler 설치된 게임만</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">즐겨찾기만</x:String>
     <x:String x:Key="TxtRefreshingCovers">누락된 커버 새로 고침 중...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">커버 새로 고침 완료. {0}/{1}개의 누락된 커버를 찾았습니다.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">커버 새로 고침 완료 — {0}/{1}개의 커버를 찾았습니다.</x:String>

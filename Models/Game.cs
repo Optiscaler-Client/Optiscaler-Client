@@ -62,5 +62,6 @@ public class Game
 
     // UI customization (not set by scanner)
     public bool IsHidden { get; set; } = false;
+    public bool IsFavorite { get; set; } = false;
     public int DisplayOrder { get; set; } = 0;
 }

@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">Es gab ein Problem bei der Überprüfung auf Updates. Bitte versuchen Sie es später erneut.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Masseninstallation</x:String>
+    <x:String x:Key="TxtBtnFilters">Filter</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler Masseninstallation</x:String>
@@ -528,6 +529,10 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHideShowGame">Spiel ein-/ausblenden</x:String>
     <x:String x:Key="TxtHideGame">Ausblenden</x:String>
     <x:String x:Key="TxtShowGame">Einblenden</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Favorit umschalten</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Spiele ohne Upscaler-Unterstützung ausblenden</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Nur mit installiertem OptiScaler</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Nur Favoriten</x:String>
     <x:String x:Key="TxtRefreshingCovers">Fehlende Cover werden aktualisiert...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Cover-Aktualisierung abgeschlossen. {0}/{1} fehlende Cover gefunden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Cover-Aktualisierung abgeschlossen — {0}/{1} Cover gefunden.</x:String>

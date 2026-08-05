@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">檢查更新時出現問題。請稍後再試。</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  批量安裝</x:String>
+    <x:String x:Key="TxtBtnFilters">篩選</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler 批量安裝</x:String>
@@ -526,6 +527,10 @@
     <x:String x:Key="TxtHideShowGame">顯示/隱藏遊戲</x:String>
     <x:String x:Key="TxtHideGame">隱藏</x:String>
     <x:String x:Key="TxtShowGame">顯示</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">切換最愛</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">隱藏不支援升頻的遊戲</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">僅顯示已安裝 OptiScaler</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">僅顯示最愛</x:String>
     <x:String x:Key="TxtRefreshingCovers">正在重新整理缺失封面...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">封面重新整理完成。找到 {0}/{1} 個缺失封面。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">封面重新整理完成 — 找到 {0}/{1} 個封面。</x:String>

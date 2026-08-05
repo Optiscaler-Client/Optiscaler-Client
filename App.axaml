@@ -219,6 +219,16 @@
             <Setter Property="CornerRadius"       Value="{StaticResource RadiusSmall}"/>
         </Style>
 
+        <!-- Flyouts (e.g. the game-list filter dropdown) — match the app's dark theme instead
+             of Fluent's default light chrome. -->
+        <Style Selector="FlyoutPresenter">
+            <Setter Property="Background"      Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrBorderDefault}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Padding"         Value="4"/>
+        </Style>
+
         <Style Selector="ListBox">
             <Setter Property="Background"         Value="Transparent"/>
             <Setter Property="BorderThickness"    Value="0"/>

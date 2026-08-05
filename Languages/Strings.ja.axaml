@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">更新の確認中に問題が発生しました。後でもう一度お試しください。</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  一括インストール</x:String>
+    <x:String x:Key="TxtBtnFilters">フィルター</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler 一括インストール</x:String>
@@ -528,6 +529,10 @@
     <x:String x:Key="TxtHideShowGame">ゲームを表示/非表示</x:String>
     <x:String x:Key="TxtHideGame">非表示</x:String>
     <x:String x:Key="TxtShowGame">表示</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">お気に入りを切り替え</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">アップスケーラー非対応のゲームを非表示</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler導入済みのみ</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">お気に入りのみ</x:String>
     <x:String x:Key="TxtRefreshingCovers">不足しているカバーを更新中...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">カバーの更新が完了しました。{0}/{1}件の不足カバーが見つかりました。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">カバーの更新が完了しました — {0}/{1}件のカバーが見つかりました。</x:String>

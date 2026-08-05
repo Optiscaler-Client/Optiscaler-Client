@@ -90,6 +90,9 @@ namespace OptiscalerClient.Views
         private TextBlock? _txtGpuInfo;
         private Avalonia.Controls.Shapes.Path? _txtGamepadIcon;
         private Border? _pnlNoUpscalersFound;
+        private CheckBox? _chkHideNoUpscaler;
+        private CheckBox? _chkOnlyInstalled;
+        private CheckBox? _chkOnlyFavorites;
         private bool _hasScanned = false;
         private bool _isEditMode = false;
         private Game? _draggedGame;
@@ -355,6 +358,8 @@ namespace OptiscalerClient.Views
                 _gameGridScrollViewer = this.FindControl<ScrollViewer>("GameGridScrollViewer");
                 _lstGames = this.FindControl<ListBox>("LstGames");
                 _lstGamesGrid = this.FindControl<ListBox>("LstGamesGrid");
+                if (_lstGames != null) _lstGames.ContainerPrepared += GameContainer_FavoriteIconPrepared;
+                if (_lstGamesGrid != null) _lstGamesGrid.ContainerPrepared += GameContainer_FavoriteIconPrepared;
                 _txtStatus = this.FindControl<TextBlock>("TxtStatus");
                 _btnScan = this.FindControl<Button>("BtnScan");
                 _btnViewList = this.FindControl<Button>("BtnViewList");
@@ -369,6 +374,13 @@ namespace OptiscalerClient.Views
                 _txtGpuInfo = this.FindControl<TextBlock>("TxtGpuInfo");
                 _txtGamepadIcon = this.FindControl<Avalonia.Controls.Shapes.Path>("TxtGamepadIcon");
                 _pnlNoUpscalersFound = this.FindControl<Border>("PnlNoUpscalersFound");
+                _chkHideNoUpscaler = this.FindControl<CheckBox>("ChkHideNoUpscaler");
+                _chkOnlyInstalled = this.FindControl<CheckBox>("ChkOnlyInstalled");
+                _chkOnlyFavorites = this.FindControl<CheckBox>("ChkOnlyFavorites");
+
+                if (_chkHideNoUpscaler != null) _chkHideNoUpscaler.IsChecked = _componentService.Config.HideGamesWithoutUpscaler;
+                if (_chkOnlyInstalled != null) _chkOnlyInstalled.IsChecked = _componentService.Config.ShowOnlyInstalled;
+                if (_chkOnlyFavorites != null) _chkOnlyFavorites.IsChecked = _componentService.Config.ShowOnlyFavorites;
 
                 if (_lstGames != null) _lstGames.ItemsSource = _games;
                 if (_lstGamesGrid != null) _lstGamesGrid.ItemsSource = _games;
@@ -654,6 +666,15 @@ namespace OptiscalerClient.Views
                 ? _allGames
                 : _allGames.Where(g => !g.IsHidden);
 
+            if (_componentService.Config.HideGamesWithoutUpscaler)
+                source = source.Where(g => g.HasUpscaler);
+
+            if (_componentService.Config.ShowOnlyInstalled)
+                source = source.Where(g => g.IsOptiscalerInstalled);
+
+            if (_componentService.Config.ShowOnlyFavorites)
+                source = source.Where(g => g.IsFavorite);
+
             var filtered = string.IsNullOrWhiteSpace(searchText)
                 ? source.ToList()
                 : source.Where(g => g.Name != null && g.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -733,6 +754,10 @@ namespace OptiscalerClient.Views
                 .OfType<Panel>()
                 .FirstOrDefault(x => x.Name == "GridCardHoverActions");
 
+            var favoriteBtn = card.GetVisualDescendants()
+                .OfType<Button>()
+                .FirstOrDefault(x => x.Name == "BtnToggleFavoriteGrid");
+
             if (overlay == null || actions == null) return;
 
             bool animationsEnabled = _componentService.Config.AnimationsEnabled;
@@ -744,11 +769,19 @@ namespace OptiscalerClient.Views
                 overlay.Opacity = isVisible ? 1 : 0;
                 actions.Opacity = isVisible ? 1 : 0;
                 actions.IsHitTestVisible = isVisible;
+
+                if (favoriteBtn != null)
+                {
+                    favoriteBtn.IsVisible = isVisible;
+                    favoriteBtn.Opacity = isVisible ? 1 : 0;
+                    favoriteBtn.IsHitTestVisible = isVisible;
+                }
                 return;
             }
 
             EnsureHoverOpacityTransition(overlay);
             EnsureHoverOpacityTransition(actions);
+            if (favoriteBtn != null) EnsureHoverOpacityTransition(favoriteBtn);
 
             overlay.IsVisible = true;
             actions.IsVisible = true;
@@ -756,9 +789,16 @@ namespace OptiscalerClient.Views
             overlay.Opacity = isVisible ? 1 : 0;
             actions.Opacity = isVisible ? 1 : 0;
 
+            if (favoriteBtn != null)
+            {
+                favoriteBtn.IsVisible = true;
+                favoriteBtn.IsHitTestVisible = isVisible;
+                favoriteBtn.Opacity = isVisible ? 1 : 0;
+            }
+
             if (!isVisible)
             {
-                _ = HideGridCardHoverAfterFadeAsync(overlay, actions);
+                _ = HideGridCardHoverAfterFadeAsync(overlay, actions, favoriteBtn);
             }
         }
 
@@ -781,7 +821,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private static async Task HideGridCardHoverAfterFadeAsync(Border overlay, Panel actions)
+        private static async Task HideGridCardHoverAfterFadeAsync(Border overlay, Panel actions, Button? favoriteBtn = null)
         {
             await Task.Delay(170);
 
@@ -794,6 +834,12 @@ namespace OptiscalerClient.Views
             {
                 actions.IsVisible = false;
                 actions.IsHitTestVisible = false;
+            }
+
+            if (favoriteBtn != null && favoriteBtn.Opacity <= 0.01)
+            {
+                favoriteBtn.IsVisible = false;
+                favoriteBtn.IsHitTestVisible = false;
             }
         }
 
@@ -975,6 +1021,66 @@ namespace OptiscalerClient.Views
                 game.IsHidden = !game.IsHidden;
                 Dispatcher.UIThread.Post(() => ApplyEditModeToCards(true), DispatcherPriority.Loaded);
             }
+        }
+
+        private void BtnToggleFavorite_Loaded(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Game game)
+                UpdateFavoriteButton(button, game);
+        }
+
+        private void BtnToggleFavorite_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button button || button.DataContext is not Game game) return;
+
+            game.IsFavorite = !game.IsFavorite;
+            UpdateFavoriteButton(button, game);
+            _persistenceService.SaveGames(_allGames);
+
+            // If the "favorites only" filter is active, toggling a game off must remove it
+            // from the currently displayed list right away.
+            if (_componentService.Config.ShowOnlyFavorites)
+                ApplyFilter(_txtSearch?.Text);
+        }
+
+        private void UpdateFavoriteButton(Button button, Game game)
+        {
+            // Content is a logical-tree value available immediately; GetVisualDescendants()
+            // requires the ContentPresenter to have materialized the child into the visual
+            // tree first, which hasn't happened yet at Loaded time - that's why the star
+            // never painted on startup.
+            if (button.Content is not TextBlock icon) return;
+
+            var favoriteBrush = this.FindResource("BrAccentWarm") as IBrush ?? Brushes.Orange;
+            var secondaryBrush = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray;
+
+            icon.Text = game.IsFavorite ? "★" : "☆";
+            icon.Foreground = game.IsFavorite ? favoriteBrush : secondaryBrush;
+        }
+
+        // ItemsControl.ContainerPrepared fires every time a container is handed an item -
+        // both on first realization AND when a virtualizing ListBox recycles an existing
+        // container for a different item (unlike Loaded, which only fires once). Kept as a
+        // safety net for scroll-driven recycling on top of the Loaded-based paint.
+        private void GameContainer_FavoriteIconPrepared(object? sender, ContainerPreparedEventArgs e)
+        {
+            if (e.Index < 0 || e.Index >= _games.Count) return;
+            if (e.Container is not Control container) return;
+
+            var button = container.GetVisualDescendants().OfType<Button>()
+                .FirstOrDefault(x => x.Name == "BtnToggleFavorite" || x.Name == "BtnToggleFavoriteGrid");
+            if (button == null) return;
+
+            UpdateFavoriteButton(button, _games[e.Index]);
+        }
+
+        private void ChkFilters_IsCheckedChanged(object? sender, RoutedEventArgs e)
+        {
+            _componentService.Config.HideGamesWithoutUpscaler = _chkHideNoUpscaler?.IsChecked == true;
+            _componentService.Config.ShowOnlyInstalled = _chkOnlyInstalled?.IsChecked == true;
+            _componentService.Config.ShowOnlyFavorites = _chkOnlyFavorites?.IsChecked == true;
+            _componentService.SaveConfiguration();
+            ApplyFilter(_txtSearch?.Text);
         }
 
         // ── Pointer-based drag ──────────────────────────────────────────────────
@@ -4539,11 +4645,7 @@ namespace OptiscalerClient.Views
                 {
                     if (!_games.Any(g => g.InstallPath.Equals(scannedGame.InstallPath, StringComparison.OrdinalIgnoreCase)))
                     {
-                        bool lacksUpscaler = string.IsNullOrEmpty(scannedGame.DlssVersion) &&
-                                             string.IsNullOrEmpty(scannedGame.FsrVersion) &&
-                                             string.IsNullOrEmpty(scannedGame.XessVersion) &&
-                                             string.IsNullOrEmpty(scannedGame.DlssFrameGenVersion) &&
-                                             !scannedGame.IsOptiscalerInstalled;
+                        bool lacksUpscaler = !scannedGame.HasUpscaler;
 
                         // SkipWithoutUpscaler: do not add the game at all
                         if (upscalerFilter == UpscalerFilterMode.SkipWithoutUpscaler && lacksUpscaler)

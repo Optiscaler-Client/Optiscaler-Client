@@ -34,6 +34,7 @@
     <x:String x:Key="TxtBtnScan">⟳ Escanear Juegos</x:String>
     <x:String x:Key="TxtBtnAddManual">＋ Añadir Manualmente</x:String>
     <x:String x:Key="TxtBtnBulkInstall">Instalación Masiva</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtros</x:String>
     <x:String x:Key="TxtTipSettings">Ajustes</x:String>
     <x:String x:Key="TxtTipComponent">Versiones de componentes</x:String>
     <x:String x:Key="TxtUpdateNukem">↑ Actualizar NukemFG</x:String>
@@ -552,6 +553,10 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHideShowGame">Ocultar/mostrar juego</x:String>
     <x:String x:Key="TxtHideGame">Ocultar</x:String>
     <x:String x:Key="TxtShowGame">Mostrar</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Alternar favorito</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Ocultar juegos sin soporte de upscaler</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Solo con OptiScaler instalado</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Solo favoritos</x:String>
     <x:String x:Key="TxtRefreshingCovers">Actualizando portadas faltantes...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Actualizacion de portadas completada. Se encontraron {0}/{1} portadas faltantes.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Actualizacion de portadas completada — {0}/{1} portadas encontradas.</x:String>

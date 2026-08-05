@@ -313,6 +313,7 @@
                              <Button Name="BtnBulkInstall"
                                      Classes="BtnBase"
                                      Padding="14,7"
+                                     Margin="0,0,10,0"
                                      Click="BtnBulkInstall_Click">
                                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <Path Data="M13 0 L5 9 H11 L9 16 L17 7 H11 Z"
@@ -325,6 +326,36 @@
                                                 VerticalAlignment="Center"
                                                 Foreground="{StaticResource BrTextPrimary}"/>
                                  </StackPanel>
+                             </Button>
+
+                             <Button Name="BtnFilters"
+                                     Classes="BtnBase"
+                                     Padding="14,7">
+                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                     <Path Data="M0 0 L16 0 L10 7 L10 14 L6 14 L6 7 Z"
+                                           Fill="{StaticResource BrTextPrimary}"
+                                           Stretch="Uniform"
+                                           Width="12" Height="12"
+                                           VerticalAlignment="Center"/>
+                                     <TextBlock Text="{DynamicResource TxtBtnFilters}"
+                                                VerticalAlignment="Center"
+                                                Foreground="{StaticResource BrTextPrimary}"/>
+                                 </StackPanel>
+                                 <Button.Flyout>
+                                     <Flyout Placement="BottomEdgeAlignedLeft">
+                                         <StackPanel Spacing="12" Margin="6" MinWidth="240">
+                                             <CheckBox Name="ChkHideNoUpscaler"
+                                                       Content="{DynamicResource TxtFilterHideNoUpscaler}"
+                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                             <CheckBox Name="ChkOnlyInstalled"
+                                                       Content="{DynamicResource TxtFilterOnlyInstalled}"
+                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                             <CheckBox Name="ChkOnlyFavorites"
+                                                       Content="{DynamicResource TxtFilterOnlyFavorites}"
+                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                         </StackPanel>
+                                     </Flyout>
+                                 </Button.Flyout>
                              </Button>
                          </StackPanel>
 
@@ -682,6 +713,26 @@
 
                                          <!-- Actions -->
                                          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                             <Button Name="BtnToggleFavorite"
+                                                     Width="36" Height="32"
+                                                     Padding="0"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     ToolTip.Tip="{DynamicResource TxtToggleFavoriteTip}"
+                                                     Click="BtnToggleFavorite_Click"
+                                                     Loaded="BtnToggleFavorite_Loaded">
+                                                 <Button.Styles>
+                                                     <Style Selector="Button:pointerover">
+                                                         <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                     </Style>
+                                                 </Button.Styles>
+                                                 <TextBlock Name="TxtFavoriteIcon"
+                                                            Text="☆"
+                                                            FontSize="18"
+                                                            Foreground="{StaticResource BrTextSecondary}"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"/>
+                                             </Button>
                                              <Button Content="&#xE74D;"
                                                      FontFamily="{StaticResource FontIcons}"
                                                      Foreground="{StaticResource BrTextSecondary}"
@@ -898,6 +949,7 @@
                                                          <Grid.ColumnDefinitions>
                                                              <ColumnDefinition Width="*"/>
                                                              <ColumnDefinition Width="Auto"/>
+                                                             <ColumnDefinition Width="Auto"/>
                                                          </Grid.ColumnDefinitions>
 
                                                          <Border Grid.Column="0"
@@ -913,7 +965,7 @@
                                                                         Foreground="{StaticResource BrTextPrimary}"/>
                                                          </Border>
 
-                                                         <Button Grid.Column="1"
+                                                         <Button Grid.Column="2"
                                                                  Content="&#xE74D;"
                                                                  FontFamily="{StaticResource FontIcons}"
                                                                  Foreground="{StaticResource BrTextSecondary}"
@@ -924,6 +976,7 @@
                                                                  Width="26"
                                                                  Height="24"
                                                                  Padding="0"
+                                                                 Margin="6,0,34,0"
                                                                  CornerRadius="6"
                                                                  ToolTip.Tip="{DynamicResource TxtRemoveGameTip}"
                                                                  IsVisible="{Binding IsManual, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -1008,6 +1061,30 @@
                                                  IsHitTestVisible="False"
                                                  Background="#800B0E16"
                                                  CornerRadius="{StaticResource RadiusLarge}"/>
+
+                                         <Button Name="BtnToggleFavoriteGrid"
+                                                 IsVisible="False"
+                                                 Opacity="0"
+                                                 HorizontalAlignment="Right"
+                                                 VerticalAlignment="Top"
+                                                 Margin="0,16,16,0"
+                                                 Background="#BF10131A"
+                                                 BorderBrush="{StaticResource BrBorderSubtle}"
+                                                 BorderThickness="1"
+                                                 Width="26"
+                                                 Height="24"
+                                                 Padding="0"
+                                                 CornerRadius="6"
+                                                 ToolTip.Tip="{DynamicResource TxtToggleFavoriteTip}"
+                                                 Click="BtnToggleFavorite_Click"
+                                                 Loaded="BtnToggleFavorite_Loaded">
+                                             <TextBlock Name="TxtFavoriteIcon"
+                                                        Text="☆"
+                                                        FontSize="13"
+                                                        Foreground="{StaticResource BrTextSecondary}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                         </Button>
 
                                         <StackPanel Name="GridCardHoverActions"
                                                     IsVisible="False"

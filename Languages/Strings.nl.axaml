@@ -239,6 +239,7 @@
     <x:String x:Key="TxtUpdateCheckError">Er was een probleem bij het controleren op updates. Probeer het later opnieuw.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Bulk Installatie</x:String>
+    <x:String x:Key="TxtBtnFilters">Filters</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">OptiScaler Bulk Installatie</x:String>
@@ -528,6 +529,10 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHideShowGame">Game weergeven/verbergen</x:String>
     <x:String x:Key="TxtHideGame">Verbergen</x:String>
     <x:String x:Key="TxtShowGame">Weergeven</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Favoriet wisselen</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Games zonder upscaler-ondersteuning verbergen</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Alleen met OptiScaler geïnstalleerd</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Alleen favorieten</x:String>
     <x:String x:Key="TxtRefreshingCovers">Ontbrekende omslagen vernieuwen...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Omslagvernieuwing voltooid. {0}/{1} ontbrekende omslagen gevonden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Omslagvernieuwing voltooid — {0}/{1} omslagen gevonden.</x:String>

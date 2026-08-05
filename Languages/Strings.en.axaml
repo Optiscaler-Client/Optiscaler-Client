@@ -34,6 +34,7 @@
     <x:String x:Key="TxtBtnScan">⟳  Scan Games</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  Add Manually</x:String>
     <x:String x:Key="TxtBtnBulkInstall">Bulk Install</x:String>
+    <x:String x:Key="TxtBtnFilters">Filters</x:String>
     <x:String x:Key="TxtTipSettings">Settings</x:String>
     <x:String x:Key="TxtTipComponent">Component versions</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  Update NukemFG</x:String>
@@ -554,6 +555,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHideShowGame">Hide/show game</x:String>
     <x:String x:Key="TxtHideGame">Hide</x:String>
     <x:String x:Key="TxtShowGame">Show</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Toggle favorite</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Hide games without upscaler support</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler installed only</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Favorites only</x:String>
     <x:String x:Key="TxtRefreshingCovers">Refreshing missing covers...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Cover refresh complete. Found {0}/{1} missing covers.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Cover refresh complete — {0}/{1} covers found.</x:String>

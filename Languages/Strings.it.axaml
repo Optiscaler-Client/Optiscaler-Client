@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">C'è stato un problema nel controllo degli aggiornamenti. Riprova più tardi.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Installazione di massa</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtri</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Installazione di massa OptiScaler</x:String>
@@ -528,6 +529,10 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtHideShowGame">Mostra/nascondi gioco</x:String>
     <x:String x:Key="TxtHideGame">Nascondi</x:String>
     <x:String x:Key="TxtShowGame">Mostra</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Attiva/disattiva preferito</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Nascondi giochi senza supporto upscaler</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Solo con OptiScaler installato</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Solo preferiti</x:String>
     <x:String x:Key="TxtRefreshingCovers">Aggiornamento copertine mancanti...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Aggiornamento copertine completato. Trovate {0}/{1} copertine mancanti.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Aggiornamento copertine completato — {0}/{1} copertine trovate.</x:String>

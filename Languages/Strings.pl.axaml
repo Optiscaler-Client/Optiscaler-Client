@@ -221,6 +221,7 @@
     <x:String x:Key="TxtUpdateCheckError">Wystąpił problem podczas sprawdzania aktualizacji. Proszę spróbować ponownie później.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Instalacja masowa</x:String>
+    <x:String x:Key="TxtBtnFilters">Filtry</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Masowa instalacja OptiScaler</x:String>
@@ -528,6 +529,10 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHideShowGame">Pokaz/ukryj gre</x:String>
     <x:String x:Key="TxtHideGame">Ukryj</x:String>
     <x:String x:Key="TxtShowGame">Pokaż</x:String>
+    <x:String x:Key="TxtToggleFavoriteTip">Przełącz ulubione</x:String>
+    <x:String x:Key="TxtFilterHideNoUpscaler">Ukryj gry bez obsługi upscalera</x:String>
+    <x:String x:Key="TxtFilterOnlyInstalled">Tylko z zainstalowanym OptiScaler</x:String>
+    <x:String x:Key="TxtFilterOnlyFavorites">Tylko ulubione</x:String>
     <x:String x:Key="TxtRefreshingCovers">Odswierzanie brakujacych okladek...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Odswierzanie okladek zakonczone. Znaleziono {0}/{1} brakujacych okladek.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Odswierzanie okladek zakonczone — znaleziono {0}/{1} okladek.</x:String>
