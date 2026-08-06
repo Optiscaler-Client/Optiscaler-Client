@@ -48,8 +48,7 @@ namespace OptiscalerClient.Services
 
         public BackupStoreService()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            _backupsRoot = Path.Combine(appData, "OptiscalerClient", "Backups");
+            _backupsRoot = Path.Combine(AppPaths.GetAppDataRoot(), "Backups");
             Directory.CreateDirectory(_backupsRoot);
         }
 

@@ -1,0 +1,54 @@
+# Maintainer: (your name here) <your@email>
+#
+# Reference PKGBUILD for AUR, tracking the official GitHub releases as a "-bin" package.
+# This is NOT auto-published to AUR - it's a starting point for whoever maintains the
+# actual AUR listing. Bump pkgver/pkgrel and refresh sha256sums on every new release:
+#
+#   updpkgsums
+#   makepkg --printsrcinfo > .SRCINFO
+#
+# The app is self-contained (bundles its own .NET runtime), so no dotnet runtime
+# dependency is needed - only the native libs Avalonia/Skia link against at runtime.
+# The in-app "check for updates" flow refuses to self-update when its install directory
+# isn't writable (e.g. under /opt, owned by pacman), so it won't fight this package.
+
+pkgname=optiscaler-client-bin
+pkgver=1.0.5
+pkgrel=1
+pkgdesc="A modern manager for OptiScaler"
+arch=('x86_64')
+url="https://github.com/Agustinm28/Optiscaler-Client"
+license=('GPL3')
+depends=('fontconfig' 'libx11' 'libice' 'libsm')
+provides=('optiscaler-client')
+conflicts=('optiscaler-client')
+source=(
+    "OptiscalerClient-${pkgver}-linux-x64.tar.gz::https://github.com/Agustinm28/Optiscaler-Client/releases/download/OptiscalerClient-${pkgver}/OptiscalerClient-${pkgver}-linux-x64.tar.gz"
+    "optiscaler-client.png::https://raw.githubusercontent.com/Agustinm28/Optiscaler-Client/OptiscalerClient-${pkgver}/assets/icon.png"
+    "optiscaler-client.desktop"
+)
+sha256sums=(
+    'daaf66dd27c8fd13edc75f7744d2d0669533184a402c43a39ab97440aa8b948b'
+    '6cbd9f7a125322895f5d2081c274a24580ea4c499e96e7c0624174b41f5abe06'
+    'SKIP'
+)
+
+package() {
+    install -dm755 "${pkgdir}/opt/optiscaler-client"
+
+    # The tarball extracts flat into $srcdir; copy everything except our own
+    # packaging inputs (the icon, the .desktop file, and the tarball itself).
+    find "${srcdir}" -maxdepth 1 -mindepth 1 \
+        ! -name 'optiscaler-client.png' \
+        ! -name 'optiscaler-client.desktop' \
+        ! -name "OptiscalerClient-${pkgver}-linux-x64.tar.gz" \
+        -exec cp -r {} "${pkgdir}/opt/optiscaler-client/" \;
+
+    chmod +x "${pkgdir}/opt/optiscaler-client/OptiscalerClient"
+
+    install -dm755 "${pkgdir}/usr/bin"
+    ln -s /opt/optiscaler-client/OptiscalerClient "${pkgdir}/usr/bin/optiscaler-client"
+
+    install -Dm644 "${srcdir}/optiscaler-client.desktop" "${pkgdir}/usr/share/applications/optiscaler-client.desktop"
+    install -Dm644 "${srcdir}/optiscaler-client.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/optiscaler-client.png"
+}

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Optiscaler Client
+GenericName=Optiscaler Client
+Comment=A modern manager for OptiScaler
+Exec=optiscaler-client
+Icon=optiscaler-client
+Categories=Utility;
+StartupNotify=true
+Terminal=false

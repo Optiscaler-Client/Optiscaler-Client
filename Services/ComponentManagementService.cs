@@ -140,8 +140,7 @@ namespace OptiscalerClient.Services
 
         public ComponentManagementService()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            _baseDir = Path.Combine(appData, "OptiscalerClient");
+            _baseDir = AppPaths.GetAppDataRoot();
             _cacheDir = Path.Combine(_baseDir, "Cache");
             _versionFile = Path.Combine(_baseDir, "versions.json");
             _configFile = Path.Combine(_baseDir, "config.json");

@@ -37,11 +37,7 @@ namespace OptiscalerClient
             {
                 try
                 {
-                    var crashDir = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "OptiscalerClient");
-                    System.IO.Directory.CreateDirectory(crashDir);
-                    var crashLogPath = System.IO.Path.Combine(crashDir, "crash.log");
+                    var crashLogPath = System.IO.Path.Combine(Services.AppPaths.GetAppDataRoot(), "crash.log");
                     System.IO.File.WriteAllText(crashLogPath, args.ExceptionObject.ToString());
                 }
                 catch

@@ -26,15 +26,7 @@ public class GamePersistenceService
 
     public GamePersistenceService()
     {
-        // Guardamos en AppData para ser correctos con los permisos de usuario
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var folder = Path.Combine(appData, "OptiscalerClient");
-
-        if (!Directory.Exists(folder))
-        {
-            Directory.CreateDirectory(folder);
-        }
-
+        var folder = AppPaths.GetAppDataRoot();
         _filePath = Path.Combine(folder, "games.json");
     }
 

@@ -23,13 +23,8 @@ public class GameMetadataService
         _componentService = componentService;
 
         // Caching covers in AppData
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        _coversCachePath = Path.Combine(appData, "OptiscalerClient", "Covers");
-
-        if (!Directory.Exists(_coversCachePath))
-        {
-            Directory.CreateDirectory(_coversCachePath);
-        }
+        _coversCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
+        Directory.CreateDirectory(_coversCachePath);
     }
 
     private static HttpClient CreateHttpClient()

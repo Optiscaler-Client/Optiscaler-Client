@@ -1885,8 +1885,7 @@ namespace OptiscalerClient.Views
 
             try
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var baseDir = System.IO.Path.Combine(appData, "OptiscalerClient");
+                var baseDir = AppPaths.GetAppDataRoot();
 
                 string[] filesToDelete =
                 [
@@ -4356,7 +4355,17 @@ namespace OptiscalerClient.Views
                 var appUpdateService = new AppUpdateService(_componentService);
                 bool hasUpdate = await appUpdateService.CheckForAppUpdateAsync();
 
-                if (hasUpdate)
+                if (hasUpdate && !AppUpdateService.IsInstallDirWritable())
+                {
+                    // Package-managed install (AUR, Nix store, /usr, ...) - the install dir
+                    // isn't writable, so self-updating would fail (or worse, fight the next
+                    // package-manager update). Point the user at their package manager instead.
+                    var managedTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
+                    var managedMsgFormat = GetResourceString("TxtUpdateManagedInstallMsg", "A new version is available (v{0}), but this installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.");
+                    var managedMsg = string.Format(managedMsgFormat, appUpdateService.LatestVersion);
+                    await new ConfirmDialog(this, managedTitle, managedMsg).ShowDialog<object>(this);
+                }
+                else if (hasUpdate)
                 {
                     var updateTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
                     var updateMsgFormat = GetResourceString("TxtUpdateAvailableMsg", "A new version is available (v{0}). Download now?");
@@ -4394,6 +4403,12 @@ namespace OptiscalerClient.Views
                     var noUpdateMsg = GetResourceString("TxtNoUpdateFound", "No new updates found.");
                     await new ConfirmDialog(this, GetResourceString("TxtReady", "Updates"), noUpdateMsg).ShowDialog<object>(this);
                 }
+            }
+            catch (ManagedInstallException)
+            {
+                var managedTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
+                var managedMsg = GetResourceString("TxtUpdateManagedInstallMsgGeneric", "This installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.");
+                await new ConfirmDialog(this, managedTitle, managedMsg).ShowDialog<object>(this);
             }
             catch (Exception ex)
             {
@@ -5548,12 +5563,7 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OptiscalerClient", "crash.log");
-                var logDir = System.IO.Path.GetDirectoryName(logPath);
-                if (!string.IsNullOrEmpty(logDir) && !System.IO.Directory.Exists(logDir))
-                {
-                    System.IO.Directory.CreateDirectory(logDir);
-                }
+                var logPath = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "crash.log");
 
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 System.IO.File.AppendAllText(logPath, $"[{timestamp}] {message}\n");

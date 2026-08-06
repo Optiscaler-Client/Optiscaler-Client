@@ -31,8 +31,7 @@ public class OptiscalerManagementService
 
     public OptiscalerManagementService()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var baseDir = Path.Combine(appData, "OptiscalerClient");
+        var baseDir = AppPaths.GetAppDataRoot();
         _cacheDir = Path.Combine(baseDir, "Cache");
         _versionFile = Path.Combine(baseDir, "version.json");
         _configFile = Path.Combine(baseDir, "config.json");

@@ -106,13 +106,7 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                var cachePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "OptiscalerClient");
-
-                Directory.CreateDirectory(cachePath);
-
-                PlatformServiceFactory.CreateShellService().OpenFolder(cachePath);
+                PlatformServiceFactory.CreateShellService().OpenFolder(OptiscalerClient.Services.AppPaths.GetAppDataRoot());
             }
             catch (Exception ex)
             {

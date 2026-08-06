@@ -13,6 +13,17 @@ using OptiscalerClient.Views;
 
 namespace OptiscalerClient.Services
 {
+    /// <summary>
+    /// Thrown when the app can't self-update because its own install directory isn't
+    /// writable - e.g. installed via a distro package (AUR) or the Nix store, where the
+    /// package manager owns the binary and self-replacing it would be both impossible
+    /// (permissions) and wrong (it'd fight the next `pacman -Syu` / `nix profile upgrade`).
+    /// </summary>
+    public class ManagedInstallException : Exception
+    {
+        public ManagedInstallException() : base("The install directory is not writable; this looks like a package-managed install.") { }
+    }
+
     public class AppUpdateService
     {
         private HttpClient _httpClient => NetworkService.GetHttpClient();
@@ -230,10 +241,33 @@ namespace OptiscalerClient.Services
             return false;
         }
 
+        /// <summary>
+        /// Probes whether the app's own install directory can be written to. False under
+        /// a package-managed install (AUR, Nix store, /usr, ...), where self-updating
+        /// must be skipped in favor of the package manager.
+        /// </summary>
+        public static bool IsInstallDirWritable()
+        {
+            try
+            {
+                var probePath = Path.Combine(AppContext.BaseDirectory, $".write_test_{Guid.NewGuid():N}.tmp");
+                File.WriteAllText(probePath, string.Empty);
+                File.Delete(probePath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task DownloadAndPrepareUpdateAsync(IProgress<double>? progress = null)
         {
             if (string.IsNullOrEmpty(DownloadUrl))
                 throw new Exception("No valid download URL found for the update.");
+
+            if (!IsInstallDirWritable())
+                throw new ManagedInstallException();
 
             var tempZip = Path.Combine(Path.GetTempPath(), $"OptiscalerClientUpdate_{Guid.NewGuid()}.zip");
             var updateFolder = Path.Combine(AppContext.BaseDirectory, "update_temp");
