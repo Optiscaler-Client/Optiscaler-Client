@@ -45,9 +45,7 @@ public class GameAnalyzerService
     private static readonly string[] _xessNames = new[] { "libxess.dll" };
 
     private static readonly HashSet<string> _allTargetFileNames;
-    private static readonly string _diskCachePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "OptiscalerClient", "analysis_cache.json");
+    private static readonly string _diskCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache.json");
     private static volatile bool _diskCacheLoaded = false;
 
     static GameAnalyzerService()
@@ -110,10 +108,13 @@ public class GameAnalyzerService
         // Reset current versions before analysis
         game.DlssVersion = null;
         game.DlssPath = null;
+        game.DlssViaOptiscaler = false;
         game.FsrVersion = null;
         game.FsrPath = null;
+        game.FsrViaOptiscaler = false;
         game.XessVersion = null;
         game.XessPath = null;
+        game.XessViaOptiscaler = false;
         game.IsOptiscalerInstalled = false;
         game.OptiscalerVersion = null; // Will be repopulated from manifest or log
 
@@ -149,8 +150,16 @@ public class GameAnalyzerService
                                 game.IsOptiscalerInstalled = true;
                                 if (!string.IsNullOrEmpty(extManifest.OptiscalerVersion))
                                     game.OptiscalerVersion = extManifest.OptiscalerVersion;
+
+                                // The manifest's own recorded install dir is authoritative - candidate
+                                // (InstallPath/ExecutablePath's dir) can differ from where OptiScaler
+                                // actually landed (e.g. UE games installing into Binaries\Win64), which
+                                // would silently break every path comparison below.
+                                var extInstallDir = !string.IsNullOrEmpty(extManifest.InstalledGameDirectory) && Directory.Exists(extManifest.InstalledGameDirectory)
+                                    ? extManifest.InstalledGameDirectory
+                                    : candidate!;
                                 foreach (var f in extManifest.InstalledFiles)
-                                    ignoredFiles.Add(f);
+                                    ignoredFiles.Add(Path.GetFullPath(Path.Combine(extInstallDir, f)));
                                 blockHeuristicFallbackDetection = true;
                                 DebugWindow.Log($"[Analyzer] Priority 0 (external store) detected OptiScaler {extManifest.OptiscalerVersion} for '{game.Name}'");
                                 goto detectOtherComponents;
@@ -291,16 +300,16 @@ public class GameAnalyzerService
             {
                 g.DlssPath = path;
                 g.DlssVersion = ver;
-            });
+            }, g => g.DlssViaOptiscaler = true);
 
             // DLSS Frame Gen
             FindBestVersionFromCollected(game, collectedFiles, _dlssFrameGenNames, ignoredFiles, (g, path, ver) => { g.DlssFrameGenPath = path; g.DlssFrameGenVersion = ver; });
 
             // FSR
-            FindBestVersionFromCollected(game, collectedFiles, _fsrNames, ignoredFiles, (g, path, ver) => { g.FsrPath = path; g.FsrVersion = ver; });
+            FindBestVersionFromCollected(game, collectedFiles, _fsrNames, ignoredFiles, (g, path, ver) => { g.FsrPath = path; g.FsrVersion = ver; }, g => g.FsrViaOptiscaler = true);
 
             // XeSS
-            FindBestVersionFromCollected(game, collectedFiles, _xessNames, ignoredFiles, (g, path, ver) => { g.XessPath = path; g.XessVersion = ver; });
+            FindBestVersionFromCollected(game, collectedFiles, _xessNames, ignoredFiles, (g, path, ver) => { g.XessPath = path; g.XessVersion = ver; }, g => g.XessViaOptiscaler = true);
 
         }
         catch (Exception ex)
@@ -335,19 +344,22 @@ public class GameAnalyzerService
         }
     }
 
-    private static void FindBestVersionFromCollected(Game game, Dictionary<string, List<string>> collectedFiles, string[] filePatterns, HashSet<string> ignoredFiles, Action<Game, string, string> updateAction)
+    private static void FindBestVersionFromCollected(Game game, Dictionary<string, List<string>> collectedFiles, string[] filePatterns, HashSet<string> ignoredFiles, Action<Game, string, string> updateAction, Action<Game>? markViaOptiscaler = null)
     {
         var highestVer = new Version(0, 0);
         string? bestPath = null;
         string? bestVerStr = null;
+
+        // Best match among files OptiScaler itself installed - only used if no native match wins.
+        var highestIgnoredVer = new Version(0, 0);
+        string? bestIgnoredPath = null;
+        string? bestIgnoredVerStr = null;
 
         foreach (var pattern in filePatterns)
         {
             if (!collectedFiles.TryGetValue(pattern, out var files)) continue;
             foreach (var file in files)
             {
-                if (ignoredFiles.Contains(Path.GetFullPath(file))) continue;
-
                 var versionStr = GetFileVersion(file);
 
                 // Clean up version string if it contains "FSR ", e.g. "FSR 3.1.4"
@@ -358,7 +370,20 @@ public class GameAnalyzerService
                 // Also take only the first component if there are spaces, e.g. "3.1.0 (release)"
                 parseableVerStr = parseableVerStr.Split(' ')[0];
 
-                if (Version.TryParse(parseableVerStr, out var currentVer) && currentVer > highestVer)
+                if (!Version.TryParse(parseableVerStr, out var currentVer)) continue;
+
+                if (ignoredFiles.Contains(Path.GetFullPath(file)))
+                {
+                    if (currentVer > highestIgnoredVer)
+                    {
+                        highestIgnoredVer = currentVer;
+                        bestIgnoredPath = file;
+                        bestIgnoredVerStr = versionStr;
+                    }
+                    continue;
+                }
+
+                if (currentVer > highestVer)
                 {
                     highestVer = currentVer;
                     bestPath = file;
@@ -368,7 +393,16 @@ public class GameAnalyzerService
         }
 
         if (bestPath != null && bestVerStr != null)
+        {
             updateAction(game, bestPath, bestVerStr);
+        }
+        else if (bestIgnoredPath != null && bestIgnoredVerStr != null)
+        {
+            // No native install, but OptiScaler provides its own copy - still report the
+            // version, just flagged as not native.
+            updateAction(game, bestIgnoredPath, bestIgnoredVerStr);
+            markViaOptiscaler?.Invoke(game);
+        }
     }
 
     private static Dictionary<string, List<string>> CollectRelevantFiles(string path)
@@ -576,12 +610,15 @@ public class GameAnalyzerService
         public DateTime DirectoryWriteStampUtc { get; set; }
         public string? DlssVersion { get; set; }
         public string? DlssPath { get; set; }
+        public bool DlssViaOptiscaler { get; set; }
         public string? DlssFrameGenVersion { get; set; }
         public string? DlssFrameGenPath { get; set; }
         public string? FsrVersion { get; set; }
         public string? FsrPath { get; set; }
+        public bool FsrViaOptiscaler { get; set; }
         public string? XessVersion { get; set; }
         public string? XessPath { get; set; }
+        public bool XessViaOptiscaler { get; set; }
         public bool IsOptiscalerInstalled { get; set; }
         public string? OptiscalerVersion { get; set; }
 
@@ -592,12 +629,15 @@ public class GameAnalyzerService
                 DirectoryWriteStampUtc = directoryWriteStampUtc,
                 DlssVersion = game.DlssVersion,
                 DlssPath = game.DlssPath,
+                DlssViaOptiscaler = game.DlssViaOptiscaler,
                 DlssFrameGenVersion = game.DlssFrameGenVersion,
                 DlssFrameGenPath = game.DlssFrameGenPath,
                 FsrVersion = game.FsrVersion,
                 FsrPath = game.FsrPath,
+                FsrViaOptiscaler = game.FsrViaOptiscaler,
                 XessVersion = game.XessVersion,
                 XessPath = game.XessPath,
+                XessViaOptiscaler = game.XessViaOptiscaler,
                 IsOptiscalerInstalled = game.IsOptiscalerInstalled,
                 OptiscalerVersion = game.OptiscalerVersion
             };
@@ -607,12 +647,15 @@ public class GameAnalyzerService
         {
             game.DlssVersion = DlssVersion;
             game.DlssPath = DlssPath;
+            game.DlssViaOptiscaler = DlssViaOptiscaler;
             game.DlssFrameGenVersion = DlssFrameGenVersion;
             game.DlssFrameGenPath = DlssFrameGenPath;
             game.FsrVersion = FsrVersion;
             game.FsrPath = FsrPath;
+            game.FsrViaOptiscaler = FsrViaOptiscaler;
             game.XessVersion = XessVersion;
             game.XessPath = XessPath;
+            game.XessViaOptiscaler = XessViaOptiscaler;
             game.IsOptiscalerInstalled = IsOptiscalerInstalled;
             game.OptiscalerVersion = OptiscalerVersion;
         }

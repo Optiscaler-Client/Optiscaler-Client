@@ -247,8 +247,21 @@
                                        Foreground="{StaticResource BrTextSecondary}"/>
                             <ListBox Name="LstComponents"
                                      Background="Transparent"
-                                     BorderThickness="0"
-                                     IsHitTestVisible="False">
+                                     BorderThickness="0">
+                                <ListBox.Styles>
+                                    <!-- Informational only - no selection/hover highlight, but pointer
+                                         events must reach items so item tooltips can show. -->
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                    </Style>
+                                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Style>
+                                </ListBox.Styles>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <WrapPanel Orientation="Horizontal"/>
@@ -256,13 +269,26 @@
                                 </ListBox.ItemsPanel>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource BrBgCard}"
-                                                BorderBrush="{StaticResource BrBorderSubtle}"
-                                                BorderThickness="1"
+                                        <Border BorderThickness="1"
                                                 CornerRadius="{StaticResource RadiusPill}"
                                                 Padding="10,6"
-                                                Margin="0,0,6,6">
-                                            <TextBlock Text="{Binding}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}"/>
+                                                Margin="0,0,6,6"
+                                                Classes.ViaOptiscaler="{Binding ViaOptiscaler}"
+                                                ToolTip.Tip="{Binding Tooltip}">
+                                            <Border.Styles>
+                                                <!-- Background/BorderBrush live entirely in styles (not as local
+                                                     attributes) so the ViaOptiscaler selector below can actually
+                                                     override them - a local value always wins over a style setter. -->
+                                                <Style Selector="Border">
+                                                    <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+                                                </Style>
+                                                <Style Selector="Border.ViaOptiscaler">
+                                                    <Setter Property="Background" Value="#1E1530"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                                </Style>
+                                            </Border.Styles>
+                                            <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}"/>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

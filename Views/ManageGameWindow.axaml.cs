@@ -2543,14 +2543,28 @@ namespace OptiscalerClient.Views
                 if (btnUninstall != null) btnUninstall.IsEnabled = true;
 
                 var installService = new GameInstallationService();
-                installService.UninstallOptiScaler(_game);
+                var result = installService.UninstallOptiScaler(_game);
 
                 NeedsScan = true;
                 UpdateStatus();
                 LoadComponents();
 
-                var successMsg = GetResourceString("TxtOptiUninstallSuccess", "OptiScaler uninstalled successfully.");
-                await ShowToastAsync(successMsg);
+                if (result.RemainingSensitiveFiles.Count > 0)
+                {
+                    // These files could be native to the game, so uninstall deliberately left
+                    // them - but leaving that unexplained just looks like a broken uninstall.
+                    var remainingTitle = GetResourceString("TxtOptiUninstallResidueTitle", "OptiScaler Uninstalled");
+                    var remainingFormat = GetResourceString("TxtOptiUninstallResidueMsg",
+                        "OptiScaler was uninstalled, but {0} file(s) that could belong to the game were left behind as a precaution:\n\n{1}\n\nIf you're sure the game didn't ship these, use \"Folder Cleanup\" to remove them.");
+                    var fileList = string.Join("\n", result.RemainingSensitiveFiles.Select(f => $"• {f}"));
+                    var remainingMsg = string.Format(remainingFormat, result.RemainingSensitiveFiles.Count, fileList);
+                    await new ConfirmDialog(this, remainingTitle, remainingMsg).ShowDialog<object>(this);
+                }
+                else
+                {
+                    var successMsg = GetResourceString("TxtOptiUninstallSuccess", "OptiScaler uninstalled successfully.");
+                    await ShowToastAsync(successMsg);
+                }
             }
             catch (Exception ex)
             {
@@ -2646,9 +2660,19 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, string? Tooltip);
+
+        private ComponentEntry MakeUpscalerEntry(string label, bool viaOptiscaler)
+        {
+            var tooltip = viaOptiscaler
+                ? GetResourceString("TxtUpscalerViaOptiscalerTip", "Added by OptiScaler - not native to this game")
+                : null;
+            return new ComponentEntry(label, viaOptiscaler, tooltip);
+        }
+
         private void LoadComponents()
         {
-            var components = new ObservableCollection<string>();
+            var components = new ObservableCollection<ComponentEntry>();
 
             if (!string.IsNullOrEmpty(_game.DlssVersion))
             {
@@ -2660,8 +2684,9 @@ namespace OptiscalerClient.Views
                         : $"NVIDIA DLSS: {dlssNormal} ({_game.DlssVersion})";
                 else
                     dlssDisplay = $"NVIDIA DLSS: {_game.DlssVersion}";
-                components.Add(dlssDisplay);
+                components.Add(MakeUpscalerEntry(dlssDisplay, _game.DlssViaOptiscaler));
             }
+
             if (!string.IsNullOrEmpty(_game.FsrVersion))
             {
                 var fsrMap = GetFsrVersionMap();
@@ -2672,8 +2697,9 @@ namespace OptiscalerClient.Views
                         : $"AMD FSR: {fsrNormal} ({_game.FsrVersion})";
                 else
                     fsrDisplay = $"AMD FSR: {_game.FsrVersion}";
-                components.Add(fsrDisplay);
+                components.Add(MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler));
             }
+
             if (!string.IsNullOrEmpty(_game.XessVersion))
             {
                 var xessMap = GetXessVersionMap();
@@ -2684,7 +2710,7 @@ namespace OptiscalerClient.Views
                         : $"Intel XeSS: {xessNormal} ({_game.XessVersion})";
                 else
                     xessDisplay = $"Intel XeSS: {_game.XessVersion}";
-                components.Add(xessDisplay);
+                components.Add(MakeUpscalerEntry(xessDisplay, _game.XessViaOptiscaler));
             }
 
             if (_game.IsOptiscalerInstalled)
@@ -2694,20 +2720,20 @@ namespace OptiscalerClient.Views
                 {
                     if (File.Exists(System.IO.Path.Combine(_game.InstallPath, file)))
                     {
-                        components.Add($"Found: {file}");
+                        components.Add(new ComponentEntry($"Found: {file}", false, null));
                     }
                 }
 
                 if (File.Exists(System.IO.Path.Combine(_game.InstallPath, "nvapi64.dll")))
-                    components.Add("Fakenvapi: installed");
+                    components.Add(new ComponentEntry("Fakenvapi: installed", false, null));
 
                 if (File.Exists(System.IO.Path.Combine(_game.InstallPath, "dlssg_to_fsr3_amd_is_better.dll")))
-                    components.Add("NukemFG: installed");
+                    components.Add(new ComponentEntry("NukemFG: installed", false, null));
 
                 bool fsr4DllExists = Fsr4Int8DllHelper.ExistsIn(_game.InstallPath);
                 if (fsr4DllExists && !string.IsNullOrEmpty(_game.Fsr4ExtraVersion))
                 {
-                    components.Add($"FSR 4 INT8 mod: {_game.Fsr4ExtraVersion}");
+                    components.Add(new ComponentEntry($"FSR 4 INT8 mod: {_game.Fsr4ExtraVersion}", false, null));
                 }
             }
 

@@ -682,9 +682,23 @@
                                                          BorderThickness="1"
                                                          CornerRadius="6"
                                                          Padding="10,3" Margin="0,0,6,0"
-                                                         IsVisible="{Binding DlssVersion, Converter={StaticResource NullToVisibilityConverter}}">
+                                                         IsVisible="{Binding DlssIsNative}">
                                                      <TextBlock Text="DLSS"
                                                                 Foreground="#7FD481"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- DLSS badge - added by OptiScaler, not native to the game -->
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#2D5A2D"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding DlssViaOptiscaler}">
+                                                     <TextBlock Text="DLSS"
+                                                                Foreground="#7FD481"
+                                                                Opacity="0.7"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>
@@ -1021,9 +1035,22 @@
                                                          CornerRadius="6"
                                                          Padding="8,3"
                                                          Margin="0,0,6,0"
-                                                         IsVisible="{Binding DlssVersion, Converter={StaticResource NullToVisibilityConverter}}">
+                                                         IsVisible="{Binding DlssIsNative}">
                                                      <TextBlock Text="DLSS"
                                                                 Foreground="#7FD481"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#2D5A2D"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="8,3"
+                                                         Margin="0,0,6,0"
+                                                         IsVisible="{Binding DlssViaOptiscaler}">
+                                                     <TextBlock Text="DLSS"
+                                                                Foreground="#7FD481"
+                                                                Opacity="0.7"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>
@@ -1033,9 +1060,22 @@
                                                          CornerRadius="6"
                                                          Padding="8,3"
                                                          Margin="0,0,6,0"
-                                                         IsVisible="{Binding FsrVersion, Converter={StaticResource NullToVisibilityConverter}}">
+                                                         IsVisible="{Binding FsrIsNative}">
                                                      <TextBlock Text="FSR"
                                                                 Foreground="#E07070"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#5A2D2D"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="8,3"
+                                                         Margin="0,0,6,0"
+                                                         IsVisible="{Binding FsrViaOptiscaler}">
+                                                     <TextBlock Text="FSR"
+                                                                Foreground="#E07070"
+                                                                Opacity="0.7"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>
@@ -1045,9 +1085,22 @@
                                                          CornerRadius="6"
                                                          Padding="8,3"
                                                          Margin="0,0,6,0"
-                                                         IsVisible="{Binding XessVersion, Converter={StaticResource NullToVisibilityConverter}}">
+                                                         IsVisible="{Binding XessIsNative}">
                                                      <TextBlock Text="XeSS"
                                                                 Foreground="#7080E0"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#2D3A5A"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="8,3"
+                                                         Margin="0,0,6,0"
+                                                         IsVisible="{Binding XessViaOptiscaler}">
+                                                     <TextBlock Text="XeSS"
+                                                                Foreground="#7080E0"
+                                                                Opacity="0.7"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>

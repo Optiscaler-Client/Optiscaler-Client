@@ -54,6 +54,16 @@ public class Game
     public string? XessVersion { get; set; }
     public string? XessPath { get; set; }
 
+    // True when the corresponding *Version above came from a file OptiScaler itself installed
+    // rather than one the game shipped natively. The version is still populated either way.
+    public bool DlssViaOptiscaler { get; set; }
+    public bool FsrViaOptiscaler { get; set; }
+    public bool XessViaOptiscaler { get; set; }
+
+    public bool DlssIsNative => DlssVersion != null && !DlssViaOptiscaler;
+    public bool FsrIsNative => FsrVersion != null && !FsrViaOptiscaler;
+    public bool XessIsNative => XessVersion != null && !XessViaOptiscaler;
+
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
     public string? Fsr4ExtraVersion { get; set; }

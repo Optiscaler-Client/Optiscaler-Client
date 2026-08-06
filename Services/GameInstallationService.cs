@@ -550,7 +550,9 @@ namespace OptiscalerClient.Services
             }
         }
 
-        public void UninstallOptiScaler(Game game)
+        public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
+
+        public UninstallResult UninstallOptiScaler(Game game)
         {
             // ── Determine candidate root directory ───────────────────────────────
             // We need a starting point to search for the manifest.
@@ -676,6 +678,8 @@ namespace OptiscalerClient.Services
                     }
                 }
             }
+
+            bool usedLegacyFallback = manifest == null;
 
             if (manifest != null)
             {
@@ -860,6 +864,15 @@ namespace OptiscalerClient.Services
             GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
             analyzer.AnalyzeGame(game, forceRefresh: true);
             GameAnalyzerService.FlushCacheToDisk();
+
+            // Files that could be native game files were left behind on purpose (we can't tell
+            // without a manifest whether the game shipped them) - surface that to the caller
+            // instead of silently pretending the folder is fully clean.
+            var remainingSensitive = SensitiveArtifacts
+                .Where(f => File.Exists(Path.Combine(gameDir, f)))
+                .ToList();
+
+            return new UninstallResult(usedLegacyFallback, remainingSensitive);
         }
 
         public bool RecoverIncompleteInstallIfNeeded(string installRoot)
