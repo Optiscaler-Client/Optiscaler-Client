@@ -133,6 +133,10 @@
     <x:String x:Key="TxtInstallSuccessFormat">{0} başarıyla yüklendi!</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">OptiScaler indirilemedi: {0}</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler başarıyla kaldırıldı.</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler Kaldırıldı</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler kaldırıldı, ancak oyuna ait olabilecek {0} dosya önlem amacıyla bırakıldı:&#x0a;&#x0a;{1}&#x0a;&#x0a;Oyunun bunları içermediğinden eminseniz, kaldırmak için "Klasör Temizliği"ni kullanın.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Kaldırma başarısız: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Yükleme Başarılı</x:String>
 
@@ -219,6 +223,10 @@
     <x:String x:Key="TxtUpdateError">Güncelleme Hatası</x:String>
     <x:String x:Key="TxtNoUpdateFound">Uygulama zaten güncel.</x:String>
     <x:String x:Key="TxtUpdateCheckError">Güncellemeler kontrol edilirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">Yeni bir sürüm mevcut (v{0}), ancak bu kurulum bir paket yöneticisi (ör. AUR, Nix) tarafından yönetiliyor gibi görünüyor. Lütfen uygulama içinden değil, oradan güncelleyin.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">Bu kurulum bir paket yöneticisi (ör. AUR, Nix) tarafından yönetiliyor gibi görünüyor. Lütfen uygulama içinden değil, oradan güncelleyin.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Toplu Yükleme</x:String>
     <x:String x:Key="TxtBtnFilters">Filtreler</x:String>
@@ -528,6 +536,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHideGame">Gizle</x:String>
     <x:String x:Key="TxtShowGame">Göster</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">Favoriyi değiştir</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">OptiScaler tarafından eklendi - oyunda yerleşik değil</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">Yükseltici desteği olmayan oyunları gizle</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Yalnızca OptiScaler kurulu olanlar</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Yalnızca favoriler</x:String>

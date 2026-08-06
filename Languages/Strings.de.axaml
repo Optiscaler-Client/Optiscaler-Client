@@ -133,6 +133,10 @@
     <x:String x:Key="TxtInstallSuccessFormat">{0} erfolgreich installiert!</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">Herunterladen von OptiScaler fehlgeschlagen: {0}</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler erfolgreich deinstalliert.</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler deinstalliert</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler wurde deinstalliert, aber {0} Datei(en), die zum Spiel gehören könnten, wurden vorsorglich beibehalten:&#x0a;&#x0a;{1}&#x0a;&#x0a;Wenn du sicher bist, dass das Spiel diese nicht mitgebracht hat, verwende "Ordner bereinigen", um sie zu entfernen.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Deinstallation fehlgeschlagen: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installation erfolgreich</x:String>
 
@@ -219,6 +223,10 @@
     <x:String x:Key="TxtUpdateError">Update-Fehler</x:String>
     <x:String x:Key="TxtNoUpdateFound">Die Anwendung ist bereits auf dem neuesten Stand.</x:String>
     <x:String x:Key="TxtUpdateCheckError">Es gab ein Problem bei der Überprüfung auf Updates. Bitte versuchen Sie es später erneut.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">Eine neue Version ist verfügbar (v{0}), aber diese Installation scheint von einem Paketmanager verwaltet zu werden (z. B. AUR, Nix). Bitte aktualisiere sie von dort statt in der App.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">Diese Installation scheint von einem Paketmanager verwaltet zu werden (z. B. AUR, Nix). Bitte aktualisiere sie von dort statt in der App.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Masseninstallation</x:String>
     <x:String x:Key="TxtBtnFilters">Filter</x:String>
@@ -530,6 +538,8 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHideGame">Ausblenden</x:String>
     <x:String x:Key="TxtShowGame">Einblenden</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">Favorit umschalten</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">Von OptiScaler hinzugefügt - nicht nativ im Spiel enthalten</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">Spiele ohne Upscaler-Unterstützung ausblenden</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Nur mit installiertem OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Nur Favoriten</x:String>

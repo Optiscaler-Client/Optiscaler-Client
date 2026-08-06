@@ -150,6 +150,10 @@
 
 Esta versión no está disponible para descarga. Verificá tu conexión a internet e intentá de nuevo más tarde.</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler desinstalado exitosamente.</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler desinstalado</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">Se desinstaló OptiScaler, pero se dejaron {0} archivo(s) que podrían pertenecer al juego, como precaución:&#x0a;&#x0a;{1}&#x0a;&#x0a;Si estás seguro de que el juego no los traía, usá "Limpieza de carpeta" para quitarlos.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Error en la desinstalación: {0}</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -259,6 +263,10 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtUpdateError">Error de actualización</x:String>
     <x:String x:Key="TxtNoUpdateFound">La aplicación ya está actualizada.</x:String>
     <x:String x:Key="TxtUpdateCheckError">Hubo un problema al buscar actualizaciones. Por favor, inténtalo de nuevo más tarde.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">Hay una versión nueva disponible (v{0}), pero esta instalación parece estar gestionada por un gestor de paquetes (por ej. AUR, Nix). Actualizala desde ahí en vez de hacerlo desde la app.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">Esta instalación parece estar gestionada por un gestor de paquetes (por ej. AUR, Nix). Actualizala desde ahí en vez de hacerlo desde la app.</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Instalación Masiva de OptiScaler</x:String>
@@ -554,6 +562,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHideGame">Ocultar</x:String>
     <x:String x:Key="TxtShowGame">Mostrar</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">Alternar favorito</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">Agregado por OptiScaler - no es nativo del juego</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">Ocultar juegos sin soporte de upscaler</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Solo con OptiScaler instalado</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Solo favoritos</x:String>

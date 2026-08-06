@@ -134,6 +134,10 @@
     <x:String x:Key="TxtInstallSuccessFormat">{0} 安装成功！</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">下载 OptiScaler 失败：{0}</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler 卸载成功。</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">已卸载 OptiScaler</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">已卸载 OptiScaler，但出于谨慎保留了 {0} 个可能属于游戏本身的文件:&#x0a;&#x0a;{1}&#x0a;&#x0a;如果确定游戏本身没有这些文件，可以使用“文件夹清理”将其移除。</x:String>
     <x:String x:Key="TxtOptiUninstallFail">卸载失败：{0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">安装成功</x:String>
 
@@ -220,6 +224,10 @@
     <x:String x:Key="TxtUpdateError">更新错误</x:String>
     <x:String x:Key="TxtNoUpdateFound">应用程序已是最新版本</x:String>
     <x:String x:Key="TxtUpdateCheckError">检查更新时出现问题，请稍后再试。</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">有新版本可用 (v{0})，但此安装似乎由包管理器(例如 AUR、Nix)管理。请从那里更新，而不是在应用内更新。</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">此安装似乎由包管理器(例如 AUR、Nix)管理。请从那里更新，而不是在应用内更新。</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  批量安装</x:String>
     <x:String x:Key="TxtBtnFilters">筛选</x:String>
@@ -531,6 +539,8 @@
     <x:String x:Key="TxtHideGame">隐藏</x:String>
     <x:String x:Key="TxtShowGame">显示</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">切换收藏</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">由 OptiScaler 添加 - 并非游戏原生支持</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">隐藏不支持超分辨率的游戏</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">仅显示已安装 OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">仅显示收藏</x:String>

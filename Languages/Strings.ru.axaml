@@ -133,6 +133,10 @@
     <x:String x:Key="TxtInstallSuccessFormat">{0} успешно установлен!</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">Не удалось загрузить OptiScaler: {0}</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler успешно удален.</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler удалён</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler был удалён, но {0} файл(ов), которые могут принадлежать игре, были оставлены на всякий случай:&#x0a;&#x0a;{1}&#x0a;&#x0a;Если вы уверены, что игра их не поставляла, используйте «Очистку папки», чтобы удалить их.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Удаление не удалось: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Установка успешна</x:String>
 
@@ -219,6 +223,10 @@
     <x:String x:Key="TxtUpdateError">Ошибка обновления</x:String>
     <x:String x:Key="TxtNoUpdateFound">Приложение уже обновлено.</x:String>
     <x:String x:Key="TxtUpdateCheckError">Возникла проблема при проверке обновлений. Пожалуйста, попробуйте позже.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">Доступна новая версия (v{0}), но эта установка, похоже, управляется пакетным менеджером (например, AUR, Nix). Обновите её оттуда, а не через приложение.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">Эта установка, похоже, управляется пакетным менеджером (например, AUR, Nix). Обновите её оттуда, а не через приложение.</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  Массовая установка</x:String>
     <x:String x:Key="TxtBtnFilters">Фильтры</x:String>
@@ -530,6 +538,8 @@
     <x:String x:Key="TxtHideGame">Скрыть</x:String>
     <x:String x:Key="TxtShowGame">Показать</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">Переключить избранное</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">Добавлено OptiScaler - не является нативным для игры</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">Скрыть игры без поддержки апскейлера</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Только с установленным OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Только избранное</x:String>

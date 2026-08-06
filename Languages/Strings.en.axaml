@@ -151,6 +151,10 @@
 
 This version is unavailable for download. Check your internet connection and try again later.</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScaler uninstalled successfully.</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler Uninstalled</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler was uninstalled, but {0} file(s) that could belong to the game were left behind as a precaution:&#x0a;&#x0a;{1}&#x0a;&#x0a;If you're sure the game didn't ship these, use "Folder Cleanup" to remove them.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Uninstall failed: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installation Successful</x:String>
 
@@ -261,6 +265,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtUpdateError">Update Error</x:String>
     <x:String x:Key="TxtNoUpdateFound">The application is already up to date.</x:String>
     <x:String x:Key="TxtUpdateCheckError">There was a problem checking for updates. Please try again later.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">A new version is available (v{0}), but this installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">This installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Bulk Install OptiScaler</x:String>
@@ -556,6 +564,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHideGame">Hide</x:String>
     <x:String x:Key="TxtShowGame">Show</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">Toggle favorite</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">Added by OptiScaler - not native to this game</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">Hide games without upscaler support</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler installed only</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Favorites only</x:String>

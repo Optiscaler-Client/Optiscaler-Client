@@ -133,6 +133,10 @@
     <x:String x:Key="TxtInstallSuccessFormat">{0}が正常にインストールされました！</x:String>
     <x:String x:Key="TxtDownloadErrorPrefix">OptiScalerのダウンロードに失敗しました：{0}</x:String>
     <x:String x:Key="TxtOptiUninstallSuccess">OptiScalerが正常にアンインストールされました。</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueTitle">OptiScaler をアンインストールしました</x:String>
+
+    <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler はアンインストールされましたが、ゲームに属する可能性があるファイルが {0} 件、念のため残されています:&#x0a;&#x0a;{1}&#x0a;&#x0a;ゲームがこれらを含んでいなかったと確信できる場合は、「フォルダのクリーンアップ」で削除してください。</x:String>
     <x:String x:Key="TxtOptiUninstallFail">アンインストールに失敗しました：{0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">インストール成功</x:String>
 
@@ -219,6 +223,10 @@
     <x:String x:Key="TxtUpdateError">更新エラー</x:String>
     <x:String x:Key="TxtNoUpdateFound">アプリケーションはすでに最新です。</x:String>
     <x:String x:Key="TxtUpdateCheckError">更新の確認中に問題が発生しました。後でもう一度お試しください。</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsg">新しいバージョン (v{0}) が利用可能ですが、このインストールはパッケージマネージャー(AUR、Nixなど)によって管理されているようです。アプリ内ではなく、そちらから更新してください。</x:String>
+
+    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">このインストールはパッケージマネージャー(AUR、Nixなど)によって管理されているようです。アプリ内ではなく、そちらから更新してください。</x:String>
 
     <x:String x:Key="TxtBtnBulkInstall">⚡  一括インストール</x:String>
     <x:String x:Key="TxtBtnFilters">フィルター</x:String>
@@ -530,6 +538,8 @@
     <x:String x:Key="TxtHideGame">非表示</x:String>
     <x:String x:Key="TxtShowGame">表示</x:String>
     <x:String x:Key="TxtToggleFavoriteTip">お気に入りを切り替え</x:String>
+
+    <x:String x:Key="TxtUpscalerViaOptiscalerTip">OptiScaler によって追加 - ゲーム本来の機能ではありません</x:String>
     <x:String x:Key="TxtFilterHideNoUpscaler">アップスケーラー非対応のゲームを非表示</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler導入済みのみ</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">お気に入りのみ</x:String>
