@@ -388,7 +388,13 @@ namespace OptiscalerClient.Services
             _cachedLatestExtrasVersion = _extrasCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
                 ?? _extrasCache.Releases.FirstOrDefault()?.Version;
 
-            _cachedExtrasVersions = _extrasCache.Releases.Select(r => r.Version).Distinct().ToList();
+            _cachedExtrasVersions = _extrasCache.Releases
+                .Select(r => r.Version)
+                .Distinct()
+                .OrderByDescending(ParseVersionForSort)
+                .ThenByDescending(ParseVersionSuffixValue)
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             DebugWindow.Log($"[ExtrasCache] Rebuilt in-memory: {_cachedExtrasVersions.Count} version(s), latest={_cachedLatestExtrasVersion}");
         }
 
@@ -438,36 +444,38 @@ namespace OptiscalerClient.Services
         /// <summary>
         /// Rebuilds the static in-memory version lists from the persistent releases cache.
         /// </summary>
+        /// <summary>Parses the leading numeric dotted portion of a version string (e.g. "v1.2.3-beta" → 1.2.3) for descending sort.</summary>
+        private static Version ParseVersionForSort(string v)
+        {
+            if (string.IsNullOrEmpty(v)) return new Version(0, 0);
+            var clean = new string(v.TakeWhile(c => char.IsDigit(c) || c == '.').ToArray()).TrimEnd('.');
+            if (!string.IsNullOrEmpty(clean) && Version.TryParse(clean, out var parsed)) return parsed;
+            return new Version(0, 0);
+        }
+
+        /// <summary>Trailing numeric suffix (e.g. build/patch number) used as a tiebreaker after ParseVersionForSort.</summary>
+        private static int ParseVersionSuffixValue(string v)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(v, @"\d+$");
+            if (match.Success && int.TryParse(match.Value, out int val)) return val;
+            return 0;
+        }
+
         private void RebuildInMemoryCacheFromReleases()
         {
             if (_releasesCache.Releases.Count == 0) return;
 
             var all = _releasesCache.Releases;
 
-            Version parse(string v)
-            {
-                if (string.IsNullOrEmpty(v)) return new Version(0, 0);
-                var clean = new string(v.TakeWhile(c => char.IsDigit(c) || c == '.').ToArray()).TrimEnd('.');
-                if (!string.IsNullOrEmpty(clean) && Version.TryParse(clean, out var parsed)) return parsed;
-                return new Version(0, 0);
-            }
-
-            int parseSuffixValue(string v)
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(v, @"\d+$");
-                if (match.Success && int.TryParse(match.Value, out int val)) return val;
-                return 0;
-            }
-
             var stablesList = all.Where(r => !r.IsBeta)
-                                 .OrderByDescending(r => parse(r.Version))
-                                 .ThenByDescending(r => parseSuffixValue(r.Version))
+                                 .OrderByDescending(r => ParseVersionForSort(r.Version))
+                                 .ThenByDescending(r => ParseVersionSuffixValue(r.Version))
                                  .ThenByDescending(r => r.Version, StringComparer.OrdinalIgnoreCase)
                                  .ToList();
 
             var betasList = all.Where(r => r.IsBeta)
-                               .OrderByDescending(r => parse(r.Version))
-                               .ThenByDescending(r => parseSuffixValue(r.Version))
+                               .OrderByDescending(r => ParseVersionForSort(r.Version))
+                               .ThenByDescending(r => ParseVersionSuffixValue(r.Version))
                                .ThenByDescending(r => r.Version, StringComparer.OrdinalIgnoreCase)
                                .ToList();
 
@@ -1217,7 +1225,15 @@ namespace OptiscalerClient.Services
             }
             _cachedLatestOptiPatcherVersion = _optiPatcherCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
                 ?? _optiPatcherCache.Releases.FirstOrDefault()?.Version;
-            _cachedOptiPatcherVersions = _optiPatcherCache.Releases.Select(r => r.Version).Distinct().ToList();
+            _cachedOptiPatcherVersions = _optiPatcherCache.Releases
+                .Select(r => r.Version)
+                .Distinct()
+                // "rolling" is a continuously-updated build, not a dated release — always keep it first.
+                .OrderByDescending(v => string.Equals(v, "rolling", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(ParseVersionForSort)
+                .ThenByDescending(ParseVersionSuffixValue)
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             DebugWindow.Log($"[OptiPatcherCache] Rebuilt in-memory: {_cachedOptiPatcherVersions.Count} version(s), latest={_cachedLatestOptiPatcherVersion}");
         }
 
