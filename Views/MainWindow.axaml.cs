@@ -4203,6 +4203,46 @@ namespace OptiscalerClient.Views
                         itemStack.Children.Add(label);
                         itemStack.Children.Add(text);
 
+                        // Optional external link (e.g. wiki/compatibility list)
+                        if (!string.IsNullOrEmpty(item.Link))
+                        {
+                            var linkUrl = item.Link;
+                            var linkText = string.IsNullOrEmpty(item.LinkLabelKey)
+                                ? (item.LinkLabel ?? linkUrl)
+                                : GetResourceString(item.LinkLabelKey, item.LinkLabel ?? linkUrl);
+
+                            var linkButton = new Button
+                            {
+                                Content = linkText,
+                                Classes = { "Link" },
+                                Background = Brushes.Transparent,
+                                BorderThickness = new Thickness(0),
+                                Padding = new Thickness(0),
+                                Margin = new Thickness(0, 8, 0, 0),
+                                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                                FontSize = GetFontSize((double)(this.FindResource("FontSizeBody") ?? 14.0), item.FontSize),
+                                Foreground = this.FindResource("BrAccent") as IBrush,
+                                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand)
+                            };
+                            linkButton.Click += (s, e) =>
+                            {
+                                try
+                                {
+                                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                    {
+                                        FileName = linkUrl,
+                                        UseShellExecute = true
+                                    });
+                                }
+                                catch (Exception ex)
+                                {
+                                    DebugWindow.Log($"[Help] Could not open link '{linkUrl}': {ex.Message}");
+                                }
+                            };
+
+                            itemStack.Children.Add(linkButton);
+                        }
+
                         // Add sub-items (bullet points) if they exist
                         if (item.Items != null)
                         {
@@ -5160,9 +5200,10 @@ namespace OptiscalerClient.Views
 
                         // Install with default settings (backup always enabled)
                         SetQuickInstallLoading(button);
+                        string? resolvedGameDir = null;
                         await Task.Run(() =>
                         {
-                            installService.InstallOptiScaler(
+                            resolvedGameDir = installService.InstallOptiScaler(
                                 selectedGame,
                                 optiCacheDir,
                                 "dxgi.dll",
@@ -5188,7 +5229,7 @@ namespace OptiscalerClient.Views
 
                                 // Copy into game directory
                                 var installSvc = new GameInstallationService();
-                                var gameDir = installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+                                var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
                                 var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
@@ -5230,7 +5271,7 @@ namespace OptiscalerClient.Views
                                 await Task.Run(() =>
                                 {
                                     var installSvc = new GameInstallationService();
-                                    var gameDir = installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+                                    var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
 
                                     var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");
                                     Directory.CreateDirectory(pluginsDir);

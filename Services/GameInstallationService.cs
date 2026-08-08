@@ -79,7 +79,10 @@ namespace OptiscalerClient.Services
         // We will backup ANYTHING we overwrite, but these are known criticals.
         private readonly string[] _criticalFiles = { "dxgi.dll", "version.dll", "winmm.dll", "nvngx.dll", "nvngx_dlssg.dll", "libxess.dll" };
 
-        public void InstallOptiScaler(Game game, string cachePath, string injectionDllName = "dxgi.dll",
+        /// <summary>Installs OptiScaler and returns the resolved game directory the files were placed in,
+        /// so callers installing additional components (FSR4 INT8, OptiPatcher) reuse the same directory
+        /// instead of re-running directory detection independently.</summary>
+        public string InstallOptiScaler(Game game, string cachePath, string injectionDllName = "dxgi.dll",
                                      bool installFakenvapi = false, string fakenvapiCachePath = "",
                                      bool installNukemFG = false, string nukemFGCachePath = "",
                                      string? optiscalerVersion = null,
@@ -530,6 +533,8 @@ namespace OptiscalerClient.Services
             DebugWindow.Log($"[Install] OptiScaler installation completed successfully for {game.Name}");
             DebugWindow.Log($"[Install] Total files installed: {manifest.InstalledFiles.Count}");
             DebugWindow.Log($"[Install] Total files backed up: {manifest.BackedUpFiles.Count}");
+
+            return gameDir;
             }
             catch (Exception ex)
             {
@@ -1564,6 +1569,22 @@ namespace OptiscalerClient.Services
         /// <summary>
         /// Determines the correct installation directory for games based on user rules.
         /// </summary>
+        /// <summary>
+        /// Checks whether an executable sits directly under a "Binaries/Win64" folder (Unreal Engine's
+        /// shipping layout), independent of the OS path separator. Directory.GetFiles returns '\' on
+        /// Windows and '/' on Linux, so a literal @"Binaries\Win64" substring check never matches on
+        /// Linux/SteamOS — comparing folder names instead keeps this working on both.
+        /// </summary>
+        private static bool IsUnderBinariesWin64(string exePath)
+        {
+            var win64Dir = Path.GetDirectoryName(exePath);
+            if (string.IsNullOrEmpty(win64Dir) || !string.Equals(Path.GetFileName(win64Dir), "Win64", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var binariesDir = Path.GetDirectoryName(win64Dir);
+            return !string.IsNullOrEmpty(binariesDir) && string.Equals(Path.GetFileName(binariesDir), "Binaries", StringComparison.OrdinalIgnoreCase);
+        }
+
         public string? DetermineInstallDirectory(Game game)
         {
             if (string.IsNullOrEmpty(game.InstallPath) || !Directory.Exists(game.InstallPath))
@@ -1594,7 +1615,7 @@ namespace OptiscalerClient.Services
             // come and go (e.g. a native upscaler DLL removed by Folder Cleanup) and is therefore not
             // reliable enough on its own to pick between a root launcher stub and the real shipping exe.
             var binariesWin64Exes = allExes
-                .Where(x => x.Contains(@"Binaries\Win64", StringComparison.OrdinalIgnoreCase))
+                .Where(IsUnderBinariesWin64)
                 .ToArray();
             var candidateExes = binariesWin64Exes.Length > 0 ? binariesWin64Exes : allExes;
 
@@ -1633,7 +1654,7 @@ namespace OptiscalerClient.Services
                         }
                     }
 
-                    if (exePath.Contains(@"Binaries\Win64", StringComparison.OrdinalIgnoreCase))
+                    if (IsUnderBinariesWin64(exePath))
                     {
                         score += 5;
                     }

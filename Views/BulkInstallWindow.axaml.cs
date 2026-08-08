@@ -574,9 +574,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     ? _componentService.GetNukemFGCachePath(selectedNukemFGVersion!)
                     : "";
 
+                string? resolvedGameDir = null;
                 await Task.Run(() =>
                 {
-                    _installService.InstallOptiScaler(
+                    resolvedGameDir = _installService.InstallOptiScaler(
                         gameItem.Game,
                         optiCacheDir,
                         injectionMethod, // Use selected injection method
@@ -615,7 +616,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     // Copy FSR4 INT8 DLL to game directory
                     await Task.Run(() =>
                     {
-                        var gameDir = _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+                        var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
                         var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                         System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
@@ -641,7 +642,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
                         await Task.Run(() =>
                         {
-                            var gameDir = _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+                            var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
 
                             // Create plugins folder and copy the .asi
                             var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");

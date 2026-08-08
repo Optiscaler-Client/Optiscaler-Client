@@ -2086,10 +2086,11 @@ namespace OptiscalerClient.Views
                     selectedProfile = profile;
                 }
 
+                string? resolvedGameDir = null;
                 try
                 {
                     await Task.Run(() => {
-                        installService.InstallOptiScaler(_game, optiCacheDir, injectionMethod,
+                        resolvedGameDir = installService.InstallOptiScaler(_game, optiCacheDir, injectionMethod,
                                                         installFakenvapi, fakeCacheDir,
                                                         installNukemFG, nukemCacheDir,
                                                         optiscalerVersion: optiscalerVersion,
@@ -2161,7 +2162,7 @@ namespace OptiscalerClient.Views
                         await Task.Run(() =>
                         {
                             var installSvc = new GameInstallationService();
-                            var gameDir = installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
+                            var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
                             var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
@@ -2219,7 +2220,7 @@ namespace OptiscalerClient.Views
                         await Task.Run(() =>
                         {
                             var installSvc = new GameInstallationService();
-                            var gameDir = overrideGameDir ?? installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
+                            var gameDir = overrideGameDir ?? resolvedGameDir ?? installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
 
                             // Create plugins folder and copy the .asi file
                             var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");
