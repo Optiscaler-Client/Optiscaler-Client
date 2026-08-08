@@ -346,6 +346,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpPageProfiles">Sistema de Perfiles</x:String>
     <x:String x:Key="TxtHelpPageSettings">Ajustes y Configuración</x:String>
     <x:String x:Key="TxtHelpPageBulkOperations">Operaciones Masivas</x:String>
+    <x:String x:Key="TxtHelpPageGamepad">Soporte de Mando</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">Preguntas Frecuentes y Solución de Problemas</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Aviso Legal ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">Este no es un proyecto oficial de OptiScaler. No tengo ninguna afiliación con el equipo de OptiScaler. Este es un proyecto personal desarrollado sin ningún propósito comercial. Cualquiera puede intentar usar este software bajo su propio riesgo.&#x0a;&#x0a;Créditos: Un agradecimiento especial al equipo de OptiScaler; esta herramienta solo es posible gracias a su increíble trabajo en el mod original.</x:String>
@@ -396,19 +397,26 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Botón Instalación Rápida ✦</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallText">Instala rápidamente OptiScaler con ajustes óptimos para el juego seleccionado.</x:String>
     <x:String x:Key="TxtHelpMWScanLabel">Botón Escanear 🔍</x:String>
-    <x:String x:Key="TxtHelpMWScanText">Detecta automáticamente juegos de Steam, Epic Games, GOG, EA, Ubisoft, Xbox y Battle.net. Aquí puedes elegir qué fuentes escanear e incluso qué discos.</x:String>
+    <x:String x:Key="TxtHelpMWScanText">Detecta automáticamente juegos de Steam, Heroic, Epic Games, GOG, EA, Ubisoft, Xbox, Battle.net y Lutris (solo Linux). Aquí puedes elegir qué fuentes escanear e incluso qué discos.</x:String>
     <x:String x:Key="TxtHelpMWAddManualLabel">Botón Agregar Manual ➕</x:String>
     <x:String x:Key="TxtHelpMWAddManualText">Permite agregar manualmente juegos que no fueron detectados automáticamente. Útil para juegos independientes o instalaciones personalizadas.</x:String>
     <x:String x:Key="TxtHelpMWBulkLabel">Instalación masiva ⚡</x:String>
     <x:String x:Key="TxtHelpMWBulkText">Abre la ventana de instalación masiva, que permite instalar OptiScaler en varios juegos a la vez.</x:String>
     <x:String x:Key="TxtHelpMWSearchLabel">Buscar &amp; Filtrar 🔍</x:String>
     <x:String x:Key="TxtHelpMWSearchText">Encuentra juegos rápidamente usando la barra de búsqueda.</x:String>
+    <x:String x:Key="TxtHelpMWFiltersLabel">Filtros 🔽</x:String>
+    <x:String x:Key="TxtHelpMWFiltersText">Abre el panel de Filtros para acotar tu biblioteca: ocultar juegos sin soporte de upscaler, mostrar solo los instalados o mostrar solo favoritos. Estos filtros se guardan y se vuelven a aplicar automáticamente.</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesLabel">Favoritos ★</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesText">Haz clic en el ícono de estrella de cualquier juego para marcarlo como favorito. Combínalo con el filtro 'Solo Favoritos' para encontrarlos rápidamente.</x:String>
     <x:String x:Key="TxtHelpMWViewLabel">Botones de vista cuadrícula/lista 📊</x:String>
     <x:String x:Key="TxtHelpMWViewText">Cambia entre los modos de vista cuadrícula y lista para organizar tu biblioteca como prefieras.</x:String>
     <x:String x:Key="TxtHelpMWOrganizeLabel">Organizar juegos ✏️</x:String>
     <x:String x:Key="TxtHelpMWOrganizeText">En este modo puedes reordenar y mostrar/ocultar los juegos de la lista a tu gusto.</x:String>
     <x:String x:Key="TxtHelpGMTitle">Gestión de juegos individuales</x:String>
     <x:String x:Key="TxtHelpGMContent">La ventana de gestión de juegos ofrece control total sobre la instalación y configuración de OptiScaler para un juego específico.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLabel">Lista de Compatibilidad 📋</x:String>
+    <x:String x:Key="TxtHelpGMCompatText">Para configurar cada juego de la mejor forma, revisá la lista de compatibilidad oficial de OptiScaler en la wiki. Incluye juegos probados con ajustes recomendados y problemas conocidos.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLinkLabel">Ver Lista de Compatibilidad ↗</x:String>
     <x:String x:Key="TxtHelpGMInfoLabel">Información del juego 🎮</x:String>
     <x:String x:Key="TxtHelpGMInfoText">Ver detalles del juego incluyendo título, ruta del ejecutable, plataforma y estado actual de instalación de OptiScaler.</x:String>
     <x:String x:Key="TxtHelpGMFolderLabel">Abrir carpeta 📁</x:String>
@@ -420,17 +428,23 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpGMManualInstallLabel">Instalación Manual ✦</x:String>
     <x:String x:Key="TxtHelpGMManualInstallText">Permite seleccionar manualmente el ejecutable del juego para instalar OptiScaler. Se recomienda si la instalación automática no encuentra el ejecutable.</x:String>
     <x:String x:Key="TxtHelpGMUninstallLabel">Desinstalar 🗑️</x:String>
-    <x:String x:Key="TxtHelpGMUninstallText">Elimina OptiScaler completamente del juego, restaurando los archivos y configuraciones originales desde la copia de seguridad.</x:String>
+    <x:String x:Key="TxtHelpGMUninstallText">Elimina OptiScaler completamente del juego, restaurando los archivos y configuraciones originales desde la copia de seguridad. Si quedan archivos que podrían pertenecer al propio juego, se te pedirá revisarlos y usar Limpieza de Carpeta si es necesario.</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupLabel">Limpieza de Carpeta 🗁</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupText">Elimina forzosamente todos los archivos conocidos de OptiScaler de la carpeta del juego. Úsalo para restablecer una instalación corrupta o incompleta antes de reinstalar. Los archivos que podrían pertenecer al propio juego se marcan por separado para que elijas si eliminarlos.</x:String>
     <x:String x:Key="TxtHelpGMProfileLabel">Selección de perfil 🎯</x:String>
     <x:String x:Key="TxtHelpGMProfileText">Elige entre perfiles preconfigurados de OptiScaler o crea perfiles personalizados para juegos o necesidades de rendimiento específicas.</x:String>
     <x:String x:Key="TxtHelpGMVersionLabel">Versión de OptiScaler 📦</x:String>
     <x:String x:Key="TxtHelpGMVersionText">Selecciona qué versión de OptiScaler instalar. Puedes cambiar entre versiones estables y builds beta.</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiLabel">Fakenvapi &amp; NukemFG 📦</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiText">Componentes opcionales que mejoran la compatibilidad con ciertos juegos. No son necesarios para versiones beta de OptiScaler que ya incluyen estos archivos.</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherLabel">OptiPatcher 🧩</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherText">Plugin ASI opcional que expone las entradas de DLSS/DLSS-FG sin spoofing en los juegos compatibles. Ayuda a usuarios de AMD e Intel a evitar errores de D3D12 y previene sobrecarga o cuelgues causados por el spoofing de DXGI.</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">Método de inyección 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">Elige cómo OptiScaler se inyecta en el proceso del juego. Para la mayoría de casos, la opción predeterminada (dxgi.dll) es suficiente.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
     <x:String x:Key="TxtHelpGMFsr4Text">Selector que permite inyectar la versión INT 8 de FSR 4 para GPUs que no son RDNA 4.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsLabel">Componentes Instalados 🧩</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Muestra los upscalers detectados en la carpeta del juego. Una insignia sólida indica que el upscaler es nativo del juego; una insignia más tenue y con borde indica que fue agregado por OptiScaler. Pasa el mouse sobre cada uno para más detalles.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -443,7 +457,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpSetTitle">Ajustes de la aplicación</x:String>
     <x:String x:Key="TxtHelpSetContent">Configura el comportamiento del cliente de OptiScaler, las fuentes de escaneo, los servicios de metadatos y las opciones avanzadas.</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">Gestión de caché local</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">Permite ver y eliminar las versiones en caché de OptiScaler y FSR INT8.</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">Permite ver y eliminar las versiones en caché de OptiScaler, FSR INT8, Fakenvapi, NukemFG y OptiPatcher, y gestionar la versión predeterminada de cada uno. Activar 'Usar siempre la última versión disponible como predeterminada' para OptiScaler bloquea la selección manual de versión en la ventana Gestionar Versiones Predeterminadas; desactívalo ahí para elegir una versión específica.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">Gestión de perfiles</x:String>
     <x:String x:Key="TxtHelpSetProfileText">Permite gestionar diferentes perfiles. Consulta la página 'Sistema de perfiles' para más información.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Fuentes de escaneo</x:String>
@@ -454,8 +468,6 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpSetGpuText">Elige qué GPU usar cuando se detectan varias en tu sistema.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">Escaneo automático al inicio</x:String>
     <x:String x:Key="TxtHelpSetAutoscanText">Busca juegos automáticamente cuando se inicia la aplicación.</x:String>
-    <x:String x:Key="TxtHelpSetBetaLabel">Preferir la última beta como predeterminada</x:String>
-    <x:String x:Key="TxtHelpSetBetaText">Cuando está activado, el cliente de OptiScaler preferirá descargar y usar las últimas versiones beta de los componentes cuando estén disponibles.</x:String>
     <x:String x:Key="TxtHelpSetAnimLabel">Activar animaciones</x:String>
     <x:String x:Key="TxtHelpSetAnimText">Cuando está activado, el cliente de OptiScaler mostrará animaciones y transiciones para una experiencia de usuario más pulida.</x:String>
     <x:String x:Key="TxtHelpSetSteamGridLabel">Clave API de SteamGridDB</x:String>
@@ -496,6 +508,29 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep1">Necesitas los últimos drivers MESA de AMD (versión 25.2.0 o superior).</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep2">Instala la última versión disponible de OptiScaler.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Se recomienda usar GE-Proton, que puede gestionarse desde Proton Plus o desde ProtonUp-Qt.</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrLabel">La app no se actualiza sola / dice que está gestionada por un gestor de paquetes</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrText">Si OptiScaler Client fue instalado mediante un gestor de paquetes (por ejemplo, AUR, Nix), las actualizaciones automáticas dentro de la app se desactivan para evitar conflictos. Actualiza la app desde tu gestor de paquetes (por ejemplo, 'yay -Syu' en Arch/AUR).</x:String>
+
+
+    <!-- Help - Gamepad -->
+    <x:String x:Key="TxtHelpGPTitle">Soporte de Mando y Control</x:String>
+    <x:String x:Key="TxtHelpGPIntroContent">OptiScaler Client permite navegación completa con mando: conecta uno y aparecerá un indicador de conexión en la cabecera de Juegos. Funciona en prácticamente todas las ventanas de la app, tanto en Windows (XInput) como en Linux, sin configuración necesaria.</x:String>
+    <x:String x:Key="TxtHelpGPMappingTitle">Mapeo de Botones</x:String>
+    <x:String x:Key="TxtHelpGPDpadLabel">Cruceta / Stick Izquierdo 🕹️</x:String>
+    <x:String x:Key="TxtHelpGPDpadText">Navega entre juegos, botones y elementos del menú.</x:String>
+    <x:String x:Key="TxtHelpGPALabel">Botón A ✅</x:String>
+    <x:String x:Key="TxtHelpGPAText">Confirma, selecciona un juego o abre sus acciones de Instalación Rápida / Administrar.</x:String>
+    <x:String x:Key="TxtHelpGPBLabel">Botón B ↩️</x:String>
+    <x:String x:Key="TxtHelpGPBText">Retrocede o cancela: cierra menús, diálogos y el modo de acción.</x:String>
+    <x:String x:Key="TxtHelpGPYLabel">Botón Y (modo Organizar) 👁️</x:String>
+    <x:String x:Key="TxtHelpGPYText">Mientras organizas tu biblioteca, alterna si el juego seleccionado está oculto.</x:String>
+    <x:String x:Key="TxtHelpGPRightStickLabel">Stick Derecho 📜</x:String>
+    <x:String x:Key="TxtHelpGPRightStickText">Desplaza suavemente la lista de juegos o el contenido de la página de Ayuda.</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorLabel">Indicador de Conexión 🔌</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorText">Un ícono de mando en la cabecera de Juegos muestra si hay un control conectado actualmente.</x:String>
+    <x:String x:Key="TxtHelpGPWindowsTitle">Ventanas Compatibles</x:String>
+    <x:String x:Key="TxtHelpGPWindowsContent">La navegación funciona en la ventana principal (Juegos, Perfiles, Ajustes, Ayuda), la ventana de Gestión de Juegos, Instalación Masiva, Gestionar Versiones Locales, Gestionar Versiones Predeterminadas, Gestionar Fuentes de Escaneo y los diálogos de confirmación.</x:String>
+
 
     <!-- Help - Profile Bullets -->
     <x:String x:Key="TxtHelpProfDefaultTitle">Perfil predeterminado</x:String>

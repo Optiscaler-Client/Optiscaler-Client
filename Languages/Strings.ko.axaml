@@ -322,6 +322,7 @@
     <x:String x:Key="TxtHelpPageProfiles">프로필 시스템</x:String>
     <x:String x:Key="TxtHelpPageSettings">설정 &amp; 구성</x:String>
     <x:String x:Key="TxtHelpPageBulkOperations">일괄 작업</x:String>
+    <x:String x:Key="TxtHelpPageGamepad">게임패드 지원</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; 문제 해결</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">면책 조항 ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">이것은 OptiScaler의 공식 프로젝트가 아닙니다. 저는 OptiScaler 팀과 아무런 관련이 없습니다. 이것은 상업적 목적 없이 개발된 개인 프로젝트입니다. 누구든지 자신의 책임 하에 이 소프트웨어를 사용할 수 있습니다.&#x0a;&#x0a;크레딧: OptiScaler 팀에 특별한 감사를 드립니다. 이 도구는 그들의 놀라운 원본 모드 작업 덕분에 가능합니다.</x:String>
@@ -372,19 +373,26 @@
     <x:String x:Key="TxtHelpMWQuickInstallLabel">빠른 설치 버튼 ✦</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallText">선택한 게임에 최적의 설정으로 OptiScaler를 빠르게 설치합니다.</x:String>
     <x:String x:Key="TxtHelpMWScanLabel">검색 버튼 🔍</x:String>
-    <x:String x:Key="TxtHelpMWScanText">Steam, Epic Games, GOG, EA, Ubisoft, Xbox, Battle.net의 게임을 자동으로 감지합니다. 스캔할 소스와 디스크를 선택할 수 있습니다.</x:String>
+    <x:String x:Key="TxtHelpMWScanText">Steam, Heroic, Epic Games, GOG, EA, Ubisoft, Xbox, Battle.net, Lutris(Linux 전용)에서 게임을 자동으로 감지합니다. 스캔할 소스와 디스크를 선택할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpMWAddManualLabel">수동 추가 버튼 ➕</x:String>
     <x:String x:Key="TxtHelpMWAddManualText">자동으로 감지되지 않은 게임을 수동으로 추가할 수 있습니다. 독립 실행형 게임이나 사용자 정의 설치에 유용합니다.</x:String>
     <x:String x:Key="TxtHelpMWBulkLabel">일괄 설치 ⚡</x:String>
     <x:String x:Key="TxtHelpMWBulkText">일괄 설치 창을 열어 여러 게임에 동시에 OptiScaler를 설치할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpMWSearchLabel">검색 &amp; 필터 🔍</x:String>
     <x:String x:Key="TxtHelpMWSearchText">검색 바를 사용하여 게임을 빠르게 찾습니다.</x:String>
+    <x:String x:Key="TxtHelpMWFiltersLabel">필터 🔽</x:String>
+    <x:String x:Key="TxtHelpMWFiltersText">필터 패널을 열어 라이브러리를 좁힐 수 있습니다: 업스케일러를 지원하지 않는 게임 숨기기, 설치된 게임만 표시, 또는 즐겨찾기만 표시. 이 필터는 저장되어 자동으로 다시 적용됩니다.</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesLabel">즐겨찾기 ★</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesText">게임 카드의 별 아이콘을 클릭하여 즐겨찾기로 표시하세요. '즐겨찾기만' 필터와 함께 사용하면 빠르게 찾을 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpMWViewLabel">그리드 &amp; 목록 보기 버튼 📊</x:String>
     <x:String x:Key="TxtHelpMWViewText">그리드와 목록 보기 모드 사이를 전환하여 게임 라이브러리를 원하는 대로 정리합니다.</x:String>
     <x:String x:Key="TxtHelpMWOrganizeLabel">게임 정리 ✏️</x:String>
     <x:String x:Key="TxtHelpMWOrganizeText">이 모드에서 게임 목록의 순서를 변경하고 표시/숨기기할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpGMTitle">개별 게임 관리</x:String>
     <x:String x:Key="TxtHelpGMContent">게임 관리 창은 특정 게임의 OptiScaler 설치 및 구성에 대한 완전한 제어를 제공합니다.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLabel">호환성 목록 📋</x:String>
+    <x:String x:Key="TxtHelpGMCompatText">각 게임을 최적으로 구성하려면 위키에 있는 OptiScaler 공식 호환성 목록을 확인하세요. 테스트된 게임과 권장 설정, 알려진 문제가 나열되어 있습니다.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLinkLabel">호환성 목록 보기 ↗</x:String>
     <x:String x:Key="TxtHelpGMInfoLabel">게임 정보 🎮</x:String>
     <x:String x:Key="TxtHelpGMInfoText">제목, 실행 파일 경로, 플랫폼 및 현재 OptiScaler 설치 상태 등 게임 세부 정보를 확인합니다.</x:String>
     <x:String x:Key="TxtHelpGMFolderLabel">폴더 열기 📁</x:String>
@@ -396,17 +404,23 @@
     <x:String x:Key="TxtHelpGMManualInstallLabel">수동 설치 ✦</x:String>
     <x:String x:Key="TxtHelpGMManualInstallText">게임의 실행 파일을 수동으로 선택할 수 있습니다. 자동 설치가 실패할 경우 권장합니다.</x:String>
     <x:String x:Key="TxtHelpGMUninstallLabel">제거 🗑️</x:String>
-    <x:String x:Key="TxtHelpGMUninstallText">게임에서 OptiScaler를 완전히 제거하고 백업에서 원본 파일과 구성을 복원합니다.</x:String>
+    <x:String x:Key="TxtHelpGMUninstallText">게임에서 OptiScaler를 완전히 제거하고 백업에서 원본 파일과 구성을 복원합니다. 게임 자체에 속할 수 있는 파일이 남아 있으면 검토 후 필요 시 폴더 정리를 사용하라는 메시지가 표시됩니다.</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupLabel">폴더 정리 🗁</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupText">게임 폴더에서 알려진 모든 OptiScaler 파일을 강제로 제거합니다. 재설치하기 전에 손상되거나 불완전한 설치를 초기화할 때 사용하세요. 게임 자체에 속할 수 있는 파일은 별도로 표시되어 제거 여부를 선택할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpGMProfileLabel">프로필 선택 🎯</x:String>
     <x:String x:Key="TxtHelpGMProfileText">미리 구성된 프로필에서 선택하거나 특정 게임이나 성능 요구에 맞춘 사용자 정의 프로필을 만듭니다.</x:String>
     <x:String x:Key="TxtHelpGMVersionLabel">OptiScaler 버전 📦</x:String>
     <x:String x:Key="TxtHelpGMVersionText">설치할 OptiScaler 버전을 선택합니다. 안정 릴리즈와 베타 빌드 사이를 전환할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiLabel">Fakenvapi &amp; NukemFG 📦</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiText">특정 게임과의 호환성을 향상시키는 선택적 구성 요소입니다. 이미 해당 파일을 포함하는 OptiScaler 베타에는 필요하지 않습니다.</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherLabel">OptiPatcher 🧩</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherText">지원되는 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 선택적 ASI 플러그인입니다. AMD 및 Intel 사용자가 D3D12 오류를 피하도록 도와주며 DXGI 스푸핑으로 인한 오버헤드나 충돌을 방지합니다.</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">주입 방법 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">OptiScaler가 게임 프로세스에 주입되는 방법을 선택합니다. 대부분의 경우 기본 옵션(dxgi.dll)으로 충분합니다.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
     <x:String x:Key="TxtHelpGMFsr4Text">비 RDNA 4 GPU를 위한 FSR 4의 INT 8 버전을 주입할 수 있는 선택기입니다.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsLabel">설치된 구성 요소 🧩</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">게임 폴더에서 감지된 업스케일러를 나열합니다. 실선 배지는 업스케일러가 게임에 기본 내장되어 있음을 의미하고, 흐릿한 윤곽선 배지는 OptiScaler가 추가한 것임을 의미합니다. 자세한 내용은 항목 위에 마우스를 올려 확인하세요.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -419,7 +433,7 @@
     <x:String x:Key="TxtHelpSetTitle">애플리케이션 설정</x:String>
     <x:String x:Key="TxtHelpSetContent">OptiScaler 클라이언트 동작, 스캔 소스, 메타데이터 서비스 및 고급 옵션을 구성합니다.</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">로컬 캐시 관리</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">OptiScaler 및 FSR INT8의 캐시된 버전을 보고 삭제할 수 있습니다.</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">OptiScaler, FSR INT8, Fakenvapi, NukemFG, OptiPatcher의 캐시된 버전을 보고 삭제할 수 있으며 각각의 기본 버전을 관리할 수 있습니다. OptiScaler에서 '항상 사용 가능한 최신 버전을 기본값으로 사용'을 활성화하면 기본 버전 관리 창에서 수동 버전 선택이 잠깁니다. 특정 버전을 선택하려면 그곳에서 비활성화하세요.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">프로필 관리</x:String>
     <x:String x:Key="TxtHelpSetProfileText">다양한 프로필을 관리할 수 있습니다. 자세한 내용은 '프로필 시스템' 페이지를 참조하세요.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">스캔 소스</x:String>
@@ -430,8 +444,6 @@
     <x:String x:Key="TxtHelpSetGpuText">시스템에서 여러 GPU가 감지될 때 사용할 GPU를 선택합니다.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">시작 시 자동 스캔</x:String>
     <x:String x:Key="TxtHelpSetAutoscanText">애플리케이션 시작 시 자동으로 게임을 검색합니다.</x:String>
-    <x:String x:Key="TxtHelpSetBetaLabel">최신 베타를 기본값으로 선호</x:String>
-    <x:String x:Key="TxtHelpSetBetaText">활성화하면 OptiScaler 클라이언트가 사용 가능한 경우 컴포넌트의 최신 베타 버전을 우선 다운로드하여 사용합니다.</x:String>
     <x:String x:Key="TxtHelpSetAnimLabel">애니메이션 활성화</x:String>
     <x:String x:Key="TxtHelpSetAnimText">활성화하면 OptiScaler 클라이언트가 더 세련된 사용자 경험을 위해 애니메이션과 전환을 표시합니다.</x:String>
     <x:String x:Key="TxtHelpSetSteamGridLabel">SteamGridDB API 키</x:String>
@@ -472,6 +484,29 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep1">최신 AMD MESA 드라이버(버전 25.2.0 이상)가 필요합니다.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep2">사용 가능한 최신 버전의 OptiScaler를 설치하세요.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Proton Plus 또는 ProtonUp-Qt를 통해 관리할 수 있는 GE-Proton 사용을 권장합니다.</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrLabel">앱이 자동으로 업데이트되지 않음 / 패키지 관리자가 관리한다고 표시됨</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrText">OptiScaler Client가 패키지 관리자(예: AUR, Nix)를 통해 설치된 경우, 충돌을 피하기 위해 앱 내 업데이트가 비활성화됩니다. 대신 패키지 관리자를 통해 앱을 업데이트하세요(예: Arch/AUR의 'yay -Syu').</x:String>
+
+
+    <!-- Help - Gamepad -->
+    <x:String x:Key="TxtHelpGPTitle">게임패드 및 컨트롤러 지원</x:String>
+    <x:String x:Key="TxtHelpGPIntroContent">OptiScaler Client는 게임패드를 통한 완전한 탐색을 지원합니다. 연결하면 게임 헤더에 연결 표시기가 나타납니다. Windows(XInput)와 Linux 모두에서 별도 설정 없이 거의 모든 창에서 작동합니다.</x:String>
+    <x:String x:Key="TxtHelpGPMappingTitle">버튼 매핑</x:String>
+    <x:String x:Key="TxtHelpGPDpadLabel">방향 패드 / 왼쪽 스틱 🕹️</x:String>
+    <x:String x:Key="TxtHelpGPDpadText">게임, 버튼, 메뉴 항목 간을 탐색합니다.</x:String>
+    <x:String x:Key="TxtHelpGPALabel">A 버튼 ✅</x:String>
+    <x:String x:Key="TxtHelpGPAText">확인, 게임 선택, 또는 빠른 설치 / 관리 작업을 엽니다.</x:String>
+    <x:String x:Key="TxtHelpGPBLabel">B 버튼 ↩️</x:String>
+    <x:String x:Key="TxtHelpGPBText">뒤로 가기 또는 취소 - 메뉴, 대화 상자, 작업 모드를 닫습니다.</x:String>
+    <x:String x:Key="TxtHelpGPYLabel">Y 버튼(정리 모드) 👁️</x:String>
+    <x:String x:Key="TxtHelpGPYText">라이브러리를 정리하는 동안 선택한 게임의 숨김 상태를 전환합니다.</x:String>
+    <x:String x:Key="TxtHelpGPRightStickLabel">오른쪽 스틱 📜</x:String>
+    <x:String x:Key="TxtHelpGPRightStickText">게임 목록이나 도움말 페이지 내용을 부드럽게 스크롤합니다.</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorLabel">연결 표시기 🔌</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorText">게임 헤더의 게임패드 아이콘은 현재 컨트롤러가 연결되어 있는지 여부를 표시합니다.</x:String>
+    <x:String x:Key="TxtHelpGPWindowsTitle">지원되는 창</x:String>
+    <x:String x:Key="TxtHelpGPWindowsContent">탐색은 메인 창(게임, 프로필, 설정, 도움말), 게임 관리 창, 일괄 설치, 로컬 버전 관리, 기본 버전 관리, 스캔 소스 관리, 확인 대화 상자에서 작동합니다.</x:String>
+
 
     <!-- Help - Profile Bullets -->
     <x:String x:Key="TxtHelpProfDefaultTitle">기본 프로필</x:String>

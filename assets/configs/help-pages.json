@@ -192,7 +192,7 @@
             {
               "label": "Scan Button 🔍",
               "labelKey": "TxtHelpMWScanLabel",
-              "text": "Automatically detects games from Steam, Epic Games, GOG, EA, Ubisoft, Xbox, and Battle.net. Here you can select which sources you want to scan and even which discs.",
+              "text": "Automatically detects games from Steam, Heroic, Epic Games, GOG, EA, Ubisoft, Xbox, Battle.net, and Lutris (Linux only). Here you can select which sources you want to scan and even which disks.",
               "textKey": "TxtHelpMWScanText"
             },
             {
@@ -212,6 +212,18 @@
               "labelKey": "TxtHelpMWSearchLabel",
               "text": "Quickly find games using the search bar.",
               "textKey": "TxtHelpMWSearchText"
+            },
+            {
+              "label": "Filters 🔽",
+              "labelKey": "TxtHelpMWFiltersLabel",
+              "text": "Open the Filters panel to narrow down your library: hide games without upscaler support, show only installed games, or show only favorites. These filters are saved and re-applied automatically.",
+              "textKey": "TxtHelpMWFiltersText"
+            },
+            {
+              "label": "Favorites ★",
+              "labelKey": "TxtHelpMWFavoritesLabel",
+              "text": "Click the star icon on any game card to mark it as a favorite. Combine with the 'Only Favorites' filter to find them quickly.",
+              "textKey": "TxtHelpMWFavoritesText"
             },
             {
               "label": "Grid & List mode buttons 📊",
@@ -250,6 +262,15 @@
           "type": "list",
           "items": [
             {
+              "label": "Compatibility List 📋",
+              "labelKey": "TxtHelpGMCompatLabel",
+              "text": "For the best per-game configuration, check OptiScaler's official compatibility list on the wiki. It lists tested games with recommended settings and known issues.",
+              "textKey": "TxtHelpGMCompatText",
+              "link": "https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List",
+              "linkLabel": "View Compatibility List ↗",
+              "linkLabelKey": "TxtHelpGMCompatLinkLabel"
+            },
+            {
               "label": "Game Information 🎮",
               "labelKey": "TxtHelpGMInfoLabel",
               "text": "View game details including title, executable path, platform, and current OptiScaler installation status.",
@@ -282,8 +303,14 @@
             {
               "label": "Uninstall 🗑️",
               "labelKey": "TxtHelpGMUninstallLabel",
-              "text": "Completely remove OptiScaler from the game, restoring original files and configurations from backup.",
+              "text": "Completely remove OptiScaler from the game, restoring original files and configurations from backup. If any files that might belong to the game itself are left behind, you'll be prompted to review them and use Folder Cleanup if needed.",
               "textKey": "TxtHelpGMUninstallText"
+            },
+            {
+              "label": "Folder Cleanup 🗁",
+              "labelKey": "TxtHelpGMFolderCleanupLabel",
+              "text": "Forcefully removes all known OptiScaler files from the game folder. Use this to reset a corrupted or incomplete installation before reinstalling. Files that could belong to the game itself are flagged separately so you can choose whether to remove them.",
+              "textKey": "TxtHelpGMFolderCleanupText"
             },
             {
               "label": "Profile Selection 🎯",
@@ -304,6 +331,12 @@
               "textKey": "TxtHelpGMFakeNvapiText"
             },
             {
+              "label": "OptiPatcher 🧩",
+              "labelKey": "TxtHelpGMOptiPatcherLabel",
+              "text": "Optional ASI plugin that exposes DLSS/DLSS-FG inputs without spoofing in supported games. Helps AMD and Intel users avoid D3D12 errors and prevents overhead or crashes caused by DXGI spoofing.",
+              "textKey": "TxtHelpGMOptiPatcherText"
+            },
+            {
               "label": "Injection method 🚀",
               "labelKey": "TxtHelpGMInjectionLabel",
               "text": "Choose how OptiScaler injects into the game process. For most cases, the default option (dxgi.dll) is sufficient, but if optiscaler is not detected correctly, feel free to try others.",
@@ -314,6 +347,12 @@
               "labelKey": "TxtHelpGMFsr4Label",
               "text": "Selector that allows injecting the INT 8 version of FSR 4 for non RDNA 4 GPUs.",
               "textKey": "TxtHelpGMFsr4Text"
+            },
+            {
+              "label": "Installed Components 🧩",
+              "labelKey": "TxtHelpGMComponentsLabel",
+              "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. Hover over any entry for details.",
+              "textKey": "TxtHelpGMComponentsText"
             }
           ]
         }
@@ -424,7 +463,7 @@
             {
               "label": "Local Cache Management",
               "labelKey": "TxtHelpSetCacheLabel",
-              "text": "Allows you to view and delete cached versions of OptiScaler and FSR INT8.",
+              "text": "Allows you to view and delete cached versions of OptiScaler, FSR INT8, Fakenvapi, NukemFG, and OptiPatcher, and manage the default version used for each. Enabling 'Always use latest available version as default' for OptiScaler locks manual version selection in the Manage Default Versions window - turn it off there to pick a specific version instead.",
               "textKey": "TxtHelpSetCacheText"
             },
             {
@@ -456,12 +495,6 @@
               "labelKey": "TxtHelpSetAutoscanLabel",
               "text": "Automatically scan for games when the application starts.",
               "textKey": "TxtHelpSetAutoscanText"
-            },
-            {
-              "label": "Prefer latest beta as default",
-              "labelKey": "TxtHelpSetBetaLabel",
-              "text": "When enabled, OptiScaler Client will prefer to download and use the latest beta versions of components when available.",
-              "textKey": "TxtHelpSetBetaText"
             },
             {
               "label": "Enable animations",
@@ -524,6 +557,75 @@
               "textKey": "TxtHelpBulkErrorText"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "gamepad",
+      "title": "Gamepad Support",
+      "titleKey": "TxtHelpPageGamepad",
+      "icon": "",
+      "category": "Guides",
+      "categoryKey": "TxtHelpCategoryGuides",
+      "fontSize": 14,
+      "sections": [
+        {
+          "type": "text",
+          "title": "Gamepad & Controller Support",
+          "titleKey": "TxtHelpGPTitle",
+          "fontSize": 16,
+          "content": "OptiScaler Client supports full navigation with a gamepad - plug one in and a connection indicator appears in the Games header. It works across virtually every window in the app, on both Windows (XInput) and Linux, with no setup required.",
+          "contentKey": "TxtHelpGPIntroContent"
+        },
+        {
+          "type": "list",
+          "title": "Button Mapping",
+          "titleKey": "TxtHelpGPMappingTitle",
+          "items": [
+            {
+              "label": "D-Pad / Left Stick 🕹️",
+              "labelKey": "TxtHelpGPDpadLabel",
+              "text": "Navigate between games, buttons, and menu items.",
+              "textKey": "TxtHelpGPDpadText"
+            },
+            {
+              "label": "A Button ✅",
+              "labelKey": "TxtHelpGPALabel",
+              "text": "Confirm, select a game, or open its Quick Install / Manage actions.",
+              "textKey": "TxtHelpGPAText"
+            },
+            {
+              "label": "B Button ↩️",
+              "labelKey": "TxtHelpGPBLabel",
+              "text": "Go back or cancel - closes menus, dialogs, and action mode.",
+              "textKey": "TxtHelpGPBText"
+            },
+            {
+              "label": "Y Button (Organize mode) 👁️",
+              "labelKey": "TxtHelpGPYLabel",
+              "text": "While organizing your library, toggles whether the selected game is hidden.",
+              "textKey": "TxtHelpGPYText"
+            },
+            {
+              "label": "Right Stick 📜",
+              "labelKey": "TxtHelpGPRightStickLabel",
+              "text": "Smoothly scrolls the game list or the Help page content.",
+              "textKey": "TxtHelpGPRightStickText"
+            },
+            {
+              "label": "Connection Indicator 🔌",
+              "labelKey": "TxtHelpGPIndicatorLabel",
+              "text": "A gamepad icon in the Games header shows whether a controller is currently connected.",
+              "textKey": "TxtHelpGPIndicatorText"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Supported Windows",
+          "titleKey": "TxtHelpGPWindowsTitle",
+          "content": "Navigation works in the main window (Games, Profiles, Settings, Help), the Game Management window, Bulk Install, Manage Local Versions, Manage Default Versions, Manage Scan Sources, and confirmation dialogs.",
+          "contentKey": "TxtHelpGPWindowsContent"
         }
       ]
     },
@@ -644,6 +746,12 @@
                   "type": "bullet-point"
                 }
               ]
+            },
+            {
+              "label": "The app won't update itself / says it's managed by a package manager",
+              "labelKey": "TxtHelpFaqPkgMgrLabel",
+              "text": "If OptiScaler Client was installed via a package manager (e.g. AUR, Nix), in-app self-updates are disabled to avoid conflicting with it. Update the app through your package manager instead (e.g. 'yay -Syu' on Arch/AUR).",
+              "textKey": "TxtHelpFaqPkgMgrText"
             }
           ]
         }

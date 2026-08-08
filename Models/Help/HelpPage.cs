@@ -92,6 +92,12 @@ namespace OptiscalerClient.Models.Help
         [JsonPropertyName("link")]
         public string? Link { get; set; }
 
+        [JsonPropertyName("linkLabel")]
+        public string? LinkLabel { get; set; }
+
+        [JsonPropertyName("linkLabelKey")]
+        public string? LinkLabelKey { get; set; }
+
         [JsonPropertyName("type")]
         public string? Type { get; set; }
 

@@ -322,6 +322,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpPageProfiles">Profielsysteem</x:String>
     <x:String x:Key="TxtHelpPageSettings">Instellingen &amp; Configuratie</x:String>
     <x:String x:Key="TxtHelpPageBulkOperations">Bulkbewerkingen</x:String>
+    <x:String x:Key="TxtHelpPageGamepad">Gamepad-ondersteuning</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Probleemoplossing</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Disclaimer ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">Dit is geen officieel OptiScaler-project. Ik heb geen enkele band met het OptiScaler-team. Dit is een persoonlijk project dat zonder commercieel doel is ontwikkeld. Iedereen is vrij om deze software op eigen risico te proberen en te gebruiken.&#x0a;&#x0a;Credits: Een speciale dank aan het OptiScaler-team; dit hulpmiddel is alleen mogelijk dankzij hun ongelooflijke werk aan de originele mod.</x:String>
@@ -372,19 +373,26 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Knop Snelinstallatie ✦</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallText">Installeert OptiScaler snel met optimale instellingen voor de geselecteerde game.</x:String>
     <x:String x:Key="TxtHelpMWScanLabel">Knop Scannen 🔍</x:String>
-    <x:String x:Key="TxtHelpMWScanText">Detecteert automatisch games van Steam, Epic Games, GOG, EA, Ubisoft, Xbox en Battle.net. Selecteer te scannen bronnen en schijven.</x:String>
+    <x:String x:Key="TxtHelpMWScanText">Detecteert automatisch games van Steam, Heroic, Epic Games, GOG, EA, Ubisoft, Xbox, Battle.net en Lutris (alleen Linux). Selecteer te scannen bronnen en schijven.</x:String>
     <x:String x:Key="TxtHelpMWAddManualLabel">Knop Handmatig toevoegen ➕</x:String>
     <x:String x:Key="TxtHelpMWAddManualText">Voeg handmatig games toe die niet automatisch zijn gedetecteerd. Handig voor standalone games of aangepaste installaties.</x:String>
     <x:String x:Key="TxtHelpMWBulkLabel">Bulkinstallatie ⚡</x:String>
     <x:String x:Key="TxtHelpMWBulkText">Opent het bulkinstallatievenster om OptiScaler op meerdere games tegelijk te installeren.</x:String>
     <x:String x:Key="TxtHelpMWSearchLabel">Zoeken &amp; Filteren 🔍</x:String>
     <x:String x:Key="TxtHelpMWSearchText">Vind games snel met de zoekbalk.</x:String>
+    <x:String x:Key="TxtHelpMWFiltersLabel">Filters 🔽</x:String>
+    <x:String x:Key="TxtHelpMWFiltersText">Open het filterpaneel om je bibliotheek te verfijnen: verberg games zonder upscaler-ondersteuning, toon alleen geïnstalleerde games of toon alleen favorieten. Deze filters worden opgeslagen en automatisch opnieuw toegepast.</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesLabel">Favorieten ★</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesText">Klik op het ster-icoon van een game om deze als favoriet te markeren. Combineer met het filter 'Alleen favorieten' om ze snel terug te vinden.</x:String>
     <x:String x:Key="TxtHelpMWViewLabel">Raster- &amp; lijstmodus 📊</x:String>
     <x:String x:Key="TxtHelpMWViewText">Schakel tussen raster- en lijstweergave om uw bibliotheek naar wens te ordenen.</x:String>
     <x:String x:Key="TxtHelpMWOrganizeLabel">Games organiseren ✏️</x:String>
     <x:String x:Key="TxtHelpMWOrganizeText">In deze modus kunt u games in de lijst herordenen en tonen/verbergen.</x:String>
     <x:String x:Key="TxtHelpGMTitle">Individuele games beheren</x:String>
     <x:String x:Key="TxtHelpGMContent">Het gamebeheervenster biedt volledige controle over de OptiScaler-installatie en -configuratie voor een specifieke game.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLabel">Compatibiliteitslijst 📋</x:String>
+    <x:String x:Key="TxtHelpGMCompatText">Voor de beste configuratie per game, bekijk de officiële compatibiliteitslijst van OptiScaler op de wiki. Deze bevat geteste games met aanbevolen instellingen en bekende problemen.</x:String>
+    <x:String x:Key="TxtHelpGMCompatLinkLabel">Compatibiliteitslijst bekijken ↗</x:String>
     <x:String x:Key="TxtHelpGMInfoLabel">Game-informatie 🎮</x:String>
     <x:String x:Key="TxtHelpGMInfoText">Bekijk gamedetails inclusief titel, pad naar uitvoerbaar bestand, platform en huidige OptiScaler-installatiestatus.</x:String>
     <x:String x:Key="TxtHelpGMFolderLabel">Map openen 📁</x:String>
@@ -396,17 +404,23 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpGMManualInstallLabel">Handmatig installeren ✦</x:String>
     <x:String x:Key="TxtHelpGMManualInstallText">Selecteer handmatig het uitvoerbare bestand. Aanbevolen als de automatische installatie mislukt.</x:String>
     <x:String x:Key="TxtHelpGMUninstallLabel">Verwijderen 🗑️</x:String>
-    <x:String x:Key="TxtHelpGMUninstallText">Verwijdert OptiScaler volledig uit de game en herstelt originele bestanden vanuit de back-up.</x:String>
+    <x:String x:Key="TxtHelpGMUninstallText">Verwijdert OptiScaler volledig uit de game en herstelt originele bestanden vanuit de back-up. Als er bestanden overblijven die mogelijk bij de game zelf horen, wordt u gevraagd deze te controleren en indien nodig Mapopschoning te gebruiken.</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupLabel">Mapopschoning 🗁</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupText">Verwijdert geforceerd alle bekende OptiScaler-bestanden uit de gamemap. Gebruik dit om een beschadigde of onvolledige installatie te herstellen vóór herinstallatie. Bestanden die mogelijk bij de game zelf horen, worden apart gemarkeerd zodat u kunt kiezen of u ze verwijdert.</x:String>
     <x:String x:Key="TxtHelpGMProfileLabel">Profielselectie 🎯</x:String>
     <x:String x:Key="TxtHelpGMProfileText">Kies uit voorgeconfigureerde profielen of maak aangepaste profielen voor specifieke games of prestatiebehoeften.</x:String>
     <x:String x:Key="TxtHelpGMVersionLabel">OptiScaler-versie 📦</x:String>
     <x:String x:Key="TxtHelpGMVersionText">Selecteer welke versie van OptiScaler u wilt installeren. Schakel tussen stabiele releases en bèta-builds.</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiLabel">Fakenvapi &amp; NukemFG 📦</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiText">Optionele componenten voor verbeterde compatibiliteit. Niet vereist voor bèta's van OptiScaler die deze bestanden al bevatten.</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherLabel">OptiPatcher 🧩</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherText">Optionele ASI-plugin die DLSS/DLSS-FG-invoer blootlegt zonder spoofing in ondersteunde games. Helpt AMD- en Intel-gebruikers D3D12-fouten te vermijden en voorkomt overhead of crashes door DXGI-spoofing.</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">Injectiemethode 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">Kies hoe OptiScaler in het gameproces wordt geïnjecteerd. De standaardoptie (dxgi.dll) volstaat in de meeste gevallen.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
     <x:String x:Key="TxtHelpGMFsr4Text">Selector voor het injecteren van de INT 8-versie van FSR 4 voor niet-RDNA 4-GPU's.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsLabel">Geïnstalleerde componenten 🧩</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Toont de upscalers die in de gamemap zijn gedetecteerd. Een volle badge betekent dat de upscaler nativief bij de game hoort; een dovere, omlijnde badge betekent dat deze door OptiScaler is toegevoegd. Beweeg de muis over een item voor details.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -419,7 +433,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpSetTitle">Applicatie-instellingen</x:String>
     <x:String x:Key="TxtHelpSetContent">Configureer het gedrag van de OptiScaler-client, scanbronnen, metadataservices en geavanceerde opties.</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">Lokaal cachebeheer</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">Hiermee kunt u gecachte versies van OptiScaler en FSR INT8 bekijken en verwijderen.</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">Hiermee kunt u gecachte versies van OptiScaler, FSR INT8, Fakenvapi, NukemFG en OptiPatcher bekijken en verwijderen, en de standaardversie van elk beheren. Het inschakelen van 'Altijd de nieuwste beschikbare versie als standaard gebruiken' voor OptiScaler vergrendelt de handmatige versiekeuze in het venster Standaardversies beheren - schakel het daar uit om een specifieke versie te kiezen.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">Profielbeheer</x:String>
     <x:String x:Key="TxtHelpSetProfileText">Hiermee kunt u verschillende profielen beheren. Zie de pagina 'Profielsysteem' voor meer informatie.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Scanbronnen</x:String>
@@ -430,8 +444,6 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpSetGpuText">Kies welke GPU u wilt gebruiken wanneer meerdere GPU's worden gedetecteerd.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">Automatisch scannen bij opstarten</x:String>
     <x:String x:Key="TxtHelpSetAutoscanText">Zoekt automatisch naar games wanneer de applicatie start.</x:String>
-    <x:String x:Key="TxtHelpSetBetaLabel">Nieuwste bèta als standaard gebruiken</x:String>
-    <x:String x:Key="TxtHelpSetBetaText">Indien ingeschakeld, geeft de OptiScaler-client de voorkeur aan de nieuwste bètaversies van componenten wanneer beschikbaar.</x:String>
     <x:String x:Key="TxtHelpSetAnimLabel">Animaties inschakelen</x:String>
     <x:String x:Key="TxtHelpSetAnimText">Indien ingeschakeld, toont de OptiScaler-client animaties en overgangen voor een verfijndere gebruikerservaring.</x:String>
     <x:String x:Key="TxtHelpSetSteamGridLabel">SteamGridDB API-sleutel</x:String>
@@ -472,6 +484,29 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep1">U hebt de nieuwste AMD MESA-stuurprogramma's nodig (versie 25.2.0 of nieuwer).</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep2">Installeer de nieuwste beschikbare versie van OptiScaler.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Het wordt aanbevolen om GE-Proton te gebruiken, dat beheerd kan worden via Proton Plus of ProtonUp-Qt.</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrLabel">De app werkt zichzelf niet bij / zegt beheerd te worden door een pakketbeheerder</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrText">Als OptiScaler Client via een pakketbeheerder is geïnstalleerd (bijv. AUR, Nix), zijn updates binnen de app uitgeschakeld om conflicten te voorkomen. Werk de app in plaats daarvan bij via uw pakketbeheerder (bijv. 'yay -Syu' op Arch/AUR).</x:String>
+
+
+    <!-- Help - Gamepad -->
+    <x:String x:Key="TxtHelpGPTitle">Gamepad- en controllerondersteuning</x:String>
+    <x:String x:Key="TxtHelpGPIntroContent">OptiScaler Client ondersteunt volledige navigatie met een gamepad - sluit er een aan en er verschijnt een verbindingsindicator in de Games-header. Het werkt in vrijwel elk venster van de app, zowel op Windows (XInput) als Linux, zonder configuratie.</x:String>
+    <x:String x:Key="TxtHelpGPMappingTitle">Knoptoewijzing</x:String>
+    <x:String x:Key="TxtHelpGPDpadLabel">D-Pad / Linker stick 🕹️</x:String>
+    <x:String x:Key="TxtHelpGPDpadText">Navigeer tussen games, knoppen en menu-items.</x:String>
+    <x:String x:Key="TxtHelpGPALabel">A-knop ✅</x:String>
+    <x:String x:Key="TxtHelpGPAText">Bevestigt, selecteert een game of opent de acties Snel installeren / Beheren.</x:String>
+    <x:String x:Key="TxtHelpGPBLabel">B-knop ↩️</x:String>
+    <x:String x:Key="TxtHelpGPBText">Ga terug of annuleer - sluit menu's, dialogen en de actiemodus.</x:String>
+    <x:String x:Key="TxtHelpGPYLabel">Y-knop (Organiseer-modus) 👁️</x:String>
+    <x:String x:Key="TxtHelpGPYText">Tijdens het organiseren van uw bibliotheek schakelt dit of de geselecteerde game verborgen is.</x:String>
+    <x:String x:Key="TxtHelpGPRightStickLabel">Rechter stick 📜</x:String>
+    <x:String x:Key="TxtHelpGPRightStickText">Scrollt soepel door de gamelijst of de inhoud van de Help-pagina.</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorLabel">Verbindingsindicator 🔌</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorText">Een gamepad-icoon in de Games-header toont of er momenteel een controller is aangesloten.</x:String>
+    <x:String x:Key="TxtHelpGPWindowsTitle">Ondersteunde vensters</x:String>
+    <x:String x:Key="TxtHelpGPWindowsContent">Navigatie werkt in het hoofdvenster (Games, Profielen, Instellingen, Help), het venster Spelbeheer, Bulkinstallatie, Lokale versies beheren, Standaardversies beheren, Scanbronnen beheren en bevestigingsdialogen.</x:String>
+
 
     <!-- Help - Profile Bullets -->
     <x:String x:Key="TxtHelpProfDefaultTitle">Standaardprofiel</x:String>

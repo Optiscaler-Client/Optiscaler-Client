@@ -322,6 +322,7 @@
     <x:String x:Key="TxtHelpPageProfiles">設定檔系統</x:String>
     <x:String x:Key="TxtHelpPageSettings">設定 &amp; 配置</x:String>
     <x:String x:Key="TxtHelpPageBulkOperations">批次操作</x:String>
+    <x:String x:Key="TxtHelpPageGamepad">手把支援</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">常見問題 &amp; 疑難排解</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免責聲明 ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">這不是 OptiScaler 的官方專案。我與 OptiScaler 團隊沒有任何關聯。這是一個沒有任何商業目的的個人專案。任何人均可自行承擔風險使用本軟體。&#x0a;&#x0a;致謝：特別感謝 OptiScaler 團隊；本工具的實現完全得益於他們在原版模組上的卓越工作。</x:String>
@@ -372,19 +373,26 @@
     <x:String x:Key="TxtHelpMWQuickInstallLabel">快速安裝按鈕 ✦</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallText">以最優設定為選定遊戲快速安裝 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWScanLabel">掃描按鈕 🔍</x:String>
-    <x:String x:Key="TxtHelpMWScanText">自動偵測 Steam、Epic Games、GOG、EA、Ubisoft、Xbox 和 Battle.net 中的遊戲。可選擇掃描的來源和磁碟。</x:String>
+    <x:String x:Key="TxtHelpMWScanText">自動偵測 Steam、Heroic、Epic Games、GOG、EA、Ubisoft、Xbox、Battle.net 和 Lutris（僅限 Linux）中的遊戲。可選擇掃描的來源和磁碟。</x:String>
     <x:String x:Key="TxtHelpMWAddManualLabel">手動新增按鈕 ➕</x:String>
     <x:String x:Key="TxtHelpMWAddManualText">允許手動新增未被自動偵測到的遊戲，適用於獨立遊戲或自訂安裝。</x:String>
     <x:String x:Key="TxtHelpMWBulkLabel">批次安裝 ⚡</x:String>
     <x:String x:Key="TxtHelpMWBulkText">開啟批次安裝視窗，可同時為多個遊戲安裝 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWSearchLabel">搜尋 &amp; 篩選 🔍</x:String>
     <x:String x:Key="TxtHelpMWSearchText">使用搜尋列快速尋找遊戲。</x:String>
+    <x:String x:Key="TxtHelpMWFiltersLabel">篩選 🔽</x:String>
+    <x:String x:Key="TxtHelpMWFiltersText">開啟篩選面板以縮小遊戲庫範圍：隱藏不支援放大技術的遊戲、僅顯示已安裝的遊戲或僅顯示最愛。這些篩選條件會被儲存並自動重新套用。</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesLabel">最愛 ★</x:String>
+    <x:String x:Key="TxtHelpMWFavoritesText">點擊任何遊戲卡片上的星形圖示將其標記為最愛。搭配「僅顯示最愛」篩選器可快速找到它們。</x:String>
     <x:String x:Key="TxtHelpMWViewLabel">格狀 &amp; 清單模式按鈕 📊</x:String>
     <x:String x:Key="TxtHelpMWViewText">在格狀和清單檢視模式之間切換，按喜好整理遊戲庫。</x:String>
     <x:String x:Key="TxtHelpMWOrganizeLabel">整理遊戲 ✏️</x:String>
     <x:String x:Key="TxtHelpMWOrganizeText">在此模式下可以重新排序並顯示/隱藏遊戲清單中的遊戲。</x:String>
     <x:String x:Key="TxtHelpGMTitle">管理個別遊戲</x:String>
     <x:String x:Key="TxtHelpGMContent">遊戲管理視窗提供對特定遊戲的 OptiScaler 安裝和設定的完全控制。</x:String>
+    <x:String x:Key="TxtHelpGMCompatLabel">相容性清單 📋</x:String>
+    <x:String x:Key="TxtHelpGMCompatText">為了以最佳方式設定每款遊戲，請查看 OptiScaler 在 wiki 上的官方相容性清單。其中列出了已測試的遊戲及建議設定和已知問題。</x:String>
+    <x:String x:Key="TxtHelpGMCompatLinkLabel">查看相容性清單 ↗</x:String>
     <x:String x:Key="TxtHelpGMInfoLabel">遊戲資訊 🎮</x:String>
     <x:String x:Key="TxtHelpGMInfoText">檢視遊戲詳細資訊，包括標題、可執行檔路徑、平台和目前 OptiScaler 安裝狀態。</x:String>
     <x:String x:Key="TxtHelpGMFolderLabel">開啟資料夾 📁</x:String>
@@ -396,17 +404,23 @@
     <x:String x:Key="TxtHelpGMManualInstallLabel">手動安裝 ✦</x:String>
     <x:String x:Key="TxtHelpGMManualInstallText">允許手動選擇遊戲的可執行檔。如果自動安裝失敗，建議使用此選項。</x:String>
     <x:String x:Key="TxtHelpGMUninstallLabel">解除安裝 🗑️</x:String>
-    <x:String x:Key="TxtHelpGMUninstallText">從遊戲中完全移除 OptiScaler，從備份還原原始檔案和設定。</x:String>
+    <x:String x:Key="TxtHelpGMUninstallText">從遊戲中完全移除 OptiScaler，從備份還原原始檔案和設定。如果留有可能屬於遊戲本身的檔案，系統會提示您檢查並在需要時使用資料夾清理。</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupLabel">資料夾清理 🗁</x:String>
+    <x:String x:Key="TxtHelpGMFolderCleanupText">強制刪除遊戲資料夾中所有已知的 OptiScaler 檔案。用於在重新安裝前重設損壞或不完整的安裝。可能屬於遊戲本身的檔案會單獨標記，以便您選擇是否刪除。</x:String>
     <x:String x:Key="TxtHelpGMProfileLabel">設定檔選擇 🎯</x:String>
     <x:String x:Key="TxtHelpGMProfileText">從預設定檔中選擇，或建立針對特定遊戲或效能需求的自訂設定檔。</x:String>
     <x:String x:Key="TxtHelpGMVersionLabel">OptiScaler 版本 📦</x:String>
     <x:String x:Key="TxtHelpGMVersionText">選擇要安裝的 OptiScaler 版本，可在穩定版和測試版之間切換。</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiLabel">Fakenvapi &amp; NukemFG 📦</x:String>
     <x:String x:Key="TxtHelpGMFakeNvapiText">增強某些遊戲相容性的可選元件。已包含這些檔案的 OptiScaler 測試版不需要此選項。</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherLabel">OptiPatcher 🧩</x:String>
+    <x:String x:Key="TxtHelpGMOptiPatcherText">可選的 ASI 外掛，可在支援的遊戲中不進行欺騙即可公開 DLSS/DLSS-FG 輸入。協助 AMD 和 Intel 使用者避免 D3D12 錯誤，並防止因 DXGI 欺騙導致的額外負擔或當機。</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">注入方法 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">選擇 OptiScaler 注入遊戲程序的方式。大多數情況下預設選項 (dxgi.dll) 即可。</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
     <x:String x:Key="TxtHelpGMFsr4Text">允許為非 RDNA 4 GPU 注入 FSR 4 INT 8 版本的選擇器。</x:String>
+    <x:String x:Key="TxtHelpGMComponentsLabel">已安裝的元件 🧩</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">列出在遊戲資料夾中偵測到的放大技術。實心徽章表示該放大技術是遊戲原生的；較淡且帶外框的徽章表示它是由 OptiScaler 新增的。將滑鼠停留在項目上查看詳情。</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -419,7 +433,7 @@
     <x:String x:Key="TxtHelpSetTitle">應用程式設定</x:String>
     <x:String x:Key="TxtHelpSetContent">設定 OptiScaler 用戶端行為、掃描來源、中繼資料服務和進階選項。</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">本機快取管理</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">允許檢視和刪除 OptiScaler 和 FSR INT8 的快取版本。</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">允許檢視和刪除 OptiScaler、FSR INT8、Fakenvapi、NukemFG 和 OptiPatcher 的快取版本，並管理每個元件的預設版本。為 OptiScaler 啟用「一律使用最新可用版本作為預設版本」會鎖定「管理預設版本」視窗中的手動版本選擇——在那裡關閉它即可選擇特定版本。</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">設定檔管理</x:String>
     <x:String x:Key="TxtHelpSetProfileText">允許管理不同的設定檔。更多資訊請參閱「設定檔系統」頁面。</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">掃描來源</x:String>
@@ -430,8 +444,6 @@
     <x:String x:Key="TxtHelpSetGpuText">當系統中偵測到多個 GPU 時，選擇使用哪個 GPU。</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">啟動時自動掃描</x:String>
     <x:String x:Key="TxtHelpSetAutoscanText">應用程式啟動時自動掃描遊戲。</x:String>
-    <x:String x:Key="TxtHelpSetBetaLabel">預設優先使用最新測試版</x:String>
-    <x:String x:Key="TxtHelpSetBetaText">啟用後，OptiScaler 用戶端將在可用時優先下載和使用元件的最新測試版。</x:String>
     <x:String x:Key="TxtHelpSetAnimLabel">啟用動畫</x:String>
     <x:String x:Key="TxtHelpSetAnimText">啟用後，OptiScaler 用戶端將顯示動畫和過渡效果，提供更精緻的使用者體驗。</x:String>
     <x:String x:Key="TxtHelpSetSteamGridLabel">SteamGridDB API 金鑰</x:String>
@@ -471,6 +483,30 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep1">您需要最新版本的 AMD MESA 馨動程式（25.2.0 或更高版本）。</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep2">安裝最新版本的 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">建議使用 GE-Proton，可透過 Proton Plus 或 ProtonUp-Qt 進行管理。</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrLabel">應用程式無法自動更新／顯示由套件管理員管理</x:String>
+    <x:String x:Key="TxtHelpFaqPkgMgrText">如果 OptiScaler Client 是透過套件管理員（例如 AUR、Nix）安裝的，應用程式內更新會被停用以避免衝突。請改用您的套件管理員更新應用程式（例如在 Arch/AUR 上使用 'yay -Syu'）。</x:String>
+
+
+    <!-- Help - Gamepad -->
+    <x:String x:Key="TxtHelpGPTitle">手把與控制器支援</x:String>
+    <x:String x:Key="TxtHelpGPIntroContent">OptiScaler Client 支援使用手把進行完整導覽——插入手把後，遊戲頁首會出現連線指示器。它幾乎適用於應用程式的所有視窗，在 Windows（XInput）和 Linux 上皆可使用，無需任何設定。</x:String>
+    <x:String x:Key="TxtHelpGPMappingTitle">按鍵對應</x:String>
+    <x:String x:Key="TxtHelpGPDpadLabel">方向鍵 / 左搖桿 🕹️</x:String>
+    <x:String x:Key="TxtHelpGPDpadText">在遊戲、按鈕和選單項目之間導覽。</x:String>
+    <x:String x:Key="TxtHelpGPALabel">A 鍵 ✅</x:String>
+    <x:String x:Key="TxtHelpGPAText">確認、選擇遊戲，或開啟其快速安裝／管理操作。</x:String>
+    <x:String x:Key="TxtHelpGPBLabel">B 鍵 ↩️</x:String>
+    <x:String x:Key="TxtHelpGPBText">返回或取消——關閉選單、對話方塊和操作模式。</x:String>
+    <x:String x:Key="TxtHelpGPYLabel">Y 鍵（整理模式） 👁️</x:String>
+    <x:String x:Key="TxtHelpGPYText">整理遊戲庫時，切換所選遊戲是否隱藏。</x:String>
+    <x:String x:Key="TxtHelpGPRightStickLabel">右搖桿 📜</x:String>
+    <x:String x:Key="TxtHelpGPRightStickText">平滑捲動遊戲清單或說明頁面內容。</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorLabel">連線指示器 🔌</x:String>
+    <x:String x:Key="TxtHelpGPIndicatorText">遊戲頁首的手把圖示顯示目前是否有控制器已連線。</x:String>
+    <x:String x:Key="TxtHelpGPWindowsTitle">支援的視窗</x:String>
+    <x:String x:Key="TxtHelpGPWindowsContent">導覽功能適用於主視窗（遊戲、設定檔、設定、說明）、遊戲管理視窗、批次安裝、管理本機版本、管理預設版本、管理掃描來源以及確認對話方塊。</x:String>
+
+
     <!-- Help - Profile Bullets -->
     <x:String x:Key="TxtHelpProfDefaultTitle">預設配置檔</x:String>
     <x:String x:Key="TxtHelpProfDefaultText">設定在管理遊戲或使用快速安裝時預設選取的配置檔。</x:String>
