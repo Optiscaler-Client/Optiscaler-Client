@@ -4,6 +4,7 @@
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-yellow.svg?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-E95420?style=flat-square&logo=linux)](https://www.linux.org)
+[![ko-fi](https://img.shields.io/badge/Ko--fi-Support%20this%20project-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/agustinm28)
 
 > **⚠️ Disclaimer:** This is **not** an official OptiScaler project. I am not affiliated with the OptiScaler team. This is a personal project developed without any commercial purpose. Anyone is free to try and use this software at their own risk.
 
@@ -226,5 +227,6 @@ This client application is merely a frontend interface to help users more easily
 ---
 
 <p align="center">
-  Developed with ❤️
+  Developed with ❤️<br/>
+  If this project saved you some time, consider <a href="https://ko-fi.com/agustinm28">buying me a coffee ☕</a> — totally optional, no strings attached.
 </p>
