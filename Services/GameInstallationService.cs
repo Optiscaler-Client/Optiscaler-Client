@@ -707,6 +707,24 @@ namespace OptiscalerClient.Services
                     catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to delete '{installedFile}': {ex.Message}"); }
                 }
 
+                // Step 1b: Unconditionally remove known OptiScaler files not tracked in the manifest
+                // (e.g. the FSR4 INT8 Extras DLL and OptiPatcher.asi, which are installed through
+                // separate flows outside InstallOptiScaler's manifest tracking). Mirrors Step 3b below,
+                // which does the same thing for known directories.
+                foreach (var artifact in KnownOptiscalerArtifacts)
+                {
+                    var artifactPath = Path.Combine(gameDir, artifact);
+                    try
+                    {
+                        if (File.Exists(artifactPath))
+                        {
+                            File.Delete(artifactPath);
+                            DebugWindow.Log($"[Uninstall] Removed known OptiScaler file not tracked in manifest: {artifact}");
+                        }
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to remove known file '{artifact}': {ex.Message}"); }
+                }
+
                 // Step 2: Restore overwritten files from backup (external store or legacy folder).
                 // If v2 tracking is unavailable, fall back to legacy BackedUpFiles list.
                 if (manifest.FilesOverwritten.Count > 0)
@@ -1757,6 +1775,29 @@ namespace OptiscalerClient.Services
 
             // Return original path if no special structure detected
             return baseDir;
+        }
+
+        /// <summary>
+        /// Forces OptiScaler to use the FSR4 INT8 software fallback on GPUs that lack native FP8 hardware.
+        /// RDNA4 (Radeon RX 9000) gets FSR4 automatically with the default Fsr4ForceModel=0 (no override),
+        /// but every other GPU needs Fsr4ForceModel=2 set explicitly — otherwise OptiScaler silently falls
+        /// back to FSR3 and the injected FSR4 INT8 DLL never activates (it won't even show up in-game).
+        /// AMD's own amdxcffx64.dll (the official 4.1.1+ driver build) additionally does its own internal
+        /// GPU validation and only whitelists RDNA4/RDNA3-desktop for INT8 — Fsr4ForceModel alone isn't
+        /// enough on everything else (RDNA3 mobile/APU, RDNA2, Intel, Nvidia), so Fsr4ForceEnableInt8=true
+        /// and Fsr4Update=true (updates FSR3.X to FSR4, only defaults to true on RDNA4) are also needed.
+        /// RDNA2 needs one more push on top of all that: LoadCustomAmdxc64OnRdna2=true, which tells
+        /// OptiScaler to load a separate custom amdxc64.dll from OptiDllPath specifically for that
+        /// generation — confirmed via hands-on testing (2026-08-09).
+        /// </summary>
+        public void ConfigureFsr4IntFallback(string gameDir, bool isRdna4, bool isRdna2)
+        {
+            if (isRdna4) return;
+            ModifyOptiScalerIni(gameDir, "Fsr4ForceModel", "2", "FSR");
+            ModifyOptiScalerIni(gameDir, "Fsr4ForceEnableInt8", "true", "FSR");
+            ModifyOptiScalerIni(gameDir, "Fsr4Update", "true", "FSR");
+            if (isRdna2)
+                ModifyOptiScalerIni(gameDir, "LoadCustomAmdxc64OnRdna2", "true", "Plugins");
         }
 
         /// <summary>

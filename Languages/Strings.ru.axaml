@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">Удаление не удалось: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Установка успешна</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">Рекомендуемая конфигурация</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">Совместимость</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">Совместимо с OptiScaler</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Несовместимо</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">Совместимо (только одна ОС)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">Не подтверждено</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">Входы апскейлера</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">Поддержка OptiPatcher</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">Поддерживается</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Не требуется</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">Примечания</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">Не удалось найти рекомендуемую конфигурацию для этой игры. Подробнее см. в полном списке Compatibility List.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Открыть Compatibility List</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Требуется ручной файл</x:String>
     <x:String x:Key="TxtDownloadFrom">Загрузить с: </x:String>
@@ -622,6 +637,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Журнал изменений</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Новое: боковая панель «Рекомендуемая конфигурация» в окне управления игрой — совместимость, входы апскейлера и примечания по каждой игре прямо из вики OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Новое: полная поддержка геймпада — просматривайте, устанавливайте и управляйте всей библиотекой без мыши и клавиатуры.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Новое: теперь можно отмечать игры как избранные и фильтровать библиотеку прямо в главном окне.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Исправлено: FSR4 4.1.1 INT8 не работал на GPU без RDNA4.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Исправления: ряд других мелких исправлений и улучшений.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Справка: новая страница поддержки геймпада, а также документация по фильтрам и избранному.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Полный список изменений и новых функций этой версии доступен на GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Посмотреть журнал изменений на GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Начало работы</x:String>

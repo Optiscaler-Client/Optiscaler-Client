@@ -175,6 +175,13 @@ namespace OptiscalerClient.Models
         /// Persisted so that the 15-minute cooldown survives app restarts.
         /// </summary>
         public DateTime? LastApiCheckTime { get; set; } = null;
+
+        /// <summary>
+        /// UTC timestamp of the last Compatibility List refresh attempt.
+        /// Persisted so that the 24-hour cooldown survives app restarts. Recorded before the
+        /// request is made, so a failed attempt doesn't retry on every app launch.
+        /// </summary>
+        public DateTime? LastCompatListCheckTime { get; set; } = null;
     }
 
     /// <summary>

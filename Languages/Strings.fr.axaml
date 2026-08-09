@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">Échec de la désinstallation : {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installation réussie</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">Configuration Recommandée</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibilité</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatible avec OptiScaler</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Non compatible</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">Compatible (un seul OS)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">Non confirmé</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">Entrées d'Upscaler</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">Support OptiPatcher</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">Pris en charge</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Non requis</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">Nous n'avons pas trouvé de configuration recommandée pour ce jeu. Consultez la Compatibility List complète pour plus d'informations.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Voir la Compatibility List</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Fichier manuel requis</x:String>
     <x:String x:Key="TxtDownloadFrom">Télécharger depuis : </x:String>
@@ -622,6 +637,12 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Journal des modifications</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nouveau : barre latérale de Configuration Recommandée dans Gérer le Jeu, avec compatibilité, entrées d'upscaler et notes par jeu directement depuis le wiki d'OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nouveau : prise en charge complète de la manette — parcourez, installez et gérez toute votre bibliothèque sans souris ni clavier.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nouveau : possibilité de marquer des jeux comme favoris et de filtrer votre bibliothèque depuis la fenêtre principale.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Corrigé : FSR4 4.1.1 INT8 ne fonctionnait pas sur les GPU non-RDNA4.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Corrections : plusieurs autres petites corrections et améliorations.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Aide : nouvelle page Support Manette, plus une documentation sur les Filtres et Favoris.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">La liste complète des modifications et nouvelles fonctionnalités de cette version est disponible sur GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Voir le journal sur GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Premiers pas</x:String>

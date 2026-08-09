@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         x:Class="OptiscalerClient.Views.ManageGameWindow"
         Title="{DynamicResource TxtManageGameWindow}"
-        MinHeight="600" Width="1140"
+        MinHeight="600" Width="1460"
         SizeToContent="Height"
         SystemDecorations="None"
         TransparencyLevelHint="Transparent"
@@ -72,7 +72,7 @@
                 BoxShadow="0 8 32 0 #80000000"
                 BorderBrush="{StaticResource BrBorderSubtle}"
                 BorderThickness="1">
-            <Grid ColumnDefinitions="3*,7*" RowDefinitions="*">
+            <Grid ColumnDefinitions="3*,7*,320" RowDefinitions="*">
                 <!-- LEFT COLUMN -->
                 <Grid Grid.Column="0" Margin="16" RowDefinitions="*,Auto">
                     <StackPanel Grid.Row="0" Spacing="12">
@@ -551,9 +551,127 @@
                     </Border>
                 </Grid>
 
+                <!-- RECOMMENDED CONFIG SIDEBAR (Compatibility List) -->
+                <Border Grid.Column="2"
+                        Margin="0,10,16,12"
+                        Background="{StaticResource BrBgCard}"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusLarge}">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,14,16,10" Spacing="8">
+                            <TextBlock Text="&#xE34B;"
+                                       FontFamily="{StaticResource FontIcons}"
+                                       FontSize="16"
+                                       Foreground="{StaticResource BrAccent}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource TxtCompatSidebarTitle}"
+                                       FontSize="{StaticResource FontSizeBodyLarge}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource BrTextPrimary}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" Name="ScrollCompatSidebar" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="16,0,16,16" Spacing="16">
+
+                                <!-- FOUND STATE -->
+                                <StackPanel Name="PnlCompatFound" Spacing="16" IsVisible="False">
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{DynamicResource TxtCompatSidebarCompatLbl}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   Foreground="{StaticResource BrTextSecondary}"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Ellipse Name="EllipseCompatStatus" Width="10" Height="10" VerticalAlignment="Center"/>
+                                            <TextBlock Name="TxtCompatStatus"
+                                                       FontSize="{StaticResource FontSizeBody}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource BrTextPrimary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Name="PnlUpscalerInputsSection" Spacing="6">
+                                        <TextBlock Text="{DynamicResource TxtCompatSidebarUpscalerLbl}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   Foreground="{StaticResource BrTextSecondary}"/>
+                                        <WrapPanel Name="PnlUpscalerInputsBadges"/>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{DynamicResource TxtCompatSidebarOptiPatcherLbl}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   Foreground="{StaticResource BrTextSecondary}"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Name="TxtOptiPatcherIcon"
+                                                       FontFamily="{StaticResource FontIcons}"
+                                                       FontSize="14"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Name="TxtOptiPatcherStatus"
+                                                       FontSize="{StaticResource FontSizeBody}"
+                                                       Foreground="{StaticResource BrTextPrimary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Name="PnlCompatNotesSection" Spacing="6">
+                                        <TextBlock Text="{DynamicResource TxtCompatSidebarNotesLbl}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   Foreground="{StaticResource BrTextSecondary}"/>
+                                        <TextBlock Name="TxtCompatNotes"
+                                                   FontSize="{StaticResource FontSizeBody}"
+                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                   TextWrapping="Wrap"
+                                                   LineSpacing="2"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- NOT FOUND STATE -->
+                                <StackPanel Name="PnlCompatNotFound" Spacing="10" Margin="0,24,0,0" IsVisible="False">
+                                    <TextBlock Text="&#xF63D;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="26"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource TxtCompatSidebarNotFound}"
+                                               FontSize="{StaticResource FontSizeBody}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- FOOTER LINK (always visible, both states) -->
+                                <Border BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="0,1,0,0"
+                                        Padding="0,14,0,0"
+                                        Margin="0,4,0,0">
+                                    <Button Name="BtnCompatSidebarLink"
+                                            Classes="InvisibleBtn"
+                                            HorizontalAlignment="Left"
+                                            Cursor="Hand"
+                                            Click="BtnCompatSidebarLink_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{DynamicResource TxtCompatSidebarViewMore}"
+                                                       Foreground="{StaticResource BrAccent}"
+                                                       FontSize="{StaticResource FontSizeBody}"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="&#xE12E;"
+                                                       FontFamily="{StaticResource FontIcons}"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource BrAccent}"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
                 <!-- TOAST NOTIFICATION -->
                 <Border Name="BdToast"
-                        Grid.ColumnSpan="2"
+                        Grid.ColumnSpan="3"
                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
                         Background="{StaticResource BrBgElevated}"
                         BorderBrush="{StaticResource BrAccent}"
@@ -572,7 +690,7 @@
 
                 <!-- FOLDER CLEANUP CONFIRMATION MODAL -->
                 <!-- CORRUPT INSTALL DETECTED MODAL -->
-                <Grid Name="BdConfirmCorruptInstall" Grid.ColumnSpan="2" Background="#80000000" IsVisible="False" ZIndex="22">
+                <Grid Name="BdConfirmCorruptInstall" Grid.ColumnSpan="3" Background="#80000000" IsVisible="False" ZIndex="22">
                     <Border Background="{StaticResource BrBgElevated}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
@@ -603,7 +721,7 @@
                     </Border>
                 </Grid>
 
-                <Grid Name="BdConfirmFolderCleanup" Grid.ColumnSpan="2" Background="#80000000" IsVisible="False" ZIndex="21">
+                <Grid Name="BdConfirmFolderCleanup" Grid.ColumnSpan="3" Background="#80000000" IsVisible="False" ZIndex="21">
                     <Border Background="{StaticResource BrBgElevated}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
@@ -672,7 +790,7 @@
                 </Grid>
 
                 <!-- UNINSTALL CONFIRMATION MODAL -->
-                <Grid Name="BdConfirmUninstall" Grid.ColumnSpan="2" Background="#80000000" IsVisible="False" ZIndex="20">
+                <Grid Name="BdConfirmUninstall" Grid.ColumnSpan="3" Background="#80000000" IsVisible="False" ZIndex="20">
                     <Border Background="{StaticResource BrBgElevated}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
@@ -702,7 +820,7 @@
                 </Grid>
 
                 <!-- COVER IMAGE MODAL -->
-                <Grid Name="BdCoverModal" Grid.ColumnSpan="2" Background="#A0000000" IsVisible="False" ZIndex="30">
+                <Grid Name="BdCoverModal" Grid.ColumnSpan="3" Background="#A0000000" IsVisible="False" ZIndex="30">
                     <Border Background="{StaticResource BrBgElevated}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"

@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">제거 실패: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">설치 성공</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">권장 설정</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">호환성</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">OptiScaler와 호환됨</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">호환되지 않음</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">호환됨 (단일 OS만 해당)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">미확인</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">업스케일러 입력</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher 지원</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">지원됨</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">필요 없음</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">참고 사항</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">이 게임에 대한 권장 설정을 찾을 수 없습니다. 자세한 내용은 전체 Compatibility List를 확인하세요.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List 보기</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">수동 파일 필요</x:String>
     <x:String x:Key="TxtDownloadFrom">다운로드 위치: </x:String>
@@ -622,6 +637,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">변경 사항</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 신규: 게임 관리 창에 추천 설정 사이드바 추가 — OptiScaler 위키에서 게임별 호환성, 업스케일러 입력, 참고 사항을 바로 가져옵니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 신규: 게임패드 완전 지원 — 마우스나 키보드 없이 전체 라이브러리를 탐색, 설치, 관리할 수 있습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 신규: 이제 게임을 즐겨찾기로 표시하고 메인 창에서 라이브러리를 필터링할 수 있습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 수정: RDNA4가 아닌 GPU에서 FSR4 4.1.1 INT8이 작동하지 않던 문제.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 수정: 기타 여러 사소한 수정 및 개선 사항.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 도움말: 새로운 게임패드 지원 페이지 및 필터·즐겨찾기 문서 추가.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">이 버전의 전체 변경 사항 및 새로운 기능 목록은 GitHub에서 확인할 수 있습니다.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHub에서 변경 사항 보기</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">시작하기</x:String>

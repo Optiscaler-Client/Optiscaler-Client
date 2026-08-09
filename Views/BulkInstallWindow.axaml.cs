@@ -550,6 +550,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         int totalGames = selectedGames.Count;
         int currentGame = 0;
 
+        // Same machine for the whole batch, so resolve this once rather than per game.
+        var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+        var isRdna4ForFsr4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
+        var isRdna2ForFsr4 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
+
         foreach (var gameItem in selectedGames)
         {
             currentGame++;
@@ -619,6 +624,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
                         var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                         System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
+                        // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
+                        // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
+                        _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
                         DebugWindow.Log($"[BulkInstall] Copied FSR4 INT8 DLL to {destPath} for {gameItem.Name}");
                     });
@@ -904,10 +912,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             try
             {
                 var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                // RDNA 4 = Radeon RX 9000 series (GPU name contains "RX 9" or similar)
-                isRdna4 = gpu != null && gpu.Vendor == GpuVendor.AMD &&
-                          (gpu.Name.Contains(" 9", StringComparison.OrdinalIgnoreCase) ||
-                           gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
+                isRdna4 = GpuSelectionHelper.IsRdna4(gpu);
             }
             catch (Exception ex) { DebugWindow.Log($"[BulkInstall] GPU detection failed: {ex.Message}"); }
         }

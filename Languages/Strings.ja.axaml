@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">アンインストールに失敗しました：{0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">インストール成功</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">推奨設定</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">互換性</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">OptiScaler と互換性あり</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">互換性なし</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">互換性あり(単一OSのみ)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">未確認</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">アップスケーラー入力</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher 対応</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">対応</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">不要</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">備考</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">このゲームの推奨設定が見つかりませんでした。詳細は Compatibility List 全体をご確認ください。</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List を見る</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">手動ファイルが必要</x:String>
     <x:String x:Key="TxtDownloadFrom">ダウンロード元： </x:String>
@@ -622,6 +637,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: ゲーム管理画面に「推奨設定」サイドバーを追加。OptiScaler wikiから互換性・アップスケーラー入力・注意事項をゲームごとに自動取得します。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 新機能: ゲームパッドに完全対応 — マウスやキーボードなしでライブラリの閲覧・インストール・管理が可能に。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: ゲームをお気に入りに登録し、メイン画面からライブラリを絞り込めるようになりました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 修正: 非RDNA4 GPUでFSR4 4.1.1 INT8が動作しない問題。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: その他の細かな修正と改善。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• ヘルプ: 新しい「ゲームパッド対応」ページ、およびフィルターとお気に入りのドキュメントを追加。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>

@@ -84,7 +84,7 @@ public partial class GamepadNavigationHelper
         listBox.SelectedIndex = clampedIndex;
         FocusListItem(listBox, clampedIndex);
 
-        if (!TryGetGameActionButtons(isGrid, listBox, clampedIndex, out var quickInstall, out var manage))
+        if (!TryGetGameActionButtons(isGrid, listBox, clampedIndex, out var favorite, out var quickInstall, out var manage))
         {
             ActivateFocusedElement();
             return;
@@ -95,7 +95,7 @@ public partial class GamepadNavigationHelper
         _gamesActionItemIndex = clampedIndex;
         _gamesActionButtonIndex = 0;
 
-        quickInstall?.Focus(NavigationMethod.Directional);
+        favorite?.Focus(NavigationMethod.Directional);
     }
 
     private void ExitGamesActionMode(bool restoreGameFocus = true)
@@ -144,21 +144,30 @@ public partial class GamepadNavigationHelper
             return;
         }
 
-        if (!TryGetGameActionButtons(_gamesActionIsGrid, list, _gamesActionItemIndex, out var quickInstall, out var manage))
+        if (!TryGetGameActionButtons(_gamesActionIsGrid, list, _gamesActionItemIndex, out var favorite, out var quickInstall, out var manage))
         {
             ExitGamesActionMode();
             return;
         }
 
-        _gamesActionButtonIndex = Math.Clamp(_gamesActionButtonIndex + Math.Sign(direction), 0, 1);
-        if (_gamesActionButtonIndex == 0)
-            quickInstall?.Focus(NavigationMethod.Directional);
-        else
-            manage?.Focus(NavigationMethod.Directional);
+        _gamesActionButtonIndex = Math.Clamp(_gamesActionButtonIndex + Math.Sign(direction), 0, 2);
+        switch (_gamesActionButtonIndex)
+        {
+            case 0:
+                favorite?.Focus(NavigationMethod.Directional);
+                break;
+            case 1:
+                quickInstall?.Focus(NavigationMethod.Directional);
+                break;
+            default:
+                manage?.Focus(NavigationMethod.Directional);
+                break;
+        }
     }
 
-    private bool TryGetGameActionButtons(bool isGrid, ListBox listBox, int itemIndex, out Button? quickInstall, out Button? manage)
+    private bool TryGetGameActionButtons(bool isGrid, ListBox listBox, int itemIndex, out Button? favorite, out Button? quickInstall, out Button? manage)
     {
+        favorite = null;
         quickInstall = null;
         manage = null;
 
@@ -171,13 +180,16 @@ public partial class GamepadNavigationHelper
 
         if (!isGrid)
         {
+            favorite = item.GetVisualDescendants()
+                .OfType<Button>()
+                .FirstOrDefault(x => x.Name == "BtnToggleFavorite");
             quickInstall = item.GetVisualDescendants()
                 .OfType<Button>()
                 .FirstOrDefault(x => x.Name == "BtnFastInstall");
             manage = item.GetVisualDescendants()
                 .OfType<Button>()
                 .FirstOrDefault(x => x.Name == "BtnManageGame");
-            return quickInstall != null && manage != null;
+            return favorite != null && quickInstall != null && manage != null;
         }
 
         var card = item.GetVisualDescendants()
@@ -187,6 +199,10 @@ public partial class GamepadNavigationHelper
 
         SetGridCardHoverState(card, true);
 
+        favorite = card.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(x => x.Name == "BtnToggleFavoriteGrid");
+
         var actions = card.GetVisualDescendants()
             .OfType<Panel>()
             .FirstOrDefault(x => x.Name == "GridCardHoverActions");
@@ -195,7 +211,7 @@ public partial class GamepadNavigationHelper
         var buttons = actions.GetVisualDescendants().OfType<Button>().ToList();
         quickInstall = buttons.ElementAtOrDefault(0);
         manage = buttons.ElementAtOrDefault(1);
-        return quickInstall != null && manage != null;
+        return favorite != null && quickInstall != null && manage != null;
     }
 
     private static void SetGridCardHoverState(Border card, bool isVisible)
@@ -214,5 +230,18 @@ public partial class GamepadNavigationHelper
         actions.IsVisible = isVisible;
         actions.Opacity = isVisible ? 1 : 0;
         actions.IsHitTestVisible = isVisible;
+
+        // The favorite star lives outside GridCardHoverActions (top-right corner overlay), so
+        // mouse hover reveals it separately (see MainWindow.axaml.cs ToggleGridCardHover) — gamepad
+        // focus needs to do the same or the star stays invisible/unreachable in grid view.
+        var favoriteBtn = card.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(x => x.Name == "BtnToggleFavoriteGrid");
+        if (favoriteBtn != null)
+        {
+            favoriteBtn.IsVisible = isVisible;
+            favoriteBtn.Opacity = isVisible ? 1 : 0;
+            favoriteBtn.IsHitTestVisible = isVisible;
+        }
     }
 }

@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">Deïnstallatie mislukt: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installatie Succesvol</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">Aanbevolen Configuratie</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibiliteit</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatibel met OptiScaler</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Niet compatibel</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">Compatibel (slechts één besturingssysteem)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">Onbevestigd</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">Upscaler-invoer</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher-ondersteuning</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">Ondersteund</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Niet vereist</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">Opmerkingen</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">We konden geen aanbevolen configuratie vinden voor dit spel. Raadpleeg de volledige Compatibility List voor meer info.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Bekijk Compatibility List</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Handmatig Bestand Vereist</x:String>
     <x:String x:Key="TxtDownloadFrom">Download van: </x:String>
@@ -622,6 +637,12 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Wijzigingslogboek</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: zijbalk met Aanbevolen Configuratie in Spel Beheren, met compatibiliteit, upscaler-invoer en opmerkingen per spel rechtstreeks uit de OptiScaler-wiki.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nieuw: volledige gamepad-ondersteuning — blader door, installeer en beheer je hele bibliotheek zonder muis of toetsenbord.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nieuw: games kunnen nu als favoriet worden gemarkeerd en je bibliotheek kan vanuit het hoofdvenster worden gefilterd.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Opgelost: FSR4 4.1.1 INT8 werkte niet op niet-RDNA4 GPU's.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Opgelost: verschillende andere kleinere reparaties en verbeteringen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Help: nieuwe pagina over Gamepad-ondersteuning, plus documentatie over Filters en Favorieten.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">De volledige lijst van wijzigingen en nieuwe functies van deze versie is beschikbaar op GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Bekijk wijzigingslogboek op GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Aan de slag</x:String>

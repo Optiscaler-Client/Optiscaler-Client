@@ -82,10 +82,23 @@
                                                    FontSize="13"
                                                    FontWeight="Bold"
                                                    Foreground="{StaticResource BrAccent}"/>
+
+                                        <!-- What's new bullets for the current version. Update this
+                                             list (and the matching keys in all 14 Languages/ files)
+                                             on every release — it is NOT generated automatically. -->
+                                        <StackPanel Spacing="4" Margin="0,2,0,4">
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew1}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew2}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew3}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew4}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew5}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                            <TextBlock Text="{DynamicResource TxtWelcomeWhatsNew6}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrTextPrimary}" LineHeight="17"/>
+                                        </StackPanel>
+
                                         <TextBlock Text="{DynamicResource TxtWelcomeChangelogContent}"
                                                    TextWrapping="Wrap"
                                                    FontSize="12"
-                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
                                                    LineHeight="18"/>
                                         <Button Content="{DynamicResource TxtWelcomeChangelogLink}"
                                                 Classes="BtnBase"

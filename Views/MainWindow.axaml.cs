@@ -3154,6 +3154,13 @@ namespace OptiscalerClient.Views
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtCheckingUpdates", "Checking for updates...");
+
+                // Runs independently of the component version check below, and BEFORE it —
+                // if that call throws (e.g. GitHub API rate limit), this must still have run.
+                // Best-effort, never blocks startup or surfaces an error — see CompatibilityListService.
+                try { await new CompatibilityListService().CheckForUpdatesAsync(); }
+                catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
+
                 await _componentService.CheckForUpdatesAsync();
             }
             catch (OperationCanceledException) { }
@@ -5234,6 +5241,12 @@ namespace OptiscalerClient.Views
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);
+                                // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
+                                // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
+                                var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                                var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
+                                var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
+                                installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                                 selectedGame.Fsr4ExtraVersion = configuredExtras;
                                 ShowToast($"FSR4 INT8 v{configuredExtras} injected", showProgress: false, progressPercent: null);
                                 Dispatcher.UIThread.Post(() =>
@@ -5254,8 +5267,21 @@ namespace OptiscalerClient.Views
                             }
                         }
 
-                        // ── OptiPatcher install (respect configured default)
+                        // ── OptiPatcher install (auto-select the latest version when the wiki's
+                        // Compatibility List flags this game as needing it; otherwise respect
+                        // the user's configured default)
                         var configuredPatcher = _componentService.Config.DefaultOptiPatcherVersion;
+                        try
+                        {
+                            if (new CompatibilityListService().TryGetForGame(selectedGame.Name, out var compatEntryForPatcher) &&
+                                compatEntryForPatcher != null && compatEntryForPatcher.OptiPatcherSupported &&
+                                !string.IsNullOrEmpty(_componentService.LatestOptiPatcherVersion))
+                            {
+                                configuredPatcher = _componentService.LatestOptiPatcherVersion;
+                            }
+                        }
+                        catch (Exception ex) { DebugWindow.Log($"[QuickInstall] Compatibility List lookup failed: {ex.Message}"); }
+
                         if (!string.IsNullOrEmpty(configuredPatcher) && !configuredPatcher.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
                             try
@@ -5332,9 +5358,8 @@ namespace OptiscalerClient.Views
                         var configuredExtrasFinal = _componentService.Config.DefaultExtrasVersion;
                         if (!string.IsNullOrEmpty(configuredExtrasFinal) && !configuredExtrasFinal.Equals("none", StringComparison.OrdinalIgnoreCase))
                             parts.Add($"FSR4 INT8 {configuredExtrasFinal}");
-                        var configuredPatcherFinal = _componentService.Config.DefaultOptiPatcherVersion;
-                        if (!string.IsNullOrEmpty(configuredPatcherFinal) && !configuredPatcherFinal.Equals("none", StringComparison.OrdinalIgnoreCase))
-                            parts.Add($"OptiPatcher {configuredPatcherFinal}");
+                        if (!string.IsNullOrEmpty(configuredPatcher) && !configuredPatcher.Equals("none", StringComparison.OrdinalIgnoreCase))
+                            parts.Add($"OptiPatcher {configuredPatcher}");
 
                         ShowToast($"Installed {string.Join(" + ", parts)}", showProgress: false, progressPercent: null);
                         Dispatcher.UIThread.Post(() =>

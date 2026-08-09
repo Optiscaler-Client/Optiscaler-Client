@@ -141,6 +141,21 @@
     <x:String x:Key="TxtOptiUninstallFail">卸载失败：{0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">安装成功</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">推荐配置</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">兼容性</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">与 OptiScaler 兼容</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">不兼容</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">兼容(仅限单一操作系统)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">未确认</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">升级器输入</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher 支持</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">支持</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">无需</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">备注</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">未能找到此游戏的推荐配置。请查看完整的 Compatibility List 了解更多信息。</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">查看 Compatibility List</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">需要手动文件</x:String>
     <x:String x:Key="TxtDownloadFrom">下载自：</x:String>
@@ -623,6 +638,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增:"管理游戏"窗口中的推荐配置侧边栏,直接从 OptiScaler wiki 获取每个游戏的兼容性、升级器输入和注意事项。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 新增:完整的手柄支持 —— 无需鼠标或键盘即可浏览、安装和管理整个游戏库。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增:现在可以将游戏标记为收藏,并在主窗口中筛选游戏库。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 修复:FSR4 4.1.1 INT8 在非 RDNA4 显卡上无法工作的问题。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修复:其他若干小问题修复与改进。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 帮助:新增手柄支持页面,以及筛选和收藏的文档。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>

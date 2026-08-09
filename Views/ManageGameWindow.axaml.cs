@@ -70,6 +70,13 @@ namespace OptiscalerClient.Views
         private DateTime _ignoreGamepadInputUntilUtc;
         private bool _isControllerModeActive;
 
+        // Right-stick scroll for the compatibility sidebar — read-only content, deliberately not
+        // part of the D-pad/left-stick focus navigation (see compatibility_list_sidebar_plan.md).
+        private readonly DispatcherTimer _compatSidebarScrollTimer;
+        private bool _isRightStickUpHeld;
+        private bool _isRightStickDownHeld;
+        private double _compatSidebarScrollVelocity;
+
         public bool NeedsScan { get; private set; }
 
         // TaskCompletionSource for the corrupt-install-detected modal (3-way: cancel/clean/continue).
@@ -83,6 +90,11 @@ namespace OptiscalerClient.Views
         private static Dictionary<string, string>? _fsrVersionMap;
         private static Dictionary<string, string>? _dlssVersionMap;
         private static Dictionary<string, string>? _xessVersionMap;
+
+        // Set by PopulateCompatibilitySidebar (always runs before PopulateOptiPatcherComboBox —
+        // see SetupUI/LoadVersionsAsync ordering in the constructor), reused so the OptiPatcher
+        // selector knows whether this game is flagged as needing OptiPatcher.
+        private CompatibilityListEntry? _compatEntry;
 
         private void InitializeComponent()
         {
@@ -180,6 +192,8 @@ namespace OptiscalerClient.Views
             DialogDimHelper.Register(this);
             _game = null!;
             _gpuService = null!;
+            _compatSidebarScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _compatSidebarScrollTimer.Tick += CompatSidebarScrollTimer_Tick;
         }
 
         public ManageGameWindow(Window owner, Game game)
@@ -207,6 +221,8 @@ namespace OptiscalerClient.Views
             _gpuService = PlatformServiceFactory.CreateGpuDetectionService();
             _gamepadService = PlatformServiceFactory.CreateGamepadDetectionService();
             _ignoreGamepadInputUntilUtc = DateTime.UtcNow.AddMilliseconds(350);
+            _compatSidebarScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _compatSidebarScrollTimer.Tick += CompatSidebarScrollTimer_Tick;
 
             SetupUI();
             InitializeGamepadNavigation();
@@ -273,6 +289,14 @@ namespace OptiscalerClient.Views
 
         private void OnGamepadInputReceived(object? sender, GamepadEventArgs e)
         {
+            // Intercepted before the IsPressed-only filter below: right-stick scroll needs both
+            // press AND release to track the "held" state and stop scrolling when released.
+            if (e.Button == GamepadButton.ThumbRightUp || e.Button == GamepadButton.ThumbRightDown)
+            {
+                Dispatcher.UIThread.Post(() => HandleCompatSidebarRightStickInput(e));
+                return;
+            }
+
             if (!e.IsPressed) return;
 
             Dispatcher.UIThread.Post(() =>
@@ -1243,10 +1267,7 @@ namespace OptiscalerClient.Views
                 try
                 {
                     var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
-                    // RDNA 4 = Radeon RX 9000 series (GPU name contains "RX 9" or similar)
-                    isRdna4 = gpu != null && gpu.Vendor == GpuVendor.AMD &&
-                              (gpu.Name.Contains(" 9", StringComparison.OrdinalIgnoreCase) ||
-                               gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
+                    isRdna4 = GpuSelectionHelper.IsRdna4(gpu);
                 }
                 catch (Exception ex) { DebugWindow.Log($"[ManageGame] GPU detection failed: {ex.Message}"); }
             }
@@ -1323,15 +1344,20 @@ namespace OptiscalerClient.Views
                 cmb.Items.Add(BuildVersionItem(ver, isBeta: false, isLatest: isLatest));
             }
 
-            // Respect configured default
             int targetIndex = 0;
-            var savedDefault = componentService.Config.DefaultOptiPatcherVersion;
-            if (!string.IsNullOrEmpty(savedDefault) && !savedDefault.Equals("none", StringComparison.OrdinalIgnoreCase))
+
+            // The wiki's Compatibility List flags this game as needing OptiPatcher — auto-select
+            // the latest version instead of falling back to the user's saved global default.
+            var latestVersion = componentService.LatestOptiPatcherVersion;
+            var wantsAutoLatest = _compatEntry != null && _compatEntry.OptiPatcherSupported && !string.IsNullOrEmpty(latestVersion);
+            var targetVersion = wantsAutoLatest ? latestVersion : componentService.Config.DefaultOptiPatcherVersion;
+
+            if (!string.IsNullOrEmpty(targetVersion) && !targetVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
                 for (int i = 1; i < cmb.Items.Count; i++)
                 {
                     if (cmb.Items[i] is ComboBoxItem ci &&
-                        string.Equals(ci.Tag?.ToString(), savedDefault, StringComparison.OrdinalIgnoreCase))
+                        string.Equals(ci.Tag?.ToString(), targetVersion, StringComparison.OrdinalIgnoreCase))
                     {
                         targetIndex = i;
                         break;
@@ -1543,7 +1569,200 @@ namespace OptiscalerClient.Views
             LoadComponents();
             ConfigureAdditionalComponents();
             CheckIfAntiCheat();
+            PopulateCompatibilitySidebar();
 
+        }
+
+        /// <summary>
+        /// Fills the "Recommended Config" sidebar from the locally cached Compatibility List
+        /// (already refreshed at app startup by CompatibilityListService — this is a pure,
+        /// synchronous, network-free local lookup, safe to call while building the window).
+        /// </summary>
+        private void PopulateCompatibilitySidebar()
+        {
+            var pnlFound = this.FindControl<StackPanel>("PnlCompatFound");
+            var pnlNotFound = this.FindControl<StackPanel>("PnlCompatNotFound");
+            if (pnlFound == null || pnlNotFound == null) return;
+
+            var compatService = new CompatibilityListService();
+            if (!compatService.TryGetForGame(_game.Name, out var entry) || entry == null)
+            {
+                pnlFound.IsVisible = false;
+                pnlNotFound.IsVisible = true;
+                _compatEntry = null;
+                return;
+            }
+
+            _compatEntry = entry;
+            pnlNotFound.IsVisible = false;
+            pnlFound.IsVisible = true;
+
+            var ellipseStatus = this.FindControl<Ellipse>("EllipseCompatStatus");
+            var txtStatus = this.FindControl<TextBlock>("TxtCompatStatus");
+            if (ellipseStatus != null && txtStatus != null)
+            {
+                var (brushKey, textKey, fallback) = entry.Status switch
+                {
+                    CompatibilityStatus.Compatible => ("BrSuccess", "TxtCompatSidebarStatusCompatible", "Compatible with OptiScaler"),
+                    CompatibilityStatus.NotCompatible => ("BrError", "TxtCompatSidebarStatusNotCompatible", "Not compatible"),
+                    CompatibilityStatus.SingleOsOnly => ("BrWarning", "TxtCompatSidebarStatusSingleOs", "Compatible (single OS only)"),
+                    _ => ("BrTextSecondary", "TxtCompatSidebarStatusUnconfirmed", "Unconfirmed")
+                };
+                var brush = this.FindResource(brushKey) as IBrush;
+                ellipseStatus.Fill = brush;
+                txtStatus.Foreground = brush;
+                txtStatus.Text = GetResourceString(textKey, fallback);
+            }
+
+            var pnlUpscalerSection = this.FindControl<StackPanel>("PnlUpscalerInputsSection");
+            var pnlUpscalerBadges = this.FindControl<WrapPanel>("PnlUpscalerInputsBadges");
+            if (pnlUpscalerSection != null && pnlUpscalerBadges != null)
+            {
+                pnlUpscalerBadges.Children.Clear();
+                var inputs = entry.UpscalerInputs
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Where(s => s.Length > 0)
+                    .ToList();
+
+                pnlUpscalerSection.IsVisible = inputs.Count > 0;
+                foreach (var input in inputs)
+                {
+                    pnlUpscalerBadges.Children.Add(BuildUpscalerInputBadge(input));
+                }
+            }
+
+            var txtOptiPatcherIcon = this.FindControl<TextBlock>("TxtOptiPatcherIcon");
+            var txtOptiPatcherStatus = this.FindControl<TextBlock>("TxtOptiPatcherStatus");
+            if (txtOptiPatcherIcon != null && txtOptiPatcherStatus != null)
+            {
+                if (entry.OptiPatcherSupported)
+                {
+                    txtOptiPatcherIcon.Text = ""; // ic_fluent_checkmark_circle_20_regular
+                    txtOptiPatcherIcon.Foreground = this.FindResource("BrSuccess") as IBrush;
+                    txtOptiPatcherStatus.Text = GetResourceString("TxtCompatSidebarOptiPatcherYes", "Supported");
+                    txtOptiPatcherStatus.Foreground = this.FindResource("BrTextPrimary") as IBrush;
+                }
+                else
+                {
+                    txtOptiPatcherIcon.Text = "";
+                    txtOptiPatcherStatus.Text = GetResourceString("TxtCompatSidebarOptiPatcherNo", "Not required");
+                    txtOptiPatcherStatus.Foreground = this.FindResource("BrTextSecondary") as IBrush;
+                }
+            }
+
+            var pnlNotesSection = this.FindControl<StackPanel>("PnlCompatNotesSection");
+            var txtNotes = this.FindControl<TextBlock>("TxtCompatNotes");
+            if (pnlNotesSection != null && txtNotes != null)
+            {
+                var hasNotes = !string.IsNullOrWhiteSpace(entry.Notes);
+                pnlNotesSection.IsVisible = hasNotes;
+                txtNotes.Text = entry.Notes;
+            }
+        }
+
+        private Border BuildUpscalerInputBadge(string text)
+        {
+            return new Border
+            {
+                Background = this.FindResource("BrBgSurface") as IBrush,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = (CornerRadius)(this.FindResource("RadiusSmall") ?? new CornerRadius(4)),
+                Padding = new Thickness(8, 3),
+                Margin = new Thickness(0, 0, 6, 6),
+                Child = new TextBlock
+                {
+                    Text = text,
+                    FontSize = (double)(this.FindResource("FontSizeCaption") ?? 11.0),
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = this.FindResource("BrTextPrimary") as IBrush
+                }
+            };
+        }
+
+        private void BtnCompatSidebarLink_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = CompatibilityListService.WikiUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ManageGameWindow] Could not open Compatibility List link: {ex.Message}");
+            }
+        }
+
+        // ── Right-stick scroll for the compatibility sidebar ────────────────────
+        // Mirrors the held-state + accelerating DispatcherTimer pattern already used in
+        // Helpers/GamepadDialogNavigationHelper.cs, scoped to ScrollCompatSidebar only.
+
+        private void HandleCompatSidebarRightStickInput(GamepadEventArgs e)
+        {
+            if (e.Button == GamepadButton.ThumbRightUp)
+                _isRightStickUpHeld = e.IsPressed;
+            else
+                _isRightStickDownHeld = e.IsPressed;
+
+            if (e.IsPressed)
+                SetControllerModeActive(true);
+
+            UpdateCompatSidebarScrollTimerState();
+        }
+
+        private void UpdateCompatSidebarScrollTimerState()
+        {
+            var scrollViewer = this.FindControl<ScrollViewer>("ScrollCompatSidebar");
+            bool hasDirection = _isRightStickUpHeld ^ _isRightStickDownHeld;
+            bool shouldScroll = hasDirection && scrollViewer != null && this.IsVisible;
+
+            if (shouldScroll)
+            {
+                if (!_compatSidebarScrollTimer.IsEnabled)
+                {
+                    _compatSidebarScrollVelocity = 0;
+                    _compatSidebarScrollTimer.Start();
+                    ScrollCompatSidebarViewport(_isRightStickUpHeld ? -10.0 : 10.0);
+                }
+                return;
+            }
+
+            if (_compatSidebarScrollTimer.IsEnabled)
+                _compatSidebarScrollTimer.Stop();
+
+            _compatSidebarScrollVelocity = 0;
+        }
+
+        private void CompatSidebarScrollTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_isRightStickUpHeld == _isRightStickDownHeld || !this.IsVisible)
+            {
+                UpdateCompatSidebarScrollTimerState();
+                return;
+            }
+
+            _compatSidebarScrollVelocity = Math.Min(28.0, _compatSidebarScrollVelocity + 1.5);
+            double delta = 6.0 + _compatSidebarScrollVelocity;
+
+            if (_isRightStickUpHeld)
+                delta = -delta;
+
+            ScrollCompatSidebarViewport(delta);
+        }
+
+        private void ScrollCompatSidebarViewport(double deltaY)
+        {
+            var scrollViewer = this.FindControl<ScrollViewer>("ScrollCompatSidebar");
+            if (scrollViewer == null || !scrollViewer.IsVisible) return;
+
+            double currentY = scrollViewer.Offset.Y;
+            double maxY = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+            double targetY = Math.Clamp(currentY + deltaY, 0, maxY);
+
+            scrollViewer.Offset = new Vector(scrollViewer.Offset.X, targetY);
         }
 
         private void TrySetCoverImage(Image? image, string? coverPath)
@@ -2159,6 +2378,9 @@ namespace OptiscalerClient.Views
 
                     try
                     {
+                        var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+                        var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
+                        var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
                         await Task.Run(() =>
                         {
                             var installSvc = new GameInstallationService();
@@ -2167,6 +2389,9 @@ namespace OptiscalerClient.Views
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
                             File.Copy(extrasDllPath, destPath, overwrite: true);
+                            // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
+                            // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
+                            installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                             _game.Fsr4ExtraVersion = selectedExtrasVersion;
                             DebugWindow.Log($"[ExtrasInject] Copied DLL to {destPath} and set version to {selectedExtrasVersion}");
                         });

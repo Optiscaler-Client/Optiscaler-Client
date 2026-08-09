@@ -140,6 +140,21 @@
     <x:String x:Key="TxtOptiUninstallFail">Deinstallation fehlgeschlagen: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installation erfolgreich</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">Empfohlene Konfiguration</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">Kompatibilität</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">Kompatibel mit OptiScaler</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Nicht kompatibel</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">Kompatibel (nur ein Betriebssystem)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">Unbestätigt</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">Upscaler-Eingänge</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher-Unterstützung</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">Unterstützt</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Nicht erforderlich</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">Hinweise</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">Für dieses Spiel konnte keine empfohlene Konfiguration gefunden werden. Weitere Infos findest du in der vollständigen Compatibility List.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List ansehen</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Manuelle Datei erforderlich</x:String>
     <x:String x:Key="TxtDownloadFrom">Herunterladen von: </x:String>
@@ -622,6 +637,12 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Änderungsprotokoll</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Neu: Sidebar mit empfohlener Konfiguration in "Spiel verwalten" – zeigt Kompatibilität, Upscaler-Eingänge und Hinweise pro Spiel direkt aus dem OptiScaler-Wiki.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Neu: Vollständige Gamepad-Unterstützung – durchsuche, installiere und verwalte deine gesamte Bibliothek ohne Maus oder Tastatur.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Neu: Spiele können jetzt als Favoriten markiert und die Bibliothek im Hauptfenster gefiltert werden.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Behoben: FSR4 4.1.1 INT8 funktionierte auf Nicht-RDNA4-GPUs nicht.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Behoben: mehrere weitere kleinere Fehlerbehebungen und Verbesserungen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Hilfe: neue Seite zur Gamepad-Unterstützung sowie Dokumentation zu Filtern und Favoriten.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Die vollständige Liste der Änderungen und neuen Funktionen dieser Version ist auf GitHub verfügbar.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Änderungsprotokoll auf GitHub anzeigen</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Erste Schritte</x:String>

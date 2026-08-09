@@ -158,6 +158,21 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtOptiUninstallFail">Uninstall failed: {0}</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Installation Successful</x:String>
 
+    <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
+    <x:String x:Key="TxtCompatSidebarTitle">Recommended Config</x:String>
+    <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibility</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatible with OptiScaler</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Not compatible</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusSingleOs">Compatible (single OS only)</x:String>
+    <x:String x:Key="TxtCompatSidebarStatusUnconfirmed">Unconfirmed</x:String>
+    <x:String x:Key="TxtCompatSidebarUpscalerLbl">Upscaler Inputs</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherLbl">OptiPatcher Support</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherYes">Supported</x:String>
+    <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Not required</x:String>
+    <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
+    <x:String x:Key="TxtCompatSidebarNotFound">We couldn't find recommended configuration for this game. Check the full Compatibility List for more info.</x:String>
+    <x:String x:Key="TxtCompatSidebarViewMore">View Compatibility List</x:String>
+
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Manual File Required</x:String>
     <x:String x:Key="TxtDownloadFrom">Download from: </x:String>
@@ -626,6 +641,12 @@ This version is unavailable for download. Check your internet connection and try
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Changelog</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• New: Recommended Config sidebar in Manage Game, pulling compatibility, upscaler inputs and notes per game from the OptiScaler wiki.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• New: Full gamepad/controller support — browse, install and manage your entire library without a mouse or keyboard.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• New: Mark games as favorites and filter your library from the main window.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Fixed: FSR4 4.1.1 INT8 not working on non-RDNA4 GPUs.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Fixes: several other smaller fixes and improvements.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Help: new Gamepad Support page, plus docs for Filters and Favorites.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">See the full list of changes and new features for this version on GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; View changelog on GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Getting Started</x:String>

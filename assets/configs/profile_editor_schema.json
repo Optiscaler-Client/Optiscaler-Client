@@ -537,6 +537,18 @@
           ],
           "Row": 2,
           "Column": 0
+        },
+        {
+          "Key": "LoadCustomAmdxc64OnRdna2",
+          "Label": "Load Custom amdxc64.dll on RDNA2",
+          "Tooltip": "Loads custom amdxc64.dll for all detected RDNA 2 GPUs. OptiScaler loads it from OptiDllPath, e.g. \".\\OptiScaler\\amdxc64.dll\"",
+          "Options": [
+            { "Value": "auto", "Label": "Auto" },
+            { "Value": "true", "Label": "Enabled" },
+            { "Value": "false", "Label": "Disabled" }
+          ],
+          "Row": 2,
+          "Column": 1
         }
       ]
     },
@@ -1760,6 +1772,19 @@
           ],
           "Row": 11,
           "Column": 0
+        },
+        {
+          "Key": "Fsr4ForceModel",
+          "Label": "FSR4 Force Model",
+          "Tooltip": "Forces Opti to try to use a specific FSR 4 model. Don't fool yourself when trying to force FP8 on actually unsupported GPUs, driver has a FSR 3 fallback. 0 = No override | 1 = FP8 | 2 = INT8",
+          "Options": [
+            { "Value": "auto", "Label": "Auto" },
+            { "Value": "0", "Label": "0 (No override)" },
+            { "Value": "1", "Label": "1 (FP8)" },
+            { "Value": "2", "Label": "2 (INT8)" }
+          ],
+          "Row": 11,
+          "Column": 1
         },
         {
           "Key": "FfxDx12Path",

@@ -26,6 +26,7 @@ using SharpCompress.Common;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
+using static OptiscalerClient.Helpers.HttpRetryHelper;
 
 namespace OptiscalerClient.Services
 {
@@ -501,46 +502,9 @@ namespace OptiscalerClient.Services
 
         // ── Download helpers ─────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Executes an HTTP GET with per-attempt timeout and exponential-backoff retries on
-        /// transient network errors. Does NOT retry on HTTP error status codes (e.g. 404).
-        /// </summary>
-        private static async Task<HttpResponseMessage> GetWithRetryAsync(
-            Func<HttpClient> getClient, string url,
-            int maxRetries = 3, int timeoutSeconds = 30,
-            CancellationToken cancellationToken = default)
-        {
-            int[] backoff = { 1000, 3000, 7000 };
-            Exception? lastEx = null;
-            for (int attempt = 0; attempt <= maxRetries; attempt++)
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
-                try
-                {
-                    var resp = await getClient().GetAsync(url, cts.Token);
-                    if ((int)resp.StatusCode == 403)
-                        throw new GitHubRateLimitException();
-                    return resp;
-                }
-                catch (GitHubRateLimitException)
-                {
-                    throw; // propagate immediately, no retry
-                }
-                catch (Exception ex) when (ex is HttpRequestException
-                    || ex is ObjectDisposedException  // HttpClient replaced mid-flight; retry picks up the new client
-                    || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
-                {
-                    lastEx = ex is OperationCanceledException
-                        ? new TimeoutException($"Request timed out after {timeoutSeconds}s (attempt {attempt + 1})")
-                        : ex;
-                    DebugWindow.Log($"[HTTP] Attempt {attempt + 1}/{maxRetries + 1} failed for {url}: {lastEx.Message}");
-                }
-                if (attempt < maxRetries)
-                    await Task.Delay(backoff[Math.Min(attempt, backoff.Length - 1)], cancellationToken);
-            }
-            throw lastEx!;
-        }
+        // GetWithRetryAsync now lives in Helpers/HttpRetryHelper.cs (shared with other services
+        // that need the same exponential-backoff retry behavior) — imported via the
+        // `using static OptiscalerClient.Helpers.HttpRetryHelper;` at the top of this file.
 
         /// <summary>
         /// Validates that an archive entry path stays inside <paramref name="destinationDir"/>
