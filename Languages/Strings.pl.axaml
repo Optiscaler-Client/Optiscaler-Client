@@ -306,6 +306,9 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtFeedbackFeatures">✨ Prośby o funkcje: użyj szablonu "Feature request" aby zasugerować nowe funkcje</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Ulepszenia: użyj szablonu "Improvement request" dla istniejących funkcji</x:String>
     <x:String x:Key="TxtFeedbackSystem">Dołącz swój system operacyjny, GPU i wersję aplikacji, aby przyspieszyć pomoc</x:String>
+    <x:String x:Key="TxtDonateTitle">Wesprzyj rozwój</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client jest darmowy i rozwijany w moim wolnym czasie. Jeśli zaoszczędził Ci czas, rozważ wsparcie jego rozwoju na Ko-fi. Jest to całkowicie opcjonalne i nigdy niewymagane do korzystania z aplikacji.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Wesprzyj na Ko-fi</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Ta wersja zawiera już Fakenvapi i NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Domyślny FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Domyślna wersja moda FSR4 INT8 wstępnie wybierana przy otwieraniu gry. GPU RDNA 4 (seria RX 9000) automatycznie używają opcji Brak.</x:String>

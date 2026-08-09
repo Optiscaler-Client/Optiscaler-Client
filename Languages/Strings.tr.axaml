@@ -306,6 +306,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFeedbackFeatures">✨ Özellik istekleri: yeni özellik önermek için "Feature request" şablonunu kullanın</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 İyileştirmeler: mevcut özellikler için "Improvement request" şablonunu kullanın</x:String>
     <x:String x:Key="TxtFeedbackSystem">Daha hızlı çözüm için OS, GPU ve uygulama sürümünüzü ekleyin</x:String>
+    <x:String x:Key="TxtDonateTitle">Geliştirmeyi Destekle</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client ücretsizdir ve boş zamanlarımda geliştirilir. Size zaman kazandırdıysa, gelişimini Ko-fi üzerinden desteklemeyi düşünebilirsiniz. Bu tamamen isteğe bağlıdır ve uygulamayı kullanmak için asla gerekli değildir.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Ko-fi'de Destekle</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Bu sürüm zaten Fakenvapi ve NukemFG içerir</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Varsayılan FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Oyun açılırken önceden seçilen varsayılan FSR4 INT8 mod sürümü. RDNA 4 GPU'lar (RX 9000 serisi) otomatik olarak Hiçbirini kullanır.</x:String>

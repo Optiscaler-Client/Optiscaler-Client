@@ -38,6 +38,10 @@
         {
           "type": "feedback",
           "title": "Feedback"
+        },
+        {
+          "type": "donate",
+          "title": "Support Development"
         }
       ]
     },

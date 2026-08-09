@@ -306,6 +306,9 @@
     <x:String x:Key="TxtFeedbackFeatures">✨ Запросы функций: используйте шаблон "Feature request", чтобы предложить новые функции</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Улучшения: используйте шаблон "Improvement request" для существующих функций</x:String>
     <x:String x:Key="TxtFeedbackSystem">Укажите вашу ОС, GPU и версию приложения для более быстрой помощи</x:String>
+    <x:String x:Key="TxtDonateTitle">Поддержать разработку</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client бесплатен и разрабатывается в свободное время. Если он сэкономил вам время, вы можете поддержать его разработку на Ko-fi. Это полностью необязательно и никогда не требуется для использования приложения.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Поддержать на Ko-fi</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Эта версия уже включает Fakenvapi и NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">По умолчанию FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Версия мода FSR4 INT8, предвыбираемая при открытии игры. ГПУ RDNA 4 (серия RX 9000) автоматически используют «Нет».</x:String>

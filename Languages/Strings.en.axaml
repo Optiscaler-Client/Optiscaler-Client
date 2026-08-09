@@ -196,6 +196,9 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtFeedbackFeatures">✨ Feature Requests: Use the "Feature request" template to suggest new functionality</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Improvements: Use the "Improvement request" template for existing features</x:String>
     <x:String x:Key="TxtFeedbackSystem">Include your OS, GPU, and app version for faster resolution</x:String>
+    <x:String x:Key="TxtDonateTitle">Support Development</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client is free and developed in my spare time. If it saved you some time, consider supporting its development on Ko-fi. It's entirely optional and never required to use the app.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Support on Ko-fi</x:String>
     <x:String x:Key="TxtBuildDateLbl">Last Build Date</x:String>
     <x:String x:Key="TxtCheckUpdatesBtn">Check for updates</x:String>
     <x:String x:Key="TxtGithubBtn">GitHub Repository</x:String>

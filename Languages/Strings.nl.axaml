@@ -324,6 +324,9 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtFeedbackFeatures">✨ Functieaanvragen: gebruik de sjabloon "Feature request" om nieuwe functionaliteit voor te stellen</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Verbeteringen: gebruik de sjabloon "Improvement request" voor bestaande functies</x:String>
     <x:String x:Key="TxtFeedbackSystem">Voeg uw OS, GPU en app-versie toe voor snellere ondersteuning</x:String>
+    <x:String x:Key="TxtDonateTitle">Ontwikkeling steunen</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client is gratis en wordt in mijn vrije tijd ontwikkeld. Als het je tijd heeft bespaard, overweeg dan om de ontwikkeling op Ko-fi te steunen. Dit is volledig optioneel en nooit vereist om de app te gebruiken.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Steun op Ko-fi</x:String>
     <x:String x:Key="TxtWarning">Waarschuwing</x:String>
     <x:String x:Key="TxtNoVersionsFound">Geen OptiScaler-versies beschikbaar voor installatie.</x:String>
     <!-- Help Window -->

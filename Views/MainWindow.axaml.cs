@@ -3507,6 +3507,9 @@ namespace OptiscalerClient.Views
                 case "feedback":
                     RenderFeedback(container);
                     break;
+                case "donate":
+                    RenderDonate(container);
+                    break;
                 case "text":
                     RenderTextSection(container, section);
                     break;
@@ -4037,7 +4040,7 @@ namespace OptiscalerClient.Views
             var border = new Border
             {
                 Padding = new Thickness(16, 12),
-                Margin = new Thickness(0, 0, 0, 40),
+                Margin = new Thickness(0, 0, 0, 24),
                 BorderThickness = new Thickness(1),
                 Background = this.FindResource("BrBgCard") as IBrush,
                 BorderBrush = this.FindResource("BrBorderSubtle") as IBrush,
@@ -4071,6 +4074,71 @@ namespace OptiscalerClient.Views
             border.Child = stack;
             container.Children.Add(title);
             container.Children.Add(border);
+        }
+
+        private void RenderDonate(StackPanel container)
+        {
+            var title = new TextBlock
+            {
+                Text = GetResourceString("TxtDonateTitle", "Support Development"),
+                FontSize = 18,
+                FontWeight = FontWeight.SemiBold,
+                Margin = new Thickness(0, 0, 0, 12),
+                Foreground = this.FindResource("BrTextPrimary") as IBrush
+            };
+
+            var border = new Border
+            {
+                Padding = new Thickness(16, 12),
+                Margin = new Thickness(0, 0, 0, 40),
+                BorderThickness = new Thickness(1),
+                Background = this.FindResource("BrBgCard") as IBrush,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush,
+                CornerRadius = (CornerRadius)(this.FindResource("RadiusMedium") ?? new CornerRadius(8))
+            };
+
+            var stack = new StackPanel();
+
+            var desc = new TextBlock
+            {
+                Text = GetResourceString("TxtDonateDesc", "OptiScaler Client is free and developed in my spare time. If it saved you some time, consider supporting its development on Ko-fi. It's entirely optional and never required to use the app."),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 12),
+                Foreground = this.FindResource("BrTextSecondary") as IBrush,
+                FontSize = (double)(this.FindResource("FontSizeBody") ?? 14.0)
+            };
+
+            var kofiBtn = new Button
+            {
+                Content = GetResourceString("TxtDonateKofiBtn", "Support on Ko-fi"),
+                Padding = new Thickness(16, 8),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left
+            };
+            kofiBtn.Classes.Add("BtnBase");
+            kofiBtn.Click += BtnKofi_Click;
+
+            stack.Children.Add(desc);
+            stack.Children.Add(kofiBtn);
+
+            border.Child = stack;
+            container.Children.Add(title);
+            container.Children.Add(border);
+        }
+
+        private async void BtnKofi_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://ko-fi.com/agustinm28",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this, "Error", $"Could not open browser: {ex.Message}").ShowDialog<object>(this);
+            }
         }
 
         private void RenderTextSection(StackPanel container, HelpSection section)

@@ -265,6 +265,9 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtFeedbackFeatures">✨ Solicitudes de Funciones: Usa la plantilla "Feature request" para sugerir nueva funcionalidad</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Mejoras: Usa la plantilla "Improvement request" para funciones existentes</x:String>
     <x:String x:Key="TxtFeedbackSystem">Incluye tu SO, GPU y versión de la app para resolución más rápida</x:String>
+    <x:String x:Key="TxtDonateTitle">Apoyar el desarrollo</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client es gratuito y se desarrolla en mi tiempo libre. Si te ahorró tiempo, podés considerar apoyar su desarrollo en Ko-fi. Es completamente opcional y nunca es necesario para usar la app.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Apoyar en Ko-fi</x:String>
     <x:String x:Key="TxtBuildDateLbl">Fecha de compilación</x:String>
     <x:String x:Key="TxtCheckUpdatesBtn">Buscar actualizaciones</x:String>
     <x:String x:Key="TxtGithubBtn">Repositorio de GitHub</x:String>

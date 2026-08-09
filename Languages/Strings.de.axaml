@@ -306,6 +306,9 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtFeedbackFeatures">✨ Funktionswünsche: Verwenden Sie die Vorlage "Feature request", um neue Funktionen vorzuschlagen</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Verbesserungen: Verwenden Sie die Vorlage "Improvement request" für bestehende Funktionen</x:String>
     <x:String x:Key="TxtFeedbackSystem">Geben Sie Ihr Betriebssystem, Ihre GPU und die App-Version an, um schneller Hilfe zu erhalten</x:String>
+    <x:String x:Key="TxtDonateTitle">Entwicklung unterstützen</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client ist kostenlos und wird in meiner Freizeit entwickelt. Wenn es dir Zeit erspart hat, kannst du die Entwicklung auf Ko-fi unterstützen. Das ist völlig optional und nie erforderlich, um die App zu nutzen.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Auf Ko-fi unterstützen</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Diese Version enthält bereits Fakenvapi und NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8-Standard</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Standard-FSR4-INT8-Modversion, die beim Öffnen eines Spiels vorausgewählt ist. RDNA-4-GPUs (RX-9000-Serie) verwenden automatisch Keine.</x:String>

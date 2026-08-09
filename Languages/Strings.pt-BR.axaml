@@ -324,6 +324,9 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtFeedbackFeatures">✨ Solicitações de recurso: use o modelo "Feature request" para sugerir novas funcionalidades</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 Melhorias: use o modelo "Improvement request" para recursos existentes</x:String>
     <x:String x:Key="TxtFeedbackSystem">Inclua seu SO, GPU e versão do aplicativo para resolução mais rápida</x:String>
+    <x:String x:Key="TxtDonateTitle">Apoiar o desenvolvimento</x:String>
+    <x:String x:Key="TxtDonateDesc">O OptiScaler Client é gratuito e desenvolvido no meu tempo livre. Se ele economizou seu tempo, considere apoiar o desenvolvimento no Ko-fi. É totalmente opcional e nunca é necessário para usar o aplicativo.</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">Apoiar no Ko-fi</x:String>
     <x:String x:Key="TxtWarning">Aviso</x:String>
     <x:String x:Key="TxtNoVersionsFound">Nenhuma versão do OptiScaler está disponível para instalação.</x:String>
     <!-- Help Window -->

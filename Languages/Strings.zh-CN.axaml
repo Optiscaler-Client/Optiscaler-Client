@@ -307,6 +307,9 @@
     <x:String x:Key="TxtFeedbackFeatures">✨ 功能请求：使用「Feature request」模板建议新功能</x:String>
     <x:String x:Key="TxtFeedbackImprovements">🔧 改进：对现有功能的改进请使用「Improvement request」模板</x:String>
     <x:String x:Key="TxtFeedbackSystem">为加快处理，请提供操作系统、GPU 以及应用版本</x:String>
+    <x:String x:Key="TxtDonateTitle">支持开发</x:String>
+    <x:String x:Key="TxtDonateDesc">OptiScaler Client 是免费的，由我利用业余时间开发。如果它为你节省了时间，欢迎在 Ko-fi 上支持它的开发。这完全是自愿的，绝不是使用本应用的必要条件。</x:String>
+    <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 和 NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">默认 FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">打开游戏时预选的默认 FSR4 INT8 模组版本。RDNA 4 GPU（RX 9000 系列）会自动使用「无」选项。</x:String>
