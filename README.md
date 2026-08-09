@@ -10,6 +10,8 @@
 
 **OptiScaler Client** is a modern, high-performance desktop utility designed to simplify the installation, management, and update of the **OptiScaler** mod across your entire game library. Built with **C#** and **Avalonia UI**.
 
+> If this project saved you some time, consider [buying me a coffee ☕](https://ko-fi.com/agustinm28) — totally optional, no strings attached.
+
 ---
 
 ## Screenshots
@@ -227,6 +229,5 @@ This client application is merely a frontend interface to help users more easily
 ---
 
 <p align="center">
-  Developed with ❤️<br/>
-  If this project saved you some time, consider <a href="https://ko-fi.com/agustinm28">buying me a coffee ☕</a> — totally optional, no strings attached.
+  Developed with ❤️
 </p>
