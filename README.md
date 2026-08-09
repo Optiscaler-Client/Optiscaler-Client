@@ -156,6 +156,7 @@ Full interface translation in **14 languages**:
 - On Linux, automatic scanner sources are focused on Steam and Heroic libraries.
 - Manual add/install flows currently target executable files (`.exe`) for game selection.
 - **Nix/NixOS:** A `flake.nix` is provided for building via Nix. Before the first build, regenerate the lock file by running `nix flake update` in the project root.
+- **Arch Linux (AUR):** A reference `PKGBUILD` for an `optiscaler-client-bin` package is provided under [`packaging/aur/`](packaging/aur/). It is not yet published to the AUR — see [`packaging/README.md`](packaging/README.md) for details.
 
 ---
 
