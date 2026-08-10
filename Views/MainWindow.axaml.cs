@@ -4574,8 +4574,8 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                var repoOwner = _componentService.Config.App.RepoOwner ?? "Agustinm28";
-                var repoName = _componentService.Config.App.RepoName ?? "Optiscaler-Switcher";
+                var repoOwner = _componentService.Config.App.RepoOwner ?? "Optiscaler-Client";
+                var repoName = _componentService.Config.App.RepoName ?? "Optiscaler-Client";
                 var url = $"https://github.com/{repoOwner}/{repoName}";
 
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo

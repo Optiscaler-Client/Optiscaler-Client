@@ -17,14 +17,14 @@ pkgver=1.0.6
 pkgrel=1
 pkgdesc="A modern manager for OptiScaler"
 arch=('x86_64')
-url="https://github.com/Agustinm28/Optiscaler-Client"
+url="https://github.com/Optiscaler-Client/Optiscaler-Client"
 license=('GPL3')
 depends=('fontconfig' 'libx11' 'libice' 'libsm')
 provides=('optiscaler-client')
 conflicts=('optiscaler-client')
 source=(
-    "OptiscalerClient-${pkgver}-linux-x64.tar.gz::https://github.com/Agustinm28/Optiscaler-Client/releases/download/OptiscalerClient-${pkgver}/OptiscalerClient-${pkgver}-linux-x64.tar.gz"
-    "optiscaler-client.png::https://raw.githubusercontent.com/Agustinm28/Optiscaler-Client/OptiscalerClient-${pkgver}/assets/icon.png"
+    "OptiscalerClient-${pkgver}-linux-x64.tar.gz::https://github.com/Optiscaler-Client/Optiscaler-Client/releases/download/OptiscalerClient-${pkgver}/OptiscalerClient-${pkgver}-linux-x64.tar.gz"
+    "optiscaler-client.png::https://raw.githubusercontent.com/Optiscaler-Client/Optiscaler-Client/OptiscalerClient-${pkgver}/assets/icon.png"
     "optiscaler-client.desktop"
 )
 # Placeholder until the OptiscalerClient-1.0.6 GitHub release exists - run `updpkgsums`

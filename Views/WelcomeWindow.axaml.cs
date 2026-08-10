@@ -77,7 +77,7 @@ namespace OptiscalerClient.Views
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = "https://github.com/Agustinm28/Optiscaler-Client/releases",
+                    FileName = "https://github.com/Optiscaler-Client/Optiscaler-Client/releases",
                     UseShellExecute = true
                 });
             }

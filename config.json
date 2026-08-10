@@ -1,6 +1,6 @@
 {
     "App": {
-        "RepoOwner": "Agustinm28",
+        "RepoOwner": "Optiscaler-Client",
         "RepoName": "Optiscaler-Client"
     },
     "OptiScaler": {
@@ -12,11 +12,11 @@
         "RepoName": "OptiPatcher"
     },
     "OptiScalerBetas": {
-        "RepoOwner": "Agustinm28",
+        "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Betas"
     },
     "OptiScalerExtras": {
-        "RepoOwner": "Agustinm28",
+        "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Extras"
     },
     "Fakenvapi": {

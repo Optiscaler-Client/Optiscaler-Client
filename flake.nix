@@ -74,7 +74,7 @@
 
           meta = with pkgs; {
             description = "A modern manager for OptiScaler";
-            homepage = "https://github.com/Agustinm28/Optiscaler-Client";
+            homepage = "https://github.com/Optiscaler-Client/Optiscaler-Client";
             license = lib.licenses.gpl3Only;
             platforms = lib.platforms.linux;
             mainProgram = "OptiscalerClient";

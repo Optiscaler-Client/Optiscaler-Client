@@ -1,6 +1,6 @@
 ﻿# ✦ OptiScaler Client
 
-[![GitHub Release](https://img.shields.io/github/v/release/Agustinm28/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Agustinm28/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.6)
+[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.6)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-yellow.svg?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-E95420?style=flat-square&logo=linux)](https://www.linux.org)
@@ -146,7 +146,7 @@ Full interface translation in **14 languages**:
 
 ### Instructions
 
-1. Download the latest release asset from [Releases](https://github.com/Agustinm28/Optiscaler-Client/releases).
+1. Download the latest release asset from [Releases](https://github.com/Optiscaler-Client/Optiscaler-Client/releases).
 2. Extract the package.
 3. Run `OptiscalerClient.exe`.
 
@@ -179,7 +179,7 @@ Yes, OptiScaler Client is completely safe and open-source. However, some antivir
 
 ### What you can do
 
-1. **Verify the Source**: Download only from official [GitHub Releases](https://github.com/Agustinm28/Optiscaler-Client/releases)
+1. **Verify the Source**: Download only from official [GitHub Releases](https://github.com/Optiscaler-Client/Optiscaler-Client/releases)
 2. **Check VirusTotal**: Upload the file to [VirusTotal.com](https://www.virustotal.com) — most reputable AVs will show clean
 3. **Review the Code**: This is open-source — you can inspect all code before running
 4. **Add Exception**: Whitelist `OptiscalerClient.exe` in your antivirus settings
