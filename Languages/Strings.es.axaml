@@ -274,6 +274,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
 
     <!-- App Update -->
     <x:String x:Key="TxtUpdateAvailableTitle">Actualización disponible</x:String>
+    <x:String x:Key="TxtUpdateAvailablePopupMessage">Hay una nueva versión de OptiScaler Client disponible: v{0}. Estás usando la v{1}.</x:String>
+    <x:String x:Key="TxtUpdateAvailableViewGithub">Ver en GitHub</x:String>
     <x:String x:Key="TxtUpdateAvailableMsg">Una nueva versión de Optiscaler Client está disponible (v{0}).&#x0a;¿Deseas descargarla e instalarla ahora?</x:String>
     <x:String x:Key="TxtUpdatingApp">Actualizando aplicación...</x:String>
     <x:String x:Key="TxtUpdateReady">Actualización lista</x:String>

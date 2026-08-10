@@ -182,6 +182,19 @@ namespace OptiscalerClient.Models
         /// request is made, so a failed attempt doesn't retry on every app launch.
         /// </summary>
         public DateTime? LastCompatListCheckTime { get; set; } = null;
+
+        /// <summary>
+        /// Latest GitHub release version the "Update Available" popup has already notified
+        /// the user about. When a newer version than this is found, the popup is shown again.
+        /// </summary>
+        public string? LastNotifiedUpdateVersion { get; set; } = null;
+
+        /// <summary>
+        /// Whether the "Update Available" popup for <see cref="LastNotifiedUpdateVersion"/> has
+        /// already been shown and dismissed. If false (e.g. the app closed before it was seen),
+        /// the popup is shown again on next startup even if the latest version hasn't changed.
+        /// </summary>
+        public bool UpdateNotificationDismissed { get; set; } = true;
     }
 
     /// <summary>

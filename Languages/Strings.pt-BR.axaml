@@ -247,6 +247,8 @@
 
     <!-- App Update -->
     <x:String x:Key="TxtUpdateAvailableTitle">Atualização disponível</x:String>
+    <x:String x:Key="TxtUpdateAvailablePopupMessage">Uma nova versão do OptiScaler Client está disponível: v{0}. Você está usando a v{1}.</x:String>
+    <x:String x:Key="TxtUpdateAvailableViewGithub">Ver no GitHub</x:String>
     <x:String x:Key="TxtUpdateAvailableMsg">Uma nova versão do Optiscaler Client está disponível (v{0}).&#x0a;Deseja baixar e instalar agora?</x:String>
     <x:String x:Key="TxtUpdatingApp">Atualizando aplicativo...</x:String>
     <x:String x:Key="TxtUpdateReady">Atualização pronta</x:String>

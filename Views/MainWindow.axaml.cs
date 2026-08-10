@@ -3162,6 +3162,10 @@ namespace OptiscalerClient.Views
                 catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
 
                 await _componentService.CheckForUpdatesAsync();
+
+                // Best-effort, never blocks startup or surfaces an error - see CheckAppUpdateNotificationAsync.
+                try { await CheckAppUpdateNotificationAsync(); }
+                catch (Exception ex) { DebugWindow.Log($"[MainWindow] App update notification check failed: {ex.Message}"); }
             }
             catch (OperationCanceledException) { }
             catch (GitHubRateLimitException)
@@ -3176,6 +3180,34 @@ namespace OptiscalerClient.Views
                 if (!cancellationToken.IsCancellationRequested && _txtStatus != null)
                     _txtStatus.Text = GetResourceString("TxtReady", "Ready");
             }
+        }
+
+        /// <summary>
+        /// Shows the "Update Available" popup once per newly-released app version. Runs on every
+        /// startup, but stays silent unless the latest GitHub release is newer than the version
+        /// currently running (so it never re-appears just because the user already updated) and
+        /// hasn't already been shown and dismissed for that specific version.
+        /// </summary>
+        private async Task CheckAppUpdateNotificationAsync()
+        {
+            var appUpdateService = new AppUpdateService(_componentService);
+            bool hasUpdate = await appUpdateService.CheckForAppUpdateAsync();
+            if (!hasUpdate || string.IsNullOrEmpty(appUpdateService.LatestVersion))
+                return;
+
+            var latest = appUpdateService.LatestVersion;
+            var config = _componentService.Config;
+
+            bool alreadyNotified = config.LastNotifiedUpdateVersion == latest && config.UpdateNotificationDismissed;
+            if (alreadyNotified)
+                return;
+
+            var popup = new UpdateAvailableWindow(this, latest);
+            await popup.ShowDialog(this);
+
+            config.LastNotifiedUpdateVersion = latest;
+            config.UpdateNotificationDismissed = true;
+            _componentService.SaveConfiguration();
         }
 
         private async Task ShowGitHubRateLimitDialogAsync()

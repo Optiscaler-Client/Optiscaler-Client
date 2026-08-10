@@ -276,6 +276,8 @@ This version is unavailable for download. Check your internet connection and try
 
     <!-- App Update -->
     <x:String x:Key="TxtUpdateAvailableTitle">Update Available</x:String>
+    <x:String x:Key="TxtUpdateAvailablePopupMessage">A new version of OptiScaler Client is available: v{0}. You're currently using v{1}.</x:String>
+    <x:String x:Key="TxtUpdateAvailableViewGithub">View on GitHub</x:String>
     <x:String x:Key="TxtUpdateAvailableMsg">A new version of Optiscaler Client is available (v{0}).&#x0a;Would you like to download and install it now?</x:String>
     <x:String x:Key="TxtUpdatingApp">Updating App...</x:String>
     <x:String x:Key="TxtUpdateReady">Update Ready</x:String>

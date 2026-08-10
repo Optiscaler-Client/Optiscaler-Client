@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.UpdateAvailableWindow"
+        Title="Update Available"
+        Width="460"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        CanResize="False"
+        ShowInTaskbar="False">
+
+    <Panel Margin="16" Name="RootPanel" Opacity="0">
+        <Border CornerRadius="12"
+                Background="{StaticResource BrBgBase}"
+                BoxShadow="0 10 30 0 #A0000000">
+
+            <Grid>
+                <!-- Subtle border overlay (never clipped) -->
+                <Border CornerRadius="12"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="1"
+                        ZIndex="10"
+                        IsHitTestVisible="False"/>
+
+                <Border CornerRadius="12"
+                        Background="Transparent"
+                        ClipToBounds="True">
+
+                    <Grid RowDefinitions="Auto, Auto, Auto">
+
+                        <!-- Title Bar -->
+                        <Border Grid.Row="0"
+                                Name="TitleBar"
+                                Background="{StaticResource BrBgDeep}"
+                                Padding="24,18"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="&#xE0A2;"
+                                           FontFamily="{StaticResource FontIcons}"
+                                           FontSize="20"
+                                           Foreground="{StaticResource BrAccent}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource TxtUpdateAvailableTitle}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrTextPrimary}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Content -->
+                        <StackPanel Grid.Row="1" Margin="24,20">
+                            <TextBlock Name="TxtUpdateMessage"
+                                       TextWrapping="Wrap"
+                                       FontSize="13"
+                                       Foreground="{StaticResource BrTextPrimary}"
+                                       LineHeight="19"/>
+                        </StackPanel>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,18"
+                                Background="{StaticResource BrBgDeep}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                                <Button Name="BtnLater"
+                                        Content="{DynamicResource TxtBtnLater}"
+                                        Classes="BtnBase"
+                                        Padding="16,10"
+                                        FontSize="13"
+                                        Click="BtnLater_Click"/>
+                                <Button Name="BtnViewOnGithub"
+                                        Content="{DynamicResource TxtUpdateAvailableViewGithub}"
+                                        Classes="BtnPrimary"
+                                        Padding="16,10"
+                                        FontSize="13"
+                                        Click="BtnViewOnGithub_Click"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>
