@@ -758,6 +758,13 @@ namespace OptiscalerClient.Views
                 .OfType<Button>()
                 .FirstOrDefault(x => x.Name == "BtnToggleFavoriteGrid");
 
+            var removeBtn = card.GetVisualDescendants()
+                .OfType<Button>()
+                .FirstOrDefault(x => x.Name == "BtnRemoveGameGrid");
+
+            bool canRemove = isVisible && card.DataContext is Game game && game.IsManual;
+            if (removeBtn != null) removeBtn.IsVisible = canRemove || removeBtn.IsVisible;
+
             if (overlay == null || actions == null) return;
 
             bool animationsEnabled = _componentService.Config.AnimationsEnabled;
@@ -776,12 +783,20 @@ namespace OptiscalerClient.Views
                     favoriteBtn.Opacity = isVisible ? 1 : 0;
                     favoriteBtn.IsHitTestVisible = isVisible;
                 }
+
+                if (removeBtn != null)
+                {
+                    removeBtn.IsVisible = canRemove;
+                    removeBtn.Opacity = canRemove ? 1 : 0;
+                    removeBtn.IsHitTestVisible = canRemove;
+                }
                 return;
             }
 
             EnsureHoverOpacityTransition(overlay);
             EnsureHoverOpacityTransition(actions);
             if (favoriteBtn != null) EnsureHoverOpacityTransition(favoriteBtn);
+            if (removeBtn != null) EnsureHoverOpacityTransition(removeBtn);
 
             overlay.IsVisible = true;
             actions.IsVisible = true;
@@ -796,9 +811,15 @@ namespace OptiscalerClient.Views
                 favoriteBtn.Opacity = isVisible ? 1 : 0;
             }
 
+            if (removeBtn != null)
+            {
+                removeBtn.IsHitTestVisible = canRemove;
+                removeBtn.Opacity = canRemove ? 1 : 0;
+            }
+
             if (!isVisible)
             {
-                _ = HideGridCardHoverAfterFadeAsync(overlay, actions, favoriteBtn);
+                _ = HideGridCardHoverAfterFadeAsync(overlay, actions, favoriteBtn, removeBtn);
             }
         }
 
@@ -821,7 +842,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private static async Task HideGridCardHoverAfterFadeAsync(Border overlay, Panel actions, Button? favoriteBtn = null)
+        private static async Task HideGridCardHoverAfterFadeAsync(Border overlay, Panel actions, Button? favoriteBtn = null, Button? removeBtn = null)
         {
             await Task.Delay(170);
 
@@ -840,6 +861,12 @@ namespace OptiscalerClient.Views
             {
                 favoriteBtn.IsVisible = false;
                 favoriteBtn.IsHitTestVisible = false;
+            }
+
+            if (removeBtn != null && removeBtn.Opacity <= 0.01)
+            {
+                removeBtn.IsVisible = false;
+                removeBtn.IsHitTestVisible = false;
             }
         }
 

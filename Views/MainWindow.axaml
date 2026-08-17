@@ -747,7 +747,7 @@
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"/>
                                              </Button>
-                                             <Button Content="&#xE74D;"
+                                             <Button Content="&#xF34C;"
                                                      FontFamily="{StaticResource FontIcons}"
                                                      Foreground="{StaticResource BrTextSecondary}"
                                                      Background="Transparent"
@@ -962,8 +962,6 @@
                                                      <Grid Margin="8,8,8,0" VerticalAlignment="Top">
                                                          <Grid.ColumnDefinitions>
                                                              <ColumnDefinition Width="*"/>
-                                                             <ColumnDefinition Width="Auto"/>
-                                                             <ColumnDefinition Width="Auto"/>
                                                          </Grid.ColumnDefinitions>
 
                                                          <Border Grid.Column="0"
@@ -978,23 +976,6 @@
                                                                         FontWeight="SemiBold"
                                                                         Foreground="{StaticResource BrTextPrimary}"/>
                                                          </Border>
-
-                                                         <Button Grid.Column="2"
-                                                                 Content="&#xE74D;"
-                                                                 FontFamily="{StaticResource FontIcons}"
-                                                                 Foreground="{StaticResource BrTextSecondary}"
-                                                                 Background="#BF10131A"
-                                                                 BorderBrush="{StaticResource BrBorderSubtle}"
-                                                                 BorderThickness="1"
-                                                                 FontSize="14"
-                                                                 Width="26"
-                                                                 Height="24"
-                                                                 Padding="0"
-                                                                 Margin="6,0,34,0"
-                                                                 CornerRadius="6"
-                                                                 ToolTip.Tip="{DynamicResource TxtRemoveGameTip}"
-                                                                 IsVisible="{Binding IsManual, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                                 Click="BtnRemoveGame_Click"/>
                                                      </Grid>
 
                                                      <Border Background="#E61E1530"
@@ -1133,6 +1114,29 @@
                                                  Loaded="BtnToggleFavorite_Loaded">
                                              <TextBlock Name="TxtFavoriteIcon"
                                                         Text="☆"
+                                                        FontSize="13"
+                                                        Foreground="{StaticResource BrTextSecondary}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                         </Button>
+
+                                         <Button Name="BtnRemoveGameGrid"
+                                                 IsVisible="False"
+                                                 Opacity="0"
+                                                 HorizontalAlignment="Right"
+                                                 VerticalAlignment="Top"
+                                                 Margin="0,16,50,0"
+                                                 Background="#BF10131A"
+                                                 BorderBrush="{StaticResource BrBorderSubtle}"
+                                                 BorderThickness="1"
+                                                 Width="26"
+                                                 Height="24"
+                                                 Padding="0"
+                                                 CornerRadius="6"
+                                                 ToolTip.Tip="{DynamicResource TxtRemoveGameTip}"
+                                                 Click="BtnRemoveGame_Click">
+                                             <TextBlock Text="&#xF34C;"
+                                                        FontFamily="{StaticResource FontIcons}"
                                                         FontSize="13"
                                                         Foreground="{StaticResource BrTextSecondary}"
                                                         HorizontalAlignment="Center"
