@@ -604,6 +604,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">Desteklenen oyunlarda spoofing olmadan DLSS/DLSS-FG girişlerini açığa çıkaran OptiScaler için bir ASI Eklentisi. Intel Arc kullanıcılarının D3D12 hatalarından kaçınmasına yardımcı olur ve Dxgi spoofing'in neden olduğu performans düşüşlerini veya çökmeleri önler.</x:String>
+    <x:String x:Key="TxtProfileLbl">Profil (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">Profil, kaydedilmiş bir OptiScaler .ini yapılandırmasıdır. Bu oyun için OptiScaler kurulurken belirli bir ayar grubunu yeniden kullanmak için birini seçin.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>

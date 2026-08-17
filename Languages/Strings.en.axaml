@@ -631,6 +631,8 @@ This version is unavailable for download. Check your internet connection and try
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">An ASI Plugin for OptiScaler that exposes DLSS/DLSS-FG inputs without spoofing in supported games. Helps AMD and Intel users avoid D3D12 errors and prevents performance overhead or crashes caused by Dxgi spoofing.</x:String>
+    <x:String x:Key="TxtProfileLbl">Profile (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">A profile is a saved OptiScaler .ini configuration. Pick one to reuse a specific set of settings when installing OptiScaler for this game.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Downloading OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Installing OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Version Management</x:String>

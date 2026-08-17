@@ -427,9 +427,23 @@
 
                                 <!-- Row 2, Col 0 : Profile selector -->
                                 <StackPanel Grid.Row="2" Grid.Column="0">
-                                    <TextBlock Text="Profile"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtProfileLbl}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtProfileTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <ComboBox Name="CmbProfile"
                                               Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"

@@ -605,6 +605,8 @@
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">지원 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 OptiScaler용 ASI 플러그인입니다. Intel Arc 사용자의 D3D12 오류와 Dxgi 스푸핑으로 인한 성능 저하 또는 크래시를 방지합니다.</x:String>
+    <x:String x:Key="TxtProfileLbl">프로필 (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">프로필은 저장된 OptiScaler .ini 구성입니다. 이 게임에 OptiScaler를 설치할 때 특정 설정 세트를 재사용하려면 프로필을 선택하세요.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher 다운로드 중...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher 설치 중...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">버전 관리</x:String>

@@ -605,6 +605,8 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">Plugin ASI pour OptiScaler exposant les entrées DLSS/DLSS-FG sans spoofing dans les jeux compatibles. Aide les utilisateurs Intel Arc à éviter les erreurs D3D12 et prévient les baisses de performance ou crashs causés par le spoofing Dxgi.</x:String>
+    <x:String x:Key="TxtProfileLbl">Profil (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">Un profil est une configuration .ini OptiScaler enregistrée. Choisissez-en un pour réutiliser un ensemble de paramètres spécifique lors de l'installation d'OptiScaler pour ce jeu.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Téléchargement d'OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Installation d'OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestion des versions</x:String>

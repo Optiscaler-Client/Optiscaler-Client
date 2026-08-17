@@ -605,6 +605,8 @@
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">ASI-плагин для OptiScaler, открывающий входы DLSS/DLSS-FG без спуфинга в поддерживаемых играх. Помогает пользователям Intel Arc избежать ошибок D3D12 и предотвращает потерю производительности или краши из-за спуфинга Dxgi.</x:String>
+    <x:String x:Key="TxtProfileLbl">Профиль (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">Профиль — это сохранённая .ini-конфигурация OptiScaler. Выберите его, чтобы повторно использовать определённый набор настроек при установке OptiScaler для этой игры.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Загрузка OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Установка OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Управление версиями</x:String>

@@ -604,6 +604,8 @@
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支援的遊戲中無需欺騙即可公開 DLSS/DLSS-FG 輸入。幫助 Intel Arc 使用者避免 D3D12 錯誤，並防止 Dxgi 欺騙導致的效能負擔或崩潰。</x:String>
+    <x:String x:Key="TxtProfileLbl">設定檔 (.ini)</x:String>
+    <x:String x:Key="TxtProfileTooltip">設定檔是已儲存的 OptiScaler .ini 設定。選擇一個設定檔，可在為此遊戲安裝 OptiScaler 時重複使用一組特定的設定。</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下載 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安裝 OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>
