@@ -46,12 +46,40 @@ public class GamePersistenceService
         try
         {
             var json = File.ReadAllText(_filePath);
-            return JsonSerializer.Deserialize(json, OptimizerContext.Default.ListGame) ?? new List<Game>();
+            var games = JsonSerializer.Deserialize(json, OptimizerContext.Default.ListGame) ?? new List<Game>();
+            MigrateMisclassifiedManualGames(games);
+            return games;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[GamePersistence] Failed to load games: {ex.Message}");
             return new List<Game>();
+        }
+    }
+
+    // 1.0.6 inserted GamePlatform.Lutris before Manual in the enum, shifting its integer
+    // value. Since Platform is persisted as a raw int, every game added manually under
+    // 1.0.5 deserializes as Lutris instead of Manual after upgrading. Manually-added
+    // games always get an AppId of "Manual_<guid>" (see BtnAddManual_Click), while real
+    // Lutris scans always use the Lutris slug as AppId, so that prefix reliably tells
+    // the two apart without risking a genuine Lutris game.
+    private void MigrateMisclassifiedManualGames(List<Game> games)
+    {
+        bool migrated = false;
+
+        foreach (var game in games)
+        {
+            if (game.Platform == GamePlatform.Lutris && game.AppId.StartsWith("Manual_", StringComparison.Ordinal))
+            {
+                game.Platform = GamePlatform.Manual;
+                migrated = true;
+            }
+        }
+
+        if (migrated)
+        {
+            System.Diagnostics.Debug.WriteLine("[GamePersistence] Migrated misclassified Manual games back from Lutris.");
+            SaveGames(games);
         }
     }
 }

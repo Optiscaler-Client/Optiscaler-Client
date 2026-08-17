@@ -16,18 +16,23 @@
 
 namespace OptiscalerClient.Models;
 
+// Values are persisted as raw integers in games.json (no string enum converter is
+// registered), so they must stay pinned. Adding a new platform must always append a
+// new explicit value at the end — inserting one in the middle silently reinterprets
+// every previously-saved game's Platform as a different platform (see the Lutris
+// insertion between 1.0.5 and 1.0.6, which turned old Manual games into Lutris ones).
 public enum GamePlatform
 {
-    Steam,
-    Epic,
-    GOG,
-    Xbox,
-    EA,
-    BattleNet,
-    Ubisoft,
-    Lutris,
-    Manual,
-    Custom
+    Steam = 0,
+    Epic = 1,
+    GOG = 2,
+    Xbox = 3,
+    EA = 4,
+    BattleNet = 5,
+    Ubisoft = 6,
+    Lutris = 7,
+    Manual = 8,
+    Custom = 9
 }
 
 public class Game
