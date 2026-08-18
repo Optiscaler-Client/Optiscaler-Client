@@ -242,6 +242,18 @@ namespace OptiscalerClient.Services
                 modifiedLines.Add($"; Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 modifiedLines.Add("");
 
+                // Tracks (section, key) pairs actually found and overridden while walking the
+                // template, so anything left over afterward is a profile setting the template
+                // didn't already contain — e.g. a key added by a newer OptiScaler release than
+                // whatever version's ini this game happens to have cached. Without this, such
+                // settings were silently dropped instead of ending up in the generated ini at all.
+                var applied = new HashSet<(string Section, string Key)>();
+
+                // Index in modifiedLines right after each section's last line, so missing keys
+                // for that section can be inserted in the right place afterward.
+                var sectionEndIndex = new Dictionary<string, int>();
+                string? sectionForInsert = null;
+
                 foreach (var line in lines)
                 {
                     var trimmed = line.Trim();
@@ -249,7 +261,11 @@ namespace OptiscalerClient.Services
                     // Track current section
                     if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
                     {
+                        if (sectionForInsert != null)
+                            sectionEndIndex[sectionForInsert] = modifiedLines.Count;
+
                         currentSection = trimmed.Substring(1, trimmed.Length - 2);
+                        sectionForInsert = currentSection;
                         modifiedLines.Add(line);
                         continue;
                     }
@@ -266,11 +282,11 @@ namespace OptiscalerClient.Services
                             var key = parts[0].Trim();
 
                             // Check if this setting is configured in the profile
-                            if (profile.IniSettings.ContainsKey(currentSection) &&
-                                profile.IniSettings[currentSection].ContainsKey(key))
+                            if (profile.IniSettings.TryGetValue(currentSection, out var sectionSettings) &&
+                                sectionSettings.TryGetValue(key, out var newValue))
                             {
-                                var newValue = profile.IniSettings[currentSection][key];
                                 modifiedLines.Add($"{key}={newValue}");
+                                applied.Add((currentSection, key));
                                 continue;
                             }
                         }
@@ -278,6 +294,32 @@ namespace OptiscalerClient.Services
 
                     // Keep the line as-is (comments, empty lines, unconfigured settings)
                     modifiedLines.Add(line);
+                }
+                if (sectionForInsert != null)
+                    sectionEndIndex[sectionForInsert] = modifiedLines.Count;
+
+                // Append whatever the profile configures that the template didn't already have —
+                // as new lines in an existing section, or as a brand-new section at the end.
+                int insertOffset = 0;
+                foreach (var section in profile.IniSettings)
+                {
+                    var missing = section.Value
+                        .Where(kv => !applied.Contains((section.Key, kv.Key)))
+                        .Select(kv => $"{kv.Key}={kv.Value}")
+                        .ToList();
+                    if (missing.Count == 0) continue;
+
+                    if (sectionEndIndex.TryGetValue(section.Key, out var insertAt))
+                    {
+                        modifiedLines.InsertRange(insertAt + insertOffset, missing);
+                        insertOffset += missing.Count;
+                    }
+                    else
+                    {
+                        modifiedLines.Add("");
+                        modifiedLines.Add($"[{section.Key}]");
+                        modifiedLines.AddRange(missing);
+                    }
                 }
 
                 return string.Join(Environment.NewLine, modifiedLines);

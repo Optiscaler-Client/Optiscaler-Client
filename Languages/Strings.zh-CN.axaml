@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
@@ -315,6 +315,7 @@
     <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 和 NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">默认 FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">打开游戏时预选的默认 FSR4 INT8 模组版本。RDNA 4 GPU（RX 9000 系列）会自动使用「无」选项。</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">导入包含 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 和/或 amdxc64.dll 的 .zip/.7z/.rar 包（或单个 .dll），以测试尚未发布的版本。</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">默认 GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">用于默认值和 GPU 特定建议</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">默认 OptiScaler 版本</x:String>
@@ -507,6 +508,11 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">建议使用 GE-Proton，可通过 Proton Plus 或 ProtonUp-Qt 进行管理。</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">应用无法自动更新 / 提示由包管理器管理</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">如果 OptiScaler Client 是通过包管理器（例如 AUR、Nix）安装的，应用内更新会被禁用以避免冲突。请改用您的包管理器更新应用（例如在 Arch/AUR 上使用 'yay -Syu'）。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 在 RDNA2 显卡上导致重影、卡顿或黑屏</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">这是一个已知的、目前尚未修复的 AMD 驱动编译器回归问题，专门影响 RDNA2 显卡（Radeon RX 6000 系列以及基于 RDNA2 的 APU/掌机）上基于驱动的 FSR4 INT8 版本（4.1.1 及更新版本）。这不是本应用或 OptiScaler 本身的错误。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">如果你的显卡是 RDNA2，请使用 FSR4 INT8 4.0.2c 版本而不是 4.1.1——它使用不同的实现，不受此问题影响，可以正常工作。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">你可以在 Manage Game 中为每个游戏单独选择 FSR4 INT8 版本，或在 Settings → Local cache &amp; Default version management 中设置默认版本。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">此问题只能由 AMD 发布更新的驱动来修复；目前客户端没有可用的解决方法。</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -645,12 +651,6 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增:"管理游戏"窗口中的推荐配置侧边栏,直接从 OptiScaler wiki 获取每个游戏的兼容性、升级器输入和注意事项。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 新增:完整的手柄支持 —— 无需鼠标或键盘即可浏览、安装和管理整个游戏库。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增:现在可以将游戏标记为收藏,并在主窗口中筛选游戏库。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 修复:FSR4 4.1.1 INT8 在非 RDNA4 显卡上无法工作的问题。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修复:其他若干小问题修复与改进。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 帮助:新增手柄支持页面,以及筛选和收藏的文档。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>

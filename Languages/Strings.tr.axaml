@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -314,6 +314,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtBetaIncludesComponents">Bu sürüm zaten Fakenvapi ve NukemFG içerir</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Varsayılan FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Oyun açılırken önceden seçilen varsayılan FSR4 INT8 mod sürümü. RDNA 4 GPU'lar (RX 9000 serisi) otomatik olarak Hiçbirini kullanır.</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Henüz yayınlanmamış bir sürümü test etmek için amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll ve/veya amdxc64.dll içeren bir .zip/.7z/.rar paketi (veya tek bir .dll) içe aktarın.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">Varsayılan GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Varsayılan değerler ve GPU'ya özgü kılavuz için kullanılır.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Varsayılan OptiScaler Sürümü</x:String>
@@ -505,6 +506,11 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Proton Plus veya ProtonUp-Qt aracılığıyla yönetilebilen GE-Proton kullanılması önerilir.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">Uygulama kendini güncellemiyor / bir paket yöneticisi tarafından yönetildiğini söylüyor</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">OptiScaler İstemcisi bir paket yöneticisi (ör. AUR, Nix) aracılığıyla yüklendiyse, çakışmaları önlemek için uygulama içi güncellemeler devre dışı bırakılır. Bunun yerine uygulamayı paket yöneticiniz aracılığıyla güncelleyin (ör. Arch/AUR'da 'yay -Syu').</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1, RDNA2 GPU'larda hayalet görüntü, takılma veya siyah ekrana neden oluyor</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Bu, özellikle RDNA2 GPU'larda (Radeon RX 6000 serisi ve RDNA2 tabanlı APU/el konsolları) sürücü tabanlı FSR4 INT8 sürümünü (4.1.1 ve sonrası) etkileyen, bilinen ve şu anda düzeltilmemiş bir AMD sürücü derleyici regresyonudur. Bu uygulamanın veya OptiScaler'ın kendisinin hatası değildir.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">GPU'nuz RDNA2 ise, 4.1.1 yerine FSR4 INT8 4.0.2c sürümünü kullanın — bu, etkilenmeyen farklı bir uygulama kullanır ve doğru şekilde çalışır.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Manage Game içinde her oyun için belirli bir FSR4 INT8 sürümü seçebilir veya Settings → Local cache &amp; Default version management içinde varsayılan tercihinizi belirleyebilirsiniz.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Bu sorun yalnızca AMD'nin güncellenmiş bir sürücü yayınlamasıyla düzelebilir; şu anda istemci tarafında bir çözüm bulunmamaktadır.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -643,12 +649,6 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Değişiklik Günlüğü</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Yeni: Oyunu Yönet penceresinde, OptiScaler wiki'sinden doğrudan uyumluluk, upscaler girişleri ve notlar gösteren Önerilen Yapılandırma paneli.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Yeni: Tam gamepad desteği — tüm kütüphanenizi fare veya klavye kullanmadan gezin, yükleyin ve yönetin.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Yeni: Artık oyunları favori olarak işaretleyebilir ve kütüphanenizi ana pencereden filtreleyebilirsiniz.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Düzeltildi: FSR4 4.1.1 INT8, RDNA4 olmayan GPU'larda çalışmıyordu.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Düzeltmeler: çeşitli diğer küçük düzeltmeler ve iyileştirmeler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Yardım: yeni Gamepad Desteği sayfası, ayrıca Filtreler ve Favoriler için belgeler.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Bu sürümün tüm değişikliklerinin ve yeni özelliklerinin tam listesini GitHub&apos;da görebilirsiniz.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHub&apos;da değişiklik günlüğünü görüntüle</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Başlarken</x:String>

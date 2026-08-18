@@ -237,6 +237,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtBetaIncludesComponents">This version already includes Fakenvapi and NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 Default</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Default FSR4 INT8 mod version pre-selected when opening a game. RDNA 4 GPUs (RX 9000 series) default to None automatically.</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Import a .zip/.7z/.rar package (or a single .dll) containing amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, and/or amdxc64.dll to test a build that isn't published yet.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">Default GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Used for defaults and GPU-specific guidance.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Default OptiScaler Version</x:String>
@@ -278,17 +279,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtUpdateAvailableTitle">Update Available</x:String>
     <x:String x:Key="TxtUpdateAvailablePopupMessage">A new version of OptiScaler Client is available: v{0}. You're currently using v{1}.</x:String>
     <x:String x:Key="TxtUpdateAvailableViewGithub">View on GitHub</x:String>
-    <x:String x:Key="TxtUpdateAvailableMsg">A new version of Optiscaler Client is available (v{0}).&#x0a;Would you like to download and install it now?</x:String>
-    <x:String x:Key="TxtUpdatingApp">Updating App...</x:String>
-    <x:String x:Key="TxtUpdateReady">Update Ready</x:String>
-    <x:String x:Key="TxtUpdateReadyMsg">The update has been downloaded. The application will now restart to complete the installation.</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} available</x:String>
     <x:String x:Key="TxtUpdateError">Update Error</x:String>
     <x:String x:Key="TxtNoUpdateFound">The application is already up to date.</x:String>
     <x:String x:Key="TxtUpdateCheckError">There was a problem checking for updates. Please try again later.</x:String>
-
-    <x:String x:Key="TxtUpdateManagedInstallMsg">A new version is available (v{0}), but this installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.</x:String>
-
-    <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">This installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.</x:String>
 
     <!-- BulkInstallWindow -->
     <x:String x:Key="TxtBulkInstallWindow">Bulk Install OptiScaler</x:String>
@@ -532,6 +526,11 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">It is recommended to use GE-Proton, which can be managed via Proton Plus or ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">The app won't update itself / says it's managed by a package manager</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">If OptiScaler Client was installed via a package manager (e.g. AUR, Nix), in-app self-updates are disabled to avoid conflicting with it. Update the app through your package manager instead (e.g. 'yay -Syu' on Arch/AUR).</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 causes ghosting, stuttering, or a black screen on RDNA2 GPUs</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">This is a known, currently unfixed AMD driver compiler regression affecting the FSR4 INT8 driver-based build (version 4.1.1 and newer) specifically on RDNA2 GPUs (Radeon RX 6000 series and RDNA2-based APUs/handhelds). It is not a bug in this app or in OptiScaler itself.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">If your GPU is RDNA2, use FSR4 INT8 version 4.0.2c instead of 4.1.1 — it uses a different implementation that isn't affected and works correctly.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">You can pick a specific FSR4 INT8 version per game in Manage Game, or set your preferred default in Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">This can only be fixed by AMD releasing an updated driver; there is no client-side workaround available yet.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -648,12 +647,9 @@ This version is unavailable for download. Check your internet connection and try
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Changelog</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• New: Recommended Config sidebar in Manage Game, pulling compatibility, upscaler inputs and notes per game from the OptiScaler wiki.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• New: Full gamepad/controller support — browse, install and manage your entire library without a mouse or keyboard.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• New: Mark games as favorites and filter your library from the main window.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Fixed: FSR4 4.1.1 INT8 not working on non-RDNA4 GPUs.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Fixes: several other smaller fixes and improvements.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Help: new Gamepad Support page, plus docs for Filters and Favorites.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Fixed: FSR4 INT8 could fail to launch the game on RDNA2 GPUs, caused by an internal setting pointing at a file the client never actually provided.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Fixed: NukemFG (DLSSG-to-FSR3) was force-enabled even on games without native DLSS Frame Generation, leaving OptiScaler stuck asking to "enable Frame Generation" with no way to satisfy it.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• New: "Check for Updates" button in Help, with a badge next to the app version whenever a new release is available.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">See the full list of changes and new features for this version on GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; View changelog on GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Getting Started</x:String>

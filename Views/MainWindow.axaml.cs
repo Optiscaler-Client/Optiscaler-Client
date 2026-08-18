@@ -3654,6 +3654,24 @@ namespace OptiscalerClient.Views
             container.Children.Add(border);
         }
 
+        /// <summary>
+        /// Whether a GitHub release newer than the running app was already detected by either
+        /// the automatic startup check or a manual "Check for updates" click, per the persisted
+        /// <see cref="AppConfiguration.LastNotifiedUpdateVersion"/> (not LastSeenAppVersion,
+        /// which tracks the separate welcome/changelog popup). Comparing versions rather than
+        /// just checking for a non-empty value means the badge disappears on its own once the
+        /// user actually updates to that version or newer, without needing an explicit reset.
+        /// </summary>
+        private bool TryGetPendingAppUpdate(out string pendingVersion)
+        {
+            pendingVersion = _componentService.Config.LastNotifiedUpdateVersion ?? string.Empty;
+            if (string.IsNullOrEmpty(pendingVersion)) return false;
+
+            return Version.TryParse(pendingVersion, out var pendingVer)
+                && Version.TryParse(App.AppVersion, out var currentVer)
+                && pendingVer > currentVer;
+        }
+
         private void RenderAppInfo(StackPanel container)
         {
             var title = new TextBlock
@@ -3690,6 +3708,36 @@ namespace OptiscalerClient.Views
                 Foreground = this.FindResource("BrTextPrimary") as IBrush
             };
 
+            var appVersionStack = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+
+            if (TryGetPendingAppUpdate(out var pendingVersion))
+            {
+                var badge = new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#2A1F4A")),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(8, 4),
+                    Margin = new Thickness(0, 0, 8, 0),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    BorderBrush = this.FindResource("BrAccent") as IBrush
+                };
+
+                var badgeFormat = GetResourceString("TxtAppUpdateAvailBadge", "v{0} available");
+                var badgeText = new TextBlock
+                {
+                    Text = string.Format(badgeFormat, pendingVersion),
+                    FontSize = 11,
+                    Foreground = this.FindResource("BrAccent") as IBrush
+                };
+                badge.Child = badgeText;
+                appVersionStack.Children.Add(badge);
+            }
+
             var appVersion = new TextBlock
             {
                 Text = $"v{App.AppVersion}",
@@ -3697,11 +3745,12 @@ namespace OptiscalerClient.Views
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Foreground = this.FindResource("BrAccent") as IBrush
             };
+            appVersionStack.Children.Add(appVersion);
 
             Grid.SetColumn(appLabel, 0);
-            Grid.SetColumn(appVersion, 1);
+            Grid.SetColumn(appVersionStack, 1);
             appGrid.Children.Add(appLabel);
-            appGrid.Children.Add(appVersion);
+            appGrid.Children.Add(appVersionStack);
 
             var dateGrid = new Grid();
             dateGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -3738,12 +3787,81 @@ namespace OptiscalerClient.Views
             dateGrid.Children.Add(dateLabel);
             dateGrid.Children.Add(dateValue);
 
+            var checkUpdatesBtn = new Button
+            {
+                Content = GetResourceString("TxtCheckUpdatesBtn", "Check for updates"),
+                Padding = new Thickness(16, 8),
+                Margin = new Thickness(0, 12, 0, 0)
+            };
+            checkUpdatesBtn.Classes.Add("BtnBase");
+            checkUpdatesBtn.Click += async (s, e) => await CheckForAppUpdatesAsync(checkUpdatesBtn);
+
             stack.Children.Add(appGrid);
             stack.Children.Add(dateGrid);
+            stack.Children.Add(checkUpdatesBtn);
             border.Child = stack;
 
             container.Children.Add(title);
             container.Children.Add(border);
+        }
+
+        /// <summary>
+        /// Checks only the app's own version against GitHub releases (not OptiScaler/component
+        /// versions, which live under Settings' Local cache & Default version management). No
+        /// self-update: shows the same UpdateAvailableWindow modal as the automatic startup
+        /// check, which only points the user at the GitHub releases page - see AppUpdateService
+        /// for why in-place self-replacing was dropped. When an update is found, persists
+        /// LastNotifiedUpdateVersion (same field the automatic check writes) so the "vX available"
+        /// badge next to the version in this page keeps showing after the modal closes, then
+        /// calls PopulateHelpContent() to render it immediately - safe to do here, unlike mid-flow,
+        /// because the modal has already closed and nothing after this touches triggerButton
+        /// again, so orphaning it by rebuilding the page is harmless (the fresh button PopulateHelpContent
+        /// creates already starts in the correct default state).
+        /// </summary>
+        private async Task CheckForAppUpdatesAsync(Button triggerButton)
+        {
+            triggerButton.IsEnabled = false;
+            var originalContent = triggerButton.Content;
+            triggerButton.Content = GetResourceString("TxtCheckingUpdates", "Checking for updates…");
+
+            try
+            {
+                var appUpdateService = new AppUpdateService(_componentService);
+                bool hasUpdate = await appUpdateService.CheckForAppUpdateAsync();
+
+                if (hasUpdate && !string.IsNullOrEmpty(appUpdateService.LatestVersion))
+                {
+                    var popup = new UpdateAvailableWindow(this, appUpdateService.LatestVersion);
+                    await popup.ShowDialog(this);
+
+                    var config = _componentService.Config;
+                    config.LastNotifiedUpdateVersion = appUpdateService.LatestVersion;
+                    config.UpdateNotificationDismissed = true;
+                    _componentService.SaveConfiguration();
+
+                    PopulateHelpContent();
+                    return;
+                }
+                else if (appUpdateService.IsError)
+                {
+                    var errorMsg = GetResourceString("TxtUpdateCheckError", "There was a problem checking for updates. Please try again later.");
+                    await new ConfirmDialog(this, GetResourceString("TxtUpdateError", "Update Error"), errorMsg).ShowDialog<object>(this);
+                }
+                else
+                {
+                    var noUpdateMsg = GetResourceString("TxtNoUpdateFound", "The application is already up to date.");
+                    await new ConfirmDialog(this, GetResourceString("TxtUpdateAvailableTitle", "Update Available"), noUpdateMsg).ShowDialog<object>(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[AppUpdate] Fatal exception: {ex.Message}");
+                var errorTitle = GetResourceString("TxtUpdateError", "Update Error");
+                await new ConfirmDialog(this, errorTitle, $"Error: {ex.Message}").ShowDialog<object>(this);
+            }
+
+            triggerButton.Content = originalContent;
+            triggerButton.IsEnabled = true;
         }
 
         private void RenderVersionManagementInfo(StackPanel container)
@@ -4507,93 +4625,6 @@ namespace OptiscalerClient.Views
             {
                 DebugWindow.Log($"[NukemFG] Error: {ex.Message}");
                 await new ConfirmDialog(this, "Error", $"Error installing NukemFG: {ex.Message}").ShowDialog<object>(this);
-            }
-        }
-
-        private async void BtnCheckUpdates_Click(object? sender, RoutedEventArgs e)
-        {
-            var btnCheckUpdates = this.FindControl<Button>("BtnCheckUpdates");
-            if (btnCheckUpdates == null) return;
-
-            btnCheckUpdates.IsEnabled = false;
-            var originalContent = btnCheckUpdates.Content;
-            btnCheckUpdates.Content = GetResourceString("TxtCheckingUpdates", "Checking…");
-
-            try
-            {
-                // 1. Check for component updates (Fakenvapi, etc)
-                await _componentService.CheckForUpdatesAsync();
-                PopulateHelpContent();
-
-                // 2. Check for App Updates
-                var appUpdateService = new AppUpdateService(_componentService);
-                bool hasUpdate = await appUpdateService.CheckForAppUpdateAsync();
-
-                if (hasUpdate && !AppUpdateService.IsInstallDirWritable())
-                {
-                    // Package-managed install (AUR, Nix store, /usr, ...) - the install dir
-                    // isn't writable, so self-updating would fail (or worse, fight the next
-                    // package-manager update). Point the user at their package manager instead.
-                    var managedTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
-                    var managedMsgFormat = GetResourceString("TxtUpdateManagedInstallMsg", "A new version is available (v{0}), but this installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.");
-                    var managedMsg = string.Format(managedMsgFormat, appUpdateService.LatestVersion);
-                    await new ConfirmDialog(this, managedTitle, managedMsg).ShowDialog<object>(this);
-                }
-                else if (hasUpdate)
-                {
-                    var updateTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
-                    var updateMsgFormat = GetResourceString("TxtUpdateAvailableMsg", "A new version is available (v{0}). Download now?");
-                    var updateMsg = string.Format(updateMsgFormat, appUpdateService.LatestVersion);
-
-                    var dialog = new ConfirmDialog(this, updateTitle, updateMsg, false);
-                    if (await dialog.ShowDialog<bool>(this)) // true if confirmed
-                    {
-                        btnCheckUpdates.Content = GetResourceString("TxtUpdatingApp", "Updating...");
-
-                        await appUpdateService.DownloadAndPrepareUpdateAsync(new Progress<double>(p => {
-                            btnCheckUpdates.Content = $"{GetResourceString("TxtUpdatingApp", "Updating")} ({p:F0}%)";
-                        }));
-
-                        var readyTitle = GetResourceString("TxtUpdateReady", "Update Ready");
-                        var readyMsg = GetResourceString("TxtUpdateReadyMsg", "Update downloaded. Restarting...");
-
-                        await new ConfirmDialog(this, readyTitle, readyMsg).ShowDialog<object>(this);
-
-                        appUpdateService.FinalizeAndRestart();
-
-                        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-                        {
-                            desktop.Shutdown();
-                        }
-                    }
-                }
-                else if (appUpdateService.IsError)
-                {
-                    var errorMsg = GetResourceString("TxtUpdateCheckError", "There was a problem checking for updates.");
-                    await new ConfirmDialog(this, GetResourceString("TxtUpdateError", "Error"), errorMsg).ShowDialog<object>(this);
-                }
-                else
-                {
-                    var noUpdateMsg = GetResourceString("TxtNoUpdateFound", "No new updates found.");
-                    await new ConfirmDialog(this, GetResourceString("TxtReady", "Updates"), noUpdateMsg).ShowDialog<object>(this);
-                }
-            }
-            catch (ManagedInstallException)
-            {
-                var managedTitle = GetResourceString("TxtUpdateAvailableTitle", "Update Available");
-                var managedMsg = GetResourceString("TxtUpdateManagedInstallMsgGeneric", "This installation appears to be managed by a package manager (e.g. AUR, Nix). Please update it from there instead of in-app.");
-                await new ConfirmDialog(this, managedTitle, managedMsg).ShowDialog<object>(this);
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[AppUpdate] Fatal exception: {ex.Message}");
-                var errorTitle = GetResourceString("TxtUpdateError", "Error");
-                await new ConfirmDialog(this, errorTitle, $"Error: {ex.Message}").ShowDialog<object>(this);
-            }
-            finally
-            {
-                btnCheckUpdates.Content = originalContent;
-                btnCheckUpdates.IsEnabled = true;
             }
         }
 
@@ -5368,6 +5399,9 @@ namespace OptiscalerClient.Views
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);
+                                var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(configuredExtras);
+                                if (customAmdxc64Path != null)
+                                    installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
                                 // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
                                 // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
                                 var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);

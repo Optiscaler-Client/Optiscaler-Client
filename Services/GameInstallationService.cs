@@ -488,12 +488,27 @@ namespace OptiscalerClient.Services
                         nukemFileCount++;
                         DebugWindow.Log($"[Install] Installed NukemFG file: {fileName}");
 
-                        // Wire NukemFG as both the FG input and output in [FrameGen] and enable it,
-                        // otherwise the DLL is deployed but Frame Generation never actually engages.
-                        ModifyOptiScalerIni(gameDir, "Enabled", "true", "FrameGen");
-                        ModifyOptiScalerIni(gameDir, "FGInput", "nukems", "FrameGen");
-                        ModifyOptiScalerIni(gameDir, "FGOutput", "nukems", "FrameGen");
-                        DebugWindow.Log($"[Install] Modified OptiScaler.ini [FrameGen] for NukemFG");
+                        // Wire NukemFG as both the FG input and output in [FrameGen] and enable it —
+                        // but only if the game actually ships native DLSS Frame Generation
+                        // (nvngx_dlssg.dll, detected by GameAnalyzerService into game.DlssFrameGenVersion).
+                        // Per OptiScaler.ini's own docs, FGInput=nukems "Requires DLSSG in the game": it
+                        // works by intercepting the game's native DLSS-G call, not by generating frames
+                        // on its own. Forcing it on a game that never calls DLSS-G (either because the
+                        // game has no DLSS-G support at all, or hides the toggle for non-Nvidia GPUs)
+                        // makes OptiScaler wait forever for a signal that will never come, surfacing an
+                        // in-game "enable Frame Generation" prompt the user has no way to satisfy
+                        // (reported 2026-08-17, e.g. Clair Obscur: Expedition 33 on AMD/Intel GPUs).
+                        if (!string.IsNullOrEmpty(game.DlssFrameGenVersion))
+                        {
+                            ModifyOptiScalerIni(gameDir, "Enabled", "true", "FrameGen");
+                            ModifyOptiScalerIni(gameDir, "FGInput", "nukems", "FrameGen");
+                            ModifyOptiScalerIni(gameDir, "FGOutput", "nukems", "FrameGen");
+                            DebugWindow.Log($"[Install] Modified OptiScaler.ini [FrameGen] for NukemFG");
+                        }
+                        else
+                        {
+                            DebugWindow.Log($"[Install] Skipped forcing [FrameGen] for NukemFG — no native DLSS Frame Generation (nvngx_dlssg.dll) detected in game folder, FGInput=nukems would never trigger");
+                        }
                     }
                 }
 
@@ -1782,21 +1797,40 @@ namespace OptiscalerClient.Services
         /// RDNA4 (Radeon RX 9000) gets FSR4 automatically with the default Fsr4ForceModel=0 (no override),
         /// but every other GPU needs Fsr4ForceModel=2 set explicitly — otherwise OptiScaler silently falls
         /// back to FSR3 and the injected FSR4 INT8 DLL never activates (it won't even show up in-game).
-        /// AMD's own amdxcffx64.dll (the official 4.1.1+ driver build) additionally does its own internal
-        /// GPU validation and only whitelists RDNA4/RDNA3-desktop for INT8 — Fsr4ForceModel alone isn't
-        /// enough on everything else (RDNA3 mobile/APU, RDNA2, Intel, Nvidia), so Fsr4ForceEnableInt8=true
-        /// and Fsr4Update=true (updates FSR3.X to FSR4, only defaults to true on RDNA4) are also needed.
-        /// RDNA2 needs one more push on top of all that: LoadCustomAmdxc64OnRdna2=true, which tells
-        /// OptiScaler to load a separate custom amdxc64.dll from OptiDllPath specifically for that
-        /// generation — confirmed via hands-on testing (2026-08-09).
+        /// Per OptiScaler's own v0.9.4 release notes, Fsr4ForceEnableInt8/Fsr4Update apply to the shipped
+        /// SDK upscaler DLL (amd_fidelityfx_upscaler_dx12.dll, e.g. the 4.0.2c Extras release) and do NOT
+        /// affect the official Driver amdxcffx64.dll — so these three keys are safe to set for either DLL.
+        ///
+        /// LoadCustomAmdxc64OnRdna2 tells OptiScaler to load a custom amdxc64.dll from OptiDllPath
+        /// (".\OptiScaler\amdxc64.dll" by default). Most Extras releases don't bundle that file — it
+        /// isn't produced by the FSR4 INT8 build process, it has to be sourced separately (historically,
+        /// hand-extracted from an old AMD Adrenalin driver package). Setting this key with no file behind
+        /// it makes OptiScaler try to load a DLL that doesn't exist, which was suspected as a cause of
+        /// games failing to launch after installing FSR4 INT8 on RDNA2 (2026-08-17) — so this only gets
+        /// set when that file has actually been placed there (see the copy step in the call sites, which
+        /// pulls it from ComponentManagementService.GetCachedCustomAmdxc64Path if the downloaded Extras
+        /// archive included one). No file there → key stays unset, same as before.
         /// </summary>
+        /// <summary>
+        /// Copies a downloaded RDNA2 amdxc64.dll companion into OptiDllPath (".\OptiScaler\") so
+        /// ConfigureFsr4IntFallback can find it and enable LoadCustomAmdxc64OnRdna2.
+        /// </summary>
+        public void InstallCustomAmdxc64(string gameDir, string sourcePath)
+        {
+            var optiScalerDir = Path.Combine(gameDir, "OptiScaler");
+            Directory.CreateDirectory(optiScalerDir);
+            File.Copy(sourcePath, Path.Combine(optiScalerDir, Fsr4Int8DllHelper.CustomRdna2FileName), overwrite: true);
+        }
+
         public void ConfigureFsr4IntFallback(string gameDir, bool isRdna4, bool isRdna2)
         {
             if (isRdna4) return;
+
             ModifyOptiScalerIni(gameDir, "Fsr4ForceModel", "2", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4ForceEnableInt8", "true", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4Update", "true", "FSR");
-            if (isRdna2)
+
+            if (isRdna2 && File.Exists(Path.Combine(gameDir, "OptiScaler", Fsr4Int8DllHelper.CustomRdna2FileName)))
                 ModifyOptiScalerIni(gameDir, "LoadCustomAmdxc64OnRdna2", "true", "Plugins");
         }
 

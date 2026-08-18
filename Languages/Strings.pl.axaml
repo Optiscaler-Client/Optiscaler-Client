@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -314,6 +314,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtBetaIncludesComponents">Ta wersja zawiera już Fakenvapi i NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Domyślny FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Domyślna wersja moda FSR4 INT8 wstępnie wybierana przy otwieraniu gry. GPU RDNA 4 (seria RX 9000) automatycznie używają opcji Brak.</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Zaimportuj pakiet .zip/.7z/.rar (lub pojedynczy plik .dll) zawierający amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll i/lub amdxc64.dll, aby przetestować jeszcze nieopublikowaną wersję.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">Domyślny GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Używany do wartości domyślnych i wskazówek specyficznych dla GPU.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Domyślna wersja OptiScaler</x:String>
@@ -506,6 +507,11 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Zalecane jest używanie GE-Proton, którym można zarządzać za pomocą Proton Plus lub ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">Aplikacja nie aktualizuje się sama / mówi, że jest zarządzana przez menedżera pakietów</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">Jeśli OptiScaler Client został zainstalowany za pomocą menedżera pakietów (np. AUR, Nix), aktualizacje w aplikacji są wyłączone, aby uniknąć konfliktów. Zaktualizuj aplikację za pomocą swojego menedżera pakietów (np. 'yay -Syu' w Arch/AUR).</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 powoduje smużenie, zacinanie się lub czarny ekran na GPU RDNA2</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">To znany, obecnie nienaprawiony regres w kompilatorze sterownika AMD, dotyczący sterownikowej wersji FSR4 INT8 (wersja 4.1.1 i nowsze) konkretnie na GPU RDNA2 (seria Radeon RX 6000 oraz APU/handheldy oparte na RDNA2). To nie jest błąd tej aplikacji ani samego OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Jeśli Twoja karta graficzna to RDNA2, użyj wersji FSR4 INT8 4.0.2c zamiast 4.1.1 — korzysta z innej implementacji, której ten problem nie dotyczy, i działa poprawnie.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Możesz wybrać konkretną wersję FSR4 INT8 dla każdej gry w Manage Game albo ustawić preferowaną wersję domyślną w Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Może to naprawić tylko AMD, wydając zaktualizowany sterownik; obecnie nie ma obejścia po stronie klienta.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -644,12 +650,6 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Historia zmian</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Nowość: panel Zalecanej Konfiguracji w oknie Zarządzaj Grą, pokazujący zgodność, wejścia upscalera i uwagi dla danej gry prosto z wiki OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Nowość: pełne wsparcie gamepada — przeglądaj, instaluj i zarządzaj całą biblioteką bez myszy i klawiatury.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nowość: gry można teraz oznaczać jako ulubione i filtrować bibliotekę z poziomu głównego okna.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Naprawiono: FSR4 4.1.1 INT8 nie działał na kartach graficznych innych niż RDNA4.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Poprawki: kilka innych mniejszych poprawek i usprawnień.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Pomoc: nowa strona o Wsparciu dla Gamepada oraz dokumentacja Filtrów i Ulubionych.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Pełna lista zmian i nowych funkcji tej wersji jest dostępna na GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Zobacz historię zmian na GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Pierwsze kroki</x:String>

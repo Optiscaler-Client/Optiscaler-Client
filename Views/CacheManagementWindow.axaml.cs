@@ -547,6 +547,41 @@ namespace OptiscalerClient.Views
         {
             content.Children.Add(CreateSetDefaultRow());
 
+            // Import archive/DLL button row
+            var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
+            var btnImport = new Button
+            {
+                Name = "BtnImportCustomExtras",
+                Content = Application.Current?.FindResource("TxtImportArchive") as string ?? "Import Archive",
+                Padding = new Thickness(12, 5),
+                FontSize = 11
+            };
+            btnImport.Classes.Add("BtnBase");
+            btnImport.Click += BtnImportCustomExtras_Click;
+
+            importRow.Children.Add(btnImport);
+            Grid.SetColumn(btnImport, 1);
+            content.Children.Add(importRow);
+
+            // Info banner
+            content.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 8),
+                Margin = new Thickness(0, 0, 0, 12),
+                Child = new TextBlock
+                {
+                    Text = Application.Current?.FindResource("TxtCustomExtrasImportInfo") as string
+                        ?? "Import a .zip/.7z/.rar package (or a single .dll) containing amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, and/or amdxc64.dll to test a build that isn't published yet.",
+                    Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    FontSize = 11,
+                    TextWrapping = TextWrapping.Wrap
+                }
+            });
+
             var versions = _componentService.GetDownloadedExtrasVersions();
 
             if (versions.Count == 0)
@@ -1055,6 +1090,58 @@ namespace OptiscalerClient.Views
                 var innerMsg = ex.InnerException != null ? $"\n{ex.InnerException.Message}" : "";
                 await new ConfirmDialog(this, "Import Error",
                     $"Failed to import custom version:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
+            }
+        }
+
+        // ── Import FSR4 INT8 ──────────────────────────────────────────────────
+
+        private async void BtnImportCustomExtras_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Select FSR4 INT8 Package",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[]
+                    {
+                        new FilePickerFileType("Archives (7z, zip, rar) or DLL")
+                        {
+                            Patterns = new[] { "*.7z", "*.zip", "*.rar", "*.dll" }
+                        }
+                    }
+                });
+
+                if (files == null || files.Count == 0) return;
+
+                var filePath = files[0].Path.IsAbsoluteUri
+                    ? files[0].Path.LocalPath
+                    : files[0].TryGetLocalPath();
+                if (string.IsNullOrEmpty(filePath)) return;
+
+                var overlay = this.FindControl<Grid>("OverlayImporting");
+                if (overlay != null) overlay.IsVisible = true;
+                if (sender is Button btnSender) btnSender.IsEnabled = false;
+
+                var versionName = await _componentService.ImportCustomExtrasArchiveAsync(filePath);
+                DebugWindow.Log($"[Cache] Custom FSR4 INT8 version imported: {versionName}");
+
+                if (overlay != null) overlay.IsVisible = false;
+                if (sender is Button btnSender2) btnSender2.IsEnabled = true;
+
+                ShowSection("fsr4");
+                UpdateSidebarSelection("fsr4");
+                UpdateCacheInfo();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Cache] Import FSR4 INT8 failed: {ex}");
+                var overlay = this.FindControl<Grid>("OverlayImporting");
+                if (overlay != null) overlay.IsVisible = false;
+                if (sender is Button btnSender) btnSender.IsEnabled = true;
+                var innerMsg = ex.InnerException != null ? $"\n{ex.InnerException.Message}" : "";
+                await new ConfirmDialog(this, "Import Error",
+                    $"Failed to import FSR4 INT8 package:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
             }
         }
 

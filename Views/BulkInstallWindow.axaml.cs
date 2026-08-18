@@ -624,6 +624,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
                         var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                         System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
+                        var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
+                        if (customAmdxc64Path != null)
+                            _installService.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
                         // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
                         // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
                         _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);

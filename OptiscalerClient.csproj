@@ -3,9 +3,9 @@
     <OutputType Condition="$([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
     <OutputType Condition="!$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <Version>1.0.6</Version>
-    <FileVersion>1.0.6</FileVersion>
-    <AssemblyVersion>1.0.6</AssemblyVersion>
+    <Version>1.0.6.1</Version>
+    <FileVersion>1.0.6.1</FileVersion>
+    <AssemblyVersion>1.0.6.1</AssemblyVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>

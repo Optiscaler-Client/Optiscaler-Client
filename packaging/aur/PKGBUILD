@@ -13,7 +13,7 @@
 # isn't writable (e.g. under /opt, owned by pacman), so it won't fight this package.
 
 pkgname=optiscaler-client-bin
-pkgver=1.0.6
+pkgver=1.0.6.1
 pkgrel=1
 pkgdesc="A modern manager for OptiScaler"
 arch=('x86_64')
@@ -27,7 +27,7 @@ source=(
     "optiscaler-client.png::https://raw.githubusercontent.com/Optiscaler-Client/Optiscaler-Client/OptiscalerClient-${pkgver}/assets/icon.png"
     "optiscaler-client.desktop"
 )
-# Placeholder until the OptiscalerClient-1.0.6 GitHub release exists - run `updpkgsums`
+# Placeholder until the OptiscalerClient-1.0.6.1 GitHub release exists - run `updpkgsums`
 # once it's published to fill in the real hashes for the tarball and icon.
 sha256sums=(
     'SKIP'

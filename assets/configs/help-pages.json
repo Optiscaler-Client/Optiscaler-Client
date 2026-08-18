@@ -756,6 +756,35 @@
               "labelKey": "TxtHelpFaqPkgMgrLabel",
               "text": "If OptiScaler Client was installed via a package manager (e.g. AUR, Nix), in-app self-updates are disabled to avoid conflicting with it. Update the app through your package manager instead (e.g. 'yay -Syu' on Arch/AUR).",
               "textKey": "TxtHelpFaqPkgMgrText"
+            },
+            {
+              "label": "FSR4 INT8 4.1.1 causes ghosting, stuttering, or a black screen on RDNA2 GPUs",
+              "labelKey": "TxtHelpFaqFsr4Rdna2Label",
+              "text": "This is a known, currently unfixed AMD driver compiler regression affecting the FSR4 INT8 driver-based build (version 4.1.1 and newer) specifically on RDNA2 GPUs (Radeon RX 6000 series and RDNA2-based APUs/handhelds). It is not a bug in this app or in OptiScaler itself.",
+              "textKey": "TxtHelpFaqFsr4Rdna2Text",
+              "items": [
+                {
+                  "title": "",
+                  "titleKey": "",
+                  "text": "If your GPU is RDNA2, use FSR4 INT8 version 4.0.2c instead of 4.1.1 — it uses a different implementation that isn't affected and works correctly.",
+                  "textKey": "TxtHelpFaqFsr4Rdna2Step1",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "",
+                  "titleKey": "",
+                  "text": "You can pick a specific FSR4 INT8 version per game in Manage Game, or set your preferred default in Settings → Local cache & Default version management.",
+                  "textKey": "TxtHelpFaqFsr4Rdna2Step2",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "",
+                  "titleKey": "",
+                  "text": "This can only be fixed by AMD releasing an updated driver; there is no client-side workaround available yet.",
+                  "textKey": "TxtHelpFaqFsr4Rdna2Step3",
+                  "type": "bullet-point"
+                }
+              ]
             }
           ]
         }

@@ -18,6 +18,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -49,6 +50,27 @@ namespace OptiscalerClient.Views
             var versionLabel = this.FindControl<TextBlock>("TxtVersionDisplay");
             if (versionLabel != null)
                 versionLabel.Text = $"v{App.AppVersion}";
+
+            // Renders TxtWelcomeWhatsNew1, 2, 3... until a key is missing, so a release's changelog
+            // can have as many or as few bullets as it actually needs - see the comment in the .axaml.
+            var whatsNewList = this.FindControl<StackPanel>("WhatsNewList");
+            if (whatsNewList != null)
+            {
+                for (int i = 1; ; i++)
+                {
+                    var entry = GetResourceString($"TxtWelcomeWhatsNew{i}", string.Empty);
+                    if (string.IsNullOrEmpty(entry)) break;
+
+                    whatsNewList.Children.Add(new TextBlock
+                    {
+                        Text = entry,
+                        TextWrapping = TextWrapping.Wrap,
+                        FontSize = 12,
+                        Foreground = this.FindResource("BrTextPrimary") as IBrush,
+                        LineHeight = 17
+                    });
+                }
+            }
 
             this.Opened += (s, e) =>
             {
@@ -93,6 +115,11 @@ namespace OptiscalerClient.Views
             if (rootPanel != null) rootPanel.Opacity = 0;
             await Task.Delay(220);
             Close();
+        }
+
+        private string GetResourceString(string key, string fallback)
+        {
+            return Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
         }
     }
 }

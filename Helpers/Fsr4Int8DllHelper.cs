@@ -27,6 +27,14 @@ namespace OptiscalerClient.Helpers
         public const string LegacyFileName = "amd_fidelityfx_upscaler_dx12.dll";
         public const string CurrentFileName = "amdxcffx64.dll";
 
+        /// <summary>
+        /// Custom amdxc64.dll needed by OptiScaler's LoadCustomAmdxc64OnRdna2 to work around AMD's
+        /// driver-side GPU whitelist for the "current" build (amdxcffx64.dll) on RDNA2. Distinct from
+        /// CurrentFileName despite the similar name — this one goes in OptiDllPath (".\OptiScaler\"),
+        /// not next to the game's .exe, and is only picked up when an Extras release actually ships it.
+        /// </summary>
+        public const string CustomRdna2FileName = "amdxc64.dll";
+
         public static readonly string[] KnownFileNames = { LegacyFileName, CurrentFileName };
 
         public static bool IsKnownFileName(string fileName)

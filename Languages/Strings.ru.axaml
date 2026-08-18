@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -314,6 +314,7 @@
     <x:String x:Key="TxtBetaIncludesComponents">Эта версия уже включает Fakenvapi и NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">По умолчанию FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Версия мода FSR4 INT8, предвыбираемая при открытии игры. ГПУ RDNA 4 (серия RX 9000) автоматически используют «Нет».</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Импортируйте пакет .zip/.7z/.rar (или один .dll), содержащий amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll и/или amdxc64.dll, чтобы протестировать ещё не опубликованную сборку.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">ГПУ по умолчанию</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Используется для значений по умолчанию и рекомендаций для конкретной ГПУ.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Версия OptiScaler по умолчанию</x:String>
@@ -506,6 +507,11 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Рекомендуется использовать GE-Proton, которым можно управлять через Proton Plus или ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">Приложение не обновляется само / сообщает, что управляется менеджером пакетов</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">Если OptiScaler Client был установлен через менеджер пакетов (например, AUR, Nix), обновления внутри приложения отключены во избежание конфликтов. Обновляйте приложение через свой менеджер пакетов (например, 'yay -Syu' в Arch/AUR).</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 вызывает шлейфы, подёргивания или чёрный экран на видеокартах RDNA2</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Это известная, пока не исправленная регрессия компилятора драйвера AMD, затрагивающая драйверную сборку FSR4 INT8 (версия 4.1.1 и новее) именно на GPU RDNA2 (Radeon RX 6000 и APU/портативки на базе RDNA2). Это не баг этого приложения и не баг самого OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Если у вас GPU RDNA2, используйте версию FSR4 INT8 4.0.2c вместо 4.1.1 — она использует другую реализацию, которая не затронута и работает корректно.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Вы можете выбрать конкретную версию FSR4 INT8 для каждой игры в Manage Game, либо задать версию по умолчанию в Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Это может исправить только AMD, выпустив обновлённый драйвер; обходного пути на стороне клиента пока нет.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -644,12 +650,6 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Журнал изменений</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Новое: боковая панель «Рекомендуемая конфигурация» в окне управления игрой — совместимость, входы апскейлера и примечания по каждой игре прямо из вики OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Новое: полная поддержка геймпада — просматривайте, устанавливайте и управляйте всей библиотекой без мыши и клавиатуры.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Новое: теперь можно отмечать игры как избранные и фильтровать библиотеку прямо в главном окне.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Исправлено: FSR4 4.1.1 INT8 не работал на GPU без RDNA4.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Исправления: ряд других мелких исправлений и улучшений.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Справка: новая страница поддержки геймпада, а также документация по фильтрам и избранному.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Полный список изменений и новых функций этой версии доступен на GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Посмотреть журнал изменений на GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Начало работы</x:String>

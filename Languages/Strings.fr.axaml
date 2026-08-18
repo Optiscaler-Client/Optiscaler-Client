@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -314,6 +314,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtBetaIncludesComponents">Cette version inclut déjà Fakenvapi et NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 par défaut</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Version du mod FSR4 INT8 présélectionnée à l'ouverture d'un jeu. Les GPU RDNA 4 (série RX 9000) utilisent automatiquement Aucun.</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Importez un paquet .zip/.7z/.rar (ou un simple .dll) contenant amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll et/ou amdxc64.dll pour tester une build pas encore publiée.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">GPU par défaut</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Utilisée pour les valeurs par défaut et les conseils spécifiques au GPU.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Version OptiScaler par défaut</x:String>
@@ -506,6 +507,11 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Il est recommandé d'utiliser GE-Proton, qui peut être géré via Proton Plus ou ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">L'application ne se met pas à jour / indique qu'elle est gérée par un gestionnaire de paquets</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">Si OptiScaler Client a été installé via un gestionnaire de paquets (par exemple AUR, Nix), les mises à jour automatiques dans l'application sont désactivées pour éviter les conflits. Mettez à jour l'application via votre gestionnaire de paquets à la place (par exemple « yay -Syu » sur Arch/AUR).</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 provoque du ghosting, des saccades ou un écran noir sur les GPU RDNA2</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Il s'agit d'une régression connue et actuellement non corrigée du compilateur du pilote AMD, affectant la build pilote de FSR4 INT8 (version 4.1.1 et ultérieures) spécifiquement sur les GPU RDNA2 (série Radeon RX 6000 et APU/portables basés sur RDNA2). Ce n'est pas un bug de cette application ni d'OptiScaler lui-même.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Si votre GPU est RDNA2, utilisez la version FSR4 INT8 4.0.2c plutôt que 4.1.1 — elle utilise une implémentation différente non affectée et fonctionne correctement.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Vous pouvez choisir une version spécifique de FSR4 INT8 par jeu dans Manage Game, ou définir votre préférence par défaut dans Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Cela ne peut être corrigé que par AMD via un pilote mis à jour ; il n'existe pas encore de solution de contournement côté client.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -644,12 +650,6 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Journal des modifications</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Nouveau : barre latérale de Configuration Recommandée dans Gérer le Jeu, avec compatibilité, entrées d'upscaler et notes par jeu directement depuis le wiki d'OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Nouveau : prise en charge complète de la manette — parcourez, installez et gérez toute votre bibliothèque sans souris ni clavier.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nouveau : possibilité de marquer des jeux comme favoris et de filtrer votre bibliothèque depuis la fenêtre principale.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Corrigé : FSR4 4.1.1 INT8 ne fonctionnait pas sur les GPU non-RDNA4.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Corrections : plusieurs autres petites corrections et améliorations.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Aide : nouvelle page Support Manette, plus une documentation sur les Filtres et Favoris.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">La liste complète des modifications et nouvelles fonctionnalités de cette version est disponible sur GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Voir le journal sur GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Premiers pas</x:String>

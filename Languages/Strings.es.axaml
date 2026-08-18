@@ -218,6 +218,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtBetaIncludesComponents">Esta versión ya incluye Fakenvapi y NukemFG</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Predeterminado FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Versión del mod FSR4 INT8 preseleccionada al abrir un juego. Las GPUs RDNA 4 (serie RX 9000) usan Ninguno automáticamente.</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">Importá un paquete .zip/.7z/.rar (o un .dll suelto) que contenga amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll y/o amdxc64.dll para probar una build que todavía no está publicada.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">GPU predeterminada</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Se usa para valores predeterminados y orientación específica de cada GPU.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Versión predeterminada de OptiScaler</x:String>
@@ -530,6 +531,11 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Se recomienda usar GE-Proton, que puede gestionarse desde Proton Plus o desde ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">La app no se actualiza sola / dice que está gestionada por un gestor de paquetes</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">Si OptiScaler Client fue instalado mediante un gestor de paquetes (por ejemplo, AUR, Nix), las actualizaciones automáticas dentro de la app se desactivan para evitar conflictos. Actualiza la app desde tu gestor de paquetes (por ejemplo, 'yay -Syu' en Arch/AUR).</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 causa ghosting, tirones o pantalla negra en GPUs RDNA2</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Es una regresión conocida del compilador del driver de AMD, todavía sin arreglar, que afecta específicamente a la build "driver" de FSR4 INT8 (versión 4.1.1 en adelante) en GPUs RDNA2 (serie Radeon RX 6000 y APUs/handhelds basadas en RDNA2). No es un bug de esta app ni de OptiScaler en sí.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Si tu GPU es RDNA2, usá la versión 4.0.2c de FSR4 INT8 en vez de la 4.1.1 — usa una implementación distinta que no está afectada y funciona correctamente.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Podés elegir una versión específica de FSR4 INT8 por juego en Manage Game, o fijar tu preferencia por defecto en Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Solo AMD puede arreglar esto con un driver actualizado; todavía no hay ningún workaround posible del lado del cliente.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -646,12 +652,6 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Historial de Cambios</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Nuevo: sidebar de Configuración Recomendada en Manage Game, que trae compatibilidad, upscaler inputs y notas por juego desde la wiki de OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Nuevo: soporte completo de gamepad — navegá, instalá y gestioná toda tu biblioteca sin mouse ni teclado.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nuevo: ahora podés marcar juegos como favoritos y filtrar tu biblioteca desde la ventana principal.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Corregido: FSR4 4.1.1 INT8 no funcionaba en GPUs no-RDNA4.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Correcciones: varios otros arreglos y mejoras menores.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Ayuda: nueva página de Soporte de Gamepad, más documentación de Filtros y Favoritos.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">Podés ver la lista completa de cambios y novedades de esta versión en GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Ver historial en GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Guía de Inicio</x:String>

@@ -155,6 +155,12 @@ namespace OptiscalerClient.Models
         /// </summary>
         public List<string> CustomOptiScalerVersions { get; set; } = new();
 
+        /// <summary>
+        /// Names/labels of custom FSR4 INT8 (Extras) packages imported by the user.
+        /// Each entry corresponds to a subdirectory under Cache/Extras/.
+        /// </summary>
+        public List<string> CustomExtrasVersions { get; set; } = new();
+
         /// <summary>Network and proxy settings.</summary>
         public NetworkConfig Network { get; set; } = new();
 

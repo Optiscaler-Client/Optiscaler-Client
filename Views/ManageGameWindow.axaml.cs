@@ -2389,6 +2389,9 @@ namespace OptiscalerClient.Views
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
                             File.Copy(extrasDllPath, destPath, overwrite: true);
+                            var customAmdxc64Path = componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
+                            if (customAmdxc64Path != null)
+                                installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
                             // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
                             // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
                             installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);

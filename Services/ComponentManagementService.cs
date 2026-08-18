@@ -102,9 +102,22 @@ namespace OptiscalerClient.Services
         public string? LatestBetaVersion => _cachedLatestBetaVersion;
         public string? LatestStableVersion => _cachedLatestStableVersion;
 
-        /// <summary>All available OptiScaler Extras (FSR4 INT8 mod) versions from the remote cache.</summary>
+        /// <summary>All available OptiScaler Extras (FSR4 INT8 mod) versions: remote releases plus any
+        /// custom packages imported via ImportCustomExtrasArchiveAsync.</summary>
         public System.Collections.Generic.List<string> ExtrasAvailableVersions
-            => _cachedExtrasVersions ?? new System.Collections.Generic.List<string>();
+        {
+            get
+            {
+                var baseList = _cachedExtrasVersions ?? new System.Collections.Generic.List<string>();
+                var custom = _config.CustomExtrasVersions;
+                if (custom.Count == 0) return baseList;
+                var merged = new System.Collections.Generic.List<string>(baseList);
+                foreach (var cv in custom)
+                    if (!merged.Contains(cv, StringComparer.OrdinalIgnoreCase))
+                        merged.Add(cv);
+                return merged;
+            }
+        }
         /// <summary>The latest (first) Extras version tag, or null if none fetched yet.</summary>
         public string? LatestExtrasVersion => _cachedLatestExtrasVersion;
 
@@ -1028,6 +1041,13 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
+        /// Names of custom FSR4 INT8 (Extras) packages imported by the user, mirroring CustomVersions
+        /// for OptiScaler. Each name is a subdirectory under Cache/Extras/.
+        /// </summary>
+        public System.Collections.Generic.HashSet<string> CustomExtrasVersions
+            => new(_config.CustomExtrasVersions, StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
         /// Returns the cache directory for a specific Extras (FSR4 INT8) DLL version.
         /// </summary>
         public string GetExtrasDllCachePath(string version)
@@ -1038,6 +1058,91 @@ namespace OptiscalerClient.Services
         /// </summary>
         public bool IsExtrasDllCached(string version)
             => Fsr4Int8DllHelper.ExistsIn(GetExtrasDllCachePath(version));
+
+        /// <summary>
+        /// Imports a manually-picked FSR4 INT8 package (a .zip/.7z/.rar archive, or a single .dll) into
+        /// its own Cache/Extras/{versionName}/ folder, named after the source file — same convention as
+        /// ImportCustomOptiScalerVersionAsync. Recognizes any combination of the known upscaler DLL names
+        /// (legacy or current) plus the optional RDNA2 amdxc64.dll companion. Registers the new name in
+        /// CustomExtrasVersions so it shows up in every FSR4 INT8 picker alongside real downloads.
+        /// Returns the derived version name.
+        /// </summary>
+        public async Task<string> ImportCustomExtrasArchiveAsync(string sourcePath)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(sourcePath);
+            var versionName = "custom-" + SanitizeVersionName(fileName);
+            var extractDir = GetExtrasDllCachePath(versionName);
+
+            if (Directory.Exists(extractDir))
+                Directory.Delete(extractDir, true);
+            Directory.CreateDirectory(extractDir);
+
+            try
+            {
+                if (sourcePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dllName = Path.GetFileName(sourcePath);
+                    if (!Fsr4Int8DllHelper.IsKnownFileName(dllName) &&
+                        !string.Equals(dllName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(
+                            $"Unrecognized file name '{dllName}'. Expected one of: {Fsr4Int8DllHelper.LegacyFileName}, {Fsr4Int8DllHelper.CurrentFileName}, or {Fsr4Int8DllHelper.CustomRdna2FileName}.");
+                    }
+
+                    File.Copy(sourcePath, Path.Combine(extractDir, dllName), overwrite: true);
+                }
+                else
+                {
+                    await Task.Run(() =>
+                    {
+                        using var archive = SharpCompress.Archives.ArchiveFactory.OpenArchive(sourcePath);
+                        bool extractedAny = false;
+                        foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+                        {
+                            var entryFileName = Path.GetFileName(entry.Key ?? "");
+                            bool isMainDll = Fsr4Int8DllHelper.IsKnownFileName(entryFileName);
+                            bool isCustomAmdxc64 = string.Equals(entryFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase);
+                            if (!isMainDll && !isCustomAmdxc64) continue;
+
+                            var dest = SafeDestinationPath(extractDir, entryFileName);
+                            using var entryStream = entry.OpenEntryStream();
+                            using var outStream = File.Create(dest);
+                            entryStream.CopyTo(outStream, 81920);
+                            extractedAny = true;
+                        }
+
+                        if (!extractedAny)
+                            throw new InvalidOperationException("No recognized FSR4 INT8 DLL found in the selected archive.");
+                    });
+                }
+            }
+            catch
+            {
+                try { if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true); }
+                catch { /* best effort */ }
+                throw;
+            }
+
+            if (!_config.CustomExtrasVersions.Contains(versionName, StringComparer.OrdinalIgnoreCase))
+            {
+                _config.CustomExtrasVersions.Add(versionName);
+                SaveConfiguration();
+            }
+            if (_cachedExtrasVersions != null && !_cachedExtrasVersions.Contains(versionName, StringComparer.OrdinalIgnoreCase))
+                _cachedExtrasVersions.Add(versionName);
+
+            return versionName;
+        }
+
+        /// <summary>
+        /// Returns the cached path to the optional RDNA2 amdxc64.dll companion for the given Extras
+        /// version, or null if that version's archive didn't include one (most don't, today).
+        /// </summary>
+        public string? GetCachedCustomAmdxc64Path(string version)
+        {
+            var path = Path.Combine(GetExtrasDllCachePath(version), Fsr4Int8DllHelper.CustomRdna2FileName);
+            return File.Exists(path) ? path : null;
+        }
 
         /// <summary>
         /// Downloads the Extras zip for the given version and extracts the FSR4 INT8 DLL
@@ -1109,7 +1214,8 @@ namespace OptiscalerClient.Services
                 // Stream download with retry and per-attempt timeout
                 await StreamToFileAsync(() => _httpClient, downloadUrl, tempZip, progress, 20 * 1024 * 1024);
 
-                // Extract only the target DLL with path validation (off the UI thread)
+                // Extract the target DLL (and, if bundled, the optional RDNA2 amdxc64.dll companion)
+                // with path validation, off the UI thread.
                 DebugWindow.Log($"[ExtrasDownload] Extracting from {Path.GetFileName(tempZip)}");
                 await Task.Run(() =>
                 {
@@ -1117,15 +1223,15 @@ namespace OptiscalerClient.Services
                     foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
                     {
                         var entryFileName = Path.GetFileName(entry.Key ?? "");
-                        if (Fsr4Int8DllHelper.IsKnownFileName(entryFileName))
-                        {
-                            var dest = SafeDestinationPath(extractDir, entryFileName);
-                            using var entryStream = entry.OpenEntryStream();
-                            using var outStream = File.Create(dest);
-                            entryStream.CopyTo(outStream, 81920);
-                            DebugWindow.Log($"[ExtrasDownload] Extracted DLL to {dest}");
-                            break;
-                        }
+                        bool isMainDll = Fsr4Int8DllHelper.IsKnownFileName(entryFileName);
+                        bool isCustomAmdxc64 = string.Equals(entryFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase);
+                        if (!isMainDll && !isCustomAmdxc64) continue;
+
+                        var dest = SafeDestinationPath(extractDir, entryFileName);
+                        using var entryStream = entry.OpenEntryStream();
+                        using var outStream = File.Create(dest);
+                        entryStream.CopyTo(outStream, 81920);
+                        DebugWindow.Log($"[ExtrasDownload] Extracted {(isCustomAmdxc64 ? "RDNA2 companion" : "DLL")} to {dest}");
                     }
                 });
             }

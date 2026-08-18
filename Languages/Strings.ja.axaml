@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -314,6 +314,7 @@
     <x:String x:Key="TxtBetaIncludesComponents">このバージョンには既に Fakenvapi と NukemFG が含まれています</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">デフォルト FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">ゲームを開く際に事前選択されるデフォルトの FSR4 INT8 モッドバージョン。RDNA 4 GPU（RX 9000シリーズ）は自動的に「なし」になります。</x:String>
+    <x:String x:Key="TxtCustomExtrasImportInfo">まだ公開されていないビルドをテストするには、amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll、amdxc64.dllのいずれかを含む.zip/.7z/.rarパッケージ(または単一の.dll)をインポートしてください。</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">デフォルト GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">デフォルト値および GPU 固有のガイダンスに使用されます。</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">デフォルト OptiScaler バージョン</x:String>
@@ -506,6 +507,11 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">GE-Protonの使用を推奨します。Proton PlusまたはProtonUp-Qtで管理できます。</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">アプリが自動更新されない/パッケージマネージャーで管理されていると表示される</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">OptiScaler Clientがパッケージマネージャー（AUR、Nixなど）経由でインストールされた場合、競合を避けるためアプリ内更新は無効化されます。代わりにパッケージマネージャーからアプリを更新してください（例:Arch/AURでの「yay -Syu」）。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1はRDNA2 GPUでゴースト、カクつき、黒画面を引き起こします</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">これは、RDNA2 GPU（Radeon RX 6000シリーズおよびRDNA2ベースのAPU/携帯機）でドライバーベースのFSR4 INT8ビルド（バージョン4.1.1以降）に影響する、既知の未修正のAMDドライバーコンパイラの回帰バグです。このアプリやOptiScaler自体のバグではありません。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">GPUがRDNA2の場合、4.1.1ではなくFSR4 INT8バージョン4.0.2cを使用してください。これは影響を受けない別の実装を使用しており、正常に動作します。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Manage Gameでゲームごとに特定のFSR4 INT8バージョンを選択するか、Settings → Local cache &amp; Default version managementで既定のバージョンを設定できます。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">これはAMDが更新されたドライバーをリリースすることでのみ修正可能です。現時点でクライアント側の回避策はありません。</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -644,12 +650,6 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: ゲーム管理画面に「推奨設定」サイドバーを追加。OptiScaler wikiから互換性・アップスケーラー入力・注意事項をゲームごとに自動取得します。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 新機能: ゲームパッドに完全対応 — マウスやキーボードなしでライブラリの閲覧・インストール・管理が可能に。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: ゲームをお気に入りに登録し、メイン画面からライブラリを絞り込めるようになりました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 修正: 非RDNA4 GPUでFSR4 4.1.1 INT8が動作しない問題。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: その他の細かな修正と改善。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• ヘルプ: 新しい「ゲームパッド対応」ページ、およびフィルターとお気に入りのドキュメントを追加。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>
