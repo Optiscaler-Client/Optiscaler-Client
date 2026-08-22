@@ -119,6 +119,23 @@
     <x:String x:Key="TxtBtnManualInstall">✦ Manual Install</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ Auto Update / Reinstall</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ Manual Update / Reinstall</x:String>
+    <x:String x:Key="TxtOptiVersionNone">None</x:String>
+    <x:String x:Key="TxtBtnAutoSwapDll">✦ Auto-Swap DLL</x:String>
+    <x:String x:Key="TxtBtnManualSwapDll">✦ Manual-Swap DLL</x:String>
+    <x:String x:Key="TxtRestoreOriginalDll">↺ Restore original DLL</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Nothing to install</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">Select an OptiScaler version or an FSR4 INT8 version before installing.</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundTitle">No DLL found to replace</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundText">Could not find amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll or amdxc64.dll in the game folder. Try Manual-Swap DLL instead.</x:String>
+    <x:String x:Key="TxtSwapDllOutsideGameFolder">The selected file must be inside the game folder.</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">This FSR4 INT8 version doesn't include a replacement for amdxc64.dll. Pick a different version or target file.</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} swapped into {1}.</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllTitle">Confirm Restore</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">Are you sure you want to restore the original DLL?&#x0a;The swapped FSR4 INT8 DLL will be replaced back with the backed-up original.</x:String>
+    <x:String x:Key="TxtRestoreDllSuccess">Original DLL restored successfully.</x:String>
+    <x:String x:Key="TxtFsr4SwappedTip">Swapped directly, without installing OptiScaler</x:String>
+    <x:String x:Key="TxtRestoreDllResidueTitle">Original DLL Restored</x:String>
+    <x:String x:Key="TxtRestoreDllResidueMsg">The original DLL was restored, but {0} file(s) that could belong to the game were left behind as a precaution:&#x0a;&#x0a;{1}&#x0a;&#x0a;If you're sure the game didn't ship these, use "Folder Cleanup" to remove them.</x:String>
     <x:String x:Key="TxtFakenvapiTip">Required for AMD/Intel GPUs to enable DLSS FG with Nukem mod</x:String>
     <x:String x:Key="TxtNukemTip">Nukem's DLSSG-to-FSR3 mod for Frame Generation</x:String>
     <x:String x:Key="TxtFakenvapiHelpTip">Tricks the game into detecting an NVIDIA graphics card, allowing you to bypass hardware restrictions and enable DLSS technologies on AMD or Intel GPUs.</x:String>
@@ -172,6 +189,11 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">We couldn't find recommended configuration for this game. Check the full Compatibility List for more info.</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">View Compatibility List</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Fetching game information…</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">View this game's wiki page</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Injection Method</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">FG Inputs</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} known issue(s) reported — see the wiki page for details.</x:String>
 
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">Manual File Required</x:String>
@@ -235,6 +257,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtBetaVersions">Prefer latest beta as default</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">When enabled, automatically selects the latest beta version instead of the stable release.</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">This version already includes Fakenvapi and NukemFG</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Select either an OptiScaler version or a FSR4 INT8 version (DLL swap).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 Default</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Default FSR4 INT8 mod version pre-selected when opening a game. RDNA 4 GPUs (RX 9000 series) default to None automatically.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Import a .zip/.7z/.rar package (or a single .dll) containing amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, and/or amdxc64.dll to test a build that isn't published yet.</x:String>
@@ -408,6 +431,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpMWContent">The main window is your central hub for managing all your games. Here you can view your entire game library, scan for new games, and access game management features.</x:String>
     <x:String x:Key="TxtHelpMWGameListLabel">Game List 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">Displays all detected games with cover art, title, and installation status.</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsLabel">Badge Colors 🎨</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">Each cover shows a badge per detected upscaler (DLSS, FSR, XeSS). A solid, filled badge means it's native to the game. A dimmer, outlined badge means it was added by OptiScaler. For FSR, an amber badge means the FSR4 INT8 DLL was swapped directly in the game folder, without installing OptiScaler.</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">Manage Button ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">Opens the Game Management Window for the selected game, where you can install, configure, and manage OptiScaler.</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Quick Install Button ✦</x:String>
@@ -458,9 +483,11 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpGMInjectionLabel">Injection method 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">Choose how OptiScaler injects into the game process. For most cases, the default option (dxgi.dll) is sufficient, but if optiscaler is not detected correctly, feel free to try others.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">Selector that allows injecting the INT 8 version of FSR 4 for non RDNA 4 GPUs.</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">Selector that allows injecting the INT 8 version of FSR 4 for GPUs older than RDNA 3. RDNA 3 and RDNA 4 GPUs already get FSR 4 INT8 natively from AMD's official driver, so this isn't needed for them.</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL Swap (FSR4 INT8) 🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">Set the OptiScaler Version to 'None' while keeping a FSR4 INT8 version selected to swap only the FSR4 INT8 DLL in the game folder, without installing OptiScaler at all. Auto-Swap DLL finds and replaces the existing DLL automatically; Manual-Swap DLL lets you pick it yourself if it isn't found. The original file is backed up, so the Uninstall button becomes 'Restore original DLL' to revert it. Swapping and installing OptiScaler are fully compatible with each other in either order. Also available for multiple games at once from Bulk Install.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Installed Components 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. Hover over any entry for details.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. An amber badge (FSR only) means the FSR4 INT8 DLL was swapped directly, without installing OptiScaler. Hover over any entry for details.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -479,7 +506,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpSetScanLabel">Scan Sources</x:String>
     <x:String x:Key="TxtHelpSetScanText">Allows you to manage which sources are scanned when clicking 'Scan', including platforms like Steam and Epic, as well as custom folders and other locations.</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">FSR INT8 Default</x:String>
-    <x:String x:Key="TxtHelpSetFsr4Text">Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 9000-series graphics cards.</x:String>
+    <x:String x:Key="TxtHelpSetFsr4Text">Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 7000-series or 9000-series graphics cards.</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">Default GPU Selection</x:String>
     <x:String x:Key="TxtHelpSetGpuText">Choose which GPU to use when multiple GPUs are detected in your system.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">Auto scan on startup</x:String>
@@ -531,6 +558,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">If your GPU is RDNA2, use FSR4 INT8 version 4.0.2c instead of 4.1.1 — it uses a different implementation that isn't affected and works correctly.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">You can pick a specific FSR4 INT8 version per game in Manage Game, or set your preferred default in Settings → Local cache &amp; Default version management.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">This can only be fixed by AMD releasing an updated driver; there is no client-side workaround available yet.</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Recommended config not found for a game that IS on the Compatibility List</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchText">This happens when the local game name doesn't match the wiki's entry closely enough for the automatic lookup to find it. Edit the game's name in the Manage window so it matches the name shown on the Compatibility List, then close Manage and open it again — the lookup only runs when the window opens.</x:String>
 
 
     <!-- Help - Gamepad -->

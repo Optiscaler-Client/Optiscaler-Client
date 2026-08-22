@@ -66,12 +66,29 @@ public class Game
     public bool XessViaOptiscaler { get; set; }
 
     public bool DlssIsNative => DlssVersion != null && !DlssViaOptiscaler;
-    public bool FsrIsNative => FsrVersion != null && !FsrViaOptiscaler;
+    // The FSR4 INT8 mod DLL is one of the files _fsrNames detects as "FSR" (GameAnalyzerService),
+    // so a swap makes FsrVersion/FsrIsNative light up exactly like a game-native FSR install would
+    // — misleading, since it's neither native nor a straightforward OptiScaler injection. IsSwapped
+    // gets its own badge state (see MainWindow.axaml/ManageGameWindow "Detected Components") and is
+    // carved out of "native" so the two don't both claim the same file.
+    public bool FsrIsSwapped => FsrVersion != null && IsFsr4DllSwapped;
+    // Raw FsrViaOptiscaler doesn't know about swaps (it's just "OptiScaler's manifest owns this
+    // file"), so if OptiScaler was installed first and the DLL got swapped afterwards, both this
+    // and FsrIsSwapped would otherwise be true for the same physical file — two badges for one
+    // thing. FsrIsSwapped wins; this is what the "via OptiScaler" badge should actually bind to.
+    public bool FsrIsViaOptiscalerOnly => FsrVersion != null && FsrViaOptiscaler && !IsFsr4DllSwapped;
+    public bool FsrIsNative => FsrVersion != null && !FsrViaOptiscaler && !IsFsr4DllSwapped;
     public bool XessIsNative => XessVersion != null && !XessViaOptiscaler;
 
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
     public string? Fsr4ExtraVersion { get; set; }
+
+    // True when a FSR4 INT8 DLL was swapped directly into the game folder without installing
+    // OptiScaler (independent of IsOptiscalerInstalled — both can be true at once). Fsr4ExtraVersion
+    // above doubles as "which version" for this too, whether injected via OptiScaler or swapped raw.
+    public bool IsFsr4DllSwapped { get; set; }
+    public string? Fsr4DllSwapTargetFileName { get; set; }
 
     public bool HasUpscaler => DlssVersion != null || DlssFrameGenVersion != null || FsrVersion != null || XessVersion != null || IsOptiscalerInstalled;
 

@@ -87,7 +87,8 @@ namespace OptiscalerClient.Services
                                      bool installNukemFG = false, string nukemFGCachePath = "",
                                      string? optiscalerVersion = null,
                                      string? overrideGameDir = null,
-                                     OptiScalerProfile? profile = null)
+                                     OptiScalerProfile? profile = null,
+                                     bool isRdna4 = false, bool isRdna2 = false)
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
             DebugWindow.Log($"[Install] Version: {optiscalerVersion}, Injection: {injectionDllName}");
@@ -390,6 +391,20 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Using Default profile - OptiScaler will use its default configuration");
             }
 
+            // FSR 4.1.1+ (the "Current" amdxcffx64.dll build) does its own internal GPU whitelist check
+            // that silently falls back to FSR3 unless ConfigureFsr4IntFallback's 4 keys are forced. Step
+            // 2.5 above just (re)generated OptiScaler.ini from whichever profile was applied, which may
+            // not carry those keys — so if this game already has that DLL sitting in gameDir from an
+            // earlier install, re-force them here. This way switching/reconfiguring a profile can never
+            // silently disable FSR4 INT8 for a game that already has it active.
+            var existingExtrasDll = Fsr4Int8DllHelper.FindIn(gameDir);
+            if (existingExtrasDll != null && !isRdna4 &&
+                string.Equals(Path.GetFileName(existingExtrasDll), Fsr4Int8DllHelper.CurrentFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
+                DebugWindow.Log($"[Install] Re-applied FSR4 INT8 forcing keys after profile write (Current extras DLL already present)");
+            }
+
             // Step 3: Install Fakenvapi if requested (AMD/Intel only)
             if (installFakenvapi && !string.IsNullOrEmpty(fakenvapiCachePath) && Directory.Exists(fakenvapiCachePath))
             {
@@ -568,6 +583,94 @@ namespace OptiscalerClient.Services
 
                 throw new Exception($"{ex.Message}", ex);
             }
+        }
+
+        public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
+
+        /// <summary>
+        /// Replaces targetPath (a FSR4 INT8-related DLL already present in the game's root, one of
+        /// Fsr4Int8DllHelper.SwapTargetFileNames) with sourceContentPath's bytes, without touching
+        /// OptiScaler or any other file. Backs up the original into the same external backup store
+        /// (same storeKey = game.InstallPath) InstallOptiScaler/UninstallOptiScaler use, so a later
+        /// UninstallOptiScaler restores it automatically — whether or not OptiScaler ever got
+        /// installed on top of this in the meantime (both flags can coexist on one manifest).
+        /// </summary>
+        public DllSwapResult SwapFsr4Dll(Game game, string targetPath, string sourceContentPath, string extrasVersion)
+        {
+            if (!File.Exists(targetPath))
+                throw new FileNotFoundException($"Target DLL not found: {targetPath}");
+            if (!File.Exists(sourceContentPath))
+                throw new FileNotFoundException("FSR4 INT8 replacement content not found (download/cache missing).");
+
+            var gameDir = Path.GetDirectoryName(targetPath)!;
+            var targetFileName = Path.GetFileName(targetPath);
+            var storeKey = game.InstallPath;
+            var relativePath = Path.GetRelativePath(gameDir, targetPath);
+
+            // Reuse (don't clobber) an existing committed manifest — e.g. OptiScaler already
+            // installed for this game, or a previous swap of a different target file — so this
+            // operation only ever adds to the same per-game record instead of losing prior state.
+            var manifest = _backupStore.LoadManifest(storeKey);
+            bool hasCommittedManifest = manifest != null &&
+                string.Equals(manifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
+            if (!hasCommittedManifest)
+            {
+                manifest = new InstallationManifest
+                {
+                    OperationId = Guid.NewGuid().ToString("N"),
+                    OperationStatus = "in_progress",
+                    StartedAtUtc = DateTime.UtcNow.ToString("O"),
+                    InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    InstalledGameDirectory = gameDir,
+                    IncludesOptiscaler = false
+                };
+            }
+
+            // Don't re-backup if this exact file already has a tracked original — that original
+            // (from the very first time this path was touched) must never be replaced by a backup
+            // of already-swapped content, or a later restore would bring back the wrong bytes.
+            bool alreadyBackedUp = manifest!.FilesOverwritten.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase))
+                                 || manifest.BackedUpFiles.Contains(relativePath, StringComparer.OrdinalIgnoreCase);
+
+            string? preHash = null;
+            if (!alreadyBackedUp)
+            {
+                preHash = ComputeSha256(targetPath);
+                if (!_backupStore.BackupFile(storeKey, gameDir, relativePath))
+                    throw new Exception($"Could not back up '{targetFileName}' before swapping.");
+            }
+
+            try
+            {
+                File.Copy(sourceContentPath, targetPath, overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                if (!alreadyBackedUp)
+                    _backupStore.RestoreFile(storeKey, gameDir, relativePath);
+                throw new Exception($"Failed to write swapped DLL: {ex.Message}", ex);
+            }
+
+            TrackManifestFileMutation(manifest, relativePath, existedBefore: true, preHash, ComputeSha256(targetPath));
+            manifest.IncludesDllSwap = true;
+            manifest.DllSwapTargetFileName = targetFileName;
+            manifest.DllSwapExtrasVersion = extrasVersion;
+            manifest.OperationStatus = "committed";
+            manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
+            _backupStore.SaveManifest(storeKey, manifest);
+
+            game.IsFsr4DllSwapped = true;
+            game.Fsr4DllSwapTargetFileName = targetFileName;
+            game.Fsr4ExtraVersion = extrasVersion;
+
+            // Re-analyze so the UI reflects the swap immediately, same as InstallOptiScaler does.
+            var analyzer = new GameAnalyzerService();
+            GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
+            analyzer.AnalyzeGame(game, forceRefresh: true);
+            GameAnalyzerService.FlushCacheToDisk();
+
+            DebugWindow.Log($"[DllSwap] Swapped '{targetFileName}' for '{game.Name}' with FSR4 INT8 v{extrasVersion}");
+            return new DllSwapResult(targetFileName, extrasVersion);
         }
 
         public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
@@ -896,6 +999,8 @@ namespace OptiscalerClient.Services
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
             game.Fsr4ExtraVersion = null;
+            game.IsFsr4DllSwapped = false;
+            game.Fsr4DllSwapTargetFileName = null;
 
             // Re-analyze to refresh DLSS/FSR/XeSS detection after files were removed/restored
             var analyzer = new GameAnalyzerService();
@@ -905,9 +1010,19 @@ namespace OptiscalerClient.Services
 
             // Files that could be native game files were left behind on purpose (we can't tell
             // without a manifest whether the game shipped them) - surface that to the caller
-            // instead of silently pretending the folder is fully clean.
+            // instead of silently pretending the folder is fully clean. Exclude anything the
+            // manifest tracked as FilesOverwritten/BackedUpFiles — those aren't a mystery, we know
+            // exactly what happened to them and Step 2 above already restored them correctly (e.g.
+            // a game's own dxgi.dll used as the injection target, or a DLL-swap target that happens
+            // to share a name with a SensitiveArtifacts entry — see SwapFsr4Dll).
+            var knownRestoredFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (manifest != null)
+            {
+                foreach (var f in manifest.FilesOverwritten) knownRestoredFiles.Add(f.RelativePath);
+                foreach (var f in manifest.BackedUpFiles) knownRestoredFiles.Add(f);
+            }
             var remainingSensitive = SensitiveArtifacts
-                .Where(f => File.Exists(Path.Combine(gameDir, f)))
+                .Where(f => !knownRestoredFiles.Contains(f) && File.Exists(Path.Combine(gameDir, f)))
                 .ToList();
 
             return new UninstallResult(usedLegacyFallback, remainingSensitive);
@@ -1797,9 +1912,13 @@ namespace OptiscalerClient.Services
         /// RDNA4 (Radeon RX 9000) gets FSR4 automatically with the default Fsr4ForceModel=0 (no override),
         /// but every other GPU needs Fsr4ForceModel=2 set explicitly — otherwise OptiScaler silently falls
         /// back to FSR3 and the injected FSR4 INT8 DLL never activates (it won't even show up in-game).
-        /// Per OptiScaler's own v0.9.4 release notes, Fsr4ForceEnableInt8/Fsr4Update apply to the shipped
-        /// SDK upscaler DLL (amd_fidelityfx_upscaler_dx12.dll, e.g. the 4.0.2c Extras release) and do NOT
-        /// affect the official Driver amdxcffx64.dll — so these three keys are safe to set for either DLL.
+        /// UpscalerIndex must also be forced to 0: on "auto" it only resolves to the FSR4 backend for
+        /// RDNA4, and to FSR3 for everything else, so without it Fsr4ForceModel never even gets a FSR4
+        /// backend to apply to.
+        /// AMD's own amdxcffx64.dll (the official 4.1.1+ driver build) additionally does its own internal
+        /// GPU validation and only whitelists RDNA4/RDNA3-desktop for INT8 — Fsr4ForceModel alone isn't
+        /// enough on everything else (RDNA3 mobile/APU, RDNA2, Intel, Nvidia), so Fsr4ForceEnableInt8=true
+        /// and Fsr4Update=true (updates FSR3.X to FSR4, only defaults to true on RDNA4) are also needed.
         ///
         /// LoadCustomAmdxc64OnRdna2 tells OptiScaler to load a custom amdxc64.dll from OptiDllPath
         /// (".\OptiScaler\amdxc64.dll" by default). Most Extras releases don't bundle that file — it
@@ -1826,6 +1945,7 @@ namespace OptiscalerClient.Services
         {
             if (isRdna4) return;
 
+            ModifyOptiScalerIni(gameDir, "UpscalerIndex", "0", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4ForceModel", "2", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4ForceEnableInt8", "true", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4Update", "true", "FSR");

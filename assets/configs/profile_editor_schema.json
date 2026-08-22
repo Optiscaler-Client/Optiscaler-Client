@@ -1801,6 +1801,18 @@
           "ControlType": "folderpath",
           "Row": 13,
           "Column": 0
+        },
+        {
+          "Key": "Fsr4ForceEnableInt8",
+          "Label": "FSR4 Force Enable INT8",
+          "Tooltip": "Forces enabling INT8 on GPUs the driver doesn't whitelist for it (RDNA3 mobile/APU, RDNA2, Intel, Nvidia). Only applies to the shipped SDK upscaler DLL, not the official Driver amdxcffx64.dll",
+          "Options": [
+            { "Value": "auto", "Label": "Auto" },
+            { "Value": "true", "Label": "Enabled" },
+            { "Value": "false", "Label": "Disabled" }
+          ],
+          "Row": 13,
+          "Column": 1
         }
       ]
     },

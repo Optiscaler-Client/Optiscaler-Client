@@ -117,6 +117,8 @@ public class GameAnalyzerService
         game.XessViaOptiscaler = false;
         game.IsOptiscalerInstalled = false;
         game.OptiscalerVersion = null; // Will be repopulated from manifest or log
+        game.IsFsr4DllSwapped = false;
+        game.Fsr4DllSwapTargetFileName = null;
 
         HashSet<string> ignoredFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var blockHeuristicFallbackDetection = false;
@@ -147,22 +149,42 @@ public class GameAnalyzerService
                             var extManifest = backupStore.LoadManifest(candidate!);
                             if (extManifest != null && string.Equals(extManifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
                             {
-                                game.IsOptiscalerInstalled = true;
-                                if (!string.IsNullOrEmpty(extManifest.OptiscalerVersion))
-                                    game.OptiscalerVersion = extManifest.OptiscalerVersion;
+                                // DLL-swap tracking is independent of OptiScaler's own install status —
+                                // a manifest can carry either flag, or both, at once (see
+                                // GameInstallationService.SwapFsr4Dll).
+                                if (extManifest.IncludesDllSwap)
+                                {
+                                    game.IsFsr4DllSwapped = true;
+                                    game.Fsr4DllSwapTargetFileName = extManifest.DllSwapTargetFileName;
+                                    if (!string.IsNullOrEmpty(extManifest.DllSwapExtrasVersion))
+                                        game.Fsr4ExtraVersion = extManifest.DllSwapExtrasVersion;
+                                }
 
-                                // The manifest's own recorded install dir is authoritative - candidate
-                                // (InstallPath/ExecutablePath's dir) can differ from where OptiScaler
-                                // actually landed (e.g. UE games installing into Binaries\Win64), which
-                                // would silently break every path comparison below.
-                                var extInstallDir = !string.IsNullOrEmpty(extManifest.InstalledGameDirectory) && Directory.Exists(extManifest.InstalledGameDirectory)
-                                    ? extManifest.InstalledGameDirectory
-                                    : candidate!;
-                                foreach (var f in extManifest.InstalledFiles)
-                                    ignoredFiles.Add(Path.GetFullPath(Path.Combine(extInstallDir, f)));
-                                blockHeuristicFallbackDetection = true;
-                                DebugWindow.Log($"[Analyzer] Priority 0 (external store) detected OptiScaler {extManifest.OptiscalerVersion} for '{game.Name}'");
-                                goto detectOtherComponents;
+                                if (extManifest.IncludesOptiscaler)
+                                {
+                                    game.IsOptiscalerInstalled = true;
+                                    if (!string.IsNullOrEmpty(extManifest.OptiscalerVersion))
+                                        game.OptiscalerVersion = extManifest.OptiscalerVersion;
+
+                                    // The manifest's own recorded install dir is authoritative - candidate
+                                    // (InstallPath/ExecutablePath's dir) can differ from where OptiScaler
+                                    // actually landed (e.g. UE games installing into Binaries\Win64), which
+                                    // would silently break every path comparison below.
+                                    var extInstallDir = !string.IsNullOrEmpty(extManifest.InstalledGameDirectory) && Directory.Exists(extManifest.InstalledGameDirectory)
+                                        ? extManifest.InstalledGameDirectory
+                                        : candidate!;
+                                    foreach (var f in extManifest.InstalledFiles)
+                                        ignoredFiles.Add(Path.GetFullPath(Path.Combine(extInstallDir, f)));
+                                    blockHeuristicFallbackDetection = true;
+                                    DebugWindow.Log($"[Analyzer] Priority 0 (external store) detected OptiScaler {extManifest.OptiscalerVersion} for '{game.Name}'");
+                                    goto detectOtherComponents;
+                                }
+
+                                // Manifest found and processed (swap-only, or neither flag set) —
+                                // don't consider a second candidate dir for the same game, but do
+                                // fall through to the normal OptiScaler detection below since this
+                                // manifest didn't establish that status one way or the other.
+                                break;
                             }
                         }
                     }

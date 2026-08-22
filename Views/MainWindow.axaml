@@ -1053,10 +1053,23 @@
                                                          CornerRadius="6"
                                                          Padding="8,3"
                                                          Margin="0,0,6,0"
-                                                         IsVisible="{Binding FsrViaOptiscaler}">
+                                                         IsVisible="{Binding FsrIsViaOptiscalerOnly}">
                                                      <TextBlock Text="FSR"
                                                                 Foreground="#E07070"
                                                                 Opacity="0.7"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+                                                 <!-- FSR badge - DLL swapped directly, without installing OptiScaler -->
+                                                 <Border Background="#2E2410"
+                                                         BorderBrush="{StaticResource BrWarning}"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="8,3"
+                                                         Margin="0,0,6,0"
+                                                         IsVisible="{Binding FsrIsSwapped}">
+                                                     <TextBlock Text="FSR"
+                                                                Foreground="{StaticResource BrWarning}"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>

@@ -96,6 +96,28 @@ namespace OptiscalerClient.Views
         // selector knows whether this game is flagged as needing OptiPatcher.
         private CompatibilityListEntry? _compatEntry;
 
+        // Points the "View Compatibility List" footer link at this game's own wiki page once
+        // PopulateWikiDetailsAsync resolves one, instead of the generic list page.
+        private string? _wikiPageUrl;
+
+        // Drives the bouncing-dots animation on the "Fetching game information..." card - same
+        // sine-wave bounce (33ms tick, 120° phase offset per dot) as SetQuickInstallLoading in
+        // MainWindow, reused here for a consistent loading feel across the app.
+        private DispatcherTimer? _wikiFetchDotsTimer;
+        private double _wikiFetchDotsPhase;
+
+        // Set once RenderWikiDetails applies the wiki-suggested injection method for the first
+        // time this window is open (see ApplySuggestedInjectionMethod), so a later silent refresh
+        // of the same wiki page (PopulateWikiDetailsAsync's background cooldown check) never
+        // overwrites a selection the user may have since picked by hand.
+        private bool _injectionMethodAutoSelected;
+
+        // Must match the Tag values on CmbInjectionMethod's ComboBoxItems in the .axaml exactly.
+        private static readonly string[] KnownInjectionDllNames =
+        {
+            "dxgi.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll", "version.dll", "wininet.dll", "winhttp.dll"
+        };
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
@@ -270,6 +292,7 @@ namespace OptiscalerClient.Views
         private void ManageGameWindow_Closed(object? sender, EventArgs e)
         {
             this.RemoveHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved);
+            StopWikiFetchingAnimation();
 
             if (_gamepadService == null) return;
 
@@ -1083,11 +1106,16 @@ namespace OptiscalerClient.Views
             cmbOptiVersion.SelectionChanged -= CmbOptiVersion_SelectionChanged;
             cmbOptiVersion.Items.Clear();
 
+            // "None" always comes first, in every channel — lets the user do a DLL-only swap
+            // (see ExecuteDllSwapAsync) without installing OptiScaler at all. Never auto-selected
+            // by the logic below; only reached if the user picks it manually.
+            cmbOptiVersion.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtOptiVersionNone", "None"), Tag = "none" });
+
             if (allVersions.Count == 0 && !_optiShowingCustom)
             {
-                cmbOptiVersion.Items.Add(GetResourceString("TxtNoOptiDetected", "No version detected"));
+                cmbOptiVersion.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
                 cmbOptiVersion.SelectedIndex = 0;
-                cmbOptiVersion.IsEnabled = false;
+                cmbOptiVersion.IsEnabled = true;
                 cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
                 return;
             }
@@ -1100,9 +1128,9 @@ namespace OptiscalerClient.Views
 
             if (versionsToShow.Count == 0)
             {
-                cmbOptiVersion.Items.Add(new ComboBoxItem { Content = "No versions available", Tag = "none" });
+                cmbOptiVersion.Items.Add(new ComboBoxItem { Content = "No versions available", IsEnabled = false });
                 cmbOptiVersion.SelectedIndex = 0;
-                cmbOptiVersion.IsEnabled = false;
+                cmbOptiVersion.IsEnabled = true;
                 cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
                 return;
             }
@@ -1133,8 +1161,11 @@ namespace OptiscalerClient.Views
                 cmbOptiVersion.Items.Add(cbi);
             }
 
-            // Select version: try to match config default if it's in this channel, else select first (latest)
-            int selectedIndex = 0;
+            // Select version: try to match config default if it's in this channel, else select first
+            // real version (latest). Index 0 is always "None" and is never picked here — it only
+            // gets selected by explicit user action, per the DLL-swap feature's requirement that it
+            // never becomes a silent default.
+            int selectedIndex = 1;
             var configDefault = componentService.EffectiveDefaultOptiScalerVersion;
             bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
                 (_optiShowingCustom
@@ -1142,7 +1173,7 @@ namespace OptiscalerClient.Views
                     : !customVersions.Contains(configDefault) && betaVersions.Contains(configDefault) == _optiShowingBeta);
             if (defaultInChannel)
             {
-                for (int i = 0; i < cmbOptiVersion.Items.Count; i++)
+                for (int i = 1; i < cmbOptiVersion.Items.Count; i++)
                 {
                     if (cmbOptiVersion.Items[i] is ComboBoxItem ci &&
                         string.Equals(ci.Tag?.ToString(), configDefault, StringComparison.OrdinalIgnoreCase))
@@ -1227,6 +1258,7 @@ namespace OptiscalerClient.Views
             var cmb = this.FindControl<ComboBox>("CmbExtrasVersion");
             if (cmb == null) return;
 
+            cmb.SelectionChanged -= CmbExtrasVersion_SelectionChanged;
             cmb.Items.Clear();
 
             var versions = componentService.ExtrasAvailableVersions;
@@ -1235,6 +1267,7 @@ namespace OptiscalerClient.Views
                 cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoVersions", "No versions available"), Tag = "none" });
                 cmb.SelectedIndex = 0;
                 cmb.IsEnabled = false;
+                cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
                 return;
             }
             cmb.IsEnabled = true;
@@ -1261,13 +1294,13 @@ namespace OptiscalerClient.Views
             }
 
             // Determine default selection
-            bool isRdna4 = false;
+            bool isRdna4OrRdna3 = false;
             if (_gpuService != null)
             {
                 try
                 {
                     var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
-                    isRdna4 = GpuSelectionHelper.IsRdna4(gpu);
+                    isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
                 }
                 catch (Exception ex) { DebugWindow.Log($"[ManageGame] GPU detection failed: {ex.Message}"); }
             }
@@ -1299,7 +1332,7 @@ namespace OptiscalerClient.Views
                     if (targetIndex == 0)
                     {
                         // Applying same "intelligent" logic if user's favorite version is gone
-                        if (!isRdna4 && versions.Count > 0)
+                        if (!isRdna4OrRdna3 && versions.Count > 0)
                         {
                             targetIndex = 1; // latest
                         }
@@ -1310,7 +1343,7 @@ namespace OptiscalerClient.Views
             {
                 // No global default preference set (DefaultExtrasVersion is null/empty)
                 // → Use "intelligent" logic
-                if (!isRdna4 && versions.Count > 0)
+                if (!isRdna4OrRdna3 && versions.Count > 0)
                 {
                     targetIndex = 1; // Latest
                 }
@@ -1321,7 +1354,19 @@ namespace OptiscalerClient.Views
             }
 
             cmb.SelectedIndex = targetIndex;
+            cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
         }  // end PopulateExtrasComboBox
+
+        /// <summary>
+        /// Recomputes the Auto/Manual-Install vs. Auto/Manual-Swap-DLL button state whenever either
+        /// CmbOptiVersion or CmbExtrasVersion changes. See the DLL-swap plan's state matrix:
+        /// Opti=none &amp; Extras=none → disabled; Opti=none &amp; Extras=version → swap-mode labels;
+        /// anything with a real Opti version → normal install labels (handled by UpdateStatus).
+        /// </summary>
+        private void CmbExtrasVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            UpdateInstallButtonsForSwapState();
+        }
 
         /// <summary>
         /// Populates CmbOptiPatcherVersion with available OptiPatcher versions + a "None" option.
@@ -1584,6 +1629,16 @@ namespace OptiscalerClient.Views
             var pnlNotFound = this.FindControl<StackPanel>("PnlCompatNotFound");
             if (pnlFound == null || pnlNotFound == null) return;
 
+            _wikiPageUrl = null;
+            _injectionMethodAutoSelected = false;
+            var pnlWikiDetails = this.FindControl<StackPanel>("PnlWikiDetailsSection");
+            var pnlWikiFetching = this.FindControl<Border>("PnlWikiFetching");
+            var btnGameWikiLink = this.FindControl<Button>("BtnGameWikiLink");
+            if (pnlWikiDetails != null) pnlWikiDetails.IsVisible = false;
+            if (pnlWikiFetching != null) pnlWikiFetching.IsVisible = false;
+            if (btnGameWikiLink != null) btnGameWikiLink.IsVisible = false;
+            StopWikiFetchingAnimation();
+
             var compatService = new CompatibilityListService();
             if (!compatService.TryGetForGame(_game.Name, out var entry) || entry == null)
             {
@@ -1594,6 +1649,25 @@ namespace OptiscalerClient.Views
             }
 
             _compatEntry = entry;
+            var hasWikiPage = !string.IsNullOrEmpty(entry.WikiPageSlug);
+
+            // Show whatever's already cached immediately, even if stale — never make the user
+            // wait on a network round-trip to see data they've already seen before. The cooldown
+            // check inside PopulateWikiDetailsAsync silently refreshes it in the background and
+            // updates the fields in place if anything changed. The "Fetching…" spinner is reserved
+            // for the one case where there's nothing to show yet at all (first time for this page).
+            var cachedWikiDetails = hasWikiPage ? compatService.GetCachedGameWikiDetails(entry) : null;
+            if (cachedWikiDetails != null)
+            {
+                RenderWikiDetails(cachedWikiDetails);
+                if (pnlWikiFetching != null) pnlWikiFetching.IsVisible = false;
+            }
+            else if (hasWikiPage)
+            {
+                if (pnlWikiFetching != null) pnlWikiFetching.IsVisible = true;
+                StartWikiFetchingAnimation();
+            }
+            if (hasWikiPage) _ = PopulateWikiDetailsAsync(compatService, entry, hadCachedDetails: cachedWikiDetails != null);
             pnlNotFound.IsVisible = false;
             pnlFound.IsVisible = true;
 
@@ -1660,6 +1734,182 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// Lazily fetches the game's individual wiki page (only while this window is open, for
+        /// this one game - never for the whole library) and (re)fills the fields from RenderWikiDetails.
+        /// When <paramref name="hadCachedDetails"/> is true, the caller already rendered a cached
+        /// result before calling this — GetGameWikiDetailsAsync's own 24h cooldown means this call
+        /// silently returns that same cached value most of the time (no network, no visible change),
+        /// and only re-renders with something new on the rare call where the cooldown had expired.
+        /// The "Fetching…" spinner is only touched when there was nothing cached to show up front.
+        /// </summary>
+        private async Task PopulateWikiDetailsAsync(CompatibilityListService compatService, CompatibilityListEntry entry, bool hadCachedDetails)
+        {
+            if (string.IsNullOrEmpty(entry.WikiPageSlug)) return;
+
+            try
+            {
+                var details = await compatService.GetGameWikiDetailsAsync(entry);
+
+                // The user may have closed the window or navigated elsewhere while this awaited, or
+                // (in theory) the compat entry could no longer be the one this fetch was started for.
+                if (details == null || _compatEntry != entry) return;
+
+                RenderWikiDetails(details);
+            }
+            finally
+            {
+                if (!hadCachedDetails)
+                {
+                    // Runs whether the fetch succeeded, found nothing, or failed - the "Fetching..."
+                    // card and its animation must never get stuck on screen.
+                    StopWikiFetchingAnimation();
+                    var pnlWikiFetching = this.FindControl<Border>("PnlWikiFetching");
+                    if (pnlWikiFetching != null) pnlWikiFetching.IsVisible = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fills the wiki-details fields (injection method, FG Inputs, Known Issues count) from an
+        /// already-resolved GameWikiDetails — either a cached value shown immediately, or a fresh
+        /// one from PopulateWikiDetailsAsync's background check. Last Tested Version and Upscaler
+        /// Inputs are parsed too (see CompatibilityListService.ParseGameWikiPage) but deliberately
+        /// not shown here - the latter would just duplicate the Compatibility List's own Upscaler
+        /// Inputs section above.
+        /// </summary>
+        private void RenderWikiDetails(GameWikiDetails details)
+        {
+            if (!_injectionMethodAutoSelected)
+            {
+                _injectionMethodAutoSelected = true;
+                ApplySuggestedInjectionMethod(details.Filename);
+            }
+
+            _wikiPageUrl = string.IsNullOrEmpty(details.PageUrl) ? null : details.PageUrl;
+            var btnGameWikiLink = this.FindControl<Button>("BtnGameWikiLink");
+            if (btnGameWikiLink != null) btnGameWikiLink.IsVisible = _wikiPageUrl != null;
+
+            var pnlWikiDetails = this.FindControl<StackPanel>("PnlWikiDetailsSection");
+            if (pnlWikiDetails == null) return;
+
+            SetWikiBadgeRow("RowWikiFilename", "PnlWikiFilenameBadges", details.Filename);
+            SetWikiBadgeRow("RowWikiFgInputs", "PnlWikiFgInputsBadges", details.FgInputs);
+
+            var txtKnownIssues = this.FindControl<TextBlock>("TxtWikiKnownIssues");
+            if (txtKnownIssues != null)
+            {
+                txtKnownIssues.IsVisible = details.KnownIssuesCount > 0;
+                if (details.KnownIssuesCount > 0)
+                {
+                    var format = GetResourceString("TxtCompatSidebarWikiKnownIssues", "⚠ {0} known issue(s) reported — see the wiki page for details.");
+                    txtKnownIssues.Text = string.Format(format, details.KnownIssuesCount);
+                }
+            }
+
+            bool hasAnyField = !string.IsNullOrWhiteSpace(details.Filename) || !string.IsNullOrWhiteSpace(details.FgInputs);
+            pnlWikiDetails.IsVisible = hasAnyField || details.KnownIssuesCount > 0;
+        }
+
+        /// <summary>
+        /// Pre-selects CmbInjectionMethod from the wiki page's "Filename" field: one name listed →
+        /// use it; several → prefer dxgi.dll if it's among them, otherwise the first one listed;
+        /// none listed, or the resolved name isn't one of CmbInjectionMethod's known options →
+        /// fall back to dxgi.dll. Only ever called once per window (see _injectionMethodAutoSelected)
+        /// so it never fights a selection the user has since made by hand.
+        /// </summary>
+        private void ApplySuggestedInjectionMethod(string wikiFilenameField)
+        {
+            var cmbInjectionMethod = this.FindControl<ComboBox>("CmbInjectionMethod");
+            if (cmbInjectionMethod == null) return;
+
+            var candidates = (wikiFilenameField ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(s => s.Length > 0)
+                .ToList();
+
+            string? target = candidates.Count switch
+            {
+                0 => null,
+                1 => candidates[0],
+                _ => candidates.FirstOrDefault(c => string.Equals(c, "dxgi.dll", StringComparison.OrdinalIgnoreCase))
+                     ?? candidates[0]
+            };
+
+            var resolved = target != null && KnownInjectionDllNames.Contains(target, StringComparer.OrdinalIgnoreCase)
+                ? target
+                : "dxgi.dll";
+
+            for (int i = 0; i < cmbInjectionMethod.Items.Count; i++)
+            {
+                if (cmbInjectionMethod.Items[i] is ComboBoxItem item &&
+                    string.Equals(item.Tag?.ToString(), resolved, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmbInjectionMethod.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private void StartWikiFetchingAnimation()
+        {
+            var dot1 = this.FindControl<Ellipse>("WikiFetchDot1")?.RenderTransform as TranslateTransform;
+            var dot2 = this.FindControl<Ellipse>("WikiFetchDot2")?.RenderTransform as TranslateTransform;
+            var dot3 = this.FindControl<Ellipse>("WikiFetchDot3")?.RenderTransform as TranslateTransform;
+            if (dot1 == null || dot2 == null || dot3 == null) return;
+
+            StopWikiFetchingAnimation();
+            _wikiFetchDotsPhase = 0;
+            _wikiFetchDotsTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+            _wikiFetchDotsTimer.Tick += (s, e) =>
+            {
+                _wikiFetchDotsPhase += 0.25;
+                const double amplitude = 5;
+                const double phaseOffset = Math.PI * 2 / 3;
+                dot1.Y = -amplitude * Math.Max(0, Math.Sin(_wikiFetchDotsPhase));
+                dot2.Y = -amplitude * Math.Max(0, Math.Sin(_wikiFetchDotsPhase + phaseOffset));
+                dot3.Y = -amplitude * Math.Max(0, Math.Sin(_wikiFetchDotsPhase + phaseOffset * 2));
+            };
+            _wikiFetchDotsTimer.Start();
+        }
+
+        private void StopWikiFetchingAnimation()
+        {
+            if (_wikiFetchDotsTimer == null) return;
+            _wikiFetchDotsTimer.Stop();
+            _wikiFetchDotsTimer = null;
+        }
+
+        private void SetWikiBadgeRow(string rowName, string badgesPanelName, string commaSeparatedValues)
+        {
+            var row = this.FindControl<StackPanel>(rowName);
+            var badgesPanel = this.FindControl<WrapPanel>(badgesPanelName);
+            if (row == null || badgesPanel == null) return;
+
+            badgesPanel.Children.Clear();
+            var values = commaSeparatedValues
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(s => s.Length > 0)
+                .ToList();
+
+            row.IsVisible = values.Count > 0;
+            foreach (var value in values)
+                badgesPanel.Children.Add(BuildUpscalerInputBadge(value));
+        }
+
+        private void BtnGameWikiLink_Click(object sender, RoutedEventArgs e)
+        {
+            if (_wikiPageUrl == null) return;
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = _wikiPageUrl, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ManageGameWindow] Could not open game wiki page: {ex.Message}");
+            }
+        }
+
         private Border BuildUpscalerInputBadge(string text)
         {
             return new Border
@@ -1670,12 +1920,19 @@ namespace OptiscalerClient.Views
                 CornerRadius = (CornerRadius)(this.FindResource("RadiusSmall") ?? new CornerRadius(4)),
                 Padding = new Thickness(8, 3),
                 Margin = new Thickness(0, 0, 6, 6),
+                // MaxWidth + wrapping matters for the wiki-sourced badges (FG Inputs especially -
+                // e.g. "DLSSG via Streamline (Use OptiPatcher to unlock DLSS and DLSS-FG inputs
+                // without spoofing.)") which can be much longer free text than the main
+                // Compatibility List's short tags ("DLSS", "FSR3.1") this was originally built for.
+                // Without it, a long value just stretches the badge past the sidebar's edge.
+                MaxWidth = 240,
                 Child = new TextBlock
                 {
                     Text = text,
                     FontSize = (double)(this.FindResource("FontSizeCaption") ?? 11.0),
                     FontWeight = FontWeight.SemiBold,
-                    Foreground = this.FindResource("BrTextPrimary") as IBrush
+                    Foreground = this.FindResource("BrTextPrimary") as IBrush,
+                    TextWrapping = TextWrapping.Wrap
                 }
             };
         }
@@ -1686,7 +1943,9 @@ namespace OptiscalerClient.Views
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = CompatibilityListService.WikiUrl,
+                    // Prefer this game's own wiki page (set once PopulateWikiDetailsAsync
+                    // resolves one) over the generic Compatibility List page.
+                    FileName = _wikiPageUrl ?? CompatibilityListService.WikiUrl,
                     UseShellExecute = true
                 });
             }
@@ -2069,6 +2328,27 @@ namespace OptiscalerClient.Views
             bool installOptiPatcher = !string.IsNullOrEmpty(selectedOptiPatcherVersion) &&
                                       !selectedOptiPatcherVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
 
+            // ── DLL-swap mode: OptiScaler version is "None" ─────────────────────────────
+            // Ignores the normal install flow entirely (profile, injection method, Fakenvapi,
+            // NukemFG, OptiPatcher — none of that applies to a bare DLL swap). See plan §3/§5.D.
+            var earlyOptiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            if (string.Equals(earlyOptiTag, "none", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!injectExtras)
+                {
+                    // Defense #2 — buttons should already be disabled for this combination
+                    // (UpdateInstallButtonsForSwapState), this is the last-resort guard.
+                    await new ConfirmDialog(this,
+                        GetResourceString("TxtErrNoOptiOrExtrasTitle", "Nothing to install"),
+                        GetResourceString("TxtErrNoOptiOrExtrasText", "Select an OptiScaler version or an FSR4 INT8 version before installing.")
+                    ).ShowDialog<object>(this);
+                    return;
+                }
+
+                await ExecuteDllSwapAsync(isManualMode, selectedExtrasVersion!);
+                return;
+            }
+
             try
             {
                 var componentService = new ComponentManagementService();
@@ -2305,6 +2585,10 @@ namespace OptiscalerClient.Views
                     selectedProfile = profile;
                 }
 
+                var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+                var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
+                var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
+
                 string? resolvedGameDir = null;
                 try
                 {
@@ -2314,7 +2598,8 @@ namespace OptiscalerClient.Views
                                                         installNukemFG, nukemCacheDir,
                                                         optiscalerVersion: optiscalerVersion,
                                                         overrideGameDir: overrideGameDir,
-                                                        profile: selectedProfile);
+                                                        profile: selectedProfile,
+                                                        isRdna4: isRdna4, isRdna2: isRdna2);
                     });
                 }
                 catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone)
@@ -2378,9 +2663,6 @@ namespace OptiscalerClient.Views
 
                     try
                     {
-                        var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
-                        var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
-                        var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
                         await Task.Run(() =>
                         {
                             var installSvc = new GameInstallationService();
@@ -2530,6 +2812,26 @@ namespace OptiscalerClient.Views
         {
             var bdConfirmUninstall = this.FindControl<Grid>("BdConfirmUninstall");
             if (bdConfirmUninstall != null) bdConfirmUninstall.IsVisible = true;
+
+            // This same button/modal also handles "Restore original DLL" (bare swap, no OptiScaler
+            // — see UpdateStatus). Swap the copy to match what's actually about to happen instead
+            // of always talking about uninstalling OptiScaler.
+            bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
+            var txtTitle = this.FindControl<TextBlock>("TxtConfirmUninstallTitleBlock");
+            var txtMsg = this.FindControl<TextBlock>("TxtConfirmUninstallMsgBlock");
+            var btnYes = this.FindControl<Button>("BtnConfirmUninstallYes");
+            if (isRestoreDllOnly)
+            {
+                if (txtTitle != null) txtTitle.Text = GetResourceString("TxtConfirmRestoreDllTitle", "Confirm Restore");
+                if (txtMsg != null) txtMsg.Text = GetResourceString("TxtConfirmRestoreDllMsg", "Are you sure you want to restore the original DLL?\nThe swapped FSR4 INT8 DLL will be replaced back with the backed-up original.");
+                if (btnYes != null) btnYes.Content = GetResourceString("TxtRestoreOriginalDll", "↺ Restore original DLL");
+            }
+            else
+            {
+                if (txtTitle != null) txtTitle.Text = GetResourceString("TxtConfirmUninstallTitle", "Confirm Uninstall");
+                if (txtMsg != null) txtMsg.Text = GetResourceString("TxtConfirmUninstallMsg", "Are you sure you want to uninstall OptiScaler?\nOnly backed-up original files will be restored.");
+                if (btnYes != null) btnYes.Content = GetResourceString("TxtUninstall", "✕ Uninstall");
+            }
 
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
@@ -2686,6 +2988,140 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// The whole point of "Opti = None + Extras = version" mode: replace a single DLL already
+        /// sitting in the game folder with the selected FSR4 INT8 build, without touching OptiScaler,
+        /// the profile, injection method, or any other selected component. Backs the original up
+        /// through the same external store InstallOptiScaler/UninstallOptiScaler use, so a later
+        /// Uninstall/"Restore original DLL" reverts it — see context/plans/fsr4_dll_swap_plan.md.
+        /// </summary>
+        private async Task ExecuteDllSwapAsync(bool isManualMode, string extrasVersion)
+        {
+            var btnInstall = this.FindControl<Button>("BtnInstall");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+            var bdProgress = this.FindControl<Border>("BdProgress");
+            var prgDownload = this.FindControl<ProgressBar>("PrgDownload");
+            var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
+
+            try
+            {
+                var componentService = new ComponentManagementService();
+                var installService = new GameInstallationService();
+
+                var gameDir = installService.DetermineInstallDirectory(_game);
+                if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+                {
+                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                        "Could not automatically detect the game directory.").ShowDialog<object>(this);
+                    return;
+                }
+
+                string targetPath;
+                if (isManualMode)
+                {
+                    var files = await this.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
+                    {
+                        Title = "Select the original DLL to replace",
+                        AllowMultiple = false,
+                        SuggestedStartLocation = await this.StorageProvider.TryGetFolderFromPathAsync(gameDir),
+                        FileTypeFilter = new[]
+                        {
+                            new FilePickerFileType("DLL Files (*.dll)") { Patterns = new[] { "*.dll" } }
+                        }
+                    });
+
+                    if (files == null || !files.Any()) return; // User cancelled
+                    targetPath = files[0].Path.LocalPath;
+
+                    // Backups are stored by path relative to gameDir (BackupStoreService) — a file
+                    // outside that tree has no sensible relative path to restore to later.
+                    var fullGameDir = System.IO.Path.GetFullPath(gameDir).TrimEnd(System.IO.Path.DirectorySeparatorChar);
+                    var fullTargetDir = System.IO.Path.GetFullPath(System.IO.Path.GetDirectoryName(targetPath) ?? "");
+                    if (!fullTargetDir.StartsWith(fullGameDir, StringComparison.OrdinalIgnoreCase))
+                    {
+                        await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                            GetResourceString("TxtSwapDllOutsideGameFolder", "The selected file must be inside the game folder.")).ShowDialog<object>(this);
+                        return;
+                    }
+                }
+                else
+                {
+                    var found = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir);
+                    if (found == null)
+                    {
+                        await new ConfirmDialog(this,
+                            GetResourceString("TxtSwapDllNotFoundTitle", "No DLL found to replace"),
+                            GetResourceString("TxtSwapDllNotFoundText",
+                                "Could not find amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll or amdxc64.dll in the game folder. Try Manual-Swap DLL instead.")
+                        ).ShowDialog<object>(this);
+                        return;
+                    }
+                    targetPath = found;
+                }
+
+                if (btnInstall != null) btnInstall.IsEnabled = false;
+                if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (bdProgress != null) bdProgress.IsVisible = true;
+                    if (txtProgressState != null) txtProgressState.Text = $"Downloading FSR4 INT8 v{extrasVersion}...";
+                    if (prgDownload != null) prgDownload.IsIndeterminate = false;
+                });
+
+                // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
+                // for a given version — everything else (both names of the main DLL) comes from the
+                // regular Extras package, regardless of how the target was found (auto or manual).
+                var targetFileName = System.IO.Path.GetFileName(targetPath);
+                string sourcePath;
+                if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var rdna2Path = componentService.GetCachedCustomAmdxc64Path(extrasVersion);
+                    if (rdna2Path == null)
+                    {
+                        Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                        await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                            GetResourceString("TxtSwapDllNoRdna2Companion",
+                                "This FSR4 INT8 version doesn't include a replacement for amdxc64.dll. Pick a different version or target file.")
+                        ).ShowDialog<object>(this);
+                        return;
+                    }
+                    sourcePath = rdna2Path;
+                }
+                else
+                {
+                    var extrasProgress = new Progress<double>(p =>
+                        Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
+                    sourcePath = await componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+                }
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (txtProgressState != null) txtProgressState.Text = "Swapping DLL...";
+                    if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                });
+
+                await Task.Run(() => installService.SwapFsr4Dll(_game, targetPath, sourcePath, extrasVersion));
+
+                NeedsScan = true;
+                UpdateStatus();
+                LoadComponents();
+
+                Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+
+                var successFormat = GetResourceString("TxtSwapDllSuccessFormat", "FSR4 INT8 v{0} swapped into {1}.");
+                await ShowToastAsync(string.Format(successFormat, extrasVersion, targetFileName));
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), $"DLL swap failed: {ex.Message}").ShowDialog<object>(this);
+            }
+            finally
+            {
+                UpdateInstallButtonsForSwapState();
+            }
+        }
+
         // ── Corrupt-install-detected modal handlers ───────────────────────────────────────────
 
         private Task<string> ShowCorruptInstallWarningAsync()
@@ -2771,6 +3207,9 @@ namespace OptiscalerClient.Views
                 if (btnInstallManual != null) btnInstallManual.IsEnabled = true;
                 if (btnUninstall != null) btnUninstall.IsEnabled = true;
 
+                // Capture before UninstallOptiScaler runs — it resets both flags on _game.
+                bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
+
                 var installService = new GameInstallationService();
                 var result = installService.UninstallOptiScaler(_game);
 
@@ -2782,16 +3221,23 @@ namespace OptiscalerClient.Views
                 {
                     // These files could be native to the game, so uninstall deliberately left
                     // them - but leaving that unexplained just looks like a broken uninstall.
-                    var remainingTitle = GetResourceString("TxtOptiUninstallResidueTitle", "OptiScaler Uninstalled");
-                    var remainingFormat = GetResourceString("TxtOptiUninstallResidueMsg",
-                        "OptiScaler was uninstalled, but {0} file(s) that could belong to the game were left behind as a precaution:\n\n{1}\n\nIf you're sure the game didn't ship these, use \"Folder Cleanup\" to remove them.");
+                    var remainingTitle = isRestoreDllOnly
+                        ? GetResourceString("TxtRestoreDllResidueTitle", "Original DLL Restored")
+                        : GetResourceString("TxtOptiUninstallResidueTitle", "OptiScaler Uninstalled");
+                    var remainingFormat = isRestoreDllOnly
+                        ? GetResourceString("TxtRestoreDllResidueMsg",
+                            "The original DLL was restored, but {0} file(s) that could belong to the game were left behind as a precaution:\n\n{1}\n\nIf you're sure the game didn't ship these, use \"Folder Cleanup\" to remove them.")
+                        : GetResourceString("TxtOptiUninstallResidueMsg",
+                            "OptiScaler was uninstalled, but {0} file(s) that could belong to the game were left behind as a precaution:\n\n{1}\n\nIf you're sure the game didn't ship these, use \"Folder Cleanup\" to remove them.");
                     var fileList = string.Join("\n", result.RemainingSensitiveFiles.Select(f => $"• {f}"));
                     var remainingMsg = string.Format(remainingFormat, result.RemainingSensitiveFiles.Count, fileList);
                     await new ConfirmDialog(this, remainingTitle, remainingMsg).ShowDialog<object>(this);
                 }
                 else
                 {
-                    var successMsg = GetResourceString("TxtOptiUninstallSuccess", "OptiScaler uninstalled successfully.");
+                    var successMsg = isRestoreDllOnly
+                        ? GetResourceString("TxtRestoreDllSuccess", "Original DLL restored successfully.")
+                        : GetResourceString("TxtOptiUninstallSuccess", "OptiScaler uninstalled successfully.");
                     await ShowToastAsync(successMsg);
                 }
             }
@@ -2864,7 +3310,13 @@ namespace OptiscalerClient.Views
 
                 if (installBtnGroup != null) installBtnGroup.IsVisible = true;
                 if (pnlInstallOptions != null) pnlInstallOptions.IsVisible = true;
-                if (btnUninstall != null) btnUninstall.IsVisible = true;
+                // Uninstall reverts OptiScaler; if a DLL swap also lives in the same manifest,
+                // the same click restores that too (UninstallOptiScaler handles both — see plan §1.4).
+                if (btnUninstall != null)
+                {
+                    btnUninstall.IsVisible = true;
+                    btnUninstall.Content = GetResourceString("TxtUninstall", "Uninstall");
+                }
             }
             else
             {
@@ -2885,18 +3337,29 @@ namespace OptiscalerClient.Views
 
                 if (installBtnGroup != null) installBtnGroup.IsVisible = true;
                 if (pnlInstallOptions != null) pnlInstallOptions.IsVisible = true;
-                if (btnUninstall != null) btnUninstall.IsVisible = false;
+
+                // OptiScaler isn't installed, but a bare DLL swap might still be active for this
+                // game — offer to revert just that (same UninstallOptiScaler call, see plan §1.4).
+                if (btnUninstall != null)
+                {
+                    btnUninstall.IsVisible = _game.IsFsr4DllSwapped;
+                    btnUninstall.Content = GetResourceString("TxtRestoreOriginalDll", "Restore original DLL");
+                }
             }
+
+            UpdateInstallButtonsForSwapState();
         }
 
-        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, string? Tooltip);
+        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);
 
-        private ComponentEntry MakeUpscalerEntry(string label, bool viaOptiscaler)
+        private ComponentEntry MakeUpscalerEntry(string label, bool viaOptiscaler, bool isSwapped = false)
         {
-            var tooltip = viaOptiscaler
-                ? GetResourceString("TxtUpscalerViaOptiscalerTip", "Added by OptiScaler - not native to this game")
-                : null;
-            return new ComponentEntry(label, viaOptiscaler, tooltip);
+            var tooltip = isSwapped
+                ? GetResourceString("TxtFsr4SwappedTip", "Swapped directly, without installing OptiScaler")
+                : viaOptiscaler
+                    ? GetResourceString("TxtUpscalerViaOptiscalerTip", "Added by OptiScaler - not native to this game")
+                    : null;
+            return new ComponentEntry(label, viaOptiscaler && !isSwapped, isSwapped, tooltip);
         }
 
         private void LoadComponents()
@@ -2926,7 +3389,9 @@ namespace OptiscalerClient.Views
                         : $"AMD FSR: {fsrNormal} ({_game.FsrVersion})";
                 else
                     fsrDisplay = $"AMD FSR: {_game.FsrVersion}";
-                components.Add(MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler));
+                if (_game.FsrIsSwapped)
+                    fsrDisplay += " (swapped)";
+                components.Add(MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler, _game.FsrIsSwapped));
             }
 
             if (!string.IsNullOrEmpty(_game.XessVersion))
@@ -2949,20 +3414,22 @@ namespace OptiscalerClient.Views
                 {
                     if (File.Exists(System.IO.Path.Combine(_game.InstallPath, file)))
                     {
-                        components.Add(new ComponentEntry($"Found: {file}", false, null));
+                        components.Add(new ComponentEntry($"Found: {file}", false, false, null));
                     }
                 }
 
                 if (File.Exists(System.IO.Path.Combine(_game.InstallPath, "nvapi64.dll")))
-                    components.Add(new ComponentEntry("Fakenvapi: installed", false, null));
+                    components.Add(new ComponentEntry("Fakenvapi: installed", false, false, null));
 
                 if (File.Exists(System.IO.Path.Combine(_game.InstallPath, "dlssg_to_fsr3_amd_is_better.dll")))
-                    components.Add(new ComponentEntry("NukemFG: installed", false, null));
+                    components.Add(new ComponentEntry("NukemFG: installed", false, false, null));
 
+                // Not shown when IsFsr4DllSwapped — that gets its own distinct entry below instead
+                // of double-reporting the same physical file as both "installed" and "swapped".
                 bool fsr4DllExists = Fsr4Int8DllHelper.ExistsIn(_game.InstallPath);
-                if (fsr4DllExists && !string.IsNullOrEmpty(_game.Fsr4ExtraVersion))
+                if (fsr4DllExists && !string.IsNullOrEmpty(_game.Fsr4ExtraVersion) && !_game.IsFsr4DllSwapped)
                 {
-                    components.Add(new ComponentEntry($"FSR 4 INT8 mod: {_game.Fsr4ExtraVersion}", false, null));
+                    components.Add(new ComponentEntry($"FSR 4 INT8 mod: {_game.Fsr4ExtraVersion}", false, false, null));
                 }
             }
 
@@ -3133,6 +3600,72 @@ namespace OptiscalerClient.Views
             if (!isBeta)
             {
                 ConfigureAdditionalComponents();
+            }
+
+            UpdateInstallButtonsForSwapState();
+        }
+
+        /// <summary>
+        /// Implements the DLL-swap feature's button-state matrix (see context/plans/fsr4_dll_swap_plan.md §3):
+        /// Opti=none &amp; Extras=none → nothing selected to install, buttons disabled (defense #1 —
+        /// defense #2 is the guard at the top of ExecuteInstallAsync/ExecuteDllSwapAsync in case
+        /// these ever get clicked anyway). Opti=none &amp; Extras=version → swap-only mode, buttons
+        /// relabeled to Auto/Manual-Swap DLL. Any real Opti version selected → normal install labels,
+        /// left to UpdateStatus (Install vs. Update/Reinstall depending on IsOptiscalerInstalled).
+        /// </summary>
+        private void UpdateInstallButtonsForSwapState()
+        {
+            var btnInstall = this.FindControl<Button>("BtnInstall");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+            var pnlNothingToInstall = this.FindControl<Border>("PnlNothingToInstallInfo");
+            if (btnInstall == null || btnInstallManual == null) return;
+
+            var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
+            var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
+            var optiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var extrasTag = (cmbExtrasVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+
+            bool optiIsNone = string.Equals(optiTag, "none", StringComparison.OrdinalIgnoreCase);
+            bool extrasIsNone = string.IsNullOrEmpty(extrasTag) || string.Equals(extrasTag, "none", StringComparison.OrdinalIgnoreCase);
+            bool nothingToInstall = optiIsNone && extrasIsNone;
+            if (pnlNothingToInstall != null) pnlNothingToInstall.IsVisible = nothingToInstall;
+
+            if (!optiIsNone)
+            {
+                // Normal install mode. Recompute the label instead of assuming UpdateStatus already
+                // set it — this method is also called live on every combo change (not just window
+                // load), so switching CmbOptiVersion away from "None" must overwrite whatever
+                // swap-mode label a previous pass left behind (e.g. "Auto-Swap DLL").
+                btnInstall.IsEnabled = true;
+                btnInstallManual.IsEnabled = true;
+                if (_game.IsOptiscalerInstalled)
+                {
+                    btnInstall.Content = GetResourceString("TxtUpdateOpti", "↑ Auto Update / Reinstall");
+                    btnInstallManual.Content = GetResourceString("TxtUpdateOptiManual", "↑ Manual Update / Reinstall");
+                }
+                else
+                {
+                    btnInstall.Content = GetResourceString("TxtInstallOpti", "✦ Auto Install");
+                    btnInstallManual.Content = GetResourceString("TxtBtnManualInstall", "✦ Manual Install");
+                }
+                return;
+            }
+
+            if (extrasIsNone)
+            {
+                // Nothing selected to install at all — grey out (defense #1) and show the info panel.
+                btnInstall.IsEnabled = false;
+                btnInstallManual.IsEnabled = false;
+                btnInstall.Content = GetResourceString("TxtInstallOpti", "✦ Auto Install");
+                btnInstallManual.Content = GetResourceString("TxtBtnManualInstall", "✦ Manual Install");
+            }
+            else
+            {
+                // Opti=None + a FSR4 INT8 version selected → swap-only mode.
+                btnInstall.IsEnabled = true;
+                btnInstallManual.IsEnabled = true;
+                btnInstall.Content = GetResourceString("TxtBtnAutoSwapDll", "✦ Auto-Swap DLL");
+                btnInstallManual.Content = GetResourceString("TxtBtnManualSwapDll", "✦ Manual-Swap DLL");
             }
         }
 

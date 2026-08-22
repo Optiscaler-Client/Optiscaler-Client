@@ -115,6 +115,23 @@
     <x:String x:Key="TxtBtnManualInstall">✦ Manuelle Installation</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ Automatisches Update / Neuinstallation</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ Manuelles Update / Neuinstallation</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Keine</x:String>
+    <x:String x:Key="TxtBtnAutoSwapDll">✦ DLL automatisch tauschen</x:String>
+    <x:String x:Key="TxtBtnManualSwapDll">✦ DLL manuell tauschen</x:String>
+    <x:String x:Key="TxtRestoreOriginalDll">↺ Original-DLL wiederherstellen</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Nichts zu installieren</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">Wähle eine OptiScaler-Version oder eine FSR4-INT8-Version, bevor du installierst.</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundTitle">Keine zu ersetzende DLL gefunden</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundText">amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll oder amdxc64.dll wurde im Spielordner nicht gefunden. Versuche stattdessen "DLL manuell tauschen".</x:String>
+    <x:String x:Key="TxtSwapDllOutsideGameFolder">Die ausgewählte Datei muss sich im Spielordner befinden.</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">Diese FSR4-INT8-Version enthält keinen Ersatz für amdxc64.dll. Wähle eine andere Version oder Zieldatei.</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} wurde in {1} getauscht.</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllTitle">Wiederherstellung bestätigen</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">Möchtest du die Original-DLL wirklich wiederherstellen?&#x0a;Die getauschte FSR4-INT8-DLL wird durch das gesicherte Original ersetzt.</x:String>
+    <x:String x:Key="TxtRestoreDllSuccess">Original-DLL erfolgreich wiederhergestellt.</x:String>
+    <x:String x:Key="TxtFsr4SwappedTip">Direkt getauscht, ohne OptiScaler zu installieren</x:String>
+    <x:String x:Key="TxtRestoreDllResidueTitle">Original-DLL wiederhergestellt</x:String>
+    <x:String x:Key="TxtRestoreDllResidueMsg">Die Original-DLL wurde wiederhergestellt, aber {0} Datei(en), die zum Spiel gehören könnten, wurden vorsichtshalber belassen:&#x0a;&#x0a;{1}&#x0a;&#x0a;Wenn du sicher bist, dass das Spiel diese nicht mitgeliefert hat, verwende „Ordner bereinigen", um sie zu entfernen.</x:String>
     <x:String x:Key="TxtFakenvapiTip">Erforderlich für AMD/Intel-GPUs, um DLSS FG mit Nukem-Mod zu aktivieren</x:String>
     <x:String x:Key="TxtNukemTip">Nukems DLSSG-to-FSR3-Mod für Frame-Generation</x:String>
     <x:String x:Key="TxtFakenvapiHelpTip">Täuscht das Spiel, sodass es eine NVIDIA-Grafikkarte erkennt, und ermöglicht Ihnen die Umgehung von Hardware-Beschränkungen und die Aktivierung von DLSS-Technologien auf AMD- oder Intel-GPUs.</x:String>
@@ -312,6 +329,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtDonateDesc">OptiScaler Client ist kostenlos und wird in meiner Freizeit entwickelt. Wenn es dir Zeit erspart hat, kannst du die Entwicklung auf Ko-fi unterstützen. Das ist völlig optional und nie erforderlich, um die App zu nutzen.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Auf Ko-fi unterstützen</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Diese Version enthält bereits Fakenvapi und NukemFG</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Wähle entweder eine OptiScaler-Version oder eine FSR4-INT8-Version (DLL-Swap).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8-Standard</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Standard-FSR4-INT8-Modversion, die beim Öffnen eines Spiels vorausgewählt ist. RDNA-4-GPUs (RX-9000-Serie) verwenden automatisch Keine.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Importiere ein .zip/.7z/.rar-Paket (oder eine einzelne .dll) mit amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll und/oder amdxc64.dll, um einen noch nicht veröffentlichten Build zu testen.</x:String>
@@ -389,6 +407,8 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpMWContent">Das Hauptfenster ist Ihre zentrale Anlaufstelle für die Verwaltung aller Spiele. Hier können Sie Ihre Bibliothek einsehen, nach Spielen scannen und auf Verwaltungsfunktionen zugreifen.</x:String>
     <x:String x:Key="TxtHelpMWGameListLabel">Spieleliste 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">Zeigt alle erkannten Spiele mit Cover, Titel und Installationsstatus.</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsLabel">Abzeichenfarben 🎨</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">Jedes Cover zeigt ein Abzeichen pro erkanntem Upscaler (DLSS, FSR, XeSS). Ein durchgehendes, gefülltes Abzeichen bedeutet, dass die Technologie nativ zum Spiel gehört. Ein blasseres, umrandetes Abzeichen bedeutet, dass sie von OptiScaler hinzugefügt wurde. Bei FSR bedeutet ein bernsteinfarbenes Abzeichen, dass die FSR4-INT8-DLL direkt im Spielordner ausgetauscht wurde, ohne OptiScaler zu installieren.</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">Verwalten-Schaltfläche ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">Öffnet das Spielverwaltungsfenster, wo Sie OptiScaler installieren, konfigurieren und verwalten können.</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Schnellinstallation ✦</x:String>
@@ -439,9 +459,11 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpGMInjectionLabel">Injektionsmethode 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">Wählen Sie, wie OptiScaler in den Spielprozess injiziert wird. Für die meisten Fälle ist die Standardoption (dxgi.dll) ausreichend.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">Ermöglicht die Injektion der INT 8-Version von FSR 4 für Nicht-RDNA-4-GPUs.</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">Ermöglicht die Injektion der INT 8-Version von FSR 4 für GPUs, die älter als RDNA 3 sind. RDNA 3- und RDNA-4-GPUs erhalten FSR 4 INT8 bereits nativ über den offiziellen AMD-Treiber, daher ist dies für sie nicht erforderlich.</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL-Swap (FSR4 INT8) 🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">Stelle die OptiScaler-Version auf „None“, während eine FSR4-INT8-Version ausgewählt bleibt, um nur die FSR4-INT8-DLL im Spielordner auszutauschen, ohne OptiScaler zu installieren. Auto-Swap DLL findet und ersetzt die vorhandene DLL automatisch; Manuell-Swap DLL lässt dich sie selbst auswählen, falls sie nicht gefunden wird. Die Originaldatei wird gesichert, sodass die Schaltfläche „Deinstallieren“ zu „Original-DLL wiederherstellen“ wird, um sie zurückzusetzen. Das Austauschen und die Installation von OptiScaler sind in beiden Reihenfolgen vollständig kompatibel. Auch für mehrere Spiele gleichzeitig über Bulk-Installation verfügbar.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Installierte Komponenten 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">Listet die im Spielordner erkannten Upscaler auf. Ein durchgehendes Abzeichen bedeutet, dass der Upscaler nativ zum Spiel gehört; ein blasseres, umrandetes Abzeichen bedeutet, dass er von OptiScaler hinzugefügt wurde. Fahren Sie mit der Maus über einen Eintrag für Details.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Listet die im Spielordner erkannten Upscaler auf. Ein durchgehendes Abzeichen bedeutet, dass der Upscaler nativ zum Spiel gehört; ein blasseres, umrandetes Abzeichen bedeutet, dass er von OptiScaler hinzugefügt wurde. Ein bernsteinfarbenes Abzeichen (nur FSR) bedeutet, dass die FSR4-INT8-DLL direkt ausgetauscht wurde, ohne OptiScaler zu installieren. Fahren Sie mit der Maus über einen Eintrag für Details.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -460,7 +482,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpSetScanLabel">Scanquellen</x:String>
     <x:String x:Key="TxtHelpSetScanText">Verwalten, welche Quellen beim Klicken auf 'Scannen' durchsucht werden, einschließlich Plattformen wie Steam und Epic sowie benutzerdefinierter Ordner.</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">FSR INT8-Standard</x:String>
-    <x:String x:Key="TxtHelpSetFsr4Text">Ermöglicht die Auswahl der Standard-FSR-INT8-Version für den Injektionsbereich. Für Nutzer mit AMD-9000-Grafikkarten wird 'Keine' empfohlen.</x:String>
+    <x:String x:Key="TxtHelpSetFsr4Text">Ermöglicht die Auswahl der Standard-FSR-INT8-Version für den Injektionsbereich. Für Nutzer mit AMD-Grafikkarten der Serie 7000 oder 9000 wird 'Keine' empfohlen.</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">Standard-GPU-Auswahl</x:String>
     <x:String x:Key="TxtHelpSetGpuText">Wählen Sie, welche GPU verwendet werden soll, wenn mehrere GPUs erkannt werden.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">Automatisch beim Start scannen</x:String>
@@ -512,6 +534,8 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Wenn Ihre GPU RDNA2 ist, verwenden Sie FSR4-INT8-Version 4.0.2c anstelle von 4.1.1 — sie nutzt eine andere, nicht betroffene Implementierung und funktioniert korrekt.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Sie können pro Spiel eine bestimmte FSR4-INT8-Version in Manage Game auswählen oder Ihre bevorzugte Standardversion in Settings → Local cache &amp; Default version management festlegen.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Dies kann nur von AMD durch einen aktualisierten Treiber behoben werden; ein clientseitiger Workaround existiert noch nicht.</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Empfohlene Konfiguration für ein Spiel nicht gefunden, obwohl es in der Kompatibilitätsliste steht</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchText">Dies passiert, wenn der lokale Spielname nicht nah genug am Wiki-Eintrag ist, damit die automatische Suche ihn findet. Bearbeite den Spielnamen im Verwalten-Fenster, sodass er dem Namen in der Kompatibilitätsliste entspricht, schließe dann Verwalten und öffne es erneut — die Suche läuft nur beim Öffnen des Fensters.</x:String>
 
 
     <!-- Help - Gamepad -->

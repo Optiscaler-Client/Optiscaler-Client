@@ -5364,6 +5364,10 @@ namespace OptiscalerClient.Views
                             defaultProfile = profileService.GetProfileByName(defaultProfileName);
 
                         // Install with default settings (backup always enabled)
+                        var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                        var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
+                        var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
+
                         SetQuickInstallLoading(button);
                         string? resolvedGameDir = null;
                         await Task.Run(() =>
@@ -5377,7 +5381,8 @@ namespace OptiscalerClient.Views
                                 installNukemFG: installNukemFG,
                                 nukemFGCachePath: nukemCacheDir,
                                 optiscalerVersion: versionToInstall,
-                                profile: defaultProfile
+                                profile: defaultProfile,
+                                isRdna4: isRdna4, isRdna2: isRdna2
                             );
                         });
 
@@ -5404,9 +5409,6 @@ namespace OptiscalerClient.Views
                                     installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
                                 // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
                                 // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
-                                var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                                var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
-                                var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
                                 installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                                 selectedGame.Fsr4ExtraVersion = configuredExtras;
                                 ShowToast($"FSR4 INT8 v{configuredExtras} injected", showProgress: false, progressPercent: null);

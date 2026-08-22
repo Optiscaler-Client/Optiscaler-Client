@@ -362,15 +362,13 @@ namespace OptiscalerClient.Views
             else
             {
                 // No saved preference — pick intelligently based on GPU
-                bool isRdna4 = false;
+                bool isRdna4OrRdna3 = false;
                 if (OperatingSystem.IsWindows() && _gpuService != null)
                 {
                     try
                     {
                         var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                        isRdna4 = gpu != null && gpu.Vendor == GpuVendor.AMD &&
-                                  (gpu.Name.Contains(" 9", StringComparison.OrdinalIgnoreCase) ||
-                                   gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
+                        isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
                     }
                     catch (Exception ex)
                     {
@@ -378,8 +376,8 @@ namespace OptiscalerClient.Views
                     }
                 }
 
-                // RDNA 4 → None (INT8 shader not needed); all others → latest version
-                cmb.SelectedIndex = isRdna4 ? 0 : (cmb.Items.Count > 1 ? 1 : 0);
+                // RDNA 4 / RDNA 3 → None (INT8 shader not needed, driver provides it natively); all others → latest version
+                cmb.SelectedIndex = isRdna4OrRdna3 ? 0 : (cmb.Items.Count > 1 ? 1 : 0);
             }
         }
 

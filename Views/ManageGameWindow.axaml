@@ -274,11 +274,12 @@
                                                 Padding="10,6"
                                                 Margin="0,0,6,6"
                                                 Classes.ViaOptiscaler="{Binding ViaOptiscaler}"
+                                                Classes.Swapped="{Binding IsSwapped}"
                                                 ToolTip.Tip="{Binding Tooltip}">
                                             <Border.Styles>
                                                 <!-- Background/BorderBrush live entirely in styles (not as local
-                                                     attributes) so the ViaOptiscaler selector below can actually
-                                                     override them - a local value always wins over a style setter. -->
+                                                     attributes) so the ViaOptiscaler/Swapped selectors below can
+                                                     actually override them - a local value always wins over a style setter. -->
                                                 <Style Selector="Border">
                                                     <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
@@ -286,6 +287,12 @@
                                                 <Style Selector="Border.ViaOptiscaler">
                                                     <Setter Property="Background" Value="#1E1530"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                                </Style>
+                                                <!-- Distinct from both native (default) and ViaOptiscaler (purple) —
+                                                     a DLL swapped directly into the game folder, without OptiScaler. -->
+                                                <Style Selector="Border.Swapped">
+                                                    <Setter Property="Background" Value="#2E2410"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BrWarning}"/>
                                                 </Style>
                                             </Border.Styles>
                                             <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}"/>
@@ -349,6 +356,34 @@
                                                FontSize="12"
                                                FontWeight="Medium"
                                                VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Info panel - shown when neither an OptiScaler version nor a FSR4 INT8
+                                 version is selected, so there's nothing for Install/Swap to do
+                                 (see UpdateInstallButtonsForSwapState, which also greys out the
+                                 install/swap buttons for this same combination). -->
+                            <Border Name="PnlNothingToInstallInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="#4A90E2"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource TxtNothingToInstallInfo}"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
 
@@ -586,7 +621,7 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" Name="ScrollCompatSidebar" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Grid.Row="1" Name="ScrollCompatSidebar" MaxHeight="640" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="16,0,16,16" Spacing="16">
 
                                 <!-- FOUND STATE -->
@@ -639,6 +674,67 @@
                                                    TextWrapping="Wrap"
                                                    LineSpacing="2"/>
                                     </StackPanel>
+
+                                    <!-- Populated asynchronously from the game's individual wiki page,
+                                         fetched lazily only while this window is open - see
+                                         ManageGameWindow.axaml.cs PopulateWikiDetailsAsync. Same
+                                         caption-above/content-below rhythm as the sections above,
+                                         and reuses the Upscaler Inputs badge style for consistency. -->
+                                    <Border Name="PnlWikiFetching"
+                                            Background="{StaticResource BrBgSurface}"
+                                            BorderBrush="{StaticResource BrAccent}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="14,12"
+                                            IsVisible="False">
+                                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Ellipse Name="WikiFetchDot1" Width="6" Height="6" Margin="2,0" Fill="{StaticResource BrAccent}">
+                                                    <Ellipse.RenderTransform>
+                                                        <TranslateTransform/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                                <Ellipse Name="WikiFetchDot2" Width="6" Height="6" Margin="2,0" Fill="{StaticResource BrAccent}">
+                                                    <Ellipse.RenderTransform>
+                                                        <TranslateTransform/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                                <Ellipse Name="WikiFetchDot3" Width="6" Height="6" Margin="2,0" Fill="{StaticResource BrAccent}">
+                                                    <Ellipse.RenderTransform>
+                                                        <TranslateTransform/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                            </StackPanel>
+                                            <TextBlock Text="{DynamicResource TxtCompatSidebarWikiFetching}"
+                                                       FontSize="{StaticResource FontSizeBody}"
+                                                       FontStyle="Italic"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       VerticalAlignment="Center"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <StackPanel Name="PnlWikiDetailsSection" Spacing="16" IsVisible="False">
+                                        <StackPanel Name="RowWikiFilename" Spacing="6" IsVisible="False">
+                                            <TextBlock Text="{DynamicResource TxtCompatSidebarWikiFilename}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       Foreground="{StaticResource BrTextSecondary}"/>
+                                            <WrapPanel Name="PnlWikiFilenameBadges"/>
+                                        </StackPanel>
+
+                                        <StackPanel Name="RowWikiFgInputs" Spacing="6" IsVisible="False">
+                                            <TextBlock Text="{DynamicResource TxtCompatSidebarWikiFgInputs}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       Foreground="{StaticResource BrTextSecondary}"/>
+                                            <WrapPanel Name="PnlWikiFgInputsBadges"/>
+                                        </StackPanel>
+
+                                        <TextBlock Name="TxtWikiKnownIssues"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   Foreground="{StaticResource BrWarning}"
+                                                   TextWrapping="Wrap"
+                                                   IsVisible="False"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- NOT FOUND STATE -->
@@ -655,28 +751,50 @@
                                                TextAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- FOOTER LINK (always visible, both states) -->
+                                <!-- FOOTER LINKS (always visible, both states) -->
                                 <Border BorderBrush="{StaticResource BrBorderSubtle}"
                                         BorderThickness="0,1,0,0"
                                         Padding="0,14,0,0"
                                         Margin="0,4,0,0">
-                                    <Button Name="BtnCompatSidebarLink"
-                                            Classes="InvisibleBtn"
-                                            HorizontalAlignment="Left"
-                                            Cursor="Hand"
-                                            Click="BtnCompatSidebarLink_Click">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="{DynamicResource TxtCompatSidebarViewMore}"
-                                                       Foreground="{StaticResource BrAccent}"
-                                                       FontSize="{StaticResource FontSizeBody}"
-                                                       TextWrapping="Wrap"/>
-                                            <TextBlock Text="&#xE12E;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       FontSize="12"
-                                                       Foreground="{StaticResource BrAccent}"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
+                                    <StackPanel Spacing="10">
+                                        <Button Name="BtnCompatSidebarLink"
+                                                Classes="InvisibleBtn"
+                                                HorizontalAlignment="Left"
+                                                Cursor="Hand"
+                                                Click="BtnCompatSidebarLink_Click">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="{DynamicResource TxtCompatSidebarViewMore}"
+                                                           Foreground="{StaticResource BrAccent}"
+                                                           FontSize="{StaticResource FontSizeBody}"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="&#xE12E;"
+                                                           FontFamily="{StaticResource FontIcons}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource BrAccent}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Only shown once PopulateWikiDetailsAsync resolves this game's own page. -->
+                                        <Button Name="BtnGameWikiLink"
+                                                Classes="InvisibleBtn"
+                                                HorizontalAlignment="Left"
+                                                Cursor="Hand"
+                                                IsVisible="False"
+                                                Click="BtnGameWikiLink_Click">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="{DynamicResource TxtCompatSidebarViewGamePage}"
+                                                           Foreground="{StaticResource BrAccent}"
+                                                           FontSize="{StaticResource FontSizeBody}"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="&#xE12E;"
+                                                           FontFamily="{StaticResource FontIcons}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource BrAccent}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
@@ -816,11 +934,11 @@
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                 <TextBlock Text="!" Foreground="{StaticResource BrAccentWarm}" FontSize="24" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{DynamicResource TxtConfirmUninstallTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
+                                <TextBlock Name="TxtConfirmUninstallTitleBlock" Text="{DynamicResource TxtConfirmUninstallTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
                             <!-- Message -->
-                            <TextBlock Text="{DynamicResource TxtConfirmUninstallMsg}"
+                            <TextBlock Name="TxtConfirmUninstallMsgBlock" Text="{DynamicResource TxtConfirmUninstallMsg}"
                                        Foreground="{StaticResource BrTextSecondary}" FontSize="{StaticResource FontSizeBody}"
                                        TextWrapping="Wrap" Margin="0,0,0,24"/>
 
@@ -881,42 +999,6 @@
                                     <Image Name="ImgCoverPreview" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
-                        <!-- Injector selector row -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-                            <TextBlock Text="{DynamicResource TxtInjectionLbl}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       VerticalAlignment="Center"
-                                       FontSize="{StaticResource FontSizeBody}"
-                                       Width="65"/>
-                            <ComboBox Name="CmbInjectionMethodCover"
-                                      Width="220"
-                                      Classes="BtnSelector"
-                                      Padding="8,0,24,0"
-                                      SelectedIndex="0"
-                                      HorizontalContentAlignment="Left"
-                                      VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="dxgi.dll"     Tag="dxgi.dll"/>
-                                <ComboBoxItem Content="winmm.dll"    Tag="winmm.dll"/>
-                                <ComboBoxItem Content="d3d12.dll"    Tag="d3d12.dll"/>
-                                <ComboBoxItem Content="dbghelp.dll"  Tag="dbghelp.dll"/>
-                                <ComboBoxItem Content="version.dll"  Tag="version.dll"/>
-                                <ComboBoxItem Content="wininet.dll"  Tag="wininet.dll"/>
-                                <ComboBoxItem Content="winhttp.dll"  Tag="winhttp.dll"/>
-                            </ComboBox>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    Margin="10,0,0,0"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtTooltipInjectionMethod}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                            FontSize="10" FontWeight="Bold"
-                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                            Margin="0,-1,0,0"/>
-                            </Border>
-                        </StackPanel>
-
                         <!-- Action buttons -->
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                             <Button Name="BtnCoverReset" Grid.Column="0" Classes="BtnBase" Padding="14,8" Click="BtnCoverReset_Click" ToolTip.Tip="{DynamicResource TxtCoverRestoreTooltip}">

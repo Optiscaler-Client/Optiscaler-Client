@@ -59,5 +59,26 @@ namespace OptiscalerClient.Helpers
         }
 
         public static bool ExistsIn(string directory) => FindIn(directory) != null;
+
+        /// <summary>
+        /// The 3 filenames the DLL-swap feature will look for/replace directly in a game's root
+        /// folder: both names of the main FSR4 INT8 DLL, plus the RDNA2 companion. Deliberately a
+        /// separate list from KnownFileNames — that one is used elsewhere to detect the Extras DLL
+        /// as installed *through OptiScaler*, and must not start matching CustomRdna2FileName (which
+        /// normally lives in ".\OptiScaler\", not the game root, and has a different source — see
+        /// ComponentManagementService.GetCachedCustomAmdxc64Path vs. DownloadExtrasDllAsync).
+        /// </summary>
+        public static readonly string[] SwapTargetFileNames = { LegacyFileName, CurrentFileName, CustomRdna2FileName };
+
+        /// <summary>Returns the full path to whichever swap-target name exists directly in the game's root, or null.</summary>
+        public static string? FindSwapTargetIn(string gameDir)
+        {
+            foreach (var name in SwapTargetFileNames)
+            {
+                var path = Path.Combine(gameDir, name);
+                if (File.Exists(path)) return path;
+            }
+            return null;
+        }
     }
 }

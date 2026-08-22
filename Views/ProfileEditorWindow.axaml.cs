@@ -91,6 +91,7 @@ namespace OptiscalerClient.Views
         {
             if (sender is TextBox textBox)
             {
+                FlushControlValues();
                 _searchText = textBox.Text?.Trim() ?? string.Empty;
                 BuildSettingsUI();
             }

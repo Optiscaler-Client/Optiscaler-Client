@@ -40,6 +40,16 @@ namespace OptiscalerClient.Helpers
                     gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>RDNA 3 desktop (Radeon RX 7000 series) is now also whitelisted by AMD's official
+        /// driver for native FSR4 INT8, same as RDNA 4 — no need for this app to inject/force it.
+        /// RDNA3 mobile/APU chips (e.g. 780M/760M) aren't covered by that whitelist, so they're
+        /// intentionally excluded here and still get the INT8 fallback like older GPUs.</summary>
+        public static bool IsRdna3(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.AMD &&
+                   gpu.Name.Contains("RX 7", StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>RDNA 2 (Radeon RX 6000 series, plus RDNA2-based APUs/handhelds like Steam Deck's
         /// "Van Gogh" or the Ryzen 6000 mobile "660M"/"680M" iGPUs) needs its own custom amdxc64.dll
         /// loaded via OptiScaler's LoadCustomAmdxc64OnRdna2 to get FSR4 INT8 working.</summary>

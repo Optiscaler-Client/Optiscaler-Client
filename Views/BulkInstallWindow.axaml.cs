@@ -252,11 +252,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         cmb.SelectionChanged -= CmbOptiVersion_SelectionChanged;
         cmb.Items.Clear();
 
+        // "None" always comes first — lets the user do a batch DLL-only swap (see
+        // RunBulkDllSwapAsync) without installing OptiScaler at all. Never auto-selected by the
+        // logic below; only reached if the user picks it manually.
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+
         if (allVersions.Count == 0 && !_optiShowingCustom)
         {
-            cmb.Items.Add("No versions available");
+            cmb.Items.Add(new ComboBoxItem { Content = "No versions available", IsEnabled = false });
             cmb.SelectedIndex = 0;
-            cmb.IsEnabled = false;
+            cmb.IsEnabled = true;
             cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
             return;
         }
@@ -269,9 +274,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         if (versionsToShow.Count == 0)
         {
-            cmb.Items.Add(new ComboBoxItem { Content = "No versions available", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "No versions available", IsEnabled = false });
             cmb.SelectedIndex = 0;
-            cmb.IsEnabled = false;
+            cmb.IsEnabled = true;
             cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
             return;
         }
@@ -302,7 +307,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.Items.Add(cbi);
         }
 
-        int selectedIndex = 0;
+        // Index 0 is always "None" and is never picked here — it only gets selected by explicit
+        // user action, per the DLL-swap feature's requirement that it never becomes a silent default.
+        int selectedIndex = 1;
         var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
         bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
             (_optiShowingCustom
@@ -310,7 +317,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 : !customVersions.Contains(configDefault) && betaVersions.Contains(configDefault) == _optiShowingBeta);
         if (defaultInChannel)
         {
-            for (int i = 0; i < cmb.Items.Count; i++)
+            for (int i = 1; i < cmb.Items.Count; i++)
             {
                 if (cmb.Items[i] is ComboBoxItem ci &&
                     string.Equals(ci.Tag?.ToString(), configDefault, StringComparison.OrdinalIgnoreCase))
@@ -438,12 +445,35 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         if (btnInstall != null)
         {
-            btnInstall.Content = selectedCount == 0
-                ? "Install Selected"
-                : selectedCount == 1
-                    ? "Install 1 game"
-                    : $"Install {selectedCount} games";
-            btnInstall.IsEnabled = selectedCount > 0 && !_isInstalling;
+            // DLL-swap mode: OptiScaler version is "None". Mirrors ManageGameWindow's
+            // UpdateInstallButtonsForSwapState — Opti=None & Extras=none has nothing to do
+            // (greyed out), Opti=None & Extras=version relabels to a swap action.
+            var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
+            var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
+            var optiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var extrasTag = (cmbExtrasVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            bool optiIsNone = string.Equals(optiTag, "none", StringComparison.OrdinalIgnoreCase);
+            bool extrasIsNone = string.IsNullOrEmpty(extrasTag) || string.Equals(extrasTag, "none", StringComparison.OrdinalIgnoreCase);
+            bool swapMode = optiIsNone && !extrasIsNone;
+            bool blockedMode = optiIsNone && extrasIsNone;
+
+            if (swapMode)
+            {
+                btnInstall.Content = selectedCount == 0
+                    ? "Swap DLL"
+                    : selectedCount == 1
+                        ? "Swap DLL on 1 game"
+                        : $"Swap DLL on {selectedCount} games";
+            }
+            else
+            {
+                btnInstall.Content = selectedCount == 0
+                    ? "Install Selected"
+                    : selectedCount == 1
+                        ? "Install 1 game"
+                        : $"Install {selectedCount} games";
+            }
+            btnInstall.IsEnabled = selectedCount > 0 && !_isInstalling && !blockedMode;
         }
     }
 
@@ -523,6 +553,24 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
                             !selectedExtrasVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
 
+        // ── DLL-swap mode: OptiScaler version is "None" ─────────────────────────────
+        // Ignores the normal batch install flow entirely (profile, injection method, Fakenvapi,
+        // NukemFG, OptiPatcher — none of that applies to a bare DLL swap). Mirrors ManageGameWindow's
+        // ExecuteDllSwapAsync, just looped per selected game with auto-detection only (no per-game
+        // manual file picker in a batch context).
+        if (string.Equals(version, "none", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!injectExtras)
+            {
+                await new ConfirmDialog(this, "Nothing to install",
+                    "Select an OptiScaler version or an FSR4 INT8 version before installing.").ShowDialog<object>(this);
+                return;
+            }
+
+            await RunBulkDllSwapAsync(selectedGames, selectedExtrasVersion!);
+            return;
+        }
+
         // Get selected OptiPatcher version
         var selectedOptiPatcherItem = cmbOptiPatcher?.SelectedItem as ComboBoxItem;
         var selectedOptiPatcherVersion = selectedOptiPatcherItem?.Tag?.ToString();
@@ -591,7 +639,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         installNukemFG,
                         nukemCacheDir,
                         optiscalerVersion: version,
-                        profile: selectedProfile
+                        profile: selectedProfile,
+                        isRdna4: isRdna4ForFsr4, isRdna2: isRdna2ForFsr4
                     );
                 });
 
@@ -730,6 +779,134 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         Close();
     }
 
+    /// <summary>
+    /// Batch counterpart to ManageGameWindow.ExecuteDllSwapAsync — replaces the FSR4 INT8 DLL
+    /// directly in each selected game's folder, without installing OptiScaler. Auto-detection only
+    /// (no per-game manual file picker makes sense in a batch context): games where none of
+    /// Fsr4Int8DllHelper.SwapTargetFileNames is found are skipped, not treated as a batch failure.
+    /// </summary>
+    private async Task RunBulkDllSwapAsync(List<BulkGameItem> selectedGames, string extrasVersion)
+    {
+        _isInstalling = true;
+
+        var btnInstall = this.FindControl<Button>("BtnInstall");
+        var btnCancel = this.FindControl<Button>("BtnCancel");
+        var progressSection = this.FindControl<Border>("ProgressSection");
+        var txtProgressStatus = this.FindControl<TextBlock>("TxtProgressStatus");
+        var txtProgressCount = this.FindControl<TextBlock>("TxtProgressCount");
+        var progressBar = this.FindControl<ProgressBar>("ProgressBar");
+
+        if (btnInstall != null) btnInstall.IsEnabled = false;
+        if (btnCancel != null) btnCancel.IsEnabled = false;
+        if (progressSection != null) progressSection.IsVisible = true;
+
+        int totalGames = selectedGames.Count;
+        int currentGame = 0;
+        int swappedCount = 0;
+        int skippedCount = 0;
+
+        foreach (var gameItem in selectedGames)
+        {
+            currentGame++;
+
+            if (txtProgressStatus != null)
+                txtProgressStatus.Text = $"Swapping FSR4 INT8 DLL for {gameItem.Name}...";
+            if (txtProgressCount != null)
+                txtProgressCount.Text = $"{currentGame} / {totalGames}";
+            if (progressBar != null)
+                progressBar.Value = (currentGame - 1) * 100.0 / totalGames;
+
+            try
+            {
+                var gameDir = _installService.DetermineInstallDirectory(gameItem.Game);
+                if (string.IsNullOrEmpty(gameDir) || !System.IO.Directory.Exists(gameDir))
+                {
+                    DebugWindow.Log($"[BulkInstall][DllSwap] Could not determine game directory for {gameItem.Name}, skipping.");
+                    skippedCount++;
+                    continue;
+                }
+
+                var targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir);
+                if (targetPath == null)
+                {
+                    DebugWindow.Log($"[BulkInstall][DllSwap] No swap target found in '{gameDir}' for {gameItem.Name}, skipping.");
+                    skippedCount++;
+                    continue;
+                }
+
+                // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
+                // for a given version — everything else comes from the regular Extras package.
+                var targetFileName = System.IO.Path.GetFileName(targetPath);
+                string sourcePath;
+                if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var rdna2Path = _componentService.GetCachedCustomAmdxc64Path(extrasVersion);
+                    if (rdna2Path == null)
+                    {
+                        DebugWindow.Log($"[BulkInstall][DllSwap] FSR4 INT8 v{extrasVersion} has no amdxc64.dll replacement for {gameItem.Name}, skipping.");
+                        skippedCount++;
+                        continue;
+                    }
+                    sourcePath = rdna2Path;
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading FSR4 INT8 v{extrasVersion} for {gameItem.Name}...";
+                        if (progressBar != null) progressBar.IsIndeterminate = false;
+                    });
+
+                    var extrasProgress = new Progress<double>(p =>
+                        Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.Value = p; }));
+                    sourcePath = await _componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+                }
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (txtProgressStatus != null) txtProgressStatus.Text = $"Swapping DLL for {gameItem.Name}...";
+                    if (progressBar != null) progressBar.IsIndeterminate = true;
+                });
+
+                await Task.Run(() => _installService.SwapFsr4Dll(gameItem.Game, targetPath, sourcePath, extrasVersion));
+
+                Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
+
+                gameItem.IsInstalled = true;
+                gameItem.CanInstall = false;
+                gameItem.IsSelected = false;
+                swappedCount++;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[BulkInstall][DllSwap] Failed to swap DLL for {gameItem.Name}: {ex.Message}");
+                skippedCount++;
+                Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
+            }
+
+            await Task.Delay(100);
+        }
+
+        if (progressBar != null)
+            progressBar.Value = 100;
+
+        await Task.Delay(500);
+
+        _isInstalling = false;
+
+        if (progressSection != null) progressSection.IsVisible = false;
+        if (btnCancel != null) btnCancel.IsEnabled = true;
+
+        UpdateSelectionCount();
+
+        var summary = skippedCount > 0
+            ? $"Swapped the FSR4 INT8 DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}. Skipped {skippedCount} game{(skippedCount != 1 ? "s" : "")} with no matching DLL to replace."
+            : $"Swapped the FSR4 INT8 DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}.";
+        await new ConfirmDialog(this, "Bulk DLL Swap Complete", summary, isAlert: true).ShowDialog<bool>(this);
+
+        Close();
+    }
+
     private void BtnCancel_Click(object? sender, RoutedEventArgs e)
     {
         if (!_isInstalling)
@@ -749,6 +926,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     private void CmbOptiVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         UpdateCheckboxStatesForVersion(sender as ComboBox);
+        UpdateSelectionCount();
     }
 
     private void UpdateCheckboxStatesForVersion(ComboBox? cmb)
@@ -909,13 +1087,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         }
 
         // Determine default selection
-        bool isRdna4 = false;
+        bool isRdna4OrRdna3 = false;
         if (_gpuService != null)
         {
             try
             {
                 var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                isRdna4 = GpuSelectionHelper.IsRdna4(gpu);
+                isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
             }
             catch (Exception ex) { DebugWindow.Log($"[BulkInstall] GPU detection failed: {ex.Message}"); }
         }
@@ -947,7 +1125,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 if (targetIndex == 0)
                 {
                     // Applying same "intelligent" logic if user's favorite version is gone
-                    if (!isRdna4 && versions.Count > 0)
+                    if (!isRdna4OrRdna3 && versions.Count > 0)
                     {
                         targetIndex = 1; // latest
                     }
@@ -958,7 +1136,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         {
             // No global default preference set (DefaultExtrasVersion is null/empty)
             // → Use "intelligent" logic
-            if (!isRdna4 && versions.Count > 0)
+            if (!isRdna4OrRdna3 && versions.Count > 0)
             {
                 targetIndex = 1; // Latest
             }
@@ -969,6 +1147,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         }
 
         cmb.SelectedIndex = targetIndex;
+        cmb.SelectionChanged -= CmbExtrasVersion_SelectionChanged;
+        cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
+    }
+
+    private void CmbExtrasVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateSelectionCount();
     }
 
     private void PopulateOptiPatcherComboBox()

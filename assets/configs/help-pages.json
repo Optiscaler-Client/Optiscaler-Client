@@ -182,6 +182,12 @@
               "textKey": "TxtHelpMWGameListText"
             },
             {
+              "label": "Badge Colors 🎨",
+              "labelKey": "TxtHelpMWBadgeColorsLabel",
+              "text": "Each cover shows a badge per detected upscaler (DLSS, FSR, XeSS). A solid, filled badge means it's native to the game. A dimmer, outlined badge means it was added by OptiScaler. For FSR, an amber badge means the FSR4 INT8 DLL was swapped directly in the game folder, without installing OptiScaler.",
+              "textKey": "TxtHelpMWBadgeColorsText"
+            },
+            {
               "label": "Manage Button ⚙️",
               "labelKey": "TxtHelpMWManageBtnLabel",
               "text": "Opens the Game Management Window for the selected game, where you can install, configure, and manage OptiScaler.",
@@ -349,13 +355,19 @@
             {
               "label": "FSR 4 INT8 ⚡",
               "labelKey": "TxtHelpGMFsr4Label",
-              "text": "Selector that allows injecting the INT 8 version of FSR 4 for non RDNA 4 GPUs.",
+              "text": "Selector that allows injecting the INT 8 version of FSR 4 for GPUs older than RDNA 3. RDNA 3 and RDNA 4 GPUs already get FSR 4 INT8 natively from AMD's official driver, so this isn't needed for them.",
               "textKey": "TxtHelpGMFsr4Text"
+            },
+            {
+              "label": "DLL Swap (FSR4 INT8) 🔁",
+              "labelKey": "TxtHelpGMDllSwapLabel",
+              "text": "Set the OptiScaler Version to 'None' while keeping a FSR4 INT8 version selected to swap only the FSR4 INT8 DLL in the game folder, without installing OptiScaler at all. Auto-Swap DLL finds and replaces the existing DLL automatically; Manual-Swap DLL lets you pick it yourself if it isn't found. The original file is backed up, so the Uninstall button becomes 'Restore original DLL' to revert it. Swapping and installing OptiScaler are fully compatible with each other in either order. Also available for multiple games at once from Bulk Install.",
+              "textKey": "TxtHelpGMDllSwapText"
             },
             {
               "label": "Installed Components 🧩",
               "labelKey": "TxtHelpGMComponentsLabel",
-              "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. Hover over any entry for details.",
+              "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. An amber badge (FSR only) means the FSR4 INT8 DLL was swapped directly, without installing OptiScaler. Hover over any entry for details.",
               "textKey": "TxtHelpGMComponentsText"
             }
           ]
@@ -485,7 +497,7 @@
             {
               "label": "FSR INT8 Default",
               "labelKey": "TxtHelpSetFsr4Label",
-              "text": "Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 9000-series graphics cards.",
+              "text": "Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 7000-series or 9000-series graphics cards.",
               "textKey": "TxtHelpSetFsr4Text"
             },
             {
@@ -785,6 +797,12 @@
                   "type": "bullet-point"
                 }
               ]
+            },
+            {
+              "label": "Recommended config not found for a game that IS on the Compatibility List",
+              "labelKey": "TxtHelpFaqNoCompatMatchLabel",
+              "text": "This happens when the local game name doesn't match the wiki's entry closely enough for the automatic lookup to find it. Edit the game's name in the Manage window so it matches the name shown on the Compatibility List, then close Manage and open it again — the lookup only runs when the window opens.",
+              "textKey": "TxtHelpFaqNoCompatMatchText"
             }
           ]
         }

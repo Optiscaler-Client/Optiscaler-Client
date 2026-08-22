@@ -115,6 +115,23 @@
     <x:String x:Key="TxtBtnManualInstall">✦ 수동 설치</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ 자동 업데이트 / 재설치</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ 수동 업데이트 / 재설치</x:String>
+    <x:String x:Key="TxtOptiVersionNone">없음</x:String>
+    <x:String x:Key="TxtBtnAutoSwapDll">✦ 자동 DLL 교체</x:String>
+    <x:String x:Key="TxtBtnManualSwapDll">✦ 수동 DLL 교체</x:String>
+    <x:String x:Key="TxtRestoreOriginalDll">↺ 원본 DLL 복원</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasTitle">설치할 항목이 없습니다</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">설치하기 전에 OptiScaler 버전 또는 FSR4 INT8 버전을 선택하세요.</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundTitle">교체할 DLL을 찾을 수 없습니다</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundText">게임 폴더에서 amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll 또는 amdxc64.dll을 찾을 수 없습니다. 대신 수동 DLL 교체를 시도해 보세요.</x:String>
+    <x:String x:Key="TxtSwapDllOutsideGameFolder">선택한 파일은 게임 폴더 내에 있어야 합니다.</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">이 FSR4 INT8 버전에는 amdxc64.dll에 대한 대체 파일이 포함되어 있지 않습니다. 다른 버전이나 대상 파일을 선택하세요.</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0}을(를) {1}에 교체했습니다.</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllTitle">복원 확인</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">원본 DLL을 복원하시겠습니까?&#x0a;교체된 FSR4 INT8 DLL이 백업된 원본으로 다시 교체됩니다.</x:String>
+    <x:String x:Key="TxtRestoreDllSuccess">원본 DLL이 성공적으로 복원되었습니다.</x:String>
+    <x:String x:Key="TxtFsr4SwappedTip">OptiScaler를 설치하지 않고 직접 교체됨</x:String>
+    <x:String x:Key="TxtRestoreDllResidueTitle">원본 DLL 복원됨</x:String>
+    <x:String x:Key="TxtRestoreDllResidueMsg">원본 DLL이 복원되었지만, 게임에 속할 수 있는 {0}개 파일이 예방 차원에서 남겨졌습니다:&#x0a;&#x0a;{1}&#x0a;&#x0a;게임이 이 파일들을 포함하지 않았다고 확신한다면 "폴더 정리"를 사용하여 제거하세요.</x:String>
     <x:String x:Key="TxtFakenvapiTip">Nukem 모드로 DLSS FG를 활성화하기 위해 AMD/Intel GPU에 필요</x:String>
     <x:String x:Key="TxtNukemTip">프레임 생성을 위한 Nukem의 DLSSG-to-FSR3 모드</x:String>
     <x:String x:Key="TxtFakenvapiHelpTip">게임이 NVIDIA 그래픽 카드를 감지하도록 속여 하드웨어 제한을 우회하고 AMD 또는 Intel GPU에서 DLSS 기술을 활성화할 수 있도록 합니다.</x:String>
@@ -312,6 +329,7 @@
     <x:String x:Key="TxtDonateDesc">OptiScaler Client는 무료이며 여가 시간에 개발됩니다. 시간을 절약하셨다면 Ko-fi에서 개발을 후원해 주시는 것을 고려해 주세요. 이는 전적으로 선택 사항이며 앱 사용에 필수는 아닙니다.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Ko-fi에서 후원하기</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">이 버전에는 이미 Fakenvapi 및 NukemFG가 포함되어 있습니다</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">OptiScaler 버전 또는 FSR4 INT8 버전(DLL 교체) 중 하나를 선택하세요.</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">기본 FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">게임을 열 때 미리 선택되는 기본 FSR4 INT8 모드 버전입니다. RDNA 4 GPU(RX 9000 시리즈)는 자동으로 없음으로 설정됩니다.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">아직 배포되지 않은 빌드를 테스트하려면 amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll 및/또는 amdxc64.dll이 포함된 .zip/.7z/.rar 패키지(또는 단일 .dll)를 가져오세요.</x:String>
@@ -389,6 +407,8 @@
     <x:String x:Key="TxtHelpMWContent">메인 창은 모든 게임을 관리하는 중심 허브입니다. 게임 라이브러리를 보고, 새 게임을 검색하고, 관리 기능에 접근할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpMWGameListLabel">게임 목록 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">감지된 모든 게임을 커버 아트, 제목, 설치 상태와 함께 표시합니다.</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsLabel">배지 색상 🎨</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">각 커버에는 감지된 업스케일러(DLSS, FSR, XeSS)마다 배지가 표시됩니다. 실선으로 채워진 배지는 해당 기술이 게임에 기본 내장되어 있음을 의미합니다. 흐릿한 윤곽선 배지는 OptiScaler가 추가한 것임을 의미합니다. FSR의 경우 호박색 배지는 OptiScaler를 설치하지 않고 FSR4 INT8 DLL이 게임 폴더에서 직접 교체되었음을 의미합니다.</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">관리 버튼 ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">선택한 게임의 관리 창을 열어 OptiScaler를 설치, 구성 및 관리할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">빠른 설치 버튼 ✦</x:String>
@@ -439,9 +459,11 @@
     <x:String x:Key="TxtHelpGMInjectionLabel">주입 방법 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">OptiScaler가 게임 프로세스에 주입되는 방법을 선택합니다. 대부분의 경우 기본 옵션(dxgi.dll)으로 충분합니다.</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">비 RDNA 4 GPU를 위한 FSR 4의 INT 8 버전을 주입할 수 있는 선택기입니다.</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">RDNA 3 이전 GPU를 위한 FSR 4의 INT 8 버전을 주입할 수 있는 선택기입니다. RDNA 3 및 RDNA 4 GPU는 AMD 공식 드라이버에서 기본적으로 FSR 4 INT8을 지원하므로 이 옵션이 필요하지 않습니다.</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL 교체 (FSR4 INT8) 🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">OptiScaler를 설치하지 않고 게임 폴더의 FSR4 INT8 DLL만 교체하려면, FSR4 INT8 버전을 선택한 상태로 OptiScaler 버전을 'None'으로 설정하세요. 자동 DLL 교체는 기존 DLL을 자동으로 찾아 교체하고, 수동 DLL 교체는 찾지 못한 경우 직접 선택할 수 있게 해줍니다. 원본 파일은 백업되므로, 제거 버튼이 되돌리기 위한 '원본 DLL 복원' 버튼으로 바뀝니다. DLL 교체와 OptiScaler 설치는 순서에 관계없이 서로 완전히 호환됩니다. 대량 설치에서도 여러 게임에 동시에 사용할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">설치된 구성 요소 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">게임 폴더에서 감지된 업스케일러를 나열합니다. 실선 배지는 업스케일러가 게임에 기본 내장되어 있음을 의미하고, 흐릿한 윤곽선 배지는 OptiScaler가 추가한 것임을 의미합니다. 자세한 내용은 항목 위에 마우스를 올려 확인하세요.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">게임 폴더에서 감지된 업스케일러를 나열합니다. 실선 배지는 업스케일러가 게임에 기본 내장되어 있음을 의미하고, 흐릿한 윤곽선 배지는 OptiScaler가 추가한 것임을 의미합니다. 호박색 배지(FSR 전용)는 OptiScaler를 설치하지 않고 FSR4 INT8 DLL이 직접 교체되었음을 의미합니다. 자세한 내용은 항목 위에 마우스를 올려 확인하세요.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -460,7 +482,7 @@
     <x:String x:Key="TxtHelpSetScanLabel">스캔 소스</x:String>
     <x:String x:Key="TxtHelpSetScanText">'스캔' 클릭 시 스캔할 소스를 관리합니다. Steam, Epic 같은 플랫폼과 사용자 지정 폴더 등이 포함됩니다.</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">FSR INT8 기본값</x:String>
-    <x:String x:Key="TxtHelpSetFsr4Text">게임 관리 또는 빠른 설치 시 주입 섹션의 기본 FSR INT8 버전을 선택합니다. AMD 9000 시리즈 그래픽 카드 사용자는 '없음'으로 설정하는 것이 좋습니다.</x:String>
+    <x:String x:Key="TxtHelpSetFsr4Text">게임 관리 또는 빠른 설치 시 주입 섹션의 기본 FSR INT8 버전을 선택합니다. AMD 7000 또는 9000 시리즈 그래픽 카드 사용자는 '없음'으로 설정하는 것이 좋습니다.</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">기본 GPU 선택</x:String>
     <x:String x:Key="TxtHelpSetGpuText">시스템에서 여러 GPU가 감지될 때 사용할 GPU를 선택합니다.</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">시작 시 자동 스캔</x:String>
@@ -512,6 +534,8 @@
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">GPU가 RDNA2인 경우 4.1.1 대신 FSR4 INT8 4.0.2c 버전을 사용하세요 — 영향을 받지 않는 다른 구현을 사용하며 정상적으로 작동합니다.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Manage Game에서 게임별로 특정 FSR4 INT8 버전을 선택하거나, Settings → Local cache &amp; Default version management에서 기본 버전을 설정할 수 있습니다.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">이 문제는 AMD가 업데이트된 드라이버를 출시해야만 해결할 수 있습니다. 아직 클라이언트 측 해결 방법은 없습니다.</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">호환성 목록에 있는 게임인데도 권장 설정을 찾을 수 없음</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchText">이는 로컬 게임 이름이 위키 항목과 충분히 일치하지 않아 자동 조회가 찾지 못할 때 발생합니다. 게임 관리 창에서 게임 이름을 호환성 목록에 표시된 이름과 일치하도록 수정한 다음, 관리 창을 닫았다가 다시 열어보세요 — 조회는 창이 열릴 때만 실행됩니다.</x:String>
 
 
     <!-- Help - Gamepad -->

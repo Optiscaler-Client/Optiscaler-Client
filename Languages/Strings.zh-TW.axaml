@@ -115,6 +115,23 @@
     <x:String x:Key="TxtBtnManualInstall">✦ 手動安裝</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ 自動更新 / 重新安裝</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ 手動更新 / 重新安裝</x:String>
+    <x:String x:Key="TxtOptiVersionNone">無</x:String>
+    <x:String x:Key="TxtBtnAutoSwapDll">✦ 自動交換 DLL</x:String>
+    <x:String x:Key="TxtBtnManualSwapDll">✦ 手動交換 DLL</x:String>
+    <x:String x:Key="TxtRestoreOriginalDll">↺ 還原原始 DLL</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasTitle">沒有可安裝的項目</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">安裝前請選擇一個 OptiScaler 版本或 FSR4 INT8 版本。</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundTitle">找不到可替換的 DLL</x:String>
+    <x:String x:Key="TxtSwapDllNotFoundText">在遊戲資料夾中找不到 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 或 amdxc64.dll。請改用「手動交換 DLL」。</x:String>
+    <x:String x:Key="TxtSwapDllOutsideGameFolder">所選檔案必須位於遊戲資料夾內。</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">此 FSR4 INT8 版本不包含 amdxc64.dll 的替代檔案。請選擇其他版本或目標檔案。</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">已將 FSR4 INT8 v{0} 交換至 {1}。</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllTitle">確認還原</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">確定要還原原始 DLL 嗎？&#x0a;已交換的 FSR4 INT8 DLL 將替換回備份的原始檔案。</x:String>
+    <x:String x:Key="TxtRestoreDllSuccess">已成功還原原始 DLL。</x:String>
+    <x:String x:Key="TxtFsr4SwappedTip">直接交換，未安裝 OptiScaler</x:String>
+    <x:String x:Key="TxtRestoreDllResidueTitle">已還原原始 DLL</x:String>
+    <x:String x:Key="TxtRestoreDllResidueMsg">已還原原始 DLL，但為求謹慎保留了 {0} 個可能屬於遊戲的檔案：&#x0a;&#x0a;{1}&#x0a;&#x0a;如果你確定遊戲沒有附帶這些檔案，請使用「資料夾清理」移除它們。</x:String>
     <x:String x:Key="TxtFakenvapiTip">AMD/Intel GPU啟用DLSS FG與Nukem模組所需</x:String>
     <x:String x:Key="TxtNukemTip">Nukem的DLSSG-to-FSR3模組用於幀生成</x:String>
     <x:String x:Key="TxtFakenvapiHelpTip">欺騙遊戲偵測NVIDIA顯卡，允許您繞過硬體限制並在AMD或Intel GPU上啟用DLSS技術。</x:String>
@@ -312,6 +329,7 @@
     <x:String x:Key="TxtDonateDesc">OptiScaler Client 是免費的，由我利用業餘時間開發。如果它為你節省了時間，歡迎在 Ko-fi 上支持它的開發。這完全是自願的，絕不是使用本應用程式的必要條件。</x:String>
     <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 與 NukemFG</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">請選擇 OptiScaler 版本或 FSR4 INT8 版本（DLL 交換）其中之一。</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">預設 FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">開啟遊戲時預先選取的預設 FSR4 INT8 模組版本。RDNA 4 GPU（RX 9000 系列）會自動使用「無」選項。</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">匯入包含 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 及/或 amdxc64.dll 的 .zip/.7z/.rar 套件（或單一 .dll），以測試尚未發布的版本。</x:String>
@@ -389,6 +407,8 @@
     <x:String x:Key="TxtHelpMWContent">主視窗是管理所有遊戲的中心樞紐。您可以查看遊戲庫、掃描新遊戲並存取遊戲管理功能。</x:String>
     <x:String x:Key="TxtHelpMWGameListLabel">遊戲清單 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">顯示所有偵測到的遊戲，包含封面圖片、標題和安裝狀態。</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsLabel">徽章顏色 🎨</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">每個封面會針對偵測到的每種放大技術（DLSS、FSR、XeSS）顯示一個徽章。實心徽章表示該技術是遊戲原生的。較淡且帶外框的徽章表示它是由 OptiScaler 新增的。對於 FSR，琥珀色徽章表示 FSR4 INT8 DLL 已直接在遊戲資料夾中替換，而未安裝 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">管理按鈕 ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">開啟選定遊戲的管理視窗，可在其中安裝、設定和管理 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">快速安裝按鈕 ✦</x:String>
@@ -439,9 +459,11 @@
     <x:String x:Key="TxtHelpGMInjectionLabel">注入方法 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">選擇 OptiScaler 注入遊戲程序的方式。大多數情況下預設選項 (dxgi.dll) 即可。</x:String>
     <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">允許為非 RDNA 4 GPU 注入 FSR 4 INT 8 版本的選擇器。</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">允許為早於 RDNA 3 的 GPU 注入 FSR 4 INT 8 版本的選擇器。RDNA 3 與 RDNA 4 GPU 已透過 AMD 官方驅動程式原生取得 FSR 4 INT8，因此不需要為它們使用此選項。</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL 替換（FSR4 INT8）🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">將 OptiScaler 版本設為「None」，同時保持選擇 FSR4 INT8 版本，即可僅替換遊戲資料夾中的 FSR4 INT8 DLL，而不安裝 OptiScaler。自動替換 DLL 會自動尋找並替換現有的 DLL；手動替換 DLL 則允許您在找不到時自行選擇。原始檔案會被備份，因此「解除安裝」按鈕會變成「還原原始 DLL」以便還原。DLL 替換與安裝 OptiScaler 完全相容，無論先後順序為何。也可在批次安裝中同時對多款遊戲使用此功能。</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">已安裝的元件 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">列出在遊戲資料夾中偵測到的放大技術。實心徽章表示該放大技術是遊戲原生的；較淡且帶外框的徽章表示它是由 OptiScaler 新增的。將滑鼠停留在項目上查看詳情。</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">列出在遊戲資料夾中偵測到的放大技術。實心徽章表示該放大技術是遊戲原生的；較淡且帶外框的徽章表示它是由 OptiScaler 新增的。琥珀色徽章（僅限 FSR）表示 FSR4 INT8 DLL 已直接替換，而未安裝 OptiScaler。將滑鼠停留在項目上查看詳情。</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -460,7 +482,7 @@
     <x:String x:Key="TxtHelpSetScanLabel">掃描來源</x:String>
     <x:String x:Key="TxtHelpSetScanText">管理點擊「掃描」時掃描哪些來源，包括 Steam、Epic 等平台以及自訂資料夾和其他位置。</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">FSR INT8 預設</x:String>
-    <x:String x:Key="TxtHelpSetFsr4Text">為注入部分選擇預設 FSR INT8 版本。AMD 9000 系列顯示卡使用者建議設定為「無」。</x:String>
+    <x:String x:Key="TxtHelpSetFsr4Text">為注入部分選擇預設 FSR INT8 版本。AMD 7000 系列或 9000 系列顯示卡使用者建議設定為「無」。</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">預設 GPU 選擇</x:String>
     <x:String x:Key="TxtHelpSetGpuText">當系統中偵測到多個 GPU 時，選擇使用哪個 GPU。</x:String>
     <x:String x:Key="TxtHelpSetAutoscanLabel">啟動時自動掃描</x:String>
@@ -511,6 +533,8 @@
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">如果您的顯示卡是 RDNA2，請使用 FSR4 INT8 4.0.2c 版本而非 4.1.1——它採用不受此問題影響的不同實作方式，可正常運作。</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">您可以在 Manage Game 中為每個遊戲選擇特定的 FSR4 INT8 版本，或在 Settings → Local cache &amp; Default version management 中設定預設版本。</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">此問題只能由 AMD 發布更新的驅動程式來修復；目前客戶端沒有可用的解決方法。</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">遊戲明明在相容性清單中，卻找不到建議設定</x:String>
+    <x:String x:Key="TxtHelpFaqNoCompatMatchText">這是因為本機遊戲名稱與 wiki 條目不夠接近，自動查詢無法比對到它。請在管理視窗中編輯遊戲名稱，使其與相容性清單中顯示的名稱一致，然後關閉管理視窗並重新開啟——查詢只會在視窗開啟時執行。</x:String>
 
 
     <!-- Help - Gamepad -->
