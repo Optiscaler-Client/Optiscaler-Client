@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">スキャン開始</x:String>
     <x:String x:Key="TxtInitialScanClose">閉じる</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">ドライブが検出されませんでした。</x:String>
-    <x:String x:Key="TxtStatusReady">準備完了</x:String>
     <x:String x:Key="TxtScanningTitle">ゲームをスキャン中...</x:String>
     <x:String x:Key="TxtScanningDesc">すべてのプラットフォームでゲームを検索中...</x:String>
     <x:String x:Key="TxtSearchGames">ゲームを検索...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">更新を確認中…</x:String>
-    <x:String x:Key="TxtReady">準備完了</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFGが正常に更新されました。</x:String>
     <x:String x:Key="TxtActualizacionTitle">更新</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0}ゲームが読み込まれました。</x:String>
-    <x:String x:Key="TxtScanningShort">ゲームをスキャン中...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">スキャン完了。合計ゲーム：{0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">カバー画像を取得中: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">カバー画像の読み込み完了。ゲーム総数: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">エラー：{0}</x:String>
     <x:String x:Key="TxtSelectExe">ゲーム実行可能ファイルを選択</x:String>
     <x:String x:Key="TxtGameDuplicate">このゲームはすでにリストにあります。</x:String>
     <x:String x:Key="TxtDuplicateTitle">重複ゲーム</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0}が手動で追加されました。</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ GPUが検出されません</x:String>
     <x:String x:Key="TxtNoGpuTip">このシステムでGPUが検出されませんでした</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU検出に失敗</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">起動時にリストが空の場合に自動的にゲームをスキャンします。</x:String>
     <x:String x:Key="TxtAnimations">アニメーションを有効にする</x:String>
     <x:String x:Key="TxtAnimationsDesc">インターフェース全体で滑らかな遷移とアニメーションを有効にします</x:String>
+    <x:String x:Key="TxtRenderingMode">レンダリングモード</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">アプリがUIを描画する方法です。既定ではハードウェアが使用されますが、GPUドライバーが起動時にクラッシュし続ける場合、自動的にソフトウェアレンダリングに切り替わります。アプリを再起動すると適用されます。</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ 起動時のクラッシュが繰り返されたため、自動的にソフトウェアレンダリングに切り替わりました。</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">ハードウェア(推奨)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">ソフトウェア</x:String>
     <x:String x:Key="TxtBetaVersions">ベータ版を表示</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">バージョンセレクターにOptiScalerのベータ版を含める。ベータ版は不安定な場合があります。</x:String>
 
@@ -628,7 +625,6 @@
     <x:String x:Key="TxtFilterHideNoUpscaler">アップスケーラー非対応のゲームを非表示</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler導入済みのみ</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">お気に入りのみ</x:String>
-    <x:String x:Key="TxtRefreshingCovers">不足しているカバーを更新中...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">カバーの更新が完了しました。{0}/{1}件の不足カバーが見つかりました。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">カバーの更新が完了しました — {0}/{1}件のカバーが見つかりました。</x:String>
 

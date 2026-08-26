@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Taramayı başlat</x:String>
     <x:String x:Key="TxtInitialScanClose">Kapat</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Sürücü bulunamadı.</x:String>
-    <x:String x:Key="TxtStatusReady">Hazır</x:String>
     <x:String x:Key="TxtScanningTitle">Oyunlar taranıyor...</x:String>
     <x:String x:Key="TxtScanningDesc">Tüm platformlarda oyunlar aranıyor...</x:String>
     <x:String x:Key="TxtSearchGames">Oyun ara...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Güncellemeler kontrol ediliyor…</x:String>
-    <x:String x:Key="TxtReady">Hazır</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG başarıyla güncellendi.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Güncelleme</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0} oyun yüklendi.</x:String>
-    <x:String x:Key="TxtScanningShort">Oyunlar taranıyor...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Tarama tamamlandı. Toplam oyun: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Kapaklar yükleniyor: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Kapaklar yüklendi. Toplam oyun: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Hata: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Oyun Yürütülebilir Dosyasını Seç</x:String>
     <x:String x:Key="TxtGameDuplicate">Bu oyun zaten listede.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Yinelenen Oyun</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} manuel olarak eklendi.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ GPU algılanmadı</x:String>
     <x:String x:Key="TxtNoGpuTip">Bu sistemde GPU algılanmadı</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU algılama başarısız</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Başlangıçta liste boşsa otomatik olarak oyunları tara.</x:String>
     <x:String x:Key="TxtAnimations">Animasyonları etkinleştir</x:String>
     <x:String x:Key="TxtAnimationsDesc">Arayüz genelinde yumuşak geçişler ve animasyonları etkinleştir</x:String>
+    <x:String x:Key="TxtRenderingMode">Oluşturma Modu</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Uygulamanın arayüzünü nasıl çizdiği. Varsayılan olarak Donanım kullanılır; GPU sürücüsü başlangıçta çökmeye devam ederse uygulama kendiliğinden yazılımsal oluşturmaya geçer. Uygulama yeniden başlatıldığında etkili olur.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Tekrarlanan başlangıç çökmelerinden sonra otomatik olarak yazılımsal oluşturmaya geçildi.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Donanım (önerilen)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Yazılım</x:String>
     <x:String x:Key="TxtBetaVersions">Beta sürümlerini göster</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Sürüm seçicide OptiScaler beta sürümlerini dahil et. Betalar kararsız olabilir.</x:String>
 
@@ -627,7 +624,6 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFilterHideNoUpscaler">Yükseltici desteği olmayan oyunları gizle</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Yalnızca OptiScaler kurulu olanlar</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Yalnızca favoriler</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Eksik kapaklar yenileniyor...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Kapak yenileme tamamlandi. {0}/{1} eksik kapak bulundu.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Kapak yenileme tamamlandi — {0}/{1} kapak bulundu.</x:String>
 

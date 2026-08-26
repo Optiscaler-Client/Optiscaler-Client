@@ -97,6 +97,12 @@ namespace OptiscalerClient.Models
         public string Language { get; set; } = "en";
         public bool Debug { get; set; } = false;
         public string DefaultProfileName { get; set; } = OptiScalerProfile.BuiltInDefaultName;
+        /// <summary>
+        /// Whether the one-time GPU-based auto-selection of the default profile (FSR 4 for RDNA4/RDNA3,
+        /// FSR 4 INT8 for RDNA2) has already run. Prevents re-running it on every startup once the user
+        /// has had a chance to change <see cref="DefaultProfileName"/> themselves.
+        /// </summary>
+        public bool HasAutoAssignedDefaultProfile { get; set; } = false;
         public bool AutoScan { get; set; } = true;
         public bool AnimationsEnabled { get; set; } = true;
         public bool PreferGridView { get; set; } = true;
@@ -201,6 +207,39 @@ namespace OptiscalerClient.Models
         /// the popup is shown again on next startup even if the latest version hasn't changed.
         /// </summary>
         public bool UpdateNotificationDismissed { get; set; } = true;
+
+        /// <summary>
+        /// User's rendering backend preference: "hardware" (default) uses hardware acceleration
+        /// normally but automatically falls back to software rendering after repeated crashes on
+        /// startup (see RenderingSafetyNet) — this is how a GPU driver crash that bypasses normal
+        /// .NET exception handling gets self-healed without the user having to find a setting.
+        /// "software" pins the choice regardless of crash history. There is deliberately no
+        /// "hardware, never self-heal" option — see RenderingSafetyNet's class remarks.
+        /// </summary>
+        public string RenderingModePreference { get; set; } = "hardware";
+
+        /// <summary>
+        /// True once the app has already fallen back to software rendering because of repeated
+        /// unclean shutdowns. Kept sticky (never auto-reverted) so a user whose driver issue is
+        /// later fixed has to explicitly switch back via RenderingModePreference, rather than the
+        /// app silently re-exposing them to the same crash on some future launch.
+        /// </summary>
+        public bool ForcedSoftwareRenderingActive { get; set; } = false;
+
+        /// <summary>
+        /// Consecutive app launches that did not reach a clean shutdown (see RunInProgress).
+        /// Reset to 0 on any clean exit. Two in a row (not one, to avoid misfiring on a single
+        /// Task Manager kill or power loss) triggers the automatic software-rendering fallback.
+        /// </summary>
+        public int UncleanShutdownStreak { get; set; } = 0;
+
+        /// <summary>
+        /// Set to true at every startup and cleared only on a clean shutdown (AppDomain.ProcessExit
+        /// in Program.cs). Finding this still true at the next startup means the previous run
+        /// never got there — most likely a native crash (e.g. a GPU driver crashing the rendering
+        /// thread), since both normal exits and handled managed exceptions still reach ProcessExit.
+        /// </summary>
+        public bool RunInProgress { get; set; } = false;
     }
 
     /// <summary>

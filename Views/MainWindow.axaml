@@ -277,7 +277,6 @@
                      <RowDefinition Height="Auto"/>
                      <RowDefinition Height="Auto"/>
                      <RowDefinition Height="*"/>
-                     <RowDefinition Height="Auto"/>
                  </Grid.RowDefinitions>
 
                  <!-- Header -->
@@ -698,6 +697,73 @@
                                                          IsVisible="{Binding DlssViaOptiscaler}">
                                                      <TextBlock Text="DLSS"
                                                                 Foreground="#7FD481"
+                                                                Opacity="0.7"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- FSR badge -->
+                                                 <Border Background="#2E1A1A"
+                                                         BorderBrush="#5A2D2D"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding FsrIsNative}">
+                                                     <TextBlock Text="FSR"
+                                                                Foreground="#E07070"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- FSR badge - added by OptiScaler, not native to the game -->
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#5A2D2D"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding FsrIsViaOptiscalerOnly}">
+                                                     <TextBlock Text="FSR"
+                                                                Foreground="#E07070"
+                                                                Opacity="0.7"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- FSR badge - DLL swapped directly, without installing OptiScaler -->
+                                                 <Border Background="#2E2410"
+                                                         BorderBrush="{StaticResource BrWarning}"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding FsrIsSwapped}">
+                                                     <TextBlock Text="FSR"
+                                                                Foreground="{StaticResource BrWarning}"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- XeSS badge -->
+                                                 <Border Background="#1A1E2E"
+                                                         BorderBrush="#2D3A5A"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding XessIsNative}">
+                                                     <TextBlock Text="XeSS"
+                                                                Foreground="#7080E0"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
+                                                 <!-- XeSS badge - added by OptiScaler, not native to the game -->
+                                                 <Border Background="Transparent"
+                                                         BorderBrush="#2D3A5A"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding XessViaOptiscaler}">
+                                                     <TextBlock Text="XeSS"
+                                                                Foreground="#7080E0"
                                                                 Opacity="0.7"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
@@ -1280,21 +1346,9 @@
                      </StackPanel>
                  </Border>
 
-                 <!-- Status Bar -->
-                 <Border Grid.Row="4"
-                         Background="{StaticResource BrBgDeep}"
-                         BorderBrush="{StaticResource BrBorderSubtle}"
-                         BorderThickness="0,1,0,0"
-                         Padding="24,8">
-                     <TextBlock Name="TxtStatus"
-                                Text="{DynamicResource TxtStatusReady}"
-                                FontSize="{StaticResource FontSizeCaption}"
-                                Foreground="{StaticResource BrTextSecondary}"/>
-                 </Border>
-
                  <!-- Ghost canvas: floating drag visuals sit here, above all content -->
                  <Canvas Name="DragGhostCanvas"
-                         Grid.Row="0" Grid.RowSpan="5"
+                         Grid.Row="0" Grid.RowSpan="4"
                          IsHitTestVisible="False"
                          ZIndex="100"/>
 
@@ -1846,6 +1900,47 @@
                                                   IsChecked="True"
                                                   Focusable="False"
                                                   IsCheckedChanged="TglAnimations_IsCheckedChanged"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Rendering Mode -->
+                            <Border Background="{StaticResource BrBgCard}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusLarge}"
+                                    Padding="20,16"
+                                    Margin="0,0,16,16"
+                                    HorizontalAlignment="Left">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource TxtRenderingMode}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource BrTextPrimary}"/>
+                                        <TextBlock Text="{DynamicResource TxtRenderingModeDesc}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,16,0"
+                                                   FontSize="{StaticResource FontSizeCaption}"/>
+                                        <TextBlock Name="TxtRenderingModeAutoNotice"
+                                                   Text="{DynamicResource TxtRenderingModeAutoNotice}"
+                                                   Foreground="{StaticResource BrWarning}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,16,0"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   IsVisible="False"/>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbRenderingMode"
+                                              Grid.Column="1"
+                                              VerticalAlignment="Center"
+                                              MinWidth="140"
+                                              SelectionChanged="CmbRenderingMode_SelectionChanged">
+                                        <ComboBoxItem Content="{DynamicResource TxtRenderingModeHardware}" Tag="hardware"/>
+                                        <ComboBoxItem Content="{DynamicResource TxtRenderingModeSoftware}" Tag="software"/>
+                                    </ComboBox>
                                 </Grid>
                             </Border>
 

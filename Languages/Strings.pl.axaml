@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Rozpocznij skanowanie</x:String>
     <x:String x:Key="TxtInitialScanClose">Zamknij</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Nie wykryto dysków.</x:String>
-    <x:String x:Key="TxtStatusReady">Gotowe</x:String>
     <x:String x:Key="TxtScanningTitle">Skanowanie gier...</x:String>
     <x:String x:Key="TxtScanningDesc">Wyszukiwanie gier na wszystkich platformach...</x:String>
     <x:String x:Key="TxtSearchGames">Szukaj gier...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Sprawdzanie aktualizacji…</x:String>
-    <x:String x:Key="TxtReady">Gotowe</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG pomyślnie zaktualizowany.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Aktualizacja</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">Załadowano {0} gier.</x:String>
-    <x:String x:Key="TxtScanningShort">Skanowanie gier...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Skanowanie zakończone. Łączna liczba gier: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Pobieranie okładek: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Okładki załadowane. Łącznie gier: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Błąd: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Wybierz plik wykonywalny gry</x:String>
     <x:String x:Key="TxtGameDuplicate">Ta gra jest już na liście.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Duplikat gry</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} dodany ręcznie.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ Nie wykryto GPU</x:String>
     <x:String x:Key="TxtNoGpuTip">Nie wykryto GPU w tym systemie</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ Nie udało się wykryć GPU</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Automatycznie skanuj gry, jeśli lista jest pusta przy uruchomieniu.</x:String>
     <x:String x:Key="TxtAnimations">Włącz animacje</x:String>
     <x:String x:Key="TxtAnimationsDesc">Włącz płynne przejścia i animacje w całym interfejsie</x:String>
+    <x:String x:Key="TxtRenderingMode">Tryb Renderowania</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Jak aplikacja rysuje swój interfejs. Domyślnie używane jest Sprzętowe; jeśli sterownik GPU wciąż zawodzi przy starcie, aplikacja sama przełącza się na renderowanie programowe. Zaczyna działać po ponownym uruchomieniu aplikacji.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Automatycznie przełączono na renderowanie programowe po powtarzających się awariach przy starcie.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Sprzętowe (zalecane)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Programowe</x:String>
     <x:String x:Key="TxtBetaVersions">Pokaż wersje beta</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Uwzględnij wersje beta OptiScaler w selektorze. Wersje beta mogą być niestabilne.</x:String>
 
@@ -628,7 +625,6 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtFilterHideNoUpscaler">Ukryj gry bez obsługi upscalera</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Tylko z zainstalowanym OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Tylko ulubione</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Odswierzanie brakujacych okladek...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Odswierzanie okladek zakonczone. Znaleziono {0}/{1} brakujacych okladek.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Odswierzanie okladek zakonczone — znaleziono {0}/{1} okladek.</x:String>
 

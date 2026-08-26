@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Начать сканирование</x:String>
     <x:String x:Key="TxtInitialScanClose">Закрыть</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Диски не обнаружены.</x:String>
-    <x:String x:Key="TxtStatusReady">Готово</x:String>
     <x:String x:Key="TxtScanningTitle">Сканирование игр...</x:String>
     <x:String x:Key="TxtScanningDesc">Поиск игр на всех платформах...</x:String>
     <x:String x:Key="TxtSearchGames">Поиск игр...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Проверка обновлений…</x:String>
-    <x:String x:Key="TxtReady">Готово</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG успешно обновлен.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Обновление</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">Загружено {0} игр.</x:String>
-    <x:String x:Key="TxtScanningShort">Сканирование игр...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Сканирование завершено. Всего игр: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Загрузка обложек: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Обложки загружены. Всего игр: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Ошибка: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Выбрать исполняемый файл игры</x:String>
     <x:String x:Key="TxtGameDuplicate">Эта игра уже в списке.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Дубликат игры</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} добавлен вручную.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ GPU не обнаружен</x:String>
     <x:String x:Key="TxtNoGpuTip">GPU не был обнаружен в этой системе</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ Сбой обнаружения GPU</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Автоматически сканировать игры, если список пуст при запуске.</x:String>
     <x:String x:Key="TxtAnimations">Включить анимации</x:String>
     <x:String x:Key="TxtAnimationsDesc">Включить плавные переходы и анимации во всем интерфейсе</x:String>
+    <x:String x:Key="TxtRenderingMode">Режим рендеринга</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Как приложение рисует интерфейс. По умолчанию используется Аппаратный; если драйвер GPU продолжает вызывать сбои при запуске, приложение само переключается на программный рендеринг. Вступает в силу после перезапуска приложения.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Автоматически переключено на программный рендеринг после повторных сбоев при запуске.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Аппаратный (рекомендуется)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Программный</x:String>
     <x:String x:Key="TxtBetaVersions">Показывать бета-версии</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Включить бета-версии OptiScaler в селектор. Бета-версии могут быть нестабильны.</x:String>
 
@@ -628,7 +625,6 @@
     <x:String x:Key="TxtFilterHideNoUpscaler">Скрыть игры без поддержки апскейлера</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Только с установленным OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Только избранное</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Обновление отсутствующих обложек...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Обновление обложек завершено. Найдено {0}/{1} отсутствующих обложек.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Обновление обложек завершено — найдено {0}/{1} обложек.</x:String>
 

@@ -77,7 +77,6 @@ namespace OptiscalerClient.Views
 
         private ListBox? _lstGames;
         private ListBox? _lstGamesGrid;
-        private TextBlock? _txtStatus;
         private Button? _btnScan;
         private Button? _btnViewList;
         private Button? _btnViewGrid;
@@ -298,6 +297,8 @@ namespace OptiscalerClient.Views
             _gpuService = PlatformServiceFactory.CreateGpuDetectionService()!;
             _games = new ObservableCollection<Game>();
 
+            EnsureDefaultProfileAutoAssigned();
+
             // Debug Window check
             if (_componentService.Config.Debug)
             {
@@ -360,7 +361,6 @@ namespace OptiscalerClient.Views
                 _lstGamesGrid = this.FindControl<ListBox>("LstGamesGrid");
                 if (_lstGames != null) _lstGames.ContainerPrepared += GameContainer_FavoriteIconPrepared;
                 if (_lstGamesGrid != null) _lstGamesGrid.ContainerPrepared += GameContainer_FavoriteIconPrepared;
-                _txtStatus = this.FindControl<TextBlock>("TxtStatus");
                 _btnScan = this.FindControl<Button>("BtnScan");
                 _btnViewList = this.FindControl<Button>("BtnViewList");
                 _btnViewGrid = this.FindControl<Button>("BtnViewGrid");
@@ -406,6 +406,7 @@ namespace OptiscalerClient.Views
                 // Show welcome/changelog popup when the app version changes (or on first run)
                 if (_componentService.Config.LastSeenAppVersion != App.AppVersion)
                 {
+                    DebugWindow.Log($"[Startup] Showing welcome/changelog popup (LastSeenAppVersion={_componentService.Config.LastSeenAppVersion ?? "none"}, current={App.AppVersion}).");
                     var welcome = new WelcomeWindow(this);
                     await welcome.ShowDialog(this);
                     _componentService.Config.LastSeenAppVersion = App.AppVersion;
@@ -420,6 +421,7 @@ namespace OptiscalerClient.Views
                         _componentService.SaveConfiguration();
                     }
 
+                    DebugWindow.Log("[Startup] No saved games found — showing initial scan source prompt.");
                     var prompt = new InitialScanPromptWindow(this, _componentService, isFirstTime: true);
                     var options = await prompt.ShowDialog<InitialScanOptions?>(this);
                     if (options != null)
@@ -1864,6 +1866,25 @@ namespace OptiscalerClient.Views
                 txtSteamGridApiKey.Text = _componentService.Config.SteamGridDBApiKey ?? string.Empty;
             }
 
+            var cmbRenderingMode = this.FindControl<ComboBox>("CmbRenderingMode");
+            if (cmbRenderingMode != null)
+            {
+                var preference = _componentService.Config.RenderingModePreference ?? "hardware";
+                foreach (var baseItem in cmbRenderingMode.Items)
+                {
+                    if (baseItem is ComboBoxItem item && item.Tag?.ToString() == preference)
+                    {
+                        cmbRenderingMode.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+            var txtRenderingModeAutoNotice = this.FindControl<TextBlock>("TxtRenderingModeAutoNotice");
+            if (txtRenderingModeAutoNotice != null)
+            {
+                txtRenderingModeAutoNotice.IsVisible = _componentService.Config.ForcedSoftwareRenderingActive;
+            }
+
             PopulateDefaultGpuComboBox();
             RepopulateVersionCombos();
         }
@@ -1966,6 +1987,55 @@ namespace OptiscalerClient.Views
         private string _profileSearchTextView = string.Empty;
         private readonly ProfileManagementService _profileService = new ProfileManagementService();
         public bool IsProfileEditorOpen { get; private set; }
+
+        /// <summary>
+        /// One-time (per install) GPU-based default profile selection. The built-in "FSR 4" and
+        /// "FSR 4 (INT8)" profiles are always ensured to exist (see ProfileManagementService), but the
+        /// default profile itself is only auto-picked once: if the user has already changed the default
+        /// away from "OptiScaler Standard" (manually, or from a previous run of this same check), it's
+        /// left untouched. Gated by HasAutoAssignedDefaultProfile so it never fights the user's choice
+        /// again after this first pass.
+        /// </summary>
+        private void EnsureDefaultProfileAutoAssigned()
+        {
+            try
+            {
+                if (_componentService.Config.HasAutoAssignedDefaultProfile)
+                {
+                    DebugWindow.Log("[Startup] Default profile auto-assignment already ran previously — skipping.");
+                    return;
+                }
+
+                var currentDefault = _componentService.Config.DefaultProfileName;
+                if (!string.IsNullOrWhiteSpace(currentDefault) &&
+                    !currentDefault.Equals(OptiScalerProfile.BuiltInDefaultName, StringComparison.OrdinalIgnoreCase))
+                {
+                    DebugWindow.Log($"[Startup] Default profile already set to '{currentDefault}' — leaving as-is.");
+                    _componentService.Config.HasAutoAssignedDefaultProfile = true;
+                    _componentService.SaveConfiguration();
+                    return;
+                }
+
+                var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                DebugWindow.Log($"[Startup] Auto-assigning default profile based on detected GPU: {gpu?.Name ?? "none"}.");
+                if (GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu))
+                {
+                    _componentService.Config.DefaultProfileName = OptiScalerProfile.BuiltInFsr4Name;
+                }
+                else if (GpuSelectionHelper.IsRdna2(gpu))
+                {
+                    _componentService.Config.DefaultProfileName = OptiScalerProfile.BuiltInFsr4Int8Name;
+                }
+                DebugWindow.Log($"[Startup] Default profile set to '{_componentService.Config.DefaultProfileName}'.");
+
+                _componentService.Config.HasAutoAssignedDefaultProfile = true;
+                _componentService.SaveConfiguration();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Profiles] Failed to auto-assign default profile: {ex.Message}");
+            }
+        }
 
         private void LoadProfilesView(bool forceRefresh = true)
         {
@@ -2114,6 +2184,9 @@ namespace OptiscalerClient.Views
                     b.Background = selected
                         ? Application.Current?.FindResource("BrBgElevated") as IBrush ?? Brushes.Transparent
                         : Application.Current?.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent;
+                    b.BorderBrush = selected
+                        ? Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.White
+                        : Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray;
                     b.BorderThickness = selected ? new Thickness(2) : new Thickness(1);
                 }
             }
@@ -2983,6 +3056,26 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private void CmbRenderingMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializingLanguage) return;
+            if (sender is not ComboBox cmb || cmb.SelectedItem is not ComboBoxItem item) return;
+
+            var preference = item.Tag?.ToString() ?? "hardware";
+            _componentService.Config.RenderingModePreference = preference;
+
+            // Any explicit choice here is deliberate, so it clears the auto-switched-after-crashes
+            // state — a fresh "Hardware" pick should judge the current driver on its own merits
+            // again, not skip straight back to software because of a streak that predates this.
+            _componentService.Config.ForcedSoftwareRenderingActive = false;
+            _componentService.Config.UncleanShutdownStreak = 0;
+
+            _componentService.SaveConfiguration();
+
+            var txtNotice = this.FindControl<TextBlock>("TxtRenderingModeAutoNotice");
+            if (txtNotice != null) txtNotice.IsVisible = false;
+        }
+
         private async void BtnManageDefaultVersions_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -3180,7 +3273,6 @@ namespace OptiscalerClient.Views
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtCheckingUpdates", "Checking for updates...");
 
                 // Runs independently of the component version check below, and BEFORE it —
                 // if that call throws (e.g. GitHub API rate limit), this must still have run.
@@ -3197,15 +3289,12 @@ namespace OptiscalerClient.Views
             catch (OperationCanceledException) { }
             catch (GitHubRateLimitException)
             {
-                if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtReady", "Ready");
                 throw; // bubble up to ScheduleStartupUpdatesAsync
             }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] CheckForUpdatesAsync failed: {ex.Message}"); }
             finally
             {
                 ComponentStatusChanged();
-                if (!cancellationToken.IsCancellationRequested && _txtStatus != null)
-                    _txtStatus.Text = GetResourceString("TxtReady", "Ready");
             }
         }
 
@@ -4669,9 +4758,6 @@ namespace OptiscalerClient.Views
 
             ApplyFilter(_txtSearch?.Text);
 
-            var loadedFormat = GetResourceString("TxtLoadedGamesFormat", "Loaded {0} games.");
-            if (_txtStatus != null) _txtStatus.Text = string.Format(loadedFormat, savedGames.Count);
-
             if (savedGames.Count > 0)
             {
                 _ = Task.Run(async () =>
@@ -4769,7 +4855,6 @@ namespace OptiscalerClient.Views
         private async Task RunRefreshCoversAsync()
         {
             if (_btnScan != null) _btnScan.IsEnabled = false;
-            if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtRefreshingCovers", "Refreshing missing covers...");
 
             try
             {
@@ -4779,7 +4864,6 @@ namespace OptiscalerClient.Views
 
                 if (missing.Count == 0)
                 {
-                    if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtReady", "Ready");
                     return;
                 }
 
@@ -4810,14 +4894,11 @@ namespace OptiscalerClient.Views
                 var found = missing.Count(g => !string.IsNullOrEmpty(g.CoverImageUrl));
                 ShowToast(string.Format(GetResourceString("TxtCoverRefreshToastFmt", "Cover refresh complete — {0}/{1} covers found."), found, missing.Count));
                 _ = HideToastAfterAsync(3500);
-                if (_txtStatus != null)
-                    _txtStatus.Text = GetResourceString("TxtReady", "Ready");
             }
             catch (Exception ex)
             {
                 HideToast();
                 await new ConfirmDialog(this, "Error", ex.Message).ShowDialog<object>(this);
-                if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtReady", "Ready");
             }
             finally
             {
@@ -4828,7 +4909,6 @@ namespace OptiscalerClient.Views
         private async Task RunScanAsync(UpscalerFilterMode upscalerFilter = UpscalerFilterMode.ShowAll)
         {
             if (_btnScan != null) _btnScan.IsEnabled = false;
-            if (_txtStatus != null) _txtStatus.Text = GetResourceString("TxtScanningShort", "Scanning for games...");
             if (_overlayScanning != null) _overlayScanning.IsVisible = true;
 
             try
@@ -4890,9 +4970,6 @@ namespace OptiscalerClient.Views
                 _hasScanned = true;
                 ApplyFilter(_txtSearch?.Text);
 
-                var scanCompleteFormat = GetResourceString("TxtScanCompleteFormat", "Scan complete. Total games: {0}");
-                if (_txtStatus != null) _txtStatus.Text = string.Format(scanCompleteFormat, _games.Count);
-
                 if (_overlayScanning != null) _overlayScanning.IsVisible = false;
                 if (_btnScan != null) _btnScan.IsEnabled = true;
 
@@ -4905,7 +4982,6 @@ namespace OptiscalerClient.Views
                     var fetchingCoversFormat = GetResourceString("TxtFetchingCoversFormat", "Fetching covers: {0}/{1}...");
                     ShowToast(string.Format(fetchingCoversFormat, 0, gamesNeedingCovers.Count),
                               showProgress: true, progressPercent: 0);
-                    if (_txtStatus != null) _txtStatus.Text = string.Format(fetchingCoversFormat, 0, gamesNeedingCovers.Count);
 
                     var completed = 0;
                     var total = gamesNeedingCovers.Count;
@@ -4929,7 +5005,6 @@ namespace OptiscalerClient.Views
                                 Dispatcher.UIThread.Post(() =>
                                 {
                                     UpdateToastProgress(msg, pct);
-                                    if (_txtStatus != null) _txtStatus.Text = msg;
                                 });
                             }
                         });
@@ -4939,11 +5014,9 @@ namespace OptiscalerClient.Views
 
                     _persistenceService.SaveGames(_games);
 
-                    var coversCompleteFormat = GetResourceString("TxtCoversCompleteFmt", "Covers loaded. Total games: {0}");
                     Dispatcher.UIThread.Post(() =>
                     {
                         HideToast();
-                        if (_txtStatus != null) _txtStatus.Text = string.Format(coversCompleteFormat, _games.Count);
                         RefreshGameLists();
                     });
                 }
@@ -4954,8 +5027,6 @@ namespace OptiscalerClient.Views
             }
             catch (Exception ex)
             {
-                var errorFormat = GetResourceString("TxtErrorFormat", "Error: {0}");
-                if (_txtStatus != null) _txtStatus.Text = string.Format(errorFormat, ex.Message);
                 HideToast();
                 await new ConfirmDialog(this, "Error", ex.Message).ShowDialog<object>(this);
             }
@@ -5006,8 +5077,6 @@ namespace OptiscalerClient.Views
                     _persistenceService.SaveGames(_games);
 
                     RefreshGameLists();
-
-                    if (_txtStatus != null) _txtStatus.Text = string.Format(GetResourceString("TxtAddedRefFormat", "Added {0} manually."), newGame.Name);
                 }
             }
             catch (Exception ex)

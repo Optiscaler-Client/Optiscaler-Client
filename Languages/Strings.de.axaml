@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Scan starten</x:String>
     <x:String x:Key="TxtInitialScanClose">Schließen</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Keine Laufwerke erkannt.</x:String>
-    <x:String x:Key="TxtStatusReady">Bereit</x:String>
     <x:String x:Key="TxtScanningTitle">Spiele werden gescannt...</x:String>
     <x:String x:Key="TxtScanningDesc">Suche nach Spielen auf allen Plattformen...</x:String>
     <x:String x:Key="TxtSearchGames">Spiele suchen...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Nach Updates suchen…</x:String>
-    <x:String x:Key="TxtReady">Bereit</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG erfolgreich aktualisiert.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Aktualisierung</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0} Spiele geladen.</x:String>
-    <x:String x:Key="TxtScanningShort">Spiele werden gescannt...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Scan abgeschlossen. Gesamtspiele: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Titelbilder werden geladen: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Titelbilder geladen. Spiele gesamt: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Fehler: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Spiel-Executable auswählen</x:String>
     <x:String x:Key="TxtGameDuplicate">Dieses Spiel ist bereits in der Liste.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Doppeltes Spiel</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} manuell hinzugefügt.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ Keine GPU erkannt</x:String>
     <x:String x:Key="TxtNoGpuTip">Es wurde keine GPU auf diesem System erkannt</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU-Erkennung fehlgeschlagen</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Automatisch nach Spielen scannen, wenn die Liste beim Start leer ist.</x:String>
     <x:String x:Key="TxtAnimations">Animationen aktivieren</x:String>
     <x:String x:Key="TxtAnimationsDesc">Fließende Übergänge und Animationen in der gesamten Benutzeroberfläche aktivieren</x:String>
+    <x:String x:Key="TxtRenderingMode">Rendermodus</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Wie die App ihre Oberfläche zeichnet. Standardmäßig wird Hardware verwendet; stürzt der GPU-Treiber beim Start weiterhin ab, wechselt die App von selbst zu Software-Rendering. Wird nach einem Neustart der App wirksam.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Nach wiederholten Abstürzen beim Start automatisch auf Software-Rendering umgeschaltet.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Hardware (empfohlen)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Software</x:String>
     <x:String x:Key="TxtBetaVersions">Beta-Versionen anzeigen</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Beta-Versionen von OptiScaler im Versionsauswahl einbeziehen. Betas können instabil sein.</x:String>
 
@@ -628,7 +625,6 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtFilterHideNoUpscaler">Spiele ohne Upscaler-Unterstützung ausblenden</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Nur mit installiertem OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Nur Favoriten</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Fehlende Cover werden aktualisiert...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Cover-Aktualisierung abgeschlossen. {0}/{1} fehlende Cover gefunden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Cover-Aktualisierung abgeschlossen — {0}/{1} Cover gefunden.</x:String>
 

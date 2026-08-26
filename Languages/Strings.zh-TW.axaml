@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">開始掃描</x:String>
     <x:String x:Key="TxtInitialScanClose">關閉</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">未偵測到磁碟機。</x:String>
-    <x:String x:Key="TxtStatusReady">就緒</x:String>
     <x:String x:Key="TxtScanningTitle">掃描遊戲中...</x:String>
     <x:String x:Key="TxtScanningDesc">在所有平台上尋找遊戲...</x:String>
     <x:String x:Key="TxtSearchGames">搜尋遊戲...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">檢查更新中…</x:String>
-    <x:String x:Key="TxtReady">就緒</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG更新成功。</x:String>
     <x:String x:Key="TxtActualizacionTitle">更新</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">已載入{0}個遊戲。</x:String>
-    <x:String x:Key="TxtScanningShort">掃描遊戲中...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">掃描完成。遊戲總數：{0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">正在取得封面: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">封面載入完成。遊戲總數: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">錯誤：{0}</x:String>
     <x:String x:Key="TxtSelectExe">選擇遊戲可執行檔</x:String>
     <x:String x:Key="TxtGameDuplicate">此遊戲已在清單中。</x:String>
     <x:String x:Key="TxtDuplicateTitle">重複遊戲</x:String>
-    <x:String x:Key="TxtAddedRefFormat">已手動新增{0}。</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ 未偵測到GPU</x:String>
     <x:String x:Key="TxtNoGpuTip">此系統上未偵測到GPU</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU偵測失敗</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">啟動時如果清單為空則自動掃描遊戲。</x:String>
     <x:String x:Key="TxtAnimations">啟用動畫</x:String>
     <x:String x:Key="TxtAnimationsDesc">在整個介面中啟用平滑轉場和動畫</x:String>
+    <x:String x:Key="TxtRenderingMode">渲染模式</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">應用程式繪製介面的方式。預設使用硬體；如果 GPU 驅動程式在啟動時持續當機，應用程式會自行切換為軟體渲染。重新啟動應用程式後生效。</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ 由於啟動時反覆當機，已自動切換為軟體渲染。</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">硬體（建議）</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">軟體</x:String>
     <x:String x:Key="TxtBetaVersions">顯示測試版</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">在版本選擇器中包含 OptiScaler 測試版。測試版可能不穩定。</x:String>
 
@@ -627,7 +624,6 @@
     <x:String x:Key="TxtFilterHideNoUpscaler">隱藏不支援升頻的遊戲</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">僅顯示已安裝 OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">僅顯示最愛</x:String>
-    <x:String x:Key="TxtRefreshingCovers">正在重新整理缺失封面...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">封面重新整理完成。找到 {0}/{1} 個缺失封面。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">封面重新整理完成 — 找到 {0}/{1} 個封面。</x:String>
 

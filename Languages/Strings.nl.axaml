@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Scan starten</x:String>
     <x:String x:Key="TxtInitialScanClose">Sluiten</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Geen stations gevonden.</x:String>
-    <x:String x:Key="TxtStatusReady">Klaar</x:String>
     <x:String x:Key="TxtScanningTitle">Games scannen...</x:String>
     <x:String x:Key="TxtScanningDesc">Zoeken naar games op alle platforms...</x:String>
     <x:String x:Key="TxtSearchGames">Zoek games...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Updates controleren…</x:String>
-    <x:String x:Key="TxtReady">Klaar</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG succesvol bijgewerkt.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Update</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0} games geladen.</x:String>
-    <x:String x:Key="TxtScanningShort">Games scannen...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Scan voltooid. Totaal games: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Omslagen laden: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Omslagen geladen. Totaal spellen: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Fout: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Selecteer Game Uitvoerbaar</x:String>
     <x:String x:Key="TxtGameDuplicate">Deze game is al in de lijst.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Dubbele Game</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} handmatig toegevoegd.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ Geen GPU gedetecteerd</x:String>
     <x:String x:Key="TxtNoGpuTip">Er is geen GPU gedetecteerd op dit systeem</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU detectie mislukt</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Scan automatisch voor games als de lijst leeg is bij opstarten.</x:String>
     <x:String x:Key="TxtAnimations">Activeer animaties</x:String>
     <x:String x:Key="TxtAnimationsDesc">Activeer soepele overgangen en animaties in de hele interface</x:String>
+    <x:String x:Key="TxtRenderingMode">Rendermodus</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Hoe de app zijn interface tekent. Standaard wordt Hardware gebruikt; als het GPU-stuurprogramma bij het opstarten blijft vastlopen, schakelt de app zelf over naar softwarerendering. Wordt van kracht na het herstarten van de app.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Automatisch overgeschakeld naar softwarerendering na herhaalde opstartcrashes.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Hardware (aanbevolen)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Software</x:String>
     <x:String x:Key="TxtBetaVersions">Voorkeur voor laatste beta als standaard</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Wanneer ingeschakeld, selecteert automatisch de laatste beta versie in plaats van de stabiele release.</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Deze versie bevat al Fakenvapi en NukemFG</x:String>
@@ -628,7 +625,6 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtFilterHideNoUpscaler">Games zonder upscaler-ondersteuning verbergen</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Alleen met OptiScaler geïnstalleerd</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Alleen favorieten</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Ontbrekende omslagen vernieuwen...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Omslagvernieuwing voltooid. {0}/{1} ontbrekende omslagen gevonden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Omslagvernieuwing voltooid — {0}/{1} omslagen gevonden.</x:String>
 

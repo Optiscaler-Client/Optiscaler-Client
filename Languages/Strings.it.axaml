@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Avvia scansione</x:String>
     <x:String x:Key="TxtInitialScanClose">Chiudi</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Nessuna unità rilevata.</x:String>
-    <x:String x:Key="TxtStatusReady">Pronto</x:String>
     <x:String x:Key="TxtScanningTitle">Scansionando giochi...</x:String>
     <x:String x:Key="TxtScanningDesc">Cercando giochi su tutte le piattaforme...</x:String>
     <x:String x:Key="TxtSearchGames">Cerca giochi...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Controllo aggiornamenti…</x:String>
-    <x:String x:Key="TxtReady">Pronto</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG aggiornato con successo.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Aggiornamento</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0} giochi caricati.</x:String>
-    <x:String x:Key="TxtScanningShort">Scansionando giochi...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Scansione completata. Giochi totali: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Recupero copertine: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Copertine caricate. Giochi totali: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Errore: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Seleziona eseguibile gioco</x:String>
     <x:String x:Key="TxtGameDuplicate">Questo gioco è già nell'elenco.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Gioco duplicato</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} aggiunto manualmente.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ Nessuna GPU rilevata</x:String>
     <x:String x:Key="TxtNoGpuTip">Nessuna GPU è stata rilevata su questo sistema</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ Rilevamento GPU fallito</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">Scansiona automaticamente i giochi se l'elenco è vuoto all'avvio.</x:String>
     <x:String x:Key="TxtAnimations">Abilita animazioni</x:String>
     <x:String x:Key="TxtAnimationsDesc">Abilita transizioni fluide e animazioni in tutta l'interfaccia</x:String>
+    <x:String x:Key="TxtRenderingMode">Modalità di Rendering</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Come l'app disegna la sua interfaccia. Hardware è usato di default; se il driver della GPU continua a bloccarsi all'avvio, l'app passa da sola al rendering software. Ha effetto dopo il riavvio dell'app.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Passato automaticamente al rendering software dopo blocchi ripetuti all'avvio.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Hardware (consigliato)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Software</x:String>
     <x:String x:Key="TxtBetaVersions">Mostra versioni beta</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Includi le versioni beta di OptiScaler nel selettore. Le beta possono essere instabili.</x:String>
 
@@ -628,7 +625,6 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtFilterHideNoUpscaler">Nascondi giochi senza supporto upscaler</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Solo con OptiScaler installato</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Solo preferiti</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Aggiornamento copertine mancanti...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Aggiornamento copertine completato. Trovate {0}/{1} copertine mancanti.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Aggiornamento copertine completato — {0}/{1} copertine trovate.</x:String>
 

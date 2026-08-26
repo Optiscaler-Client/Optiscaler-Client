@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">스캔 시작</x:String>
     <x:String x:Key="TxtInitialScanClose">닫기</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">드라이브가 감지되지 않았습니다.</x:String>
-    <x:String x:Key="TxtStatusReady">준비 완료</x:String>
     <x:String x:Key="TxtScanningTitle">게임 스캔 중...</x:String>
     <x:String x:Key="TxtScanningDesc">모든 플랫폼에서 게임 검색 중...</x:String>
     <x:String x:Key="TxtSearchGames">게임 검색...</x:String>
@@ -201,19 +200,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">업데이트 확인 중…</x:String>
-    <x:String x:Key="TxtReady">준비 완료</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG가 성공적으로 업데이트되었습니다.</x:String>
     <x:String x:Key="TxtActualizacionTitle">업데이트</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0}개 게임이 로드되었습니다.</x:String>
-    <x:String x:Key="TxtScanningShort">게임 스캔 중...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">스캔 완료. 총 게임: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">커버 이미지 불러오는 중: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">커버 이미지 로드 완료. 전체 게임 수: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">오류: {0}</x:String>
     <x:String x:Key="TxtSelectExe">게임 실행 파일 선택</x:String>
     <x:String x:Key="TxtGameDuplicate">이 게임은 이미 목록에 있습니다.</x:String>
     <x:String x:Key="TxtDuplicateTitle">중복 게임</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0}이(가) 수동으로 추가되었습니다.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ GPU 감지되지 않음</x:String>
     <x:String x:Key="TxtNoGpuTip">이 시스템에서 GPU가 감지되지 않았습니다</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU 감지 실패</x:String>
@@ -222,6 +214,11 @@
     <x:String x:Key="TxtAutoScanDesc">시작 시 목록이 비어 있으면 자동으로 게임을 스캔합니다.</x:String>
     <x:String x:Key="TxtAnimations">애니메이션 활성화</x:String>
     <x:String x:Key="TxtAnimationsDesc">전체 인터페이스에서 부드러운 전환 및 애니메이션 활성화</x:String>
+    <x:String x:Key="TxtRenderingMode">렌더링 모드</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">앱이 UI를 그리는 방식입니다. 기본값은 하드웨어이며, GPU 드라이버가 시작 시 계속 충돌하면 앱이 스스로 소프트웨어 렌더링으로 전환합니다. 앱을 재시작하면 적용됩니다.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ 반복된 시작 충돌 후 자동으로 소프트웨어 렌더링으로 전환되었습니다.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">하드웨어(권장)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">소프트웨어</x:String>
     <x:String x:Key="TxtBetaVersions">베타 버전 표시</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">선택기에 OptiScaler 베타 버전을 포함합니다. 베타는 불안정할 수 있습니다.</x:String>
 
@@ -628,7 +625,6 @@
     <x:String x:Key="TxtFilterHideNoUpscaler">업스케일러를 지원하지 않는 게임 숨기기</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">OptiScaler 설치된 게임만</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">즐겨찾기만</x:String>
-    <x:String x:Key="TxtRefreshingCovers">누락된 커버 새로 고침 중...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">커버 새로 고침 완료. {0}/{1}개의 누락된 커버를 찾았습니다.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">커버 새로 고침 완료 — {0}/{1}개의 커버를 찾았습니다.</x:String>
 

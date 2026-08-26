@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">开始扫描</x:String>
     <x:String x:Key="TxtInitialScanClose">关闭</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">未检测到驱动器</x:String>
-    <x:String x:Key="TxtStatusReady">就绪</x:String>
     <x:String x:Key="TxtScanningTitle">扫描游戏中...</x:String>
     <x:String x:Key="TxtScanningDesc">在所有平台上查找游戏...</x:String>
     <x:String x:Key="TxtSearchGames">搜索游戏...</x:String>
@@ -202,19 +201,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">检查更新中…</x:String>
-    <x:String x:Key="TxtReady">就绪</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG 更新成功</x:String>
     <x:String x:Key="TxtActualizacionTitle">更新</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">已加载 {0} 个游戏</x:String>
-    <x:String x:Key="TxtScanningShort">扫描游戏中...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">扫描完成，游戏总数：{0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">正在获取封面：{0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">封面加载完成，游戏总数：{0}</x:String>
-    <x:String x:Key="TxtErrorFormat">错误：{0}</x:String>
     <x:String x:Key="TxtSelectExe">选择游戏可执行文件</x:String>
     <x:String x:Key="TxtGameDuplicate">此游戏已在列表中</x:String>
     <x:String x:Key="TxtDuplicateTitle">重复游戏</x:String>
-    <x:String x:Key="TxtAddedRefFormat">已手动添加 {0}</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ 未检测到 GPU</x:String>
     <x:String x:Key="TxtNoGpuTip">此系统上未检测到 GPU</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ GPU 检测失败</x:String>
@@ -223,6 +215,11 @@
     <x:String x:Key="TxtAutoScanDesc">启动时如果列表为空则自动扫描游戏</x:String>
     <x:String x:Key="TxtAnimations">启用动画</x:String>
     <x:String x:Key="TxtAnimationsDesc">在整个界面中启用平滑过渡和动画</x:String>
+    <x:String x:Key="TxtRenderingMode">渲染模式</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">应用绘制界面的方式。默认使用硬件；如果 GPU 驱动在启动时持续崩溃，应用会自行切换到软件渲染。重启应用后生效。</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ 由于启动时反复崩溃，已自动切换到软件渲染。</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">硬件（推荐）</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">软件</x:String>
     <x:String x:Key="TxtBetaVersions">默认优先使用最新测试版</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">启用后，自动选择最新测试版而非稳定版。</x:String>
 
@@ -629,7 +626,6 @@
     <x:String x:Key="TxtFilterHideNoUpscaler">隐藏不支持超分辨率的游戏</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">仅显示已安装 OptiScaler</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">仅显示收藏</x:String>
-    <x:String x:Key="TxtRefreshingCovers">正在刷新缺失封面...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">封面刷新完成 - 找到 {0}/{1} 张缺失封面</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">封面刷新完成 - 找到 {0}/{1} 张封面</x:String>
 

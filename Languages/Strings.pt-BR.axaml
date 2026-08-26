@@ -50,7 +50,6 @@
     <x:String x:Key="TxtInitialScanStart">Iniciar escaneamento</x:String>
     <x:String x:Key="TxtInitialScanClose">Fechar</x:String>
     <x:String x:Key="TxtInitialScanNoDrives">Nenhuma unidade detectada.</x:String>
-    <x:String x:Key="TxtStatusReady">Pronto</x:String>
     <x:String x:Key="TxtScanningTitle">Escaneando jogos...</x:String>
     <x:String x:Key="TxtScanningDesc">Procurando jogos em todas as plataformas...</x:String>
     <x:String x:Key="TxtSearchGames">Buscar jogos...</x:String>
@@ -199,19 +198,12 @@
 
     <!-- CodeBehind additions -->
     <x:String x:Key="TxtCheckingUpdates">Verificando atualizações...</x:String>
-    <x:String x:Key="TxtReady">Pronto</x:String>
     <x:String x:Key="TxtNukemUpdateSuccess">NukemFG atualizado com sucesso.</x:String>
     <x:String x:Key="TxtActualizacionTitle">Atualização</x:String>
-    <x:String x:Key="TxtLoadedGamesFormat">{0} jogos carregados.</x:String>
-    <x:String x:Key="TxtScanningShort">Procurando jogos...</x:String>
-    <x:String x:Key="TxtScanCompleteFormat">Busca concluída. Total de jogos: {0}</x:String>
     <x:String x:Key="TxtFetchingCoversFormat">Carregando capas: {0}/{1}...</x:String>
-    <x:String x:Key="TxtCoversCompleteFmt">Capas carregadas. Total de jogos: {0}</x:String>
-    <x:String x:Key="TxtErrorFormat">Erro: {0}</x:String>
     <x:String x:Key="TxtSelectExe">Selecione o executável do jogo</x:String>
     <x:String x:Key="TxtGameDuplicate">Este jogo já está na lista.</x:String>
     <x:String x:Key="TxtDuplicateTitle">Jogo duplicado</x:String>
-    <x:String x:Key="TxtAddedRefFormat">{0} foi adicionado manualmente.</x:String>
     <x:String x:Key="TxtNoGpu">⚠️ Nenhuma GPU detectada</x:String>
     <x:String x:Key="TxtNoGpuTip">Nenhuma GPU foi detectada neste sistema</x:String>
     <x:String x:Key="TxtGpuFail">⚠️ Falha ao detectar GPU</x:String>
@@ -220,6 +212,11 @@
     <x:String x:Key="TxtAutoScanDesc">Escanear automaticamente jogos ao iniciar o aplicativo</x:String>
     <x:String x:Key="TxtAnimations">Ativar animações</x:String>
     <x:String x:Key="TxtAnimationsDesc">Ativar transições suaves e animações em toda a interface</x:String>
+    <x:String x:Key="TxtRenderingMode">Modo de Renderização</x:String>
+    <x:String x:Key="TxtRenderingModeDesc">Como o app desenha sua interface. Hardware é usado por padrão; se o driver da GPU continuar travando na inicialização, o app muda sozinho para renderização por software. Aplicado após reiniciar o app.</x:String>
+    <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Alternado automaticamente para renderização por software após falhas repetidas na inicialização.</x:String>
+    <x:String x:Key="TxtRenderingModeHardware">Hardware (recomendado)</x:String>
+    <x:String x:Key="TxtRenderingModeSoftware">Software</x:String>
     <x:String x:Key="TxtBetaVersions">Preferir último beta como padrão</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Quando ativado, seleciona automaticamente a última versão beta em vez da versão estável.</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Esta versão já inclui Fakenvapi e NukemFG</x:String>
@@ -628,7 +625,6 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtFilterHideNoUpscaler">Ocultar jogos sem suporte a upscaler</x:String>
     <x:String x:Key="TxtFilterOnlyInstalled">Somente com OptiScaler instalado</x:String>
     <x:String x:Key="TxtFilterOnlyFavorites">Somente favoritos</x:String>
-    <x:String x:Key="TxtRefreshingCovers">Atualizando capas faltantes...</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Atualizacao de capas concluida. {0}/{1} capas faltantes encontradas.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Atualizacao de capas concluida — {0}/{1} capas encontradas.</x:String>
 
