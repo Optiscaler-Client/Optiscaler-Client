@@ -394,6 +394,11 @@ public class GameAnalyzerService
 
                 if (!Version.TryParse(parseableVerStr, out var currentVer)) continue;
 
+                // "0.0.0.0" means GetFileVersion couldn't find real version info (missing/unreadable
+                // resource), not that the DLL is actually version 0 — treat it as "no version" rather
+                // than reporting a meaningless placeholder to the user.
+                if (currentVer == new Version(0, 0, 0, 0)) continue;
+
                 if (ignoredFiles.Contains(Path.GetFullPath(file)))
                 {
                     if (currentVer > highestIgnoredVer)
