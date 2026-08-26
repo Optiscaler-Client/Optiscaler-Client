@@ -56,6 +56,19 @@ namespace OptiscalerClient.Services
                 SaveProfile(defaultProfile, isBuiltIn: true);
                 DebugWindow.Log($"[Profiles] Created built-in profile: {defaultProfile.Name}");
             }
+
+            EnsureBuiltInProfileExists(OptiScalerProfile.CreateFsr4());
+            EnsureBuiltInProfileExists(OptiScalerProfile.CreateFsr4Int8());
+        }
+
+        private void EnsureBuiltInProfileExists(OptiScalerProfile profile)
+        {
+            var profilePath = Path.Combine(_builtInProfilesDir, $"{SanitizeFileName(profile.Name)}.json");
+            if (File.Exists(profilePath))
+                return;
+
+            SaveProfile(profile, isBuiltIn: true);
+            DebugWindow.Log($"[Profiles] Created built-in profile: {profile.Name}");
         }
 
         public List<OptiScalerProfile> GetAllProfiles(bool forceRefresh = false)
