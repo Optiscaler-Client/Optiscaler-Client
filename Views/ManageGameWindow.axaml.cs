@@ -3562,7 +3562,21 @@ namespace OptiscalerClient.Views
                 }
             }
 
-            // 3 & 4. Global nearest: find the highest key <= gameVer across the whole map
+            // 3 & 4. Global nearest: find the highest key <= gameVer across the whole map.
+            // Only extrapolate *between* known entries, never *past* the highest one — the raw
+            // internal build numbers in this map (e.g. "2.2.0.1328") and the human-friendly FSR
+            // versions some newer DLLs report directly as their file version (e.g. "4.0.3.0") are
+            // two unrelated numbering schemes that merely look alike. Comparing them as .NET
+            // Versions treats a higher-major raw build (4.x) as "above" every cataloged entry
+            // (all major 1-2), so without this guard a version bigger than anything we know about
+            // would silently snap to the map's topmost entry — e.g. reporting an already-friendly
+            // "4.0.3.0" as "4.1" instead of leaving it as-is.
+            if (parsed.Count == 0 || gameVer > parsed[^1].ver)
+            {
+                mappedVersion = null!;
+                return false;
+            }
+
             var below = parsed.LastOrDefault(t => t.ver <= gameVer);
             var above = parsed.FirstOrDefault(t => t.ver > gameVer);
 
