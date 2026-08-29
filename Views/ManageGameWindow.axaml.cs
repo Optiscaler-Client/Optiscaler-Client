@@ -95,6 +95,8 @@ namespace OptiscalerClient.Views
         // see SetupUI/LoadVersionsAsync ordering in the constructor), reused so the OptiPatcher
         // selector knows whether this game is flagged as needing OptiPatcher.
         private CompatibilityListEntry? _compatEntry;
+        private bool _isWaitingForCompatibilityRefresh;
+        private bool _isClosed;
 
         // Points the "View Compatibility List" footer link at this game's own wiki page once
         // PopulateWikiDetailsAsync resolves one, instead of the generic list page.
@@ -291,6 +293,8 @@ namespace OptiscalerClient.Views
 
         private void ManageGameWindow_Closed(object? sender, EventArgs e)
         {
+            _isClosed = true;
+            StopWaitingForCompatibilityRefresh();
             this.RemoveHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved);
             StopWikiFetchingAnimation();
 
@@ -1279,7 +1283,8 @@ namespace OptiscalerClient.Views
             {
                 var isLatest = ver == componentService.LatestExtrasVersion;
                 var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-                stack.Children.Add(new TextBlock { Text = ver, VerticalAlignment = VerticalAlignment.Center });
+                stack.Children.Add(new TextBlock { Text = componentService.GetExtrasDllDisplayName(ver), VerticalAlignment = VerticalAlignment.Center });
+                stack.Children.Add(CreateFsr4VariantBadge(componentService.GetExtrasDllVariant(ver)));
                 if (isLatest)
                 {
                     stack.Children.Add(new Border
@@ -1295,12 +1300,14 @@ namespace OptiscalerClient.Views
 
             // Determine default selection
             bool isRdna4OrRdna3 = false;
+            bool isRdna2 = false;
             if (_gpuService != null)
             {
                 try
                 {
                     var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
                     isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
+                    isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
                 }
                 catch (Exception ex) { DebugWindow.Log($"[ManageGame] GPU detection failed: {ex.Message}"); }
             }
@@ -1334,7 +1341,10 @@ namespace OptiscalerClient.Views
                         // Applying same "intelligent" logic if user's favorite version is gone
                         if (!isRdna4OrRdna3 && versions.Count > 0)
                         {
-                            targetIndex = 1; // latest
+                            var automaticVersion = isRdna2
+                                ? componentService.GetRdna2PreferredExtrasVersion()
+                                : versions[0];
+                            targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                         }
                     }
                 }
@@ -1345,7 +1355,10 @@ namespace OptiscalerClient.Views
                 // → Use "intelligent" logic
                 if (!isRdna4OrRdna3 && versions.Count > 0)
                 {
-                    targetIndex = 1; // Latest
+                    var automaticVersion = isRdna2
+                        ? componentService.GetRdna2PreferredExtrasVersion()
+                        : versions[0];
+                    targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                 }
                 else
                 {
@@ -1356,6 +1369,14 @@ namespace OptiscalerClient.Views
             cmb.SelectedIndex = targetIndex;
             cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
         }  // end PopulateExtrasComboBox
+
+        private static Border CreateFsr4VariantBadge(Fsr4DllVariant variant) => new()
+        {
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#16A34A")),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock { Text = variant == Fsr4DllVariant.Fp8 ? "FP8" : "INT8", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold, VerticalAlignment = VerticalAlignment.Center }
+        };
 
         /// <summary>
         /// Recomputes the Auto/Manual-Install vs. Auto/Manual-Swap-DLL button state whenever either
@@ -1627,6 +1648,7 @@ namespace OptiscalerClient.Views
         {
             var pnlFound = this.FindControl<StackPanel>("PnlCompatFound");
             var pnlNotFound = this.FindControl<StackPanel>("PnlCompatNotFound");
+            var pnlFetching = this.FindControl<Border>("PnlCompatFetching");
             if (pnlFound == null || pnlNotFound == null) return;
 
             _wikiPageUrl = null;
@@ -1637,17 +1659,26 @@ namespace OptiscalerClient.Views
             if (pnlWikiDetails != null) pnlWikiDetails.IsVisible = false;
             if (pnlWikiFetching != null) pnlWikiFetching.IsVisible = false;
             if (btnGameWikiLink != null) btnGameWikiLink.IsVisible = false;
+            if (pnlFetching != null) pnlFetching.IsVisible = false;
             StopWikiFetchingAnimation();
 
             var compatService = new CompatibilityListService();
             if (!compatService.TryGetForGame(_game.Name, out var entry) || entry == null)
             {
                 pnlFound.IsVisible = false;
-                pnlNotFound.IsVisible = true;
                 _compatEntry = null;
+                if (CompatibilityListService.IsRefreshInProgress)
+                {
+                    ShowCompatibilityListFetchingState();
+                }
+                else
+                {
+                    pnlNotFound.IsVisible = true;
+                }
                 return;
             }
 
+            StopWaitingForCompatibilityRefresh();
             _compatEntry = entry;
             var hasWikiPage = !string.IsNullOrEmpty(entry.WikiPageSlug);
 
@@ -1732,6 +1763,40 @@ namespace OptiscalerClient.Views
                 pnlNotesSection.IsVisible = hasNotes;
                 txtNotes.Text = entry.Notes;
             }
+        }
+
+        private void ShowCompatibilityListFetchingState()
+        {
+            this.FindControl<StackPanel>("PnlCompatFound")!.IsVisible = false;
+            this.FindControl<StackPanel>("PnlCompatNotFound")!.IsVisible = false;
+            this.FindControl<Border>("PnlCompatFetching")!.IsVisible = true;
+
+            if (_isWaitingForCompatibilityRefresh) return;
+
+            _isWaitingForCompatibilityRefresh = true;
+            CompatibilityListService.RefreshCompleted += CompatibilityListService_RefreshCompleted;
+
+            // The refresh can finish between the state check above and event subscription.
+            // Re-run the lookup in that case instead of leaving the loading card visible.
+            if (!CompatibilityListService.IsRefreshInProgress)
+                CompatibilityListService_RefreshCompleted(null, EventArgs.Empty);
+        }
+
+        private void CompatibilityListService_RefreshCompleted(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_isClosed) return;
+                StopWaitingForCompatibilityRefresh();
+                PopulateCompatibilitySidebar();
+            });
+        }
+
+        private void StopWaitingForCompatibilityRefresh()
+        {
+            if (!_isWaitingForCompatibilityRefresh) return;
+            CompatibilityListService.RefreshCompleted -= CompatibilityListService_RefreshCompleted;
+            _isWaitingForCompatibilityRefresh = false;
         }
 
         /// <summary>
@@ -2316,10 +2381,12 @@ namespace OptiscalerClient.Views
                                   selectedNukemFGVersion != "__manage__";
 
             // Read selected Extras (FSR4 INT8) version before any async work
+            var extrasComponentService = new ComponentManagementService();
             var selectedExtrasItem = cmbExtrasVersion?.SelectedItem as ComboBoxItem;
             var selectedExtrasVersion = selectedExtrasItem?.Tag?.ToString();
             bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
                                 !selectedExtrasVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
+            bool selectedExtrasIsInt8 = injectExtras && extrasComponentService.GetExtrasDllVariant(selectedExtrasVersion!) == Fsr4DllVariant.Int8;
 
             // Read selected OptiPatcher version before any async work
             var cmbOptiPatcherVersion = this.FindControl<ComboBox>("CmbOptiPatcherVersion");
@@ -2671,12 +2738,14 @@ namespace OptiscalerClient.Views
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
                             File.Copy(extrasDllPath, destPath, overwrite: true);
-                            var customAmdxc64Path = componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
-                            if (customAmdxc64Path != null)
-                                installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
-                            // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
-                            // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
-                            installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
+                            if (selectedExtrasIsInt8)
+                            {
+                                var customAmdxc64Path = componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
+                                if (customAmdxc64Path != null)
+                                    installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
+                                // The forcing keys are specific to the INT8 fallback path.
+                                installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
+                            }
                             _game.Fsr4ExtraVersion = selectedExtrasVersion;
                             DebugWindow.Log($"[ExtrasInject] Copied DLL to {destPath} and set version to {selectedExtrasVersion}");
                         });
@@ -3046,7 +3115,8 @@ namespace OptiscalerClient.Views
                 }
                 else
                 {
-                    var found = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir);
+                    var found = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
+                        componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
                     if (found == null)
                     {
                         await new ConfirmDialog(this,
@@ -3075,6 +3145,8 @@ namespace OptiscalerClient.Views
                 string sourcePath;
                 if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
+                    if (componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
+                        throw new InvalidOperationException("amdxc64.dll can only be replaced with an INT8 package.");
                     var rdna2Path = componentService.GetCachedCustomAmdxc64Path(extrasVersion);
                     if (rdna2Path == null)
                     {

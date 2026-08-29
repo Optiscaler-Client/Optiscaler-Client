@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace OptiscalerClient.Helpers
 {
@@ -60,6 +61,13 @@ namespace OptiscalerClient.Helpers
 
         public static bool ExistsIn(string directory) => FindIn(directory) != null;
 
+        /// <summary>Formats GitHub tags for display without changing their cache/config identity.</summary>
+        public static string FormatVersionLabel(string version)
+        {
+            var normalized = version.Replace('_', ' ').Trim();
+            return Regex.Replace(normalized, @"(?i)\bfsr\s*(?=\d)", "FSR ");
+        }
+
         /// <summary>
         /// The 3 filenames the DLL-swap feature will look for/replace directly in a game's root
         /// folder: both names of the main FSR4 INT8 DLL, plus the RDNA2 companion. Deliberately a
@@ -71,9 +79,10 @@ namespace OptiscalerClient.Helpers
         public static readonly string[] SwapTargetFileNames = { LegacyFileName, CurrentFileName, CustomRdna2FileName };
 
         /// <summary>Returns the full path to whichever swap-target name exists directly in the game's root, or null.</summary>
-        public static string? FindSwapTargetIn(string gameDir)
+        public static string? FindSwapTargetIn(string gameDir, bool includeRdna2Companion = true)
         {
-            foreach (var name in SwapTargetFileNames)
+            var names = includeRdna2Companion ? SwapTargetFileNames : KnownFileNames;
+            foreach (var name in names)
             {
                 var path = Path.Combine(gameDir, name);
                 if (File.Exists(path)) return path;

@@ -110,13 +110,13 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Default FSR4 INT8 Version -->
+                                <!-- Default FSR 4 DLL Version -->
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="{DynamicResource TxtFsr4Int8DefaultTitle}"
+                                    <TextBlock Text="{DynamicResource TxtHelpFsr4DllDefaultLabel}"
                                                FontWeight="SemiBold"
                                                FontSize="14"
                                                Foreground="{StaticResource BrTextPrimary}"/>
-                                    <TextBlock Text="{DynamicResource TxtFsr4Int8DefaultDesc}"
+                                    <TextBlock Text="{DynamicResource TxtHelpFsr4DllDefaultText}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                TextWrapping="Wrap"
                                                FontSize="{StaticResource FontSizeCaption}"/>

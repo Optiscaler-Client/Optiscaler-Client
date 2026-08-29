@@ -52,7 +52,7 @@ namespace OptiscalerClient.Services
         // CompatibilityListCache.SchemaVersion). A cache saved by an older build deserializes
         // with SchemaVersion 0, which CheckForUpdatesAsync treats as unusable so it refreshes
         // immediately instead of waiting out the normal 24h cooldown on stale/incomplete data.
-        private const int CacheSchemaVersion = 2; // 2: added CompatibilityListEntry.WikiPageSlug
+        private const int CacheSchemaVersion = 3; // 3: added CompatibilityListEntry.IsLumaUnrealEngine
 
         // Static so the in-memory cache survives across `new CompatibilityListService()` calls,
         // same convention as ComponentManagementService's release caches.
@@ -61,6 +61,17 @@ namespace OptiscalerClient.Services
         private static List<(CompatibilityListEntry Entry, HashSet<string> Tokens)> _tokenizedEntries = new();
         private static bool _loadedFromDisk;
         private static readonly object _lock = new();
+        private static int _refreshInProgress;
+
+        /// <summary>
+        /// Whether a refresh of the unified Compatibility List is currently fetching/parsing the
+        /// wiki. Consumers can keep a loading state visible instead of treating an incomplete
+        /// cache as a definitive "not found" result.
+        /// </summary>
+        public static bool IsRefreshInProgress => System.Threading.Volatile.Read(ref _refreshInProgress) != 0;
+
+        /// <summary>Raised after an in-progress Compatibility List refresh has finished.</summary>
+        public static event EventHandler? RefreshCompleted;
 
         // Words too common to be meaningful for similarity scoring.
         private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
@@ -236,12 +247,20 @@ namespace OptiscalerClient.Services
                 return;
             }
 
-            // Recorded before the request so a failed attempt doesn't retry on every launch.
-            config.LastCompatListCheckTime = DateTime.UtcNow;
-            _componentService.SaveConfiguration();
+            // A second caller should reuse the result of the refresh already in progress rather
+            // than issuing another request for the same global list.
+            if (System.Threading.Interlocked.CompareExchange(ref _refreshInProgress, 1, 0) != 0)
+            {
+                DebugWindow.Log("[CompatList] Refresh already in progress — reusing it.");
+                return;
+            }
 
             try
             {
+                // Recorded before the request so a failed attempt doesn't retry on every launch.
+                config.LastCompatListCheckTime = DateTime.UtcNow;
+                _componentService.SaveConfiguration();
+
                 var response = await GetWithRetryNoRateLimitAsync(() => NetworkService.GetHttpClient(), RawMarkdownUrl, maxRetries: 2, timeoutSeconds: 20);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -250,7 +269,7 @@ namespace OptiscalerClient.Services
                 }
 
                 var markdown = await response.Content.ReadAsStringAsync();
-                var entries = ParseMarkdownTable(markdown);
+                var entries = ParseMarkdownTables(markdown);
 
                 if (entries.Count == 0)
                 {
@@ -270,6 +289,11 @@ namespace OptiscalerClient.Services
                 // Deliberately swallowed: this is a background refresh the user never asked for,
                 // so a network hiccup must never surface a dialog or break app startup.
                 DebugWindow.Log($"[CompatList] Refresh failed (will use existing cache): {ex.Message}");
+            }
+            finally
+            {
+                System.Threading.Volatile.Write(ref _refreshInProgress, 0);
+                RefreshCompleted?.Invoke(null, EventArgs.Empty);
             }
         }
 
@@ -480,34 +504,44 @@ namespace OptiscalerClient.Services
             }
         }
 
-        private static List<CompatibilityListEntry> ParseMarkdownTable(string markdown)
+        private static List<CompatibilityListEntry> ParseMarkdownTables(string markdown)
         {
-            var entries = new List<CompatibilityListEntry>();
             var lines = markdown.Replace("\r\n", "\n").Split('\n');
 
-            int i = 0;
-            // Find the main table's header row (6 columns: Game, Compatibility, Upscaler Inputs,
-            // OptiPatcher Support, Notes, Images). The wiki page also has a second, differently
-            // shaped table further down ("Luma Unreal Engine") which is intentionally not parsed.
-            //
-            // Matched on the first two cells being exactly "Game" and "Compatibility..." rather
-            // than a loose prefix check — the page also has an HTML-commented row template
-            // ("| GAME NAME | ... |") earlier in the file that a plain "starts with '| Game'"
-            // check would false-positive on, since "GAME NAME" also starts with "Game".
-            while (i < lines.Length && !IsMainTableHeaderRow(lines[i]))
-                i++;
-            if (i >= lines.Length) return entries;
+            var mainHeaderIndex = FindTableHeader(lines, IsMainTableHeaderRow);
+            var lumaHeaderIndex = FindTableHeader(lines, IsLumaUnrealEngineTableHeaderRow);
 
-            i += 2; // skip header row + the "| --- | --- |" separator row
+            var mainEntries = mainHeaderIndex >= 0
+                ? ParseTableRows(lines, mainHeaderIndex + 2, isLumaUnrealEngine: false)
+                : new List<CompatibilityListEntry>();
+            var lumaEntries = lumaHeaderIndex >= 0
+                ? ParseTableRows(lines, lumaHeaderIndex + 2, isLumaUnrealEngine: true)
+                : new List<CompatibilityListEntry>();
 
-            for (; i < lines.Length; i++)
+            return MergeTables(mainEntries, lumaEntries);
+        }
+
+        private static int FindTableHeader(string[] lines, Func<string, bool> isHeader)
+        {
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (isHeader(lines[i])) return i;
+            }
+            return -1;
+        }
+
+        private static List<CompatibilityListEntry> ParseTableRows(string[] lines, int firstRowIndex, bool isLumaUnrealEngine)
+        {
+            var entries = new List<CompatibilityListEntry>();
+            for (int i = firstRowIndex; i < lines.Length; i++)
             {
                 var line = lines[i].Trim();
                 if (!line.StartsWith("|")) break; // blank line or next heading ends the table
 
                 var cells = line.Split('|');
-                // cells[0] and cells[^1] are the empty strings before/after the leading/trailing "|"
-                if (cells.Length < 6) continue;
+                // cells[0] and cells[^1] are the empty strings before/after the leading/trailing "|".
+                // The Luma table has no OptiPatcher column, so its Notes cell is at index 4 instead of 5.
+                if (cells.Length < (isLumaUnrealEngine ? 5 : 6)) continue;
 
                 var gameCell = cells[1].Trim();
                 if (gameCell.Length == 0) continue;
@@ -521,8 +555,9 @@ namespace OptiscalerClient.Services
                         WikiPageSlug = wikiSlug,
                         Status = ParseStatus(cells[2]),
                         UpscalerInputs = CleanText(cells[3]),
-                        OptiPatcherSupported = cells[4].Trim().Length > 0,
-                        Notes = CleanText(cells[5])
+                        OptiPatcherSupported = !isLumaUnrealEngine && cells[4].Trim().Length > 0,
+                        Notes = CleanText(cells[isLumaUnrealEngine ? 4 : 5]),
+                        IsLumaUnrealEngine = isLumaUnrealEngine
                     });
                 }
                 catch (Exception ex)
@@ -535,6 +570,48 @@ namespace OptiscalerClient.Services
             return entries;
         }
 
+        /// <summary>
+        /// Combines both wiki tables into one lookup list. If a title appears in both, retain the
+        /// primary table's more complete configuration while preserving the fact that it is also
+        /// covered by Luma Unreal Engine.
+        /// </summary>
+        private static List<CompatibilityListEntry> MergeTables(
+            List<CompatibilityListEntry> mainEntries,
+            List<CompatibilityListEntry> lumaEntries)
+        {
+            var merged = new List<CompatibilityListEntry>(mainEntries);
+            var byName = new Dictionary<string, CompatibilityListEntry>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var entry in merged)
+            {
+                var key = NormalizeName(entry.GameName);
+                if (key.Length > 0 && !byName.ContainsKey(key)) byName[key] = entry;
+            }
+
+            foreach (var lumaEntry in lumaEntries)
+            {
+                var key = NormalizeName(lumaEntry.GameName);
+                if (key.Length == 0 || !byName.TryGetValue(key, out var existing))
+                {
+                    merged.Add(lumaEntry);
+                    if (key.Length > 0) byName[key] = lumaEntry;
+                    continue;
+                }
+
+                existing.IsLumaUnrealEngine = true;
+                if (existing.Status == CompatibilityStatus.Unconfirmed)
+                    existing.Status = lumaEntry.Status;
+                if (string.IsNullOrWhiteSpace(existing.UpscalerInputs))
+                    existing.UpscalerInputs = lumaEntry.UpscalerInputs;
+                if (string.IsNullOrWhiteSpace(existing.Notes))
+                    existing.Notes = lumaEntry.Notes;
+                if (string.IsNullOrWhiteSpace(existing.WikiPageSlug))
+                    existing.WikiPageSlug = lumaEntry.WikiPageSlug;
+            }
+
+            return merged;
+        }
+
         private static bool IsMainTableHeaderRow(string line)
         {
             var cells = line.Trim().Split('|');
@@ -542,6 +619,17 @@ namespace OptiscalerClient.Services
 
             return string.Equals(cells[1].Trim(), "Game", StringComparison.OrdinalIgnoreCase)
                 && cells[2].Trim().StartsWith("Compatibility", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsLumaUnrealEngineTableHeaderRow(string line)
+        {
+            var cells = line.Trim().Split('|');
+            if (cells.Length < 5) return false;
+
+            return string.Equals(cells[1].Trim(), "Game", StringComparison.OrdinalIgnoreCase)
+                && cells[2].Trim().StartsWith("Compatibility", StringComparison.OrdinalIgnoreCase)
+                && cells[3].Trim().StartsWith("Upscaler", StringComparison.OrdinalIgnoreCase)
+                && cells[4].Trim().StartsWith("Notes", StringComparison.OrdinalIgnoreCase);
         }
 
         private static CompatibilityStatus ParseStatus(string cell)

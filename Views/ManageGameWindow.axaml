@@ -487,9 +487,9 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 0, Col 1 : FSR4 INT8 -->
+                            <!-- Row 0, Col 1 : FSR 4 DLL -->
                                 <StackPanel Grid.Row="0" Grid.Column="1">
-                                    <TextBlock Text="FSR4 INT8"
+                                    <TextBlock Text="FSR 4 DLL (INT8 &amp; FP8)"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"
                                                Margin="0,32,0,0"/>
@@ -736,6 +736,28 @@
                                                    IsVisible="False"/>
                                     </StackPanel>
                                 </StackPanel>
+
+                                <!-- GLOBAL LIST FETCHING STATE -->
+                                <Border Name="PnlCompatFetching"
+                                        Background="{StaticResource BrBgSurface}"
+                                        BorderBrush="{StaticResource BrAccent}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusMedium}"
+                                        Padding="14,12"
+                                        IsVisible="False">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                                        <ProgressBar IsIndeterminate="True"
+                                                     Width="42"
+                                                     Height="5"
+                                                     VerticalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource TxtCompatSidebarListFetching}"
+                                                   FontSize="{StaticResource FontSizeBody}"
+                                                   FontStyle="Italic"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
 
                                 <!-- NOT FOUND STATE -->
                                 <StackPanel Name="PnlCompatNotFound" Spacing="10" Margin="0,24,0,0" IsVisible="False">

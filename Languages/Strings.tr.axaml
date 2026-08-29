@@ -169,6 +169,7 @@
     <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Gerekli Değil</x:String>
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notlar</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Bu oyun için önerilen bir yapılandırma bulamadık. Daha fazla bilgi için tam Compatibility List'e göz atın.</x:String>
+    <x:String x:Key="TxtCompatSidebarListFetching">Uyumluluk bilgileri alınıyor…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List'i Görüntüle</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -673,7 +674,16 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHub&apos;da değişiklik günlüğünü görüntüle</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Başlarken</x:String>
     <x:String x:Key="TxtWelcomeGuideContent">Uygulamaya alışmak veya belirli sorularınızı çözmek için Yardım sekmesindeki yerleşik kılavuzu incelemenizi şiddetle tavsiye ederim.</x:String>
+    <x:String x:Key="TxtAddDll">DLL Ekle</x:String>
+    <x:String x:Key="TxtAddFsr4DllTitle">FSR 4 DLL Ekle</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Bir FSR 4 DLL veya arşiv seçin ve model varyantını belirleyin. Dosya adı INT8 ya da FP8'i güvenilir şekilde belirlemez.</x:String>
+    <x:String x:Key="TxtAddFsr4DllNoFile">Dosya seçilmedi</x:String>
+    <x:String x:Key="TxtFsr4DllVariant">Model varyantı</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Bir .7z arşivi (.zip/.rar da olabilir) veya doğrudan DLL seçin. İzin verilen DLL adları: amd_fidelityfx_upscaler_dx12.dll veya amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL (INT8 &amp; FP8) ⚡</x:String>
+    <x:String x:Key="TxtHelpFsr4DllText">OptiScaler için bir FSR 4 DLL paketi seçin. Her sürüm INT8 veya FP8 olduğunu gösterir. INT8 eski GPU'lar için uyumluluk geri dönüşünü kullanır; FP8 bunu etkinleştirmez.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL Değiştirme (FSR 4) 🔁</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapText">Yalnızca ilgili DLL'yi değiştirmek için OptiScaler'ı None yapın ve FSR 4 DLL seçin. Özgün dosya yedeklenir. amdxc64.dll yalnızca INT8 tarafından desteklenir.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Varsayılan FSR 4 DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage ve Quick Install'da önceden seçilen FSR 4 DLL'yi belirleyin. None eklemeyi veya değiştirmeyi atlar.</x:String>
 </ResourceDictionary>
-
-
-

@@ -35,6 +35,8 @@ namespace OptiscalerClient.Services
     /// </summary>
     public class ComponentManagementService
     {
+        /// <summary>The tested INT8 FSR 4 build selected automatically for RDNA2 GPUs.</summary>
+        public const string Rdna2PreferredExtrasVersion = "FSR_4.0.2c";
         private static readonly object _downloadLock = new();
         private static readonly System.Collections.Generic.HashSet<string> _activeOptiDownloads = new(StringComparer.OrdinalIgnoreCase);
         private static readonly object _configLock = new();
@@ -64,7 +66,7 @@ namespace OptiscalerClient.Services
         private static readonly System.Threading.SemaphoreSlim _checkSemaphore = new(1, 1);
         // Persistent local cache of release metadata (version names + download URLs)
         private static OptiScalerReleasesCache _releasesCache = new();
-        // Persistent local cache of OptiScaler Extras (FSR4 INT8 mod) release metadata
+        // Persistent local cache of FSR 4 DLL release metadata
         private static ExtrasReleasesCache _extrasCache = new();
         private static System.Collections.Generic.List<string>? _cachedExtrasVersions = null;
         private static string? _cachedLatestExtrasVersion = null;
@@ -102,7 +104,7 @@ namespace OptiscalerClient.Services
         public string? LatestBetaVersion => _cachedLatestBetaVersion;
         public string? LatestStableVersion => _cachedLatestStableVersion;
 
-        /// <summary>All available OptiScaler Extras (FSR4 INT8 mod) versions: remote releases plus any
+        /// <summary>All available FSR 4 DLL versions: remote releases plus any
         /// custom packages imported via ImportCustomExtrasArchiveAsync.</summary>
         public System.Collections.Generic.List<string> ExtrasAvailableVersions
         {
@@ -120,6 +122,31 @@ namespace OptiscalerClient.Services
         }
         /// <summary>The latest (first) Extras version tag, or null if none fetched yet.</summary>
         public string? LatestExtrasVersion => _cachedLatestExtrasVersion;
+
+        /// <summary>
+        /// Gets the tested INT8 build for RDNA2. Returning null is deliberate when it is unavailable:
+        /// automatic selection must not substitute a different INT8 or an FP8 package.
+        /// </summary>
+        public string? GetRdna2PreferredExtrasVersion()
+            => ExtrasAvailableVersions.FirstOrDefault(version =>
+                string.Equals(version, Rdna2PreferredExtrasVersion, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>
+        /// Gets the explicit model variant for a package. Existing cached/custom packages that
+        /// predate variant metadata remain INT8 for backwards compatibility.
+        /// </summary>
+        public Fsr4DllVariant GetExtrasDllVariant(string version)
+        {
+            var release = _extrasCache.Releases.FirstOrDefault(r =>
+                string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase));
+            if (release != null) return release.Variant;
+
+            return _config.CustomExtrasVariants.TryGetValue(version, out var variant)
+                ? variant
+                : InferFsr4DllVariant(version);
+        }
+
+        public string GetExtrasDllDisplayName(string version) => Fsr4Int8DllHelper.FormatVersionLabel(version);
 
         public System.Collections.Generic.List<string> ExtrasDownloadedVersions
             => GetDownloadedExtrasVersions();
@@ -1000,8 +1027,12 @@ namespace OptiscalerClient.Services
                     if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
                         version = version.Substring(1);
 
-                    // Get download URL (first .zip or .7z asset)
+                    // Get download URL (first .zip or .7z asset) and enough release metadata
+                    // to identify FP8/INT8 when a repository publishes both variants.
                     string? downloadUrl = null;
+                    var variantSource = version;
+                    if (element.TryGetProperty("name", out var releaseName))
+                        variantSource += " " + releaseName.GetString();
                     if (element.TryGetProperty("assets", out var assets))
                     {
                         foreach (var asset in assets.EnumerateArray())
@@ -1014,6 +1045,7 @@ namespace OptiscalerClient.Services
                                      assetUrl.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)))
                                 {
                                     downloadUrl = assetUrl;
+                                    variantSource += " " + assetUrl;
                                     break;
                                 }
                             }
@@ -1025,6 +1057,7 @@ namespace OptiscalerClient.Services
                         Version = version,
                         DownloadUrl = downloadUrl,
                         IsLatest = !latestMarked,
+                        Variant = InferFsr4DllVariant(variantSource),
                     });
                     latestMarked = true;
                 }
@@ -1041,11 +1074,21 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Names of custom FSR4 INT8 (Extras) packages imported by the user, mirroring CustomVersions
+        /// Names of custom FSR 4 DLL packages imported by the user, mirroring CustomVersions
         /// for OptiScaler. Each name is a subdirectory under Cache/Extras/.
         /// </summary>
         public System.Collections.Generic.HashSet<string> CustomExtrasVersions
             => new(_config.CustomExtrasVersions, StringComparer.OrdinalIgnoreCase);
+
+        private static Fsr4DllVariant InferFsr4DllVariant(string? source)
+        {
+            if (!string.IsNullOrWhiteSpace(source) &&
+                source.Contains("fp8", StringComparison.OrdinalIgnoreCase))
+                return Fsr4DllVariant.Fp8;
+
+            // Official Extras releases and all historical custom packages were INT8.
+            return Fsr4DllVariant.Int8;
+        }
 
         /// <summary>
         /// Returns the cache directory for a specific Extras (FSR4 INT8) DLL version.
@@ -1060,14 +1103,14 @@ namespace OptiscalerClient.Services
             => Fsr4Int8DllHelper.ExistsIn(GetExtrasDllCachePath(version));
 
         /// <summary>
-        /// Imports a manually-picked FSR4 INT8 package (a .zip/.7z/.rar archive, or a single .dll) into
+        /// Imports a manually-picked FSR 4 DLL package (a .zip/.7z/.rar archive, or a single .dll) into
         /// its own Cache/Extras/{versionName}/ folder, named after the source file — same convention as
         /// ImportCustomOptiScalerVersionAsync. Recognizes any combination of the known upscaler DLL names
         /// (legacy or current) plus the optional RDNA2 amdxc64.dll companion. Registers the new name in
-        /// CustomExtrasVersions so it shows up in every FSR4 INT8 picker alongside real downloads.
+        /// CustomExtrasVersions so it shows up in every FSR 4 DLL picker alongside real downloads.
         /// Returns the derived version name.
         /// </summary>
-        public async Task<string> ImportCustomExtrasArchiveAsync(string sourcePath)
+        public async Task<string> ImportCustomExtrasArchiveAsync(string sourcePath, Fsr4DllVariant variant = Fsr4DllVariant.Int8)
         {
             var fileName = Path.GetFileNameWithoutExtension(sourcePath);
             var versionName = "custom-" + SanitizeVersionName(fileName);
@@ -1082,11 +1125,10 @@ namespace OptiscalerClient.Services
                 if (sourcePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
                     var dllName = Path.GetFileName(sourcePath);
-                    if (!Fsr4Int8DllHelper.IsKnownFileName(dllName) &&
-                        !string.Equals(dllName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                    if (!Fsr4Int8DllHelper.IsKnownFileName(dllName))
                     {
                         throw new InvalidOperationException(
-                            $"Unrecognized file name '{dllName}'. Expected one of: {Fsr4Int8DllHelper.LegacyFileName}, {Fsr4Int8DllHelper.CurrentFileName}, or {Fsr4Int8DllHelper.CustomRdna2FileName}.");
+                            $"Unrecognized file name '{dllName}'. Expected: {Fsr4Int8DllHelper.LegacyFileName} or {Fsr4Int8DllHelper.CurrentFileName}.");
                     }
 
                     File.Copy(sourcePath, Path.Combine(extractDir, dllName), overwrite: true);
@@ -1096,7 +1138,7 @@ namespace OptiscalerClient.Services
                     await Task.Run(() =>
                     {
                         using var archive = SharpCompress.Archives.ArchiveFactory.OpenArchive(sourcePath);
-                        bool extractedAny = false;
+                        bool extractedMainDll = false;
                         foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
                         {
                             var entryFileName = Path.GetFileName(entry.Key ?? "");
@@ -1108,11 +1150,11 @@ namespace OptiscalerClient.Services
                             using var entryStream = entry.OpenEntryStream();
                             using var outStream = File.Create(dest);
                             entryStream.CopyTo(outStream, 81920);
-                            extractedAny = true;
+                            extractedMainDll |= isMainDll;
                         }
 
-                        if (!extractedAny)
-                            throw new InvalidOperationException("No recognized FSR4 INT8 DLL found in the selected archive.");
+                        if (!extractedMainDll)
+                            throw new InvalidOperationException("No recognized FSR 4 DLL found in the selected archive.");
                     });
                 }
             }
@@ -1126,8 +1168,9 @@ namespace OptiscalerClient.Services
             if (!_config.CustomExtrasVersions.Contains(versionName, StringComparer.OrdinalIgnoreCase))
             {
                 _config.CustomExtrasVersions.Add(versionName);
-                SaveConfiguration();
             }
+            _config.CustomExtrasVariants[versionName] = variant;
+            SaveConfiguration();
             if (_cachedExtrasVersions != null && !_cachedExtrasVersions.Contains(versionName, StringComparer.OrdinalIgnoreCase))
                 _cachedExtrasVersions.Add(versionName);
 

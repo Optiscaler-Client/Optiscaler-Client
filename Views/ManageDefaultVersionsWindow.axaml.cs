@@ -303,16 +303,16 @@ namespace OptiscalerClient.Views
             foreach (var ver in _componentService.ExtrasAvailableVersions)
             {
                 bool isLatest = ver == _componentService.LatestExtrasVersion;
-                ComboBoxItem cbi;
+                var stack = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                stack.Children.Add(new TextBlock { Text = _componentService.GetExtrasDllDisplayName(ver), VerticalAlignment = VerticalAlignment.Center });
+                stack.Children.Add(CreateFsr4VariantBadge(_componentService.GetExtrasDllVariant(ver)));
                 if (isLatest)
                 {
-                    var stack = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 6,
-                        VerticalAlignment = VerticalAlignment.Center
-                    };
-                    stack.Children.Add(new TextBlock { Text = ver, VerticalAlignment = VerticalAlignment.Center });
                     stack.Children.Add(new Border
                     {
                         CornerRadius = new CornerRadius(4),
@@ -327,13 +327,8 @@ namespace OptiscalerClient.Views
                             VerticalAlignment = VerticalAlignment.Center
                         }
                     });
-                    cbi = new ComboBoxItem { Content = stack, Tag = ver };
                 }
-                else
-                {
-                    cbi = new ComboBoxItem { Content = ver, Tag = ver };
-                }
-                cmb.Items.Add(cbi);
+                cmb.Items.Add(new ComboBoxItem { Content = stack, Tag = ver });
             }
 
             // Determine selection: saved preference wins; if none, use GPU-based intelligent default
@@ -363,12 +358,14 @@ namespace OptiscalerClient.Views
             {
                 // No saved preference — pick intelligently based on GPU
                 bool isRdna4OrRdna3 = false;
+                bool isRdna2 = false;
                 if (OperatingSystem.IsWindows() && _gpuService != null)
                 {
                     try
                     {
                         var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
                         isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
+                        isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
                     }
                     catch (Exception ex)
                     {
@@ -376,12 +373,30 @@ namespace OptiscalerClient.Views
                     }
                 }
 
-                // RDNA 4 / RDNA 3 → None (INT8 shader not needed, driver provides it natively); all others → latest version
-                cmb.SelectedIndex = isRdna4OrRdna3 ? 0 : (cmb.Items.Count > 1 ? 1 : 0);
+                // RDNA 4 / RDNA 3 → None; RDNA2 must use INT8, never the first FP8 package.
+                if (isRdna4OrRdna3)
+                {
+                    cmb.SelectedIndex = 0;
+                }
+                else
+                {
+                    var automaticVersion = isRdna2
+                        ? _componentService.GetRdna2PreferredExtrasVersion()
+                        : _componentService.ExtrasAvailableVersions.FirstOrDefault();
+                    cmb.SelectedIndex = automaticVersion == null ? 0 : _componentService.ExtrasAvailableVersions.IndexOf(automaticVersion) + 1;
+                }
             }
         }
 
         // ── OptiPatcher ─────────────────────────────────────────────────────
+
+        private static Border CreateFsr4VariantBadge(Fsr4DllVariant variant) => new()
+        {
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#16A34A")),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock { Text = variant == Fsr4DllVariant.Fp8 ? "FP8" : "INT8", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold }
+        };
 
         private void PopulateDefaultOptiPatcherCombo()
         {

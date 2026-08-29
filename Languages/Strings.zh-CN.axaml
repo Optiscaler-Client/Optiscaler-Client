@@ -170,6 +170,7 @@
     <x:String x:Key="TxtCompatSidebarOptiPatcherNo">无需</x:String>
     <x:String x:Key="TxtCompatSidebarNotesLbl">备注</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">未能找到此游戏的推荐配置。请查看完整的 Compatibility List 了解更多信息。</x:String>
+    <x:String x:Key="TxtCompatSidebarListFetching">正在获取兼容性信息…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">查看 Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -675,7 +676,16 @@
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>
     <x:String x:Key="TxtWelcomeGuideContent">强烈建议查看帮助选项卡中的内置指南，以便熟悉应用程序或解答特定问题。</x:String>
+    <x:String x:Key="TxtAddDll">添加 DLL</x:String>
+    <x:String x:Key="TxtAddFsr4DllTitle">添加 FSR 4 DLL</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">选择 FSR 4 DLL 或压缩包，然后选择其中的模型变体。仅凭文件名无法可靠区分 INT8 和 FP8。</x:String>
+    <x:String x:Key="TxtAddFsr4DllNoFile">未选择文件</x:String>
+    <x:String x:Key="TxtFsr4DllVariant">模型变体</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">选择 .7z 压缩包（也可使用 .zip/.rar）或直接选择 DLL。允许的 DLL 名称：amd_fidelityfx_upscaler_dx12.dll 或 amdxcffx64.dll。</x:String>
+    <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL（INT8 和 FP8）⚡</x:String>
+    <x:String x:Key="TxtHelpFsr4DllText">选择与 OptiScaler 一起使用的 FSR 4 DLL 包。每个版本显示 INT8 或 FP8。INT8 使用旧 GPU 所需的兼容性回退；FP8 不会启用该回退。</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL 交换（FSR 4）🔁</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapText">将 OptiScaler 设为 None 并选择 FSR 4 DLL，只替换游戏目录中对应的 DLL。原始文件会备份。amdxc64.dll 仅支持 INT8 包。</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">默认 FSR 4 DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultText">选择在 Manage 和 Quick Install 中预选的 FSR 4 DLL。None 会跳过注入或交换。</x:String>
 </ResourceDictionary>
-
-
-

@@ -237,8 +237,8 @@ namespace OptiscalerClient.Views
             // ── OptiPatcher ──────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("optipatcher", "OptiPatcher", "\uE8D7"));
 
-            // ── FSR4 INT8 ────────────────────────────────────────────────────
-            sidebar.Children.Add(CreateTopButton("fsr4",      "FSR4 INT8", "\uE726"));
+            // ── FSR 4 DLL ───────────────────────────────────────────────────
+            sidebar.Children.Add(CreateTopButton("fsr4",      "FSR 4 DLL", "\uE726"));
 
             // ── fakenvapi ────────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("fakenvapi",  "fakenvapi", "\uF193"));
@@ -547,12 +547,12 @@ namespace OptiscalerClient.Views
         {
             content.Children.Add(CreateSetDefaultRow());
 
-            // Import archive/DLL button row
+            // Add DLL button row
             var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
             var btnImport = new Button
             {
                 Name = "BtnImportCustomExtras",
-                Content = Application.Current?.FindResource("TxtImportArchive") as string ?? "Import Archive",
+                Content = Application.Current?.FindResource("TxtAddDll") as string ?? "Add DLL",
                 Padding = new Thickness(12, 5),
                 FontSize = 11
             };
@@ -574,8 +574,8 @@ namespace OptiscalerClient.Views
                 Margin = new Thickness(0, 0, 0, 12),
                 Child = new TextBlock
                 {
-                    Text = Application.Current?.FindResource("TxtCustomExtrasImportInfo") as string
-                        ?? "Import a .zip/.7z/.rar package (or a single .dll) containing amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, and/or amdxc64.dll to test a build that isn't published yet.",
+                    Text = Application.Current?.FindResource("TxtAddFsr4DllDesc") as string
+                        ?? "Add a .zip/.7z/.rar package (or a single .dll) and select whether it contains an INT8 or FP8 FSR 4 model.",
                     Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
                     FontSize = 11,
                     TextWrapping = TextWrapping.Wrap
@@ -688,12 +688,16 @@ namespace OptiscalerClient.Views
             };
 
             var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            stack.Children.Add(new TextBlock
+            var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            titleRow.Children.Add(new TextBlock
             {
-                Text = version,
+                Text = isExtras ? _componentService.GetExtrasDllDisplayName(version) : version,
                 FontWeight = FontWeight.Bold,
                 Foreground = this.FindResource("BrTextPrimary") as IBrush ?? Brushes.White
             });
+            if (isExtras)
+                titleRow.Children.Add(CreateFsr4VariantBadge(_componentService.GetExtrasDllVariant(version)));
+            stack.Children.Add(titleRow);
 
             // Show "Currently selected" label if this is the installed OptiScaler version
             // if (!isExtras && !isOptiPatcher && !isNukemFG && !isFakenvapi && version == _componentService.OptiScalerVersion)
@@ -773,6 +777,20 @@ namespace OptiscalerClient.Views
 
             return border;
         }
+
+        private static Border CreateFsr4VariantBadge(Fsr4DllVariant variant) => new()
+        {
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#16A34A")),
+            Padding = new Thickness(5, 1),
+            Child = new TextBlock
+            {
+                Text = variant == Fsr4DllVariant.Fp8 ? "FP8" : "INT8",
+                FontSize = 9,
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Bold
+            }
+        };
 
         /// <summary>
         /// Creates the "Set Default" header block shown at the top of each section.
@@ -1093,38 +1111,21 @@ namespace OptiscalerClient.Views
             }
         }
 
-        // ── Import FSR4 INT8 ──────────────────────────────────────────────────
+        // ── Add FSR 4 DLL ─────────────────────────────────────────────────────
 
         private async void BtnImportCustomExtras_Click(object? sender, RoutedEventArgs e)
         {
             try
             {
-                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-                {
-                    Title = "Select FSR4 INT8 Package",
-                    AllowMultiple = false,
-                    FileTypeFilter = new[]
-                    {
-                        new FilePickerFileType("Archives (7z, zip, rar) or DLL")
-                        {
-                            Patterns = new[] { "*.7z", "*.zip", "*.rar", "*.dll" }
-                        }
-                    }
-                });
-
-                if (files == null || files.Count == 0) return;
-
-                var filePath = files[0].Path.IsAbsoluteUri
-                    ? files[0].Path.LocalPath
-                    : files[0].TryGetLocalPath();
-                if (string.IsNullOrEmpty(filePath)) return;
+                var addDialog = new AddFsr4DllWindow(this);
+                if (await addDialog.ShowDialog<bool>(this) != true || string.IsNullOrEmpty(addDialog.SelectedFilePath)) return;
 
                 var overlay = this.FindControl<Grid>("OverlayImporting");
                 if (overlay != null) overlay.IsVisible = true;
                 if (sender is Button btnSender) btnSender.IsEnabled = false;
 
-                var versionName = await _componentService.ImportCustomExtrasArchiveAsync(filePath);
-                DebugWindow.Log($"[Cache] Custom FSR4 INT8 version imported: {versionName}");
+                var versionName = await _componentService.ImportCustomExtrasArchiveAsync(addDialog.SelectedFilePath, addDialog.SelectedVariant);
+                DebugWindow.Log($"[Cache] Custom FSR 4 {addDialog.SelectedVariant} version imported: {versionName}");
 
                 if (overlay != null) overlay.IsVisible = false;
                 if (sender is Button btnSender2) btnSender2.IsEnabled = true;
@@ -1135,13 +1136,13 @@ namespace OptiscalerClient.Views
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[Cache] Import FSR4 INT8 failed: {ex}");
+                DebugWindow.Log($"[Cache] Add FSR 4 DLL failed: {ex}");
                 var overlay = this.FindControl<Grid>("OverlayImporting");
                 if (overlay != null) overlay.IsVisible = false;
                 if (sender is Button btnSender) btnSender.IsEnabled = true;
                 var innerMsg = ex.InnerException != null ? $"\n{ex.InnerException.Message}" : "";
                 await new ConfirmDialog(this, "Import Error",
-                    $"Failed to import FSR4 INT8 package:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
+                    $"Failed to add FSR 4 DLL package:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
             }
         }
 

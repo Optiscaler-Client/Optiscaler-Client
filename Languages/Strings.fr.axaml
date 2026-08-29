@@ -169,6 +169,7 @@
     <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Non requis</x:String>
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Nous n'avons pas trouvé de configuration recommandée pour ce jeu. Consultez la Compatibility List complète pour plus d'informations.</x:String>
+    <x:String x:Key="TxtCompatSidebarListFetching">Récupération des informations de compatibilité…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Voir la Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -674,7 +675,16 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Voir le journal sur GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Premiers pas</x:String>
     <x:String x:Key="TxtWelcomeGuideContent">Je recommande vivement de consulter le guide intégré dans l’onglet Aide pour vous orienter dans l’application ou résoudre des questions spécifiques.</x:String>
+    <x:String x:Key="TxtAddDll">Ajouter un DLL</x:String>
+    <x:String x:Key="TxtAddFsr4DllTitle">Ajouter un DLL FSR 4</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Choisissez un DLL ou une archive FSR 4, puis sa variante. Le nom du DLL ne permet pas d’identifier fiablement INT8 ou FP8.</x:String>
+    <x:String x:Key="TxtAddFsr4DllNoFile">Aucun fichier sélectionné</x:String>
+    <x:String x:Key="TxtFsr4DllVariant">Variante du modèle</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choisissez une archive .7z (ou .zip/.rar) ou un DLL directement. Noms de DLL autorisés : amd_fidelityfx_upscaler_dx12.dll ou amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllLabel">DLL FSR 4 (INT8 &amp; FP8) ⚡</x:String>
+    <x:String x:Key="TxtHelpFsr4DllText">Choisissez un paquet DLL FSR 4 pour OptiScaler. Chaque version indique INT8 ou FP8. INT8 utilise le mode de compatibilité pour les GPU anciens; FP8 ne l’active pas.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapLabel">Échange de DLL (FSR 4) 🔁</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapText">Réglez OptiScaler sur « None » et sélectionnez un DLL FSR 4 pour remplacer uniquement le DLL correspondant. L’original est sauvegardé. amdxc64.dll est pris en charge uniquement par INT8.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">DLL FSR 4 par défaut</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultText">Sélectionnez le DLL FSR 4 présélectionné dans Manage et Quick Install. None ignore l’injection ou l’échange.</x:String>
 </ResourceDictionary>
-
-
-

@@ -354,15 +354,15 @@
             },
             {
               "label": "FSR 4 INT8 ⚡",
-              "labelKey": "TxtHelpGMFsr4Label",
+              "labelKey": "TxtHelpFsr4DllLabel",
               "text": "Selector that allows injecting the INT 8 version of FSR 4 for GPUs older than RDNA 3. RDNA 3 and RDNA 4 GPUs already get FSR 4 INT8 natively from AMD's official driver, so this isn't needed for them.",
-              "textKey": "TxtHelpGMFsr4Text"
+              "textKey": "TxtHelpFsr4DllText"
             },
             {
               "label": "DLL Swap (FSR4 INT8) 🔁",
-              "labelKey": "TxtHelpGMDllSwapLabel",
+              "labelKey": "TxtHelpFsr4DllSwapLabel",
               "text": "Set the OptiScaler Version to 'None' while keeping a FSR4 INT8 version selected to swap only the FSR4 INT8 DLL in the game folder, without installing OptiScaler at all. Auto-Swap DLL finds and replaces the existing DLL automatically; Manual-Swap DLL lets you pick it yourself if it isn't found. The original file is backed up, so the Uninstall button becomes 'Restore original DLL' to revert it. Swapping and installing OptiScaler are fully compatible with each other in either order. Also available for multiple games at once from Bulk Install.",
-              "textKey": "TxtHelpGMDllSwapText"
+              "textKey": "TxtHelpFsr4DllSwapText"
             },
             {
               "label": "Installed Components 🧩",
@@ -496,9 +496,9 @@
             },
             {
               "label": "FSR INT8 Default",
-              "labelKey": "TxtHelpSetFsr4Label",
+              "labelKey": "TxtHelpFsr4DllDefaultLabel",
               "text": "Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 7000-series or 9000-series graphics cards.",
-              "textKey": "TxtHelpSetFsr4Text"
+              "textKey": "TxtHelpFsr4DllDefaultText"
             },
             {
               "label": "Default GPU Selection",

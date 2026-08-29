@@ -123,7 +123,7 @@ namespace OptiscalerClient.Models
         public double WindowLeft { get; set; } = double.NaN;
         public double WindowTop { get; set; } = double.NaN;
         /// <summary>
-        /// The default FSR 4 INT8 extras version to pre-select in ManageGameWindow.
+        /// The default FSR 4 DLL version to pre-select in ManageGameWindow.
         /// Null or "none" means "do not inject".
         /// </summary>
         public string? DefaultExtrasVersion { get; set; } = null;
@@ -162,10 +162,16 @@ namespace OptiscalerClient.Models
         public List<string> CustomOptiScalerVersions { get; set; } = new();
 
         /// <summary>
-        /// Names/labels of custom FSR4 INT8 (Extras) packages imported by the user.
+        /// Names/labels of custom FSR 4 DLL packages imported by the user.
         /// Each entry corresponds to a subdirectory under Cache/Extras/.
         /// </summary>
         public List<string> CustomExtrasVersions { get; set; } = new();
+
+        /// <summary>
+        /// Variant selected when each custom FSR 4 DLL package was imported. Old custom packages
+        /// intentionally default to INT8 when this metadata is absent, preserving their behavior.
+        /// </summary>
+        public Dictionary<string, Fsr4DllVariant> CustomExtrasVariants { get; set; } = new();
 
         /// <summary>Network and proxy settings.</summary>
         public NetworkConfig Network { get; set; } = new();
@@ -276,13 +282,23 @@ namespace OptiscalerClient.Models
     }
 
     /// <summary>
-    /// A single OptiScaler Extras (FSR4 INT8 mod) release entry stored in the local cache.
+    /// FSR 4 model variant represented by a DLL package.
+    /// </summary>
+    public enum Fsr4DllVariant
+    {
+        Int8 = 0,
+        Fp8 = 1
+    }
+
+    /// <summary>
+    /// A single OptiScaler Extras (FSR 4 DLL) release entry stored in the local cache.
     /// </summary>
     public class ExtrasReleaseEntry
     {
         public string Version { get; set; } = string.Empty;
         public string? DownloadUrl { get; set; }
         public bool IsLatest { get; set; }
+        public Fsr4DllVariant Variant { get; set; } = Fsr4DllVariant.Int8;
     }
 
     /// <summary>

@@ -31,7 +31,7 @@ namespace OptiscalerClient.Models
         SingleOsOnly
     }
 
-    /// <summary>One parsed row from the OptiScaler wiki Compatibility List's main table.</summary>
+    /// <summary>One parsed row from either table on the OptiScaler wiki Compatibility List.</summary>
     public class CompatibilityListEntry
     {
         public string GameName { get; set; } = "";
@@ -39,6 +39,13 @@ namespace OptiscalerClient.Models
         public string UpscalerInputs { get; set; } = "";
         public bool OptiPatcherSupported { get; set; }
         public string Notes { get; set; } = "";
+
+        /// <summary>
+        /// True when the game originates from the Compatibility List's "Luma Unreal Engine"
+        /// table. Luma entries remain part of the same unified compatibility list, while this
+        /// flag preserves their engine/mod context for future recommendations.
+        /// </summary>
+        public bool IsLumaUnrealEngine { get; set; }
 
         /// <summary>
         /// The game's individual wiki page slug (e.g. "Hogwarts-Legacy"), taken from the main

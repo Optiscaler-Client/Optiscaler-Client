@@ -43,6 +43,7 @@ namespace OptiscalerClient.Models
     [JsonSerializable(typeof(List<OptiScalerProfile>))]
     [JsonSerializable(typeof(Dictionary<string, Dictionary<string, string>>))]
     [JsonSerializable(typeof(Dictionary<string, string>))]
+    [JsonSerializable(typeof(Dictionary<string, Fsr4DllVariant>))]
     internal partial class OptimizerContext : JsonSerializerContext
     {
     }

@@ -169,6 +169,7 @@
     <x:String x:Key="TxtCompatSidebarOptiPatcherNo">Nicht erforderlich</x:String>
     <x:String x:Key="TxtCompatSidebarNotesLbl">Hinweise</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Für dieses Spiel konnte keine empfohlene Konfiguration gefunden werden. Weitere Infos findest du in der vollständigen Compatibility List.</x:String>
+    <x:String x:Key="TxtCompatSidebarListFetching">Kompatibilitätsinformationen werden abgerufen…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List ansehen</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -674,7 +675,16 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; Änderungsprotokoll auf GitHub anzeigen</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Erste Schritte</x:String>
     <x:String x:Key="TxtWelcomeGuideContent">Ich empfehle dringend, die integrierte Anleitung im Tab „Hilfe“ aufzurufen, um sich mit der App vertraut zu machen oder spezifische Fragen zu klären.</x:String>
+    <x:String x:Key="TxtAddDll">DLL hinzufügen</x:String>
+    <x:String x:Key="TxtAddFsr4DllTitle">FSR-4-DLL hinzufügen</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Wähle eine FSR-4-DLL oder ein Archiv und dann die enthaltene Modellvariante. Dateinamen erkennen INT8 oder FP8 nicht zuverlässig.</x:String>
+    <x:String x:Key="TxtAddFsr4DllNoFile">Keine Datei ausgewählt</x:String>
+    <x:String x:Key="TxtFsr4DllVariant">Modellvariante</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Wähle ein .7z-Archiv (auch .zip/.rar) oder direkt eine DLL. Erlaubte DLL-Namen: amd_fidelityfx_upscaler_dx12.dll oder amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllLabel">FSR-4-DLL (INT8 &amp; FP8) ⚡</x:String>
+    <x:String x:Key="TxtHelpFsr4DllText">Wähle ein FSR-4-DLL-Paket für OptiScaler. Jede Version zeigt INT8 oder FP8. INT8 nutzt den Kompatibilitäts-Fallback für ältere GPUs; FP8 aktiviert ihn nicht.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL-Tausch (FSR 4) 🔁</x:String>
+    <x:String x:Key="TxtHelpFsr4DllSwapText">Setze OptiScaler auf „None“ und wähle eine FSR-4-DLL, um nur die passende DLL im Spielordner zu ersetzen. Das Original wird gesichert und kann wiederhergestellt werden. amdxc64.dll wird nur von INT8 unterstützt.</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Standard-FSR-4-DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultText">Wähle die in Manage und Quick Install vorausgewählte FSR-4-DLL. None überspringt Injektion oder Tausch.</x:String>
 </ResourceDictionary>
-
-
-

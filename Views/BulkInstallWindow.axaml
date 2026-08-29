@@ -297,10 +297,10 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- FSR4 INT8 -->
+                                <!-- FSR 4 DLL -->
                                 <StackPanel Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <TextBlock Text="FSR4 INT8:"
+                                        <TextBlock Text="FSR 4 DLL (INT8 &amp; FP8):"
                                                    Foreground="{StaticResource BrTextSecondary}"
                                                    FontSize="12"
                                                    VerticalAlignment="Center"/>

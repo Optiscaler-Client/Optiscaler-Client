@@ -3234,6 +3234,10 @@ namespace OptiscalerClient.Views
 
         private async Task ScheduleStartupUpdatesAsync(CancellationToken cancellationToken)
         {
+            // Compatibility information is independent from component-version checks. Start its
+            // refresh immediately so Manage Game can show a short loading state instead of a
+            // misleading "not found" result while a new cache is being built.
+            var compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
             bool versionsEmpty = _componentService.OptiScalerAvailableVersions.Count == 0;
 
             if (versionsEmpty)
@@ -3251,6 +3255,7 @@ namespace OptiscalerClient.Views
                 }
 
                 await CheckUpdatesOnStartupAsync(cancellationToken);
+                await compatibilityRefreshTask;
             }
             catch (OperationCanceledException)
             {
@@ -3273,13 +3278,6 @@ namespace OptiscalerClient.Views
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                // Runs independently of the component version check below, and BEFORE it —
-                // if that call throws (e.g. GitHub API rate limit), this must still have run.
-                // Best-effort, never blocks startup or surfaces an error — see CompatibilityListService.
-                try { await new CompatibilityListService().CheckForUpdatesAsync(); }
-                catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
-
                 await _componentService.CheckForUpdatesAsync();
 
                 // Best-effort, never blocks startup or surfaces an error - see CheckAppUpdateNotificationAsync.
@@ -3296,6 +3294,12 @@ namespace OptiscalerClient.Views
             {
                 ComponentStatusChanged();
             }
+        }
+
+        private static async Task RefreshCompatibilityListOnStartupAsync()
+        {
+            try { await new CompatibilityListService().CheckForUpdatesAsync(); }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
         }
 
         /// <summary>
@@ -5459,6 +5463,7 @@ namespace OptiscalerClient.Views
                         var configuredExtras = _componentService.Config.DefaultExtrasVersion;
                         if (!string.IsNullOrEmpty(configuredExtras) && !configuredExtras.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
+                            var configuredExtrasIsInt8 = _componentService.GetExtrasDllVariant(configuredExtras) == Fsr4DllVariant.Int8;
                             try
                             {
                                 ShowToast(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR4 INT8 v{0}... {1}%"), configuredExtras, 0), showProgress: true, progressPercent: 0);
@@ -5473,12 +5478,14 @@ namespace OptiscalerClient.Views
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);
-                                var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(configuredExtras);
-                                if (customAmdxc64Path != null)
-                                    installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
-                                // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
-                                // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
-                                installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
+                                if (configuredExtrasIsInt8)
+                                {
+                                    var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(configuredExtras);
+                                    if (customAmdxc64Path != null)
+                                        installSvc.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
+                                    // The fallback configuration only applies to INT8 packages.
+                                    installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
+                                }
                                 selectedGame.Fsr4ExtraVersion = configuredExtras;
                                 ShowToast($"FSR4 INT8 v{configuredExtras} injected", showProgress: false, progressPercent: null);
                                 Dispatcher.UIThread.Post(() =>

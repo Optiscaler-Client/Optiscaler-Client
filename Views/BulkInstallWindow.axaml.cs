@@ -552,6 +552,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var selectedExtrasVersion = selectedExtrasItem?.Tag?.ToString();
         bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
                             !selectedExtrasVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
+        bool selectedExtrasIsInt8 = injectExtras && _componentService.GetExtrasDllVariant(selectedExtrasVersion!) == Fsr4DllVariant.Int8;
 
         // ── DLL-swap mode: OptiScaler version is "None" ─────────────────────────────
         // Ignores the normal batch install flow entirely (profile, injection method, Fakenvapi,
@@ -673,12 +674,14 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
                         var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                         System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
-                        var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
-                        if (customAmdxc64Path != null)
-                            _installService.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
-                        // Non-RDNA4 GPUs don't get FSR4 automatically like RDNA4 does — OptiScaler needs
-                        // Fsr4ForceModel=2 (INT8) explicitly or it silently falls back to FSR3.
-                        _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);
+                        if (selectedExtrasIsInt8)
+                        {
+                            var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
+                            if (customAmdxc64Path != null)
+                                _installService.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
+                            // The fallback configuration only applies to INT8 packages.
+                            _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);
+                        }
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
                         DebugWindow.Log($"[BulkInstall] Copied FSR4 INT8 DLL to {destPath} for {gameItem.Name}");
                     });
@@ -826,7 +829,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     continue;
                 }
 
-                var targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir);
+                var targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
+                    _componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
                 if (targetPath == null)
                 {
                     DebugWindow.Log($"[BulkInstall][DllSwap] No swap target found in '{gameDir}' for {gameItem.Name}, skipping.");
@@ -840,6 +844,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 string sourcePath;
                 if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
+                    if (_componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
                     var rdna2Path = _componentService.GetCachedCustomAmdxc64Path(extrasVersion);
                     if (rdna2Path == null)
                     {
@@ -1070,7 +1079,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         {
             var isLatest = ver == _componentService.LatestExtrasVersion;
             var stack = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
-            stack.Children.Add(new TextBlock { Text = ver, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            stack.Children.Add(new TextBlock { Text = _componentService.GetExtrasDllDisplayName(ver), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            stack.Children.Add(CreateFsr4VariantBadge(_componentService.GetExtrasDllVariant(ver)));
             if (isLatest)
             {
                 var badge = new Border
@@ -1088,12 +1098,14 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         // Determine default selection
         bool isRdna4OrRdna3 = false;
+        bool isRdna2 = false;
         if (_gpuService != null)
         {
             try
             {
                 var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
                 isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
+                isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
             }
             catch (Exception ex) { DebugWindow.Log($"[BulkInstall] GPU detection failed: {ex.Message}"); }
         }
@@ -1127,7 +1139,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     // Applying same "intelligent" logic if user's favorite version is gone
                     if (!isRdna4OrRdna3 && versions.Count > 0)
                     {
-                        targetIndex = 1; // latest
+                        var automaticVersion = isRdna2
+                            ? _componentService.GetRdna2PreferredExtrasVersion()
+                            : versions[0];
+                        targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                     }
                 }
             }
@@ -1138,7 +1153,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             // → Use "intelligent" logic
             if (!isRdna4OrRdna3 && versions.Count > 0)
             {
-                targetIndex = 1; // Latest
+                var automaticVersion = isRdna2
+                    ? _componentService.GetRdna2PreferredExtrasVersion()
+                    : versions[0];
+                targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
             }
             else
             {
@@ -1155,6 +1173,14 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         UpdateSelectionCount();
     }
+
+    private static Border CreateFsr4VariantBadge(Fsr4DllVariant variant) => new()
+    {
+        CornerRadius = new CornerRadius(4),
+        Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#16A34A")),
+        Padding = new Thickness(5, 1),
+        Child = new TextBlock { Text = variant == Fsr4DllVariant.Fp8 ? "FP8" : "INT8", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold }
+    };
 
     private void PopulateOptiPatcherComboBox()
     {
