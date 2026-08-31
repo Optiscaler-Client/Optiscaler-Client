@@ -693,7 +693,6 @@
     <x:String x:Key="TxtMfgMultiplier">MFG 배율</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">고급 경로</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">FG 구성 적용</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler 가져오기…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">사용 안 함</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">Streamline을 통한 DLSS-G</x:String>

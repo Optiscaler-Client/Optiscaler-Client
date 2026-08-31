@@ -693,7 +693,6 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtMfgMultiplier">Moltiplicatore MFG</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Percorsi avanzati</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">Applica configurazione FG</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">Importa DLSS Enabler…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Disattivato</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G tramite Streamline</x:String>

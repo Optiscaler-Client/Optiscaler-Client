@@ -692,7 +692,6 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtMfgMultiplier">MFG çarpanı</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Gelişmiş yollar</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">FG yapılandırmasını uygula</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler içe aktar…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Devre dışı</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">Streamline üzerinden DLSS-G</x:String>

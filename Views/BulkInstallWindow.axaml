@@ -221,7 +221,7 @@
                                                        Margin="0,-1,0,0"/>
                                         </Border>
                                     </StackPanel>
-                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*">
+                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*,*">
                                         <Button Name="BtnOptiStable"
                                                 Grid.Column="0"
                                                 Content="Stable"
@@ -240,10 +240,20 @@
                                                 HorizontalContentAlignment="Center"
                                                 FontSize="11"
                                                 Padding="8,5"
-                                                Margin="2,0,0,0"
+                                                Margin="2,0,2,0"
                                                 Click="BtnOptiBeta_Click"/>
-                                        <Button Name="BtnOptiCustom"
+                                        <Button Name="BtnOptiNightly"
                                                 Grid.Column="2"
+                                                Content="Nightly"
+                                                Classes="BtnSecondary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="2,0,0,0"
+                                                Click="BtnOptiNightly_Click"/>
+                                        <Button Name="BtnOptiCustom"
+                                                Grid.Column="3"
                                                 Content="Custom"
                                                 Classes="BtnSecondary"
                                                 HorizontalAlignment="Stretch"
@@ -297,10 +307,10 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- FSR 4 DLL -->
+                                <!-- FSR 4 DLL swap -->
                                 <StackPanel Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <TextBlock Text="FSR 4 DLL (INT8 &amp; FP8):"
+                                        <TextBlock Text="{DynamicResource TxtFsr4SwapLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
                                                    FontSize="12"
                                                    VerticalAlignment="Center"/>
@@ -316,6 +326,28 @@
                                                        Margin="0,-1,0,0"/>
                                         </Border>
                                     </StackPanel>
+                                    <Grid Name="GridExtrasTabs" ColumnDefinitions="*,*">
+                                        <Button Name="BtnExtrasInt8"
+                                                Grid.Column="0"
+                                                Content="INT8"
+                                                Classes="BtnPrimary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="0,0,2,0"
+                                                Click="BtnExtrasInt8_Click"/>
+                                        <Button Name="BtnExtrasFp8"
+                                                Grid.Column="1"
+                                                Content="FP8"
+                                                Classes="BtnSecondary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="2,0,0,0"
+                                                Click="BtnExtrasFp8_Click"/>
+                                    </Grid>
                                     <ComboBox Name="CmbExtrasVersion"
                                               HorizontalAlignment="Stretch"
                                               Classes="BtnSelector"
@@ -363,6 +395,42 @@
                                               HorizontalContentAlignment="Left"
                                               Background="{StaticResource BrBgBase}"
                                               VerticalContentAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Frame Generation -->
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="{DynamicResource TxtFrameGeneration}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="12"/>
+                                    <Button Name="BtnFrameGeneration"
+                                            Classes="BtnBase"
+                                            MinHeight="40"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="10,7"
+                                            Click="BtnFrameGeneration_Click">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Name="TxtFrameGenerationSelection"
+                                                       Grid.Column="0"
+                                                       Foreground="{StaticResource BrTextPrimary}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center"/>
+                                            <Canvas Grid.Column="1"
+                                                    Width="16" Height="16"
+                                                    VerticalAlignment="Center"
+                                                    Margin="12,0,0,0">
+                                                <Path Data="M2,6 L10,6 L10,14 L2,14 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="Transparent"/>
+                                                <Path Data="M6,3 L14,3 L14,11 L6,11 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="{StaticResource BrBgElevated}"/>
+                                            </Canvas>
+                                        </Grid>
+                                    </Button>
                                 </StackPanel>
 
                                 <!-- Divider -->

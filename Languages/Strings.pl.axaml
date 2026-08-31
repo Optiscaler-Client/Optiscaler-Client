@@ -693,7 +693,6 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtMfgMultiplier">Mnożnik MFG</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Zaawansowane trasy</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">Zastosuj konfigurację FG</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">Importuj DLSS Enabler…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Wyłączone</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G przez Streamline</x:String>

@@ -5385,6 +5385,24 @@ namespace OptiscalerClient.Views
                             }
                         }
 
+                        var installStreamline = _componentService.IsNightlyOptiScalerVersion(versionToInstall);
+                        var streamlineCacheDir = string.Empty;
+                        if (installStreamline)
+                        {
+                            try
+                            {
+                                ShowToast(string.Format(GetResourceString("TxtExtractingFormat", "Extracting and installing v{0}..."), "Streamline"), showProgress: true, progressPercent: null);
+                                streamlineCacheDir = await _componentService.DownloadLatestStreamlineAsync();
+                            }
+                            catch (Exception downloadEx)
+                            {
+                                HideToast();
+                                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), downloadEx.Message, isAlert: true)
+                                    .ShowDialog<bool>(this);
+                                return;
+                            }
+                        }
+
                         // ── Determine Fakenvapi / NukemFG install based on configured defaults
                         // For OptiScaler >= 0.9, these components are bundled; skip them
                         bool versionIncludesBundled = false;
@@ -5409,8 +5427,28 @@ namespace OptiscalerClient.Views
                             ? _componentService.GetNukemFGCachePath(configuredNukemFG!)
                             : _componentService.GetNukemFGCachePath();
 
-                        // Download Fakenvapi on-demand if not cached
-                        if (installFakenvapi && !_componentService.IsFakenvapiCached(configuredFakenvapi!))
+                        // Nightly does not bundle Fakenvapi. Preserve a game's existing copy,
+                        // otherwise use the latest official Fakenvapi release automatically.
+                        var quickInstallDir = installService.DetermineInstallDirectory(selectedGame);
+                        var nightlyFakenvapiMissing = installStreamline &&
+                            (string.IsNullOrWhiteSpace(quickInstallDir) ||
+                             !File.Exists(System.IO.Path.Combine(quickInstallDir, "fakenvapi.dll")));
+                        if (nightlyFakenvapiMissing)
+                        {
+                            try
+                            {
+                                fakeCacheDir = await _componentService.DownloadLatestFakenvapiAsync();
+                                installFakenvapi = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                HideToast();
+                                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), ex.Message, isAlert: true)
+                                    .ShowDialog<bool>(this);
+                                return;
+                            }
+                        }
+                        else if (!installStreamline && installFakenvapi && !_componentService.IsFakenvapiCached(configuredFakenvapi!))
                         {
                             try
                             {
@@ -5455,7 +5493,10 @@ namespace OptiscalerClient.Views
                                 nukemFGCachePath: nukemCacheDir,
                                 optiscalerVersion: versionToInstall,
                                 profile: defaultProfile,
-                                isRdna4: isRdna4, isRdna2: isRdna2
+                                isRdna4: isRdna4, isRdna2: isRdna2,
+                                installStreamline: installStreamline,
+                                streamlineCachePath: streamlineCacheDir,
+                                ensureFakenvapiIfMissing: installStreamline
                             );
                         });
 

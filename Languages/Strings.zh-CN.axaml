@@ -694,7 +694,6 @@
     <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">高级路径</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">应用 FG 配置</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">导入 DLSS Enabler…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">已禁用</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">通过 Streamline 使用 DLSS-G</x:String>

@@ -32,8 +32,17 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     private bool _isUpdatingProfiles = false;
     private const string NewProfileTag = "__new_profile__";
     private bool _optiShowingBeta;
+    private bool _optiShowingNightly;
     private bool _optiShowingCustom;
     private bool _optiTabInitialized;
+    private Fsr4DllVariant _extrasVariant = Fsr4DllVariant.Int8;
+    private bool _extrasTabInitialized;
+    private GameFrameGenerationSettings _frameGenerationSettings = new()
+    {
+        Route = FrameGenerationRoute.Disabled,
+        Output = FrameGenerationOutput.Auto,
+        MultiFrameMode = MultiFrameGenerationMode.Auto
+    };
     private BulkGamepadNavigationHelper? _gamepadHelper;
 
     GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -141,6 +150,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // Populate profile selector
         PopulateProfileSelector();
 
+        UpdateFrameGenerationSummary();
+
         // Fade in animation
         var rootPanel = this.FindControl<Panel>("RootPanel");
         if (rootPanel != null)
@@ -195,12 +206,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
     private async Task LoadVersionsAsync()
     {
-        if (_componentService.OptiScalerAvailableVersions.Count == 0)
-        {
-            try { await _componentService.CheckForUpdatesAsync(); }
-            catch (GitHubRateLimitException) { /* rate limited — populate from cache */ }
-            catch (Exception) { /* network error — populate from cache */ }
-        }
+        // Always ask the service to refresh. It observes the normal cooldown, except when a
+        // newly introduced channel (such as Nightly) is missing from an older local cache.
+        try { await _componentService.CheckForUpdatesAsync(); }
+        catch (GitHubRateLimitException) { /* rate limited — populate from cache */ }
+        catch (Exception) { /* network error — populate from cache */ }
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -213,8 +223,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             if (btnCustom != null) btnCustom.IsVisible = hasCustom;
             if (gridTabs != null)
                 gridTabs.ColumnDefinitions = hasCustom
-                    ? new ColumnDefinitions("*,*,*")
-                    : new ColumnDefinitions("*,*");
+                    ? new ColumnDefinitions("*,*,*,*")
+                    : new ColumnDefinitions("*,*,*");
 
             // Determine initial tab on first load
             if (!_optiTabInitialized)
@@ -222,14 +232,18 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
                 _optiShowingBeta = !string.IsNullOrEmpty(configDefault) &&
                                    _componentService.BetaVersions.Contains(configDefault);
+                _optiShowingNightly = !string.IsNullOrEmpty(configDefault) &&
+                                      _componentService.NightlyVersions.Contains(configDefault);
                 _optiShowingCustom = !string.IsNullOrEmpty(configDefault) &&
                                      customVersions.Contains(configDefault);
-                if (_optiShowingCustom) _optiShowingBeta = false;
+                if (_optiShowingCustom || _optiShowingNightly) _optiShowingBeta = false;
+                if (_optiShowingCustom) _optiShowingNightly = false;
                 _optiTabInitialized = true;
             }
 
             UpdateOptiChannelButtons();
             PopulateOptiVersionCombo();
+            PopulateExtrasComboBox();
             PopulateOptiPatcherComboBox();
             PopulateFakenvapiComboBox();
             PopulateNukemFGComboBox();
@@ -240,11 +254,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         var allVersions = _componentService.OptiScalerAvailableVersions;
         var betaVersions = _componentService.BetaVersions;
+        var nightlyVersions = _componentService.NightlyVersions;
         var customVersions = _componentService.CustomVersions;
         var latestStable = _componentService.LatestStableVersion;
         var latestBeta = _componentService.LatestBetaVersion;
-        string? latestInChannel = _optiShowingCustom ? null : (_optiShowingBeta ? latestBeta : latestStable);
-        string latestBadgeColor = _optiShowingBeta ? "#D4A017" : "#7C3AED";
+        var latestNightly = _componentService.LatestNightlyVersion;
+        string? latestInChannel = _optiShowingCustom ? null : _optiShowingNightly ? latestNightly : (_optiShowingBeta ? latestBeta : latestStable);
+        string latestBadgeColor = _optiShowingNightly ? "#0EA5E9" : _optiShowingBeta ? "#D4A017" : "#7C3AED";
 
         var cmb = this.FindControl<ComboBox>("CmbOptiVersion");
         if (cmb == null) return;
@@ -263,6 +279,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.SelectedIndex = 0;
             cmb.IsEnabled = true;
             cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+            UpdateSelectionCount();
             return;
         }
 
@@ -270,7 +287,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (_optiShowingCustom)
             versionsToShow = allVersions.Where(v => customVersions.Contains(v)).ToList();
         else
-            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) && betaVersions.Contains(v) == _optiShowingBeta).ToList();
+            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) &&
+                nightlyVersions.Contains(v) == _optiShowingNightly &&
+                betaVersions.Contains(v) == _optiShowingBeta).ToList();
 
         if (versionsToShow.Count == 0)
         {
@@ -278,6 +297,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.SelectedIndex = 0;
             cmb.IsEnabled = true;
             cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+            UpdateSelectionCount();
             return;
         }
 
@@ -314,7 +334,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
             (_optiShowingCustom
                 ? customVersions.Contains(configDefault)
-                : !customVersions.Contains(configDefault) && betaVersions.Contains(configDefault) == _optiShowingBeta);
+                : !customVersions.Contains(configDefault) &&
+                  nightlyVersions.Contains(configDefault) == _optiShowingNightly &&
+                  betaVersions.Contains(configDefault) == _optiShowingBeta);
         if (defaultInChannel)
         {
             for (int i = 1; i < cmb.Items.Count; i++)
@@ -330,14 +352,18 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         cmb.SelectedIndex = selectedIndex;
         cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+        // Rebuilding detaches the event handler, so keep the button-state in sync with
+        // the newly selected first version when switching Stable/Beta/Nightly.
+        UpdateSelectionCount();
     }
 
     private void UpdateOptiChannelButtons()
     {
         var btnStable = this.FindControl<Button>("BtnOptiStable");
         var btnBeta = this.FindControl<Button>("BtnOptiBeta");
+        var btnNightly = this.FindControl<Button>("BtnOptiNightly");
         var btnCustom = this.FindControl<Button>("BtnOptiCustom");
-        if (btnStable == null || btnBeta == null) return;
+        if (btnStable == null || btnBeta == null || btnNightly == null) return;
 
         void SetActive(Button b) { b.Classes.Remove("BtnSecondary"); b.Classes.Add("BtnPrimary"); }
         void SetInactive(Button b) { b.Classes.Remove("BtnPrimary"); b.Classes.Add("BtnSecondary"); }
@@ -346,26 +372,37 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         {
             SetInactive(btnStable);
             SetInactive(btnBeta);
+            SetInactive(btnNightly);
             if (btnCustom != null) SetActive(btnCustom);
+        }
+        else if (_optiShowingNightly)
+        {
+            SetInactive(btnStable);
+            SetInactive(btnBeta);
+            SetActive(btnNightly);
+            if (btnCustom != null) SetInactive(btnCustom);
         }
         else if (_optiShowingBeta)
         {
             SetInactive(btnStable);
             SetActive(btnBeta);
+            SetInactive(btnNightly);
             if (btnCustom != null) SetInactive(btnCustom);
         }
         else
         {
             SetActive(btnStable);
             SetInactive(btnBeta);
+            SetInactive(btnNightly);
             if (btnCustom != null) SetInactive(btnCustom);
         }
     }
 
     private void BtnOptiStable_Click(object? sender, RoutedEventArgs e)
     {
-        if (!_optiShowingBeta && !_optiShowingCustom) return;
+        if (!_optiShowingBeta && !_optiShowingNightly && !_optiShowingCustom) return;
         _optiShowingBeta = false;
+        _optiShowingNightly = false;
         _optiShowingCustom = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
@@ -375,6 +412,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         if (_optiShowingBeta) return;
         _optiShowingBeta = true;
+        _optiShowingNightly = false;
         _optiShowingCustom = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
@@ -385,6 +423,17 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (_optiShowingCustom) return;
         _optiShowingCustom = true;
         _optiShowingBeta = false;
+        _optiShowingNightly = false;
+        UpdateOptiChannelButtons();
+        PopulateOptiVersionCombo();
+    }
+
+    private void BtnOptiNightly_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_optiShowingNightly) return;
+        _optiShowingNightly = true;
+        _optiShowingBeta = false;
+        _optiShowingCustom = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
     }
@@ -603,6 +652,28 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
         var isRdna4ForFsr4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
         var isRdna2ForFsr4 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
+        var installStreamline = _componentService.IsNightlyOptiScalerVersion(version);
+        var streamlineCacheDir = string.Empty;
+        string? nightlyFakenvapiCacheDir = null;
+
+        if (installStreamline)
+        {
+            try
+            {
+                if (progressBar != null) progressBar.IsIndeterminate = true;
+                streamlineCacheDir = await _componentService.DownloadLatestStreamlineAsync();
+            }
+            catch (Exception ex)
+            {
+                _isInstalling = false;
+                if (progressBar != null) progressBar.IsIndeterminate = false;
+                if (progressSection != null) progressSection.IsVisible = false;
+                if (btnInstall != null) btnInstall.IsEnabled = true;
+                if (btnCancel != null) btnCancel.IsEnabled = true;
+                await new ConfirmDialog(this, "Error", ex.Message, isAlert: true).ShowDialog<bool>(this);
+                return;
+            }
+        }
 
         foreach (var gameItem in selectedGames)
         {
@@ -619,14 +690,41 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
             try
             {
+                // Apply the common bulk FG configuration as a per-game copy. The installer
+                // writes this as the final, narrow INI override after the selected profile.
+                gameItem.Game.FrameGenerationSettings = CloneFrameGenerationSettings(_frameGenerationSettings);
+
                 // Get cache paths
                 var optiCacheDir = _componentService.GetOptiScalerCachePath(version);
-                var fakeCacheDir = installFakenvapi
+                var installFakenvapiForGame = installFakenvapi;
+                var fakeCacheDir = installFakenvapiForGame
                     ? _componentService.GetFakenvapiCachePath(selectedFakenvapiVersion!)
                     : "";
                 var nukemCacheDir = installNukemFG
                     ? _componentService.GetNukemFGCachePath(selectedNukemFGVersion!)
                     : "";
+
+                if (installStreamline)
+                {
+                    var gameDir = _installService.DetermineInstallDirectory(gameItem.Game);
+                    var fakenvapiMissing = string.IsNullOrWhiteSpace(gameDir) ||
+                        !File.Exists(Path.Combine(gameDir, "fakenvapi.dll"));
+                    if (fakenvapiMissing)
+                    {
+                        if (string.IsNullOrEmpty(nightlyFakenvapiCacheDir))
+                        {
+                            if (progressBar != null) progressBar.IsIndeterminate = true;
+                            nightlyFakenvapiCacheDir = await _componentService.DownloadLatestFakenvapiAsync();
+                        }
+                        installFakenvapiForGame = true;
+                        fakeCacheDir = nightlyFakenvapiCacheDir;
+                    }
+                    else
+                    {
+                        installFakenvapiForGame = false;
+                        fakeCacheDir = string.Empty;
+                    }
+                }
 
                 string? resolvedGameDir = null;
                 await Task.Run(() =>
@@ -635,13 +733,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         gameItem.Game,
                         optiCacheDir,
                         injectionMethod, // Use selected injection method
-                        installFakenvapi,
+                        installFakenvapiForGame,
                         fakeCacheDir,
                         installNukemFG,
                         nukemCacheDir,
                         optiscalerVersion: version,
                         profile: selectedProfile,
-                        isRdna4: isRdna4ForFsr4, isRdna2: isRdna2ForFsr4
+                        isRdna4: isRdna4ForFsr4, isRdna2: isRdna2ForFsr4,
+                        installStreamline: installStreamline,
+                        streamlineCachePath: streamlineCacheDir,
+                        ensureFakenvapiIfMissing: installStreamline
                     );
                 });
 
@@ -944,21 +1045,34 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         var selectedTag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         bool isBeta = !string.IsNullOrEmpty(selectedTag) && _componentService.BetaVersions.Contains(selectedTag);
+        bool isNightly = !string.IsNullOrEmpty(selectedTag) && _componentService.NightlyVersions.Contains(selectedTag);
 
-        // Disable Fakenvapi/NukemFG for any OptiScaler version >= 0.9 regardless of beta
-        bool includedInPackage = IsVersionGreaterOrEqual(selectedTag, 0, 9);
+        // Stable/Beta 0.9+ bundle both components. Nightly resolves Fakenvapi automatically
+        // per game when fakenvapi.dll is absent, so its manual selector remains disabled.
+        bool includedInPackage = !isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9);
+        bool disableFakenvapi = isNightly || includedInPackage;
+        bool disableNukemFG = isNightly || includedInPackage;
 
         var cmbFakenvapi = this.FindControl<ComboBox>("CmbFakenvapiVersion");
         var cmbNukemFG = this.FindControl<ComboBox>("CmbNukemFGVersion");
 
-        if (includedInPackage)
+        if (disableFakenvapi)
         {
             if (cmbFakenvapi != null)
             {
                 cmbFakenvapi.IsEnabled = false;
                 cmbFakenvapi.SelectedIndex = 0; // Reset to "None"
-                ToolTip.SetTip(cmbFakenvapi, "Included in OptiScaler 0.9+");
+                ToolTip.SetTip(cmbFakenvapi, includedInPackage ? "Included in OptiScaler 0.9+" : null);
             }
+        }
+        else if (cmbFakenvapi != null)
+        {
+            cmbFakenvapi.IsEnabled = true;
+            ToolTip.SetTip(cmbFakenvapi, null);
+        }
+
+        if (disableNukemFG)
+        {
             if (cmbNukemFG != null)
             {
                 cmbNukemFG.IsEnabled = false;
@@ -966,18 +1080,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 ToolTip.SetTip(cmbNukemFG, "Included in OptiScaler 0.9+");
             }
         }
-        else
+        else if (cmbNukemFG != null)
         {
-            if (cmbFakenvapi != null)
-            {
-                cmbFakenvapi.IsEnabled = true;
-                ToolTip.SetTip(cmbFakenvapi, null);
-            }
-            if (cmbNukemFG != null)
-            {
-                cmbNukemFG.IsEnabled = true;
-                ToolTip.SetTip(cmbNukemFG, null);
-            }
+            cmbNukemFG.IsEnabled = true;
+            ToolTip.SetTip(cmbNukemFG, null);
         }
     }
 
@@ -1057,6 +1163,137 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         }
     }
 
+    private async void BtnFrameGeneration_Click(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var targetGames = _gameItems
+                .Where(item => item.CanInstall && item.IsSelected)
+                .Select(item => item.Game)
+                .ToList();
+            if (targetGames.Count == 0)
+            {
+                targetGames = _gameItems
+                    .Where(item => item.CanInstall)
+                    .Select(item => item.Game)
+                    .ToList();
+            }
+            if (targetGames.Count == 0) return;
+
+            var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+            var sharedCapabilities = await Task.Run(() =>
+            {
+                var service = new FrameGenerationConfigurationService();
+                var capabilities = targetGames
+                    .Select(game => service.DetectCapabilities(game, gpu))
+                    .ToList();
+                return BuildSharedFrameGenerationCapabilities(capabilities);
+            });
+
+            var dialog = new FrameGenerationSettingsWindow(this, sharedCapabilities, _frameGenerationSettings);
+            var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
+            if (settings == null) return;
+
+            _frameGenerationSettings = settings;
+            UpdateFrameGenerationSummary();
+        }
+        catch (Exception ex)
+        {
+            await new ConfirmDialog(this, "Frame Generation",
+                $"Could not configure frame generation:\n{ex.Message}").ShowDialog<object>(this);
+        }
+    }
+
+    private static FrameGenerationCapabilities BuildSharedFrameGenerationCapabilities(
+        IReadOnlyList<FrameGenerationCapabilities> capabilities)
+    {
+        var first = capabilities[0];
+        var routes = first.AvailableRoutes.AsEnumerable();
+        var outputs = first.AvailableOutputs.AsEnumerable();
+        var mfgModes = first.AvailableMfgModes.AsEnumerable();
+
+        foreach (var current in capabilities.Skip(1))
+        {
+            routes = routes.Intersect(current.AvailableRoutes);
+            outputs = outputs.Intersect(current.AvailableOutputs);
+            mfgModes = mfgModes.Intersect(current.AvailableMfgModes);
+        }
+
+        return new FrameGenerationCapabilities
+        {
+            IsDirectX12 = capabilities.All(item => item.IsDirectX12),
+            IsVulkan = capabilities.All(item => item.IsVulkan),
+            HasNativeDlssG = capabilities.All(item => item.HasNativeDlssG),
+            HasNativeFsr3 = capabilities.All(item => item.HasNativeFsr3),
+            HasStreamline = capabilities.All(item => item.HasStreamline),
+            HasXeFgDependencies = capabilities.All(item => item.HasXeFgDependencies),
+            HasFsrFgDependencies = capabilities.All(item => item.HasFsrFgDependencies),
+            HasNukem = capabilities.All(item => item.HasNukem),
+            IsIntelArc = capabilities.All(item => item.IsIntelArc),
+            IsAntiCheatDetected = capabilities.Any(item => item.IsAntiCheatDetected),
+            AvailableRoutes = routes.ToList(),
+            AvailableOutputs = outputs.ToList(),
+            AvailableMfgModes = mfgModes.ToList(),
+            Warnings = capabilities.SelectMany(item => item.Warnings).Distinct().ToList()
+        };
+    }
+
+    private void UpdateFrameGenerationSummary()
+    {
+        var button = this.FindControl<Button>("BtnFrameGeneration");
+        var selection = this.FindControl<TextBlock>("TxtFrameGenerationSelection");
+        if (button == null || selection == null) return;
+
+        var route = _frameGenerationSettings.Route == FrameGenerationRoute.Auto
+            ? Resource("TxtFgRouteAuto", "Auto")
+            : GetFrameGenerationRouteSummary(_frameGenerationSettings.Route);
+        var output = GetFrameGenerationOutputSummary(_frameGenerationSettings.Output);
+        var multiplier = _frameGenerationSettings.MultiFrameMode == MultiFrameGenerationMode.Auto
+            ? "Auto"
+            : _frameGenerationSettings.MultiFrameMode.ToString().Replace("X", "x");
+
+        selection.Text = _frameGenerationSettings.Route == FrameGenerationRoute.Disabled ? route : output;
+        ToolTip.SetTip(button, _frameGenerationSettings.Route == FrameGenerationRoute.Disabled
+            ? route
+            : $"{route} → {output} · {multiplier}");
+    }
+
+    private static string GetFrameGenerationRouteSummary(FrameGenerationRoute route) => route switch
+    {
+        FrameGenerationRoute.Disabled => Resource("TxtFgRouteDisabled", "Disabled"),
+        FrameGenerationRoute.DlssGStreamline => Resource("TxtFgRouteDlssStreamline", "DLSS-G via Streamline"),
+        FrameGenerationRoute.Nukem => Resource("TxtFgRouteNukem", "Nukem DLSS-G → FSR3"),
+        FrameGenerationRoute.Fsr31Native => Resource("TxtFgRouteFsr31", "Native FSR 3.1 FG"),
+        FrameGenerationRoute.Fsr30Native => Resource("TxtFgRouteFsr30", "Native FSR 3.0 FG"),
+        FrameGenerationRoute.OptiFg => Resource("TxtFgRouteOptiFg", "OptiFG (experimental)"),
+        _ => route.ToString()
+    };
+
+    private static string GetFrameGenerationOutputSummary(FrameGenerationOutput output) => output switch
+    {
+        FrameGenerationOutput.Auto => "Auto",
+        FrameGenerationOutput.FsrFg => "FSR FG",
+        FrameGenerationOutput.XeFg => "Intel XeFG",
+        FrameGenerationOutput.Nukem => "Nukem FSR3 FG",
+        FrameGenerationOutput.DlssG => "DLSS-G",
+        FrameGenerationOutput.DlssGWithNvngx => "DLSS-G + NvNGX",
+        _ => output.ToString()
+    };
+
+    private static string Resource(string key, string fallback)
+        => Application.Current?.TryFindResource(key, out var value) == true && value is string text
+            ? text
+            : fallback;
+
+    private static GameFrameGenerationSettings CloneFrameGenerationSettings(GameFrameGenerationSettings source) => new()
+    {
+        Route = source.Route,
+        Output = source.Output,
+        MultiFrameMode = source.MultiFrameMode,
+        AdvancedMode = source.AdvancedMode,
+        DynamicTargetFps = source.DynamicTargetFps
+    };
+
     /// <summary>
     /// Populates CmbExtrasVersion with available Extras versions + a "None" option.
     /// Selects the default based on GPU generation: RDNA 4 → None, others → global default or latest.
@@ -1066,6 +1303,19 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var cmb = this.FindControl<ComboBox>("CmbExtrasVersion");
         if (cmb == null) return;
 
+        if (!_extrasTabInitialized)
+        {
+            var defaultVersion = _componentService.Config.DefaultExtrasVersion;
+            if (!string.IsNullOrWhiteSpace(defaultVersion) &&
+                !defaultVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                _extrasVariant = _componentService.GetExtrasDllVariant(defaultVersion);
+            }
+            _extrasTabInitialized = true;
+        }
+
+        UpdateExtrasVariantButtons();
+        cmb.SelectionChanged -= CmbExtrasVersion_SelectionChanged;
         cmb.Items.Clear();
 
         // Add "None" option
@@ -1074,13 +1324,15 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         cmb.Items.Add(new ComboBoxItem { Content = noneStack, Tag = "none" });
 
         // Add available versions
-        var versions = _componentService.ExtrasAvailableVersions;
+        var versions = _componentService.ExtrasAvailableVersions
+            .Where(version => _componentService.GetExtrasDllVariant(version) == _extrasVariant)
+            .ToList();
+        var latestInVariant = versions.FirstOrDefault();
         foreach (var ver in versions)
         {
-            var isLatest = ver == _componentService.LatestExtrasVersion;
+            var isLatest = string.Equals(ver, latestInVariant, StringComparison.OrdinalIgnoreCase);
             var stack = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
             stack.Children.Add(new TextBlock { Text = _componentService.GetExtrasDllDisplayName(ver), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
-            stack.Children.Add(CreateFsr4VariantBadge(_componentService.GetExtrasDllVariant(ver)));
             if (isLatest)
             {
                 var badge = new Border
@@ -1165,8 +1417,52 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         }
 
         cmb.SelectedIndex = targetIndex;
-        cmb.SelectionChanged -= CmbExtrasVersion_SelectionChanged;
         cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
+        UpdateSelectionCount();
+    }
+
+    private void UpdateExtrasVariantButtons()
+    {
+        var int8 = this.FindControl<Button>("BtnExtrasInt8");
+        var fp8 = this.FindControl<Button>("BtnExtrasFp8");
+        if (int8 == null || fp8 == null) return;
+
+        void SetActive(Button button)
+        {
+            button.Classes.Remove("BtnSecondary");
+            button.Classes.Add("BtnPrimary");
+        }
+
+        void SetInactive(Button button)
+        {
+            button.Classes.Remove("BtnPrimary");
+            button.Classes.Add("BtnSecondary");
+        }
+
+        if (_extrasVariant == Fsr4DllVariant.Int8)
+        {
+            SetActive(int8);
+            SetInactive(fp8);
+        }
+        else
+        {
+            SetInactive(int8);
+            SetActive(fp8);
+        }
+    }
+
+    private void BtnExtrasInt8_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_extrasVariant == Fsr4DllVariant.Int8) return;
+        _extrasVariant = Fsr4DllVariant.Int8;
+        PopulateExtrasComboBox();
+    }
+
+    private void BtnExtrasFp8_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_extrasVariant == Fsr4DllVariant.Fp8) return;
+        _extrasVariant = Fsr4DllVariant.Fp8;
+        PopulateExtrasComboBox();
     }
 
     private void CmbExtrasVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)

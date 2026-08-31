@@ -1,0 +1,136 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.UpscalingQualityCustomWindow"
+        Title="Upscaling Quality"
+        Width="470"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        CanResize="False"
+        ShowInTaskbar="False">
+
+    <Window.Styles>
+        <Style Selector=":is(Control)">
+            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+        </Style>
+    </Window.Styles>
+
+    <Panel Name="RootPanel" Margin="16" Opacity="0">
+        <Border Background="{StaticResource BrBgBase}"
+                BorderBrush="{StaticResource BrBorderSubtle}"
+                BorderThickness="1"
+                CornerRadius="12"
+                BoxShadow="0 10 30 0 #A0000000">
+            <Grid RowDefinitions="Auto,Auto,Auto">
+                <Border Name="TitleBar"
+                        Grid.Row="0"
+                        Background="{StaticResource BrBgDeep}"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="0,0,0,1"
+                        CornerRadius="12,12,0,0"
+                        Padding="22,16">
+                    <TextBlock Text="{DynamicResource TxtUpscalingQualityCustomTitle}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource BrTextPrimary}"/>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="22,20" Spacing="14">
+                    <TextBlock Text="{DynamicResource TxtUpscalingQualityCustomDescription}"
+                               Foreground="{StaticResource BrTextSecondary}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               TextWrapping="Wrap"/>
+
+                    <Grid ColumnDefinitions="*,96" ColumnSpacing="12">
+                        <Slider Name="SldQualityRatio"
+                                Grid.Column="0"
+                                Minimum="1"
+                                Maximum="3"
+                                TickFrequency="0.01"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                ValueChanged="SldQualityRatio_ValueChanged"/>
+                        <TextBox Name="TxtQualityRatio"
+                                 Grid.Column="1"
+                                 HorizontalContentAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 TextChanged="TxtQualityRatio_TextChanged"
+                                 LostFocus="TxtQualityRatio_LostFocus"/>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="10"
+                                Margin="0,4,0,0">
+                        <Border Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrBorderDefault}"
+                                BorderThickness="1"
+                                CornerRadius="50"
+                                Padding="14,7">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{DynamicResource TxtInputResolution}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Name="TxtInputResolution"
+                                           Foreground="{StaticResource BrTextPrimary}"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="→"
+                                   Foreground="{StaticResource BrAccent}"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+
+                        <Border Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrBorderDefault}"
+                                BorderThickness="1"
+                                CornerRadius="50"
+                                Padding="14,7">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{DynamicResource TxtOutputResolution}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Name="TxtOutputResolution"
+                                           Foreground="{StaticResource BrTextPrimary}"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Text="{DynamicResource TxtResolutionEstimateNote}"
+                               Foreground="{StaticResource BrTextDisabled}"
+                               FontSize="10"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <Border Grid.Row="2"
+                        Background="{StaticResource BrBgDeep}"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,12,12"
+                        Padding="22,13">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Content="{DynamicResource TxtCancel}"
+                                Classes="BtnBase"
+                                Padding="16,8"
+                                Click="BtnCancel_Click"/>
+                        <Button Content="{DynamicResource TxtSave}"
+                                Classes="BtnPrimary"
+                                Padding="16,8"
+                                Click="BtnSave_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

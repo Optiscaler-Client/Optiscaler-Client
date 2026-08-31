@@ -221,6 +221,7 @@ namespace OptiscalerClient.Views
             var optiChildren = new StackPanel { Margin = new Thickness(20, 0, 0, 0), IsVisible = true };
             optiChildren.Children.Add(CreateSubButton("opti-stable", "Stable", "\uE78F"));
             optiChildren.Children.Add(CreateSubButton("opti-beta",   "Beta",   "\uE206"));
+            optiChildren.Children.Add(CreateSubButton("opti-nightly", "Nightly", "\uE945"));
             optiChildren.Children.Add(CreateSubButton("opti-custom", "Custom", "\uF41D"));
 
             optiButton.Click += (s, e) =>
@@ -431,6 +432,7 @@ namespace OptiscalerClient.Views
             {
                 case "opti-stable": RenderOptiScalerVersions(content, showBeta: false); break;
                 case "opti-beta":   RenderOptiScalerVersions(content, showBeta: true);  break;
+                case "opti-nightly":RenderOptiScalerVersions(content, showBeta: false, showNightly: true); break;
                 case "opti-custom": RenderOptiScalerCustom(content); break;
                 case "optipatcher": RenderOptiPatcher(content); break;
                 case "fsr4":        RenderFsr4(content); break;
@@ -439,18 +441,19 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private void RenderOptiScalerVersions(StackPanel content, bool showBeta)
+        private void RenderOptiScalerVersions(StackPanel content, bool showBeta, bool showNightly = false)
         {
             content.Children.Add(CreateSetDefaultRow());
 
             var allVersions = _componentService.GetDownloadedOptiScalerVersions();
             var betaSet     = _componentService.BetaVersions;
+            var nightlySet  = _componentService.NightlyVersions;
             var customSet   = _componentService.CustomVersions;
 
             var filtered = allVersions.Where(v =>
             {
                 if (customSet.Contains(v)) return false;
-                return betaSet.Contains(v) == showBeta;
+                return betaSet.Contains(v) == showBeta && nightlySet.Contains(v) == showNightly;
             }).ToList();
 
             if (filtered.Count == 0)
@@ -664,13 +667,13 @@ namespace OptiscalerClient.Views
         // ── Version card ──────────────────────────────────────────────────────
 
         private static bool IsOptiSection(string sectionId) =>
-            sectionId is "opti-stable" or "opti-beta" or "opti-custom";
+            sectionId is "opti-stable" or "opti-beta" or "opti-nightly" or "opti-custom";
 
         private string? GetCurrentDefault()
         {
             return _currentSection switch
             {
-                "opti-stable" or "opti-beta" or "opti-custom" => _componentService.Config.DefaultOptiScalerVersion,
+                "opti-stable" or "opti-beta" or "opti-nightly" or "opti-custom" => _componentService.Config.DefaultOptiScalerVersion,
                 "optipatcher" => _componentService.Config.DefaultOptiPatcherVersion,
                 "fsr4" => _componentService.Config.DefaultExtrasVersion,
                 "fakenvapi" => _componentService.Config.DefaultFakenvapiVersion,
@@ -1009,6 +1012,7 @@ namespace OptiscalerClient.Views
             {
                 case "opti-stable":
                 case "opti-beta":
+                case "opti-nightly":
                 case "opti-custom":
                     _componentService.Config.DefaultOptiScalerVersion = _selectedVersion;
                     break;
@@ -1037,6 +1041,7 @@ namespace OptiscalerClient.Views
             {
                 case "opti-stable":
                 case "opti-beta":
+                case "opti-nightly":
                 case "opti-custom":
                     _componentService.Config.DefaultOptiScalerVersion = null;
                     break;

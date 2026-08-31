@@ -39,9 +39,22 @@
 
                 <StackPanel Grid.Row="1" Margin="22,18" Spacing="13">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="{DynamicResource TxtFgRoute}"
-                                   Foreground="{StaticResource BrTextSecondary}"
-                                   FontSize="{StaticResource FontSizeCaption}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtFgRoute}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="{StaticResource FontSizeCaption}"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtFgRouteTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
                         <ComboBox Name="CmbFgRoute"
                                   HorizontalAlignment="Stretch"
                                   Classes="BtnSelector"
@@ -49,10 +62,40 @@
                                   SelectionChanged="CmbFgRoute_SelectionChanged"/>
                     </StackPanel>
 
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <CheckBox Name="ChkAdvancedRoutes"
+                                  Content="{DynamicResource TxtFgAdvancedRoutes}"
+                                  IsCheckedChanged="ChkAdvancedRoutes_IsCheckedChanged"/>
+                        <Border Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="1" CornerRadius="8"
+                                Width="16" Height="16"
+                                ToolTip.ShowDelay="100" Cursor="Help"
+                                ToolTip.Tip="{DynamicResource TxtFgAdvancedRoutesTooltip}">
+                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="10" FontWeight="Bold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Margin="0,-1,0,0"/>
+                        </Border>
+                    </StackPanel>
+
                     <StackPanel Spacing="4">
-                        <TextBlock Text="{DynamicResource TxtFgOutput}"
-                                   Foreground="{StaticResource BrTextSecondary}"
-                                   FontSize="{StaticResource FontSizeCaption}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtFgOutput}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="{StaticResource FontSizeCaption}"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtFgOutputTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
                         <ComboBox Name="CmbFgOutput"
                                   HorizontalAlignment="Stretch"
                                   Classes="BtnSelector"
@@ -61,18 +104,28 @@
                     </StackPanel>
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="{DynamicResource TxtMfgMultiplier}"
-                                   Foreground="{StaticResource BrTextSecondary}"
-                                   FontSize="{StaticResource FontSizeCaption}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtMfgMultiplier}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="{StaticResource FontSizeCaption}"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtMfgMultiplierTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
                         <ComboBox Name="CmbMfgMultiplier"
                                   HorizontalAlignment="Stretch"
                                   Classes="BtnSelector"
                                   HorizontalContentAlignment="Left"/>
                     </StackPanel>
 
-                    <CheckBox Name="ChkAdvancedRoutes"
-                              Content="{DynamicResource TxtFgAdvancedRoutes}"
-                              IsCheckedChanged="ChkAdvancedRoutes_IsCheckedChanged"/>
                 </StackPanel>
 
                 <Border Grid.Row="2"

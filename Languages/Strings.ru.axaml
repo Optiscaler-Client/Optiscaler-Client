@@ -693,7 +693,6 @@
     <x:String x:Key="TxtMfgMultiplier">Множитель MFG</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Расширенные маршруты</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">Применить конфигурацию FG</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">Импортировать DLSS Enabler…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Отключено</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G через Streamline</x:String>

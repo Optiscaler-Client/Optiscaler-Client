@@ -693,7 +693,6 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtMfgMultiplier">MFG-vermenigvuldiger</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Geavanceerde routes</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">FG-configuratie toepassen</x:String>
-    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler importeren…</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Uitgeschakeld</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G via Streamline</x:String>

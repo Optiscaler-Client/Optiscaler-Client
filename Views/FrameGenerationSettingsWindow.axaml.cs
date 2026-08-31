@@ -38,18 +38,27 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     }
 
     public FrameGenerationSettingsWindow(Window owner, Game game, GpuInfo? gpu)
+        : this(
+            owner,
+            new FrameGenerationConfigurationService().DetectCapabilities(game, gpu),
+            game.FrameGenerationSettings)
+    {
+    }
+
+    public FrameGenerationSettingsWindow(
+        Window owner,
+        FrameGenerationCapabilities capabilities,
+        GameFrameGenerationSettings? saved)
     {
         InitializeComponent();
         DialogDimHelper.Register(this);
 
-        var service = new FrameGenerationConfigurationService();
-        _capabilities = service.DetectCapabilities(game, gpu);
-        var saved = game.FrameGenerationSettings;
+        _capabilities = capabilities;
         _initialSettings = new GameFrameGenerationSettings
         {
             Route = saved?.Route ?? FrameGenerationRoute.Disabled,
             Output = saved?.Output ?? FrameGenerationOutput.Auto,
-            MultiFrameMode = saved?.MultiFrameMode ?? MultiFrameGenerationMode.X2,
+            MultiFrameMode = saved?.MultiFrameMode ?? MultiFrameGenerationMode.Auto,
             AdvancedMode = saved?.AdvancedMode ?? false,
             DynamicTargetFps = saved?.DynamicTargetFps,
             AppliedAtUtc = saved?.AppliedAtUtc
@@ -114,7 +123,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
         combo.Items.Clear();
         foreach (var route in routes.Distinct())
-            combo.Items.Add(new ComboBoxItem { Content = GetRouteLabel(route), Tag = route });
+        {
+            var item = new ComboBoxItem { Content = GetRouteLabel(route), Tag = route };
+            ToolTip.SetTip(item, GetRouteTooltip(route));
+            combo.Items.Add(item);
+        }
         SelectTag(combo, selected);
     }
 
@@ -124,7 +137,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         if (combo == null) return;
         combo.Items.Clear();
         foreach (var output in _capabilities.AvailableOutputs)
-            combo.Items.Add(new ComboBoxItem { Content = GetOutputLabel(output), Tag = output });
+        {
+            var item = new ComboBoxItem { Content = GetOutputLabel(output), Tag = output };
+            ToolTip.SetTip(item, GetOutputTooltip(output));
+            combo.Items.Add(item);
+        }
         SelectTag(combo, selected);
     }
 
@@ -135,13 +152,16 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
         var output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput");
         var route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
-        IReadOnlyList<MultiFrameGenerationMode> modes = output == FrameGenerationOutput.XeFg
-            ? _capabilities.AvailableMfgModes
-            : [MultiFrameGenerationMode.X2];
+        IReadOnlyList<MultiFrameGenerationMode> modes = new FrameGenerationConfigurationService()
+            .GetAvailableMfgModes(route, output, _capabilities);
 
         combo.Items.Clear();
         foreach (var mode in modes)
-            combo.Items.Add(new ComboBoxItem { Content = GetMfgLabel(mode), Tag = mode });
+        {
+            var item = new ComboBoxItem { Content = GetMfgLabel(mode), Tag = mode };
+            ToolTip.SetTip(item, GetMfgTooltip(mode));
+            combo.Items.Add(item);
+        }
         combo.IsEnabled = route != FrameGenerationRoute.Disabled && modes.Count > 1;
         SelectTag(combo, selected);
     }
@@ -149,7 +169,14 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private void CmbFgRoute_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
-        UpdateDependentControlState();
+        var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        _isUpdating = true;
+        try
+        {
+            PopulateMfgModes(selectedMfg);
+            UpdateDependentControlState();
+        }
+        finally { _isUpdating = false; }
     }
 
     private void CmbFgOutput_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -227,6 +254,18 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         _ => route.ToString()
     };
 
+    private string GetRouteTooltip(FrameGenerationRoute route) => route switch
+    {
+        FrameGenerationRoute.Auto => Resource("TxtFgRouteAutoTooltip", "Lets OptiScaler choose the route from the game's detected FG input."),
+        FrameGenerationRoute.Disabled => Resource("TxtFgRouteDisabledTooltip", "Turns off Frame Generation for this game."),
+        FrameGenerationRoute.DlssGStreamline => Resource("TxtFgRouteDlssStreamlineTooltip", "Uses the game's DLSS Frame Generation input through NVIDIA Streamline."),
+        FrameGenerationRoute.Nukem => Resource("TxtFgRouteNukemTooltip", "Converts a DLSS Frame Generation input to FSR 3 through NukemFG."),
+        FrameGenerationRoute.Fsr31Native => Resource("TxtFgRouteFsr31Tooltip", "Uses the game's native FSR 3.1 Frame Generation input."),
+        FrameGenerationRoute.Fsr30Native => Resource("TxtFgRouteFsr30Tooltip", "Uses the game's native FSR 3.0 Frame Generation input."),
+        FrameGenerationRoute.OptiFg => Resource("TxtFgRouteOptiFgTooltip", "Uses OptiScaler's experimental built-in Frame Generation route."),
+        _ => route.ToString()
+    };
+
     private static string GetOutputLabel(FrameGenerationOutput output) => output switch
     {
         FrameGenerationOutput.Auto => "Auto",
@@ -238,11 +277,29 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         _ => output.ToString()
     };
 
+    private static string GetOutputTooltip(FrameGenerationOutput output) => output switch
+    {
+        FrameGenerationOutput.Auto => Resource("TxtFgOutputAutoTooltip", "Keeps the output selected automatically by OptiScaler."),
+        FrameGenerationOutput.FsrFg => Resource("TxtFgOutputFsrTooltip", "Generates frames with AMD FSR Frame Generation."),
+        FrameGenerationOutput.XeFg => Resource("TxtFgOutputXeTooltip", "Generates frames with Intel Xe Frame Generation."),
+        FrameGenerationOutput.Nukem => Resource("TxtFgOutputNukemTooltip", "Uses the NukemFG FSR 3 output."),
+        FrameGenerationOutput.DlssG => Resource("TxtFgOutputDlssTooltip", "Outputs NVIDIA DLSS Frame Generation."),
+        FrameGenerationOutput.DlssGWithNvngx => Resource("TxtFgOutputDlssNvngxTooltip", "Outputs DLSS Frame Generation through NVIDIA's NVNGX runtime."),
+        _ => output.ToString()
+    };
+
     private static string GetMfgLabel(MultiFrameGenerationMode mode) => mode switch
     {
         MultiFrameGenerationMode.Auto => "Auto",
         MultiFrameGenerationMode.Dynamic => "Dynamic",
         _ => mode.ToString().Replace("X", "x")
+    };
+
+    private static string GetMfgTooltip(MultiFrameGenerationMode mode) => mode switch
+    {
+        MultiFrameGenerationMode.Auto => Resource("TxtMfgAutoTooltip", "Lets OptiScaler choose the appropriate multiplier."),
+        MultiFrameGenerationMode.Dynamic => Resource("TxtMfgDynamicTooltip", "Adjusts the multiplier dynamically when supported."),
+        _ => string.Format(Resource("TxtMfgFixedTooltipFmt", "Generates up to {0} frames for each rendered frame when supported."), GetMfgLabel(mode))
     };
 
     private static string Resource(string key, string fallback)

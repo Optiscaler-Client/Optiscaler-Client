@@ -395,11 +395,11 @@
                                   ColumnSpacing="12">
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
-                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="{DynamicResource TxtVersionLbl}"
+                                <StackPanel Name="PanelOptiScalerVersion" Grid.Row="0" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="{DynamicResource TxtOptiScalerLbl}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"/>
-                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*">
+                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*,*">
                                         <Button Name="BtnOptiStable"
                                                 Grid.Column="0"
                                                 Content="Stable"
@@ -418,10 +418,20 @@
                                                 HorizontalContentAlignment="Center"
                                                 FontSize="11"
                                                 Padding="8,5"
-                                                Margin="2,0,0,0"
+                                                Margin="2,0,2,0"
                                                 Click="BtnOptiBeta_Click"/>
-                                        <Button Name="BtnOptiCustom"
+                                        <Button Name="BtnOptiNightly"
                                                 Grid.Column="2"
+                                                Content="Nightly"
+                                                Classes="BtnSecondary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="2,0,0,0"
+                                                Click="BtnOptiNightly_Click"/>
+                                        <Button Name="BtnOptiCustom"
+                                                Grid.Column="3"
                                                 Content="Custom"
                                                 Classes="BtnSecondary"
                                                 HorizontalAlignment="Stretch"
@@ -441,8 +451,8 @@
                                 </StackPanel>
 
                                 <!-- Row 1, Col 0 : Injection method -->
-                                <StackPanel Grid.Row="1" Grid.Column="0">
-                                    <TextBlock Text="{DynamicResource TxtInjectionLbl}"
+                                <StackPanel Name="PanelInjectionMethod" Grid.Row="1" Grid.Column="0">
+                                    <TextBlock Name="LblInjectionMethod" Text="{DynamicResource TxtInjectionLbl}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"/>
                                     <ComboBox Name="CmbInjectionMethod"
@@ -462,7 +472,7 @@
                                 </StackPanel>
 
                                 <!-- Row 2, Col 0 : Profile selector -->
-                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                <StackPanel Name="PanelProfile" Grid.Row="2" Grid.Column="0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtProfileLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -489,7 +499,7 @@
                                 </StackPanel>
 
                                 <!-- Row 2, Col 1 : Compact per-game FG configuration -->
-                                <StackPanel Grid.Row="2" Grid.Column="1">
+                                <StackPanel Name="PanelFrameGeneration" Grid.Row="2" Grid.Column="1">
                                     <TextBlock Text="{DynamicResource TxtFrameGeneration}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"/>
@@ -508,22 +518,80 @@
                                                        TextTrimming="CharacterEllipsis"
                                                        HorizontalAlignment="Left"
                                                        VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="&#xF3DD;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       Foreground="{StaticResource BrTextSecondary}"
-                                                       VerticalAlignment="Center"
-                                                       Margin="12,0,0,0"/>
+                                            <Canvas Grid.Column="1"
+                                                    Width="16" Height="16"
+                                                    VerticalAlignment="Center"
+                                                    Margin="12,0,0,0">
+                                                <Path Data="M2,6 L10,6 L10,14 L2,14 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="Transparent"/>
+                                                <Path Data="M6,3 L14,3 L14,11 L6,11 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="{StaticResource BrBgElevated}"/>
+                                            </Canvas>
                                         </Grid>
                                     </Button>
                                 </StackPanel>
 
-                            <!-- Row 0, Col 1 : FSR 4 DLL -->
-                                <StackPanel Grid.Row="0" Grid.Column="1">
-                                    <TextBlock Text="FSR 4 DLL (INT8 &amp; FP8)"
+                                <!-- Row 2, Col 2 : Per-game upscaling quality override -->
+                                <StackPanel Name="PanelUpscalingQuality" Grid.Row="2" Grid.Column="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtUpscalingQuality}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtUpscalingQualityTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbUpscalingQuality"
+                                              Margin="0,4,0,0"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              VerticalContentAlignment="Center"
+                                              DropDownOpened="CmbUpscalingQuality_DropDownOpened"
+                                              DropDownClosed="CmbUpscalingQuality_DropDownClosed"
+                                              SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
+                                </StackPanel>
+
+                            <!-- Row 0, Col 1 : FSR 4 DLL swap -->
+                                <StackPanel Name="PanelExtrasVersion" Grid.Row="0" Grid.Column="1">
+                                    <TextBlock Text="{DynamicResource TxtFsr4SwapLbl}"
                                                Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"
-                                               Margin="0,32,0,0"/>
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Grid Name="GridExtrasTabs" ColumnDefinitions="*,*" Margin="0,4,0,0">
+                                        <Button Name="BtnExtrasInt8"
+                                                Grid.Column="0"
+                                                Content="INT8"
+                                                Classes="BtnPrimary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="0,0,2,0"
+                                                Click="BtnExtrasInt8_Click"/>
+                                        <Button Name="BtnExtrasFp8"
+                                                Grid.Column="1"
+                                                Content="FP8"
+                                                Classes="BtnSecondary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="2,0,0,0"
+                                                Click="BtnExtrasFp8_Click"/>
+                                    </Grid>
                                     <ComboBox Name="CmbExtrasVersion"
                                               Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"
@@ -534,7 +602,7 @@
                                 </StackPanel>
 
                                 <!-- Row 1, Col 1 : OptiPatcher -->
-                                <StackPanel Grid.Row="1" Grid.Column="1">
+                                <StackPanel Name="PanelOptiPatcherVersion" Grid.Row="1" Grid.Column="1">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtOptiPatcherLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -562,7 +630,7 @@
                                 </StackPanel>
 
                                 <!-- Row 0, Col 2 : Fakenvapi version selector -->
-                                <StackPanel Grid.Row="0" Grid.Column="2">
+                                <StackPanel Name="PanelFakenvapiVersion" Grid.Row="0" Grid.Column="2">
                                     <TextBlock Text="Fakenvapi"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"
@@ -577,7 +645,7 @@
                                 </StackPanel>
 
                                 <!-- Row 1, Col 2 : NukemFG version selector -->
-                                <StackPanel Grid.Row="1" Grid.Column="2">
+                                <StackPanel Name="PanelNukemFGVersion" Grid.Row="1" Grid.Column="2">
                                     <TextBlock Text="NukemFG"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"/>
