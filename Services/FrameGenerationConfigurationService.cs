@@ -7,7 +7,8 @@ public interface IFrameGenerationConfigurationService
 {
     FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null);
     FrameGenerationRecommendation GetRecommendation(FrameGenerationCapabilities capabilities);
-    IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities);
+    IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(FrameGenerationRoute route, FrameGenerationOutput output, FrameGenerationCapabilities capabilities);
+    IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
 }
 
 /// <summary>
@@ -21,8 +22,15 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
     public FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null)
     {
         var root = ResolveGameDirectory(game);
+        // Do not treat OptiScaler's own installed runtime files as native game capabilities.
+        // Otherwise its dependencies make every manual FG route look safe before the user has
+        // explicitly enabled Advanced routes.
         var files = Directory.Exists(root)
-            ? Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Select(Path.GetFileName).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ? Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Where(file => !IsOptiScalerRuntimeFile(root, file))
+                .Select(Path.GetFileName)
+                .OfType<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         bool hasDlssG = !string.IsNullOrEmpty(game.DlssFrameGenVersion) || files.Contains("nvngx_dlssg.dll");
@@ -32,7 +40,6 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         bool hasFsrFg = files.Contains("amd_fidelityfx_dx12.dll") ||
                         (files.Contains("amd_fidelityfx_loader_dx12.dll") && files.Contains("amd_fidelityfx_framegeneration_dx12.dll"));
         bool hasNukem = files.Contains("dlssg_to_fsr3_amd_is_better.dll");
-        bool hasEnabler = game.IsDlssEnablerInstalled || files.Contains("dlss-enabler-headless.dll") || files.Contains("dlss-enabler.dll");
         bool dx12 = files.Contains("d3d12.dll") || files.Contains("d3d12core.dll") ||
                     !string.IsNullOrEmpty(game.DlssFrameGenVersion) || hasFsr3 || hasXeFg;
         bool vulkan = files.Contains("vulkan-1.dll") || files.Contains("amd_fidelityfx_vk.dll");
@@ -49,14 +56,14 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         {
             if (hasDlssG && hasStreamline && dx12) routes.Add(FrameGenerationRoute.DlssGStreamline);
             if (hasDlssG && (hasNukem || !string.IsNullOrEmpty(game.DlssFrameGenVersion))) routes.Add(FrameGenerationRoute.Nukem);
-            if (hasFsr3) { routes.Add(FrameGenerationRoute.Fsr31Native); routes.Add(FrameGenerationRoute.Fsr30Native); }
-            if (dx12 && game.HasUpscaler) routes.Add(FrameGenerationRoute.OptiFg);
-            if (dx12 && !string.IsNullOrEmpty(game.DlssVersion)) routes.Add(FrameGenerationRoute.DlssEnabler);
+            // FSR 3.1 is the safe automatic/native option. FSR 3.0 and OptiFG are
+            // deliberately manual routes, exposed only through Advanced routes.
+            if (hasFsr3) routes.Add(FrameGenerationRoute.Fsr31Native);
             if (hasFsrFg) outputs.Add(FrameGenerationOutput.FsrFg);
             if (hasXeFg) outputs.Add(FrameGenerationOutput.XeFg);
             if (hasNukem) outputs.Add(FrameGenerationOutput.Nukem);
             if (hasDlssG && hasStreamline) outputs.Add(FrameGenerationOutput.DlssG);
-            if (hasDlssG && (hasNukem || hasEnabler)) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
+            if (hasDlssG && hasNukem) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
         }
 
         if (!hasXeFg) warnings.Add("XeFG requires libxess_fg.dll and libxell.dll.");
@@ -66,13 +73,11 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
         var mfg = new List<MultiFrameGenerationMode> { MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2 };
         if (arc) { mfg.Add(MultiFrameGenerationMode.X3); mfg.Add(MultiFrameGenerationMode.X4); }
-        if (hasEnabler && hasStreamline) { mfg.Add(MultiFrameGenerationMode.X5); mfg.Add(MultiFrameGenerationMode.X6); mfg.Add(MultiFrameGenerationMode.Dynamic); }
-
         return new FrameGenerationCapabilities
         {
             IsDirectX12 = dx12, IsVulkan = vulkan, HasNativeDlssG = hasDlssG, HasNativeFsr3 = hasFsr3,
             HasStreamline = hasStreamline, HasXeFgDependencies = hasXeFg, HasFsrFgDependencies = hasFsrFg,
-            HasNukem = hasNukem, HasDlssEnabler = hasEnabler, IsIntelArc = arc, IsAntiCheatDetected = antiCheat,
+            HasNukem = hasNukem, IsIntelArc = arc, IsAntiCheatDetected = antiCheat,
             AvailableRoutes = routes, AvailableOutputs = outputs, AvailableMfgModes = mfg, Warnings = warnings
         };
     }
@@ -92,8 +97,32 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         return new() { Route = FrameGenerationRoute.Disabled, Output = FrameGenerationOutput.Auto, MultiFrameMode = MultiFrameGenerationMode.Auto, Level = FrameGenerationRecommendationLevel.Unavailable, Reason = "No safe frame-generation route was detected." };
     }
 
-    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities c)
+    public IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(
+        FrameGenerationRoute route,
+        FrameGenerationOutput output,
+        FrameGenerationCapabilities capabilities)
     {
+        if (route == FrameGenerationRoute.Disabled)
+            return [MultiFrameGenerationMode.Auto];
+
+        if (output == FrameGenerationOutput.XeFg)
+        {
+            var modes = new List<MultiFrameGenerationMode> { MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2 };
+            if (capabilities.IsIntelArc)
+            {
+                modes.Add(MultiFrameGenerationMode.X3);
+                modes.Add(MultiFrameGenerationMode.X4);
+            }
+            return modes;
+        }
+
+        return [MultiFrameGenerationMode.X2];
+    }
+
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(
+        GameFrameGenerationSettings settings, FrameGenerationCapabilities c, string? optiscalerVersion = null)
+    {
+        var usesNightlySchema = UsesNightlyFrameGenerationSchema(optiscalerVersion);
         var recommendation = GetRecommendation(c);
         var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
         var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
@@ -102,7 +131,13 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             throw new InvalidOperationException("Frame generation cannot be applied while anti-cheat is detected.");
         if (!settings.AdvancedMode && !c.AvailableRoutes.Contains(effectiveRoute))
             throw new InvalidOperationException("Selected frame-generation route is not available for this game.");
-        if (settings.MultiFrameMode != MultiFrameGenerationMode.Auto && !c.AvailableMfgModes.Contains(settings.MultiFrameMode))
+        var availableMfgModes = GetAvailableMfgModes(effectiveRoute, effectiveOutput, c);
+        // A multiplier is irrelevant while FG is disabled. Older saved game settings used
+        // X2 as their default, so validating it here made a disabled FG configuration block
+        // any OptiScaler install, including Nightly.
+        if (effectiveRoute != FrameGenerationRoute.Disabled &&
+            settings.MultiFrameMode != MultiFrameGenerationMode.Auto &&
+            !availableMfgModes.Contains(settings.MultiFrameMode))
             throw new InvalidOperationException("Selected multi-frame mode is not supported by the current GPU/provider.");
 
         var frameGen = new Dictionary<string, string> { ["Enabled"] = effectiveRoute == FrameGenerationRoute.Disabled ? "false" : "true" };
@@ -111,22 +146,25 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             frameGen["FGInput"] = effectiveRoute switch
             {
                 FrameGenerationRoute.DlssGStreamline => "dlssg",
-                FrameGenerationRoute.Nukem => "nvngxfg",
+                FrameGenerationRoute.Nukem => usesNightlySchema ? "nvngxfg" : "nukems",
                 FrameGenerationRoute.Fsr31Native => "fsrfg",
                 FrameGenerationRoute.Fsr30Native => "fsrfg30",
                 FrameGenerationRoute.OptiFg => "upscaler",
-                FrameGenerationRoute.DlssEnabler => "nvngxfg",
                 _ => "nofg"
             };
             frameGen["FGOutput"] = effectiveOutput switch
             {
                 FrameGenerationOutput.FsrFg => "fsrfg",
                 FrameGenerationOutput.XeFg => "xefg",
-                FrameGenerationOutput.Nukem => "nvngxfg",
+                FrameGenerationOutput.Nukem => usesNightlySchema ? "nvngxfg" : "nukems",
                 FrameGenerationOutput.DlssG => "dlssg",
                 FrameGenerationOutput.DlssGWithNvngx => "dlssgwithnvngx",
                 _ => "nofg"
             };
+            // Nightly 0.10 moved the provider choice behind the NVNGX bridge. Do
+            // not emit this unknown key for 0.9.x packages.
+            if (usesNightlySchema && (effectiveRoute == FrameGenerationRoute.Nukem || effectiveOutput == FrameGenerationOutput.Nukem))
+                frameGen["FGNvngxReplacement"] = "Nukems";
         }
 
         var result = new Dictionary<string, IReadOnlyDictionary<string, string>> { ["FrameGen"] = frameGen };
@@ -137,9 +175,25 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         }
         if (effectiveRoute == FrameGenerationRoute.OptiFg && effectiveOutput == FrameGenerationOutput.FsrFg)
             result["HUDFix"] = new Dictionary<string, string> { ["HUDFix"] = "true" };
-        if (settings.MultiFrameMode == MultiFrameGenerationMode.Dynamic)
-            result["Nvngx"] = new Dictionary<string, string> { ["OverrideForceDMFG"] = "true", ["FramerateTargetDMFG"] = settings.DynamicTargetFps?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0.0" };
         return result;
+    }
+
+    /// <summary>0.10/nightly changed the NVNGX/Nukem INI vocabulary from 0.9.x.</summary>
+    public static bool UsesNightlyFrameGenerationSchema(string? optiscalerVersion)
+    {
+        if (string.IsNullOrWhiteSpace(optiscalerVersion)) return false;
+        if (optiscalerVersion.StartsWith("nightly-", StringComparison.OrdinalIgnoreCase)) return true;
+
+        var numericPart = optiscalerVersion.TrimStart('v', 'V').Split('-', 2)[0];
+        return Version.TryParse(numericPart, out var parsed) && parsed >= new Version(0, 10);
+    }
+
+    private static bool IsOptiScalerRuntimeFile(string gameRoot, string filePath)
+    {
+        var relativePath = Path.GetRelativePath(gameRoot, filePath);
+        var firstSeparator = relativePath.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]);
+        var topLevelDirectory = firstSeparator < 0 ? relativePath : relativePath[..firstSeparator];
+        return topLevelDirectory.Equals("OptiScaler", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveGameDirectory(Game game) => !string.IsNullOrWhiteSpace(game.ExecutablePath) ? Path.GetDirectoryName(game.ExecutablePath) ?? game.InstallPath : game.InstallPath;

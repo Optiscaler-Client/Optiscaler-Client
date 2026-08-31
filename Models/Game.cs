@@ -92,8 +92,9 @@ public class Game
 
     /// <summary>Optional FG settings applied specifically to this game, never to a shared profile.</summary>
     public GameFrameGenerationSettings? FrameGenerationSettings { get; set; }
-    public bool IsDlssEnablerInstalled { get; set; }
 
+    /// <summary>Optional upscaling quality override applied specifically to this game.</summary>
+    public GameUpscalingQualitySettings? UpscalingQualitySettings { get; set; }
     public bool HasUpscaler => DlssVersion != null || DlssFrameGenVersion != null || FsrVersion != null || XessVersion != null || IsOptiscalerInstalled;
 
     // UI customization (not set by scanner)

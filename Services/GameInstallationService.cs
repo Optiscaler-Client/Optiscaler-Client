@@ -18,6 +18,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using OptiscalerClient.Helpers;
@@ -88,7 +89,9 @@ namespace OptiscalerClient.Services
                                      string? optiscalerVersion = null,
                                      string? overrideGameDir = null,
                                      OptiScalerProfile? profile = null,
-                                     bool isRdna4 = false, bool isRdna2 = false)
+                                     bool isRdna4 = false, bool isRdna2 = false,
+                                     bool installStreamline = false, string streamlineCachePath = "",
+                                     bool ensureFakenvapiIfMissing = false)
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
             DebugWindow.Log($"[Install] Version: {optiscalerVersion}, Injection: {injectionDllName}");
@@ -127,6 +130,9 @@ namespace OptiscalerClient.Services
             // storeKey is always the stable game root (game.InstallPath) so that lookup is
             // consistent after app restarts, regardless of which subdirectory was chosen as gameDir.
             var storeKey = game.InstallPath;
+            using var rollbackJournal = new InstallationRollbackJournal(gameDir);
+            var shouldInstallFakenvapi = installFakenvapi &&
+                (!ensureFakenvapiIfMissing || !File.Exists(Path.Combine(gameDir, "fakenvapi.dll")));
 
             DebugWindow.Log($"[Install] External backup store: {_backupStore.GetBackupRoot(storeKey)}");
 
@@ -191,41 +197,6 @@ namespace OptiscalerClient.Services
                 }
             }
 
-            // ── Pre-install: detect and remove residues from previous dirty installs ──
-            // If there is no valid external backup for this gameDir, any known OptiScaler
-            // artifacts found in the game folder are residues (orphaned files from a previous
-            // install that was never properly uninstalled). Back them up as original files
-            // would corrupt the next uninstall, so we delete them first.
-            if (!hasValidBackup)
-            {
-                var componentService = new ComponentManagementService();
-                var cacheDirsForResidue = new List<string>();
-                if (!string.IsNullOrEmpty(optiscalerVersion))
-                {
-                    var p = componentService.GetOptiScalerCachePath(optiscalerVersion);
-                    if (Directory.Exists(p)) cacheDirsForResidue.Add(p);
-                }
-                var fakeDir = componentService.GetFakenvapiCachePath();
-                if (Directory.Exists(fakeDir)) cacheDirsForResidue.Add(fakeDir);
-                var nukemDir = componentService.GetNukemFGCachePath();
-                if (Directory.Exists(nukemDir)) cacheDirsForResidue.Add(nukemDir);
-
-                var residues = _backupStore.FindResiduesInGameDir(gameDir, KnownOptiscalerArtifacts, cacheDirsForResidue);
-                foreach (var residue in residues)
-                {
-                    var residuePath = Path.Combine(gameDir, residue);
-                    try
-                    {
-                        File.Delete(residuePath);
-                        DebugWindow.Log($"[Install] Deleted residue from previous install: {residue}");
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugWindow.Log($"[Install] Could not delete residue '{residue}': {ex.Message}");
-                    }
-                }
-            }
-
             // Create installation manifest — OptiscalerVersion is the authoritative source for the UI
             var manifest = new InstallationManifest
             {
@@ -236,8 +207,9 @@ namespace OptiscalerClient.Services
                 InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 OptiscalerVersion = optiscalerVersion,
                 IncludesOptiscaler = true,
-                IncludesFakenvapi = installFakenvapi,
+                IncludesFakenvapi = shouldInstallFakenvapi,
                 IncludesNukemFG = installNukemFG,
+                IncludesStreamline = installStreamline,
                 // Store the EXACT directory used (already resolved for Phoenix/UE5 games).
                 // Uninstall will read this directly, avoiding re-detection issues.
                 InstalledGameDirectory = gameDir
@@ -261,6 +233,40 @@ namespace OptiscalerClient.Services
 
             try
             {
+
+            // ── Pre-install: detect and remove residues from previous dirty installs ──
+            // This must happen inside the transaction. If the new installation fails later,
+            // the journal puts these files back exactly as they were before the attempt.
+            if (!hasValidBackup)
+            {
+                var componentService = new ComponentManagementService();
+                var cacheDirsForResidue = new List<string>();
+                if (!string.IsNullOrEmpty(optiscalerVersion))
+                {
+                    var p = componentService.GetOptiScalerCachePath(optiscalerVersion);
+                    if (Directory.Exists(p)) cacheDirsForResidue.Add(p);
+                }
+                var fakeDir = componentService.GetFakenvapiCachePath();
+                if (Directory.Exists(fakeDir)) cacheDirsForResidue.Add(fakeDir);
+                var nukemDir = componentService.GetNukemFGCachePath();
+                if (Directory.Exists(nukemDir)) cacheDirsForResidue.Add(nukemDir);
+
+                var residues = _backupStore.FindResiduesInGameDir(gameDir, KnownOptiscalerArtifacts, cacheDirsForResidue);
+                foreach (var residue in residues)
+                {
+                    var residuePath = Path.Combine(gameDir, residue);
+                    try
+                    {
+                        rollbackJournal.CaptureFile(residue);
+                        File.Delete(residuePath);
+                        DebugWindow.Log($"[Install] Deleted residue from previous install: {residue}");
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[Install] Could not delete residue '{residue}': {ex.Message}");
+                    }
+                }
+            }
 
             // Find the main OptiScaler DLL (OptiScaler.dll or nvngx.dll for older versions)
             string? optiscalerMainDll = null;
@@ -300,6 +306,7 @@ namespace OptiscalerClient.Services
             }
 
             // Copy OptiScaler.dll as the injection DLL
+            rollbackJournal.CaptureFile(injectionDllName);
             File.Copy(optiscalerMainDll, injectionDllPath, true);
             manifest.InstalledFiles.Add(injectionDllName);
             // existedBefore=false for OptiScaler-created files forces them into FilesCreated (delete on uninstall).
@@ -334,6 +341,7 @@ namespace OptiscalerClient.Services
                 // Track created directories
                 if (destDir != null && !Directory.Exists(destDir))
                 {
+                    rollbackJournal.CaptureDirectoryChain(destDir);
                     Directory.CreateDirectory(destDir);
                     DebugWindow.Log($"[Install] Created directory: {Path.GetRelativePath(gameDir, destDir)}");
 
@@ -359,6 +367,7 @@ namespace OptiscalerClient.Services
                     DebugWindow.Log($"[Install] Backed up existing file: {relativePath}");
                 }
 
+                rollbackJournal.CaptureFile(relativePath);
                 File.Copy(sourcePath, destPath, true);
                 manifest.InstalledFiles.Add(relativePath);
                 TrackManifestFileMutation(
@@ -372,11 +381,71 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[Install] Copied {additionalFileCount} additional files");
 
+            // Step 2.25: Nightly builds require NVIDIA Streamline runtime DLLs. The cache contains
+            // only the bin/x64 runtime subset, preserving its nvngx subdirectory beneath the
+            // OptiScaler installation directory exactly as required by OptiScaler Nightly.
+            if (installStreamline)
+            {
+                if (string.IsNullOrWhiteSpace(streamlineCachePath) || !Directory.Exists(streamlineCachePath))
+                    throw new DirectoryNotFoundException("Streamline is required for OptiScaler Nightly but is not available in the local cache.");
+
+                var streamlineFiles = Directory.GetFiles(streamlineCachePath, "*.dll", SearchOption.AllDirectories);
+                if (streamlineFiles.Length == 0 || !File.Exists(Path.Combine(streamlineCachePath, "sl.common.dll")))
+                    throw new InvalidDataException("The cached Streamline runtime is incomplete. Download the latest Streamline release and try again.");
+
+                var streamlineRoot = Path.Combine("OptiScaler", "streamline");
+                var streamlineFileCount = 0;
+                foreach (var sourcePath in streamlineFiles)
+                {
+                    var sourceRelativePath = Path.GetRelativePath(streamlineCachePath, sourcePath);
+                    var relativePath = Path.Combine(streamlineRoot, sourceRelativePath);
+                    var destinationPath = Path.Combine(gameDir, relativePath);
+                    var destinationDirectory = Path.GetDirectoryName(destinationPath);
+
+                    if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
+                    {
+                        rollbackJournal.CaptureDirectoryChain(destinationDirectory);
+                        Directory.CreateDirectory(destinationDirectory);
+                        var relativeDirectory = Path.GetRelativePath(gameDir, destinationDirectory);
+                        if (!manifest.InstalledDirectories.Contains(relativeDirectory, StringComparer.OrdinalIgnoreCase))
+                            manifest.InstalledDirectories.Add(relativeDirectory);
+                    }
+
+                    var existedBefore = File.Exists(destinationPath);
+                    var fileIsOriginal = priorBackedUpOriginals.Contains(relativePath);
+                    var fileIsOptiCreated = priorCreatedByOptiScaler.Contains(relativePath);
+                    string? preHash = null;
+                    if (existedBefore && !fileIsOriginal && !fileIsOptiCreated)
+                    {
+                        preHash = ComputeSha256(destinationPath);
+                        _backupStore.BackupFile(storeKey, gameDir, relativePath);
+                        manifest.BackedUpFiles.Add(relativePath);
+                        DebugWindow.Log($"[Install] Backed up existing Streamline file: {relativePath}");
+                    }
+
+                    rollbackJournal.CaptureFile(relativePath);
+                    File.Copy(sourcePath, destinationPath, overwrite: true);
+                    manifest.InstalledFiles.Add(relativePath);
+                    TrackManifestFileMutation(
+                        manifest,
+                        relativePath: relativePath,
+                        existedBefore: existedBefore && !fileIsOptiCreated,
+                        preInstallHash: (!fileIsOriginal && !fileIsOptiCreated) ? preHash : null,
+                        postInstallHash: ComputeSha256(destinationPath));
+                    streamlineFileCount++;
+                }
+
+                manifest.ExpectedFinalMarkers.Add(Path.Combine(streamlineRoot, "sl.common.dll"));
+                manifest.IncludesStreamline = true;
+                DebugWindow.Log($"[Install] Installed {streamlineFileCount} Streamline runtime DLL(s)");
+            }
+
             // Step 2.5: Generate OptiScaler.ini from profile if provided (skip for Default profile)
             if (effectiveProfile != null && effectiveProfile.IniSettings.Count > 0)
             {
                 try
                 {
+                    rollbackJournal.CaptureFile("OptiScaler.ini");
                     var profileService = new ProfileManagementService();
                     profileService.WriteOptiScalerIniToFile(gameDir, effectiveProfile);
                     DebugWindow.Log($"[Install] Generated OptiScaler.ini from profile: {effectiveProfile.Name}");
@@ -401,13 +470,17 @@ namespace OptiscalerClient.Services
             if (existingExtrasDll != null && !isRdna4 &&
                 string.Equals(Path.GetFileName(existingExtrasDll), Fsr4Int8DllHelper.CurrentFileName, StringComparison.OrdinalIgnoreCase))
             {
+                rollbackJournal.CaptureFile("OptiScaler.ini");
                 ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                 DebugWindow.Log($"[Install] Re-applied FSR4 INT8 forcing keys after profile write (Current extras DLL already present)");
             }
 
             // Step 3: Install Fakenvapi if requested (AMD/Intel only)
-            if (installFakenvapi && !string.IsNullOrEmpty(fakenvapiCachePath) && Directory.Exists(fakenvapiCachePath))
+            if (shouldInstallFakenvapi)
             {
+                if (string.IsNullOrWhiteSpace(fakenvapiCachePath) || !Directory.Exists(fakenvapiCachePath))
+                    throw new DirectoryNotFoundException("Fakenvapi is required for this installation but is not available in the local cache.");
+
                 DebugWindow.Log($"[Install] Installing Fakenvapi...");
                 var fakeFiles = Directory.GetFiles(fakenvapiCachePath, "*.*", SearchOption.AllDirectories);
                 var fakeFileCount = 0;
@@ -416,8 +489,9 @@ namespace OptiscalerClient.Services
                 {
                     var fileName = Path.GetFileName(sourcePath);
 
-                    // Only copy nvapi64.dll and fakenvapi.ini
-                    if (fileName.Equals("nvapi64.dll", StringComparison.OrdinalIgnoreCase) ||
+                    // Current Fakenvapi releases use fakenvapi.dll. nvapi64.dll was the legacy
+                    // loader name and must not be substituted for the current component.
+                    if (fileName.Equals("fakenvapi.dll", StringComparison.OrdinalIgnoreCase) ||
                         fileName.Equals("fakenvapi.ini", StringComparison.OrdinalIgnoreCase))
                     {
                         var destPath = Path.Combine(gameDir, fileName);
@@ -436,6 +510,7 @@ namespace OptiscalerClient.Services
                             DebugWindow.Log($"[Install] Backed up existing Fakenvapi file: {fileName}");
                         }
 
+                        rollbackJournal.CaptureFile(fileName);
                         File.Copy(sourcePath, destPath, true);
                         manifest.InstalledFiles.Add(fileName);
                         TrackManifestFileMutation(
@@ -453,7 +528,7 @@ namespace OptiscalerClient.Services
                 if (fakeFileCount > 0)
                 {
                     manifest.IncludesFakenvapi = true;
-                    manifest.ExpectedFinalMarkers.Add("nvapi64.dll");
+                    manifest.ExpectedFinalMarkers.Add("fakenvapi.dll");
                 }
                 else
                 {
@@ -492,6 +567,7 @@ namespace OptiscalerClient.Services
                             DebugWindow.Log($"[Install] Backed up existing NukemFG file: {fileName}");
                         }
 
+                        rollbackJournal.CaptureFile(fileName);
                         File.Copy(sourcePath, destPath, true);
                         manifest.InstalledFiles.Add(fileName);
                         TrackManifestFileMutation(
@@ -515,10 +591,13 @@ namespace OptiscalerClient.Services
                         // (reported 2026-08-17, e.g. Clair Obscur: Expedition 33 on AMD/Intel GPUs).
                         if (!string.IsNullOrEmpty(game.DlssFrameGenVersion))
                         {
+                            rollbackJournal.CaptureFile("OptiScaler.ini");
                             ModifyOptiScalerIni(gameDir, "Enabled", "true", "FrameGen");
-                            // OptiScaler 0.9+ renamed the legacy "nukems" INI value to nvngxfg.
-                            ModifyOptiScalerIni(gameDir, "FGInput", "nvngxfg", "FrameGen");
-                            ModifyOptiScalerIni(gameDir, "FGOutput", "nvngxfg", "FrameGen");
+                            var usesNightlySchema = FrameGenerationConfigurationService.UsesNightlyFrameGenerationSchema(optiscalerVersion);
+                            ModifyOptiScalerIni(gameDir, "FGInput", usesNightlySchema ? "nvngxfg" : "nukems", "FrameGen");
+                            ModifyOptiScalerIni(gameDir, "FGOutput", usesNightlySchema ? "nvngxfg" : "nukems", "FrameGen");
+                            if (usesNightlySchema)
+                                ModifyOptiScalerIni(gameDir, "FGNvngxReplacement", "Nukems", "FrameGen");
                             DebugWindow.Log($"[Install] Modified OptiScaler.ini [FrameGen] for NukemFG");
                         }
                         else
@@ -544,7 +623,18 @@ namespace OptiscalerClient.Services
             // 2.5, then component-specific adjustments ran, and only now do we patch the FG keys
             // required by this game. Never regenerate or mutate the shared profile from here.
             if (game.FrameGenerationSettings != null)
-                ApplyFrameGenerationSettings(game, gameDir);
+            {
+                rollbackJournal.CaptureFile("OptiScaler.ini");
+                ApplyFrameGenerationSettings(game, gameDir, optiscalerVersion: optiscalerVersion);
+            }
+
+            // Apply the per-game quality ratio after the shared profile as another narrow INI
+            // patch. GameControlled explicitly disables a ratio a profile may have enabled.
+            if (game.UpscalingQualitySettings != null)
+            {
+                rollbackJournal.CaptureFile("OptiScaler.ini");
+                ApplyUpscalingQualitySettings(game, gameDir);
+            }
 
             // Save manifest to external store
             manifest.ExpectedFinalMarkers = manifest.ExpectedFinalMarkers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -583,10 +673,22 @@ namespace OptiscalerClient.Services
 
                 var backupFilesDir = _backupStore.GetFilesDir(storeKey);
                 var rollbackSummary = RollbackFailedInstall(gameDir, backupFilesDir, manifest);
+                var journalSummary = rollbackJournal.Rollback();
                 DebugWindow.Log($"[Install] Rollback completed. Restored={rollbackSummary.Restored}, Deleted={rollbackSummary.Deleted}");
+                DebugWindow.Log($"[Install] Transaction rollback completed. Restored={journalSummary.Restored}, Deleted={journalSummary.Deleted}, DirectoriesRemoved={journalSummary.DirectoriesRemoved}");
 
-                // Clean up the external store entry for this failed install
-                _backupStore.DeleteBackup(storeKey);
+                // An update must leave the previous committed installation fully usable.
+                // For a new install, discard the transient external backup; for an update,
+                // put the prior manifest back instead of leaving the failed in-progress one.
+                if (priorManifest != null)
+                {
+                    _backupStore.SaveManifest(storeKey, priorManifest);
+                    DebugWindow.Log("[Install] Restored the previous committed installation manifest after failed update.");
+                }
+                else
+                {
+                    _backupStore.DeleteBackup(storeKey);
+                }
 
                 throw new Exception($"{ex.Message}", ex);
             }
@@ -597,7 +699,7 @@ namespace OptiscalerClient.Services
         /// The existing file may have been generated from a shared profile; only keys returned by
         /// <see cref="FrameGenerationConfigurationService.BuildIniSettings"/> are overwritten.
         /// </summary>
-        public void ApplyFrameGenerationSettings(Game game, string? resolvedGameDir = null, GpuInfo? gpu = null)
+        public void ApplyFrameGenerationSettings(Game game, string? resolvedGameDir = null, GpuInfo? gpu = null, string? optiscalerVersion = null)
         {
             if (game.FrameGenerationSettings == null)
                 throw new InvalidOperationException("No per-game frame generation setting has been selected.");
@@ -608,7 +710,8 @@ namespace OptiscalerClient.Services
 
             var service = new FrameGenerationConfigurationService();
             var capabilities = service.DetectCapabilities(game, gpu);
-            var iniPatch = service.BuildIniSettings(game.FrameGenerationSettings, capabilities);
+            var iniPatch = service.BuildIniSettings(game.FrameGenerationSettings, capabilities,
+                optiscalerVersion ?? game.OptiscalerVersion);
             var patchedKeyCount = 0;
             foreach (var section in iniPatch)
             {
@@ -631,68 +734,47 @@ namespace OptiscalerClient.Services
             DebugWindow.Log($"[FrameGen] Applied {patchedKeyCount} INI override(s) after the selected profile: {game.FrameGenerationSettings.Route} -> {game.FrameGenerationSettings.Output} for {game.Name}; restart required.");
         }
 
-        public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
-
-        /// <summary>Imports a user-provided DLSS Enabler proxy. It cannot coexist with an OptiScaler injector.</summary>
-        public void InstallDlssEnabler(Game game, string sourceDllPath, string injectionDllName = "dxgi.dll")
+        /// <summary>
+        /// Applies the persisted per-game quality ratio as a narrow patch over the existing INI.
+        /// GameControlled disables the override so the game's own quality preset remains authoritative.
+        /// </summary>
+        public void ApplyUpscalingQualitySettings(Game game, string? resolvedGameDir = null)
         {
-            if (!File.Exists(sourceDllPath)) throw new FileNotFoundException("DLSS Enabler DLL was not found.");
-            if (!Path.GetExtension(sourceDllPath).Equals(".dll", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("DLSS Enabler must be imported from a DLL file.");
-            if (game.IsOptiscalerInstalled)
-                throw new InvalidOperationException("Uninstall OptiScaler before importing DLSS Enabler. The two injectors cannot coexist.");
+            if (game.UpscalingQualitySettings == null)
+                throw new InvalidOperationException("No per-game upscaling quality setting has been selected.");
 
-            var gameDir = DetermineInstallDirectory(game);
+            var gameDir = resolvedGameDir ?? DetermineInstallDirectory(game);
             if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
                 throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
-            var destination = Path.Combine(gameDir, injectionDllName);
-            var manifest = _backupStore.LoadManifest(game.InstallPath);
-            if (manifest?.IncludesOptiscaler == true)
-                throw new InvalidOperationException("A managed OptiScaler installation is still present. Remove it first.");
-            if (manifest == null || !string.Equals(manifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
+
+            var settings = game.UpscalingQualitySettings;
+            var isEnabled = settings.Preset != UpscalingQualityPreset.GameControlled;
+            ModifyOptiScalerIni(gameDir, "UpscaleRatioOverrideEnabled", isEnabled ? "true" : "false", "UpscaleRatio");
+            if (isEnabled)
             {
-                manifest = new InstallationManifest
-                {
-                    OperationId = Guid.NewGuid().ToString("N"), OperationStatus = "in_progress",
-                    StartedAtUtc = DateTime.UtcNow.ToString("O"), InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    InstalledGameDirectory = gameDir, IncludesOptiscaler = false
-                };
+                var ratio = settings.Ratio.ToString("0.0#", CultureInfo.InvariantCulture);
+                ModifyOptiScalerIni(gameDir, "UpscaleRatioOverrideValue", ratio, "UpscaleRatio");
+            }
+            else
+            {
+                ModifyOptiScalerIni(gameDir, "UpscaleRatioOverrideValue", "auto", "UpscaleRatio");
             }
 
-            bool existed = File.Exists(destination);
-            bool alreadyBackedUp = manifest.FilesOverwritten.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase));
-            string? hash = null;
-            if (existed && !alreadyBackedUp)
+            settings.AppliedAtUtc = DateTime.UtcNow;
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest != null)
             {
-                hash = ComputeSha256(destination);
-                if (!_backupStore.BackupFile(game.InstallPath, gameDir, injectionDllName))
-                    throw new IOException($"Could not back up '{injectionDllName}' before importing DLSS Enabler.");
-                manifest.BackedUpFiles.Add(injectionDllName);
+                manifest.UpscalingQualityPresetApplied = settings.Preset.ToString();
+                manifest.UpscalingQualityRatioApplied = isEnabled ? settings.Ratio : null;
+                _backupStore.SaveManifest(game.InstallPath, manifest);
             }
-            File.Copy(sourceDllPath, destination, overwrite: true);
-            TrackManifestFileMutation(manifest, injectionDllName, existedBefore: existed, hash, ComputeSha256(destination));
-            if (!manifest.InstalledFiles.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase)) manifest.InstalledFiles.Add(injectionDllName);
-            if (!manifest.ExpectedFinalMarkers.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase)) manifest.ExpectedFinalMarkers.Add(injectionDllName);
-            manifest.IncludesDlssEnabler = true;
-            manifest.DlssEnablerSourceFileName = Path.GetFileName(sourceDllPath);
-            manifest.DlssEnablerInjectionName = injectionDllName;
-            manifest.OperationStatus = "committed";
-            manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
-            _backupStore.SaveManifest(game.InstallPath, manifest);
-            game.IsDlssEnablerInstalled = true;
-            DebugWindow.Log($"[DLSS Enabler] Imported '{Path.GetFileName(sourceDllPath)}' as {injectionDllName} for {game.Name}.");
+
+            DebugWindow.Log(isEnabled
+                ? $"[Quality] Applied {settings.Preset} ({settings.Ratio:0.00}x) after the selected profile for {game.Name}; restart required."
+                : $"[Quality] Disabled the quality ratio override for {game.Name}; the game controls input resolution.");
         }
 
-        /// <summary>Restores files tracked for a standalone DLSS Enabler import.</summary>
-        public void RemoveDlssEnabler(Game game)
-        {
-            var manifest = _backupStore.LoadManifest(game.InstallPath);
-            if (manifest?.IncludesDlssEnabler != true) return;
-            if (manifest.IncludesOptiscaler)
-                throw new InvalidOperationException("DLSS Enabler is part of a mixed manifest; use the normal uninstall flow.");
-            UninstallOptiScaler(game);
-            game.IsDlssEnablerInstalled = false;
-        }
+        public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
 
         /// <summary>
         /// Replaces targetPath (a FSR4 INT8-related DLL already present in the game's root, one of
@@ -1108,7 +1190,6 @@ namespace OptiscalerClient.Services
             game.Fsr4ExtraVersion = null;
             game.IsFsr4DllSwapped = false;
             game.Fsr4DllSwapTargetFileName = null;
-            game.IsDlssEnablerInstalled = false;
 
             // Re-analyze to refresh DLSS/FSR/XeSS detection after files were removed/restored
             var analyzer = new GameAnalyzerService();
@@ -1203,6 +1284,7 @@ namespace OptiscalerClient.Services
                 injectionDllName,
                 "OptiScaler.ini",
                 "nvapi64.dll",
+                "fakenvapi.dll",
                 "dlssg_to_fsr3_amd_is_better.dll",
                 Fsr4Int8DllHelper.LegacyFileName,
                 Fsr4Int8DllHelper.CurrentFileName
@@ -1761,6 +1843,171 @@ namespace OptiscalerClient.Services
         {
             public int Restored { get; set; }
             public int Deleted { get; set; }
+            public int DirectoriesRemoved { get; set; }
+        }
+
+        /// <summary>
+        /// Short-lived, per-install journal of the state immediately before each game-folder
+        /// mutation. The regular manifest is deliberately an uninstall record; this journal is
+        /// an install transaction record, so an update can be restored to its previous OptiScaler
+        /// version when a later validation or INI operation fails.
+        /// </summary>
+        private sealed class InstallationRollbackJournal : IDisposable
+        {
+            private readonly string _gameDir;
+            private readonly string _gameDirWithSeparator;
+            private readonly string _stagingDir;
+            private readonly Dictionary<string, JournaledFile> _files = new(StringComparer.OrdinalIgnoreCase);
+            private readonly Dictionary<string, JournaledDirectory> _directories = new(StringComparer.OrdinalIgnoreCase);
+
+            public InstallationRollbackJournal(string gameDir)
+            {
+                _gameDir = Path.GetFullPath(gameDir)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                _gameDirWithSeparator = _gameDir + Path.DirectorySeparatorChar;
+                _stagingDir = Path.Combine(Path.GetTempPath(), "OptiscalerClient", "install-transactions", Guid.NewGuid().ToString("N"));
+            }
+
+            public void CaptureFile(string relativePath)
+            {
+                var normalized = NormalizeRelativePath(relativePath);
+                if (_files.ContainsKey(normalized))
+                    return;
+
+                var sourcePath = GetGamePath(normalized);
+                var existed = File.Exists(sourcePath);
+                var stagedPath = Path.Combine(_stagingDir, normalized);
+
+                if (existed)
+                {
+                    var stagedDirectory = Path.GetDirectoryName(stagedPath);
+                    if (!string.IsNullOrEmpty(stagedDirectory))
+                        Directory.CreateDirectory(stagedDirectory);
+                    File.Copy(sourcePath, stagedPath, overwrite: true);
+                }
+
+                _files.Add(normalized, new JournaledFile(normalized, existed, stagedPath));
+            }
+
+            public void CaptureDirectoryChain(string directoryPath)
+            {
+                var current = Path.GetFullPath(directoryPath)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                while (IsWithinGameDirectory(current) && !string.Equals(current, _gameDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    var relativePath = Path.GetRelativePath(_gameDir, current);
+                    if (!_directories.ContainsKey(relativePath))
+                        _directories.Add(relativePath, new JournaledDirectory(relativePath, Directory.Exists(current)));
+
+                    if (Directory.Exists(current))
+                        break;
+
+                    var parent = Path.GetDirectoryName(current);
+                    if (string.IsNullOrEmpty(parent))
+                        break;
+                    current = parent;
+                }
+            }
+
+            public RollbackResult Rollback()
+            {
+                var result = new RollbackResult();
+
+                foreach (var entry in _files.Values.Reverse())
+                {
+                    var destinationPath = GetGamePath(entry.RelativePath);
+                    try
+                    {
+                        if (!entry.Existed)
+                        {
+                            if (File.Exists(destinationPath))
+                            {
+                                File.Delete(destinationPath);
+                                result.Deleted++;
+                            }
+                            continue;
+                        }
+
+                        if (!File.Exists(entry.StagedPath))
+                            continue;
+
+                        var destinationDirectory = Path.GetDirectoryName(destinationPath);
+                        if (!string.IsNullOrEmpty(destinationDirectory))
+                            Directory.CreateDirectory(destinationDirectory);
+                        File.Copy(entry.StagedPath, destinationPath, overwrite: true);
+                        result.Restored++;
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[Install] Transaction rollback could not restore '{entry.RelativePath}': {ex.Message}");
+                    }
+                }
+
+                foreach (var entry in _directories.Values
+                    .Where(x => !x.Existed)
+                    .OrderByDescending(x => x.RelativePath.Length))
+                {
+                    try
+                    {
+                        var directoryPath = GetGamePath(entry.RelativePath);
+                        if (Directory.Exists(directoryPath) && !Directory.EnumerateFileSystemEntries(directoryPath).Any())
+                        {
+                            Directory.Delete(directoryPath, recursive: false);
+                            result.DirectoriesRemoved++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[Install] Transaction rollback could not remove directory '{entry.RelativePath}': {ex.Message}");
+                    }
+                }
+
+                return result;
+            }
+
+            public void Dispose()
+            {
+                try
+                {
+                    if (Directory.Exists(_stagingDir))
+                        Directory.Delete(_stagingDir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[Install] Could not remove temporary transaction data: {ex.Message}");
+                }
+            }
+
+            private string NormalizeRelativePath(string relativePath)
+            {
+                if (string.IsNullOrWhiteSpace(relativePath) || Path.IsPathRooted(relativePath))
+                    throw new ArgumentException("A non-rooted game-relative path is required.", nameof(relativePath));
+
+                var normalized = Path.GetRelativePath(_gameDir, Path.GetFullPath(Path.Combine(_gameDir, relativePath)));
+                if (normalized.Equals("..", StringComparison.Ordinal) || normalized.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                    throw new ArgumentException("The transaction path escapes the game directory.", nameof(relativePath));
+
+                return normalized;
+            }
+
+            private string GetGamePath(string relativePath)
+            {
+                var path = Path.GetFullPath(Path.Combine(_gameDir, relativePath));
+                if (!IsWithinGameDirectory(path) && !string.Equals(path, _gameDir, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("The transaction path escapes the game directory.");
+                return path;
+            }
+
+            private bool IsWithinGameDirectory(string path)
+            {
+                var fullPath = Path.GetFullPath(path)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                return fullPath.StartsWith(_gameDirWithSeparator, StringComparison.OrdinalIgnoreCase);
+            }
+
+            private sealed record JournaledFile(string RelativePath, bool Existed, string StagedPath);
+            private sealed record JournaledDirectory(string RelativePath, bool Existed);
         }
 
         private static Dictionary<string, KeyFileSnapshot> BuildPreInstallStateMap(InstallationManifest? manifest)

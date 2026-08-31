@@ -15,6 +15,14 @@
         "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Betas"
     },
+    "OptiScalerNightly": {
+        "RepoOwner": "optiscaler",
+        "RepoName": "OptiScaler-nightly"
+    },
+    "Streamline": {
+        "RepoOwner": "NVIDIA-RTX",
+        "RepoName": "Streamline"
+    },
     "OptiScalerExtras": {
         "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Extras"

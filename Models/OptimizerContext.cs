@@ -20,6 +20,7 @@ namespace OptiscalerClient.Models
     [JsonSerializable(typeof(List<Game>))]
     [JsonSerializable(typeof(Game))]
     [JsonSerializable(typeof(GameFrameGenerationSettings))]
+    [JsonSerializable(typeof(GameUpscalingQualitySettings))]
     [JsonSerializable(typeof(List<string>))]
     [JsonSerializable(typeof(OptiScalerReleaseEntry))]
     [JsonSerializable(typeof(OptiScalerReleasesCache))]

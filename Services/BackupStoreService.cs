@@ -43,7 +43,7 @@ namespace OptiscalerClient.Services
         private static readonly HashSet<string> _unambiguousResidueNames = new(StringComparer.OrdinalIgnoreCase)
         {
             "OptiScaler.dll", "OptiScaler.ini", "OptiScaler.log",
-            "fakenvapi.ini", "fakenvapi.log"
+            "fakenvapi.dll", "fakenvapi.ini", "fakenvapi.log"
         };
 
         public BackupStoreService()

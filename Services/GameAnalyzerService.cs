@@ -119,7 +119,6 @@ public class GameAnalyzerService
         game.OptiscalerVersion = null; // Will be repopulated from manifest or log
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
-        game.IsDlssEnablerInstalled = false;
 
         HashSet<string> ignoredFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var blockHeuristicFallbackDetection = false;
@@ -160,9 +159,6 @@ public class GameAnalyzerService
                                     if (!string.IsNullOrEmpty(extManifest.DllSwapExtrasVersion))
                                         game.Fsr4ExtraVersion = extManifest.DllSwapExtrasVersion;
                                 }
-
-                                if (extManifest.IncludesDlssEnabler)
-                                    game.IsDlssEnablerInstalled = true;
 
                                 if (extManifest.IncludesOptiscaler)
                                 {

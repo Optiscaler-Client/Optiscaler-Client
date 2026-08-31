@@ -10,7 +10,7 @@ public enum FrameGenerationRoute
     Fsr31Native = 3,
     Fsr30Native = 4,
     OptiFg = 5,
-    DlssEnabler = 6,
+    Reserved6 = 6,
     /// <summary>Resolve the safest route independently for each game.</summary>
     Auto = 7
 }
@@ -75,7 +75,6 @@ public sealed class FrameGenerationCapabilities
     public bool HasXeFgDependencies { get; init; }
     public bool HasFsrFgDependencies { get; init; }
     public bool HasNukem { get; init; }
-    public bool HasDlssEnabler { get; init; }
     public bool IsIntelArc { get; init; }
     public bool IsAntiCheatDetected { get; init; }
     public IReadOnlyList<FrameGenerationRoute> AvailableRoutes { get; init; } = Array.Empty<FrameGenerationRoute>();
