@@ -329,6 +329,42 @@
               "textKey": "TxtHelpGMProfileText"
             },
             {
+              "label": "Frame Generation ⚡",
+              "labelKey": "TxtHelpGMFrameGenerationLabel",
+              "text": "Opens the per-game Frame Generation settings. Use it only after enabling Frame Generation in the game when the game requires it.",
+              "textKey": "TxtHelpGMFrameGenerationText",
+              "items": [
+                {
+                  "title": "FG route",
+                  "titleKey": "TxtHelpGMFgRouteTitle",
+                  "text": "Chooses which Frame Generation input path OptiScaler uses. Auto follows the input detected for the game; Disabled turns Frame Generation off.",
+                  "textKey": "TxtHelpGMFgRouteText",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "FG output",
+                  "titleKey": "TxtHelpGMFgOutputTitle",
+                  "text": "Chooses the technology that creates the generated frames. Auto leaves the choice to OptiScaler.",
+                  "textKey": "TxtHelpGMFgOutputText",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "MFG multiplier",
+                  "titleKey": "TxtHelpGMFgMfgTitle",
+                  "text": "Selects how many generated frames can be created for each rendered frame. It is available only for compatible routes, outputs and hardware.",
+                  "textKey": "TxtHelpGMFgMfgText",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "Advanced routes",
+                  "titleKey": "TxtHelpGMFgAdvancedTitle",
+                  "text": "Shows manual and experimental routes. Leave it off unless you know the game needs a specific route.",
+                  "textKey": "TxtHelpGMFgAdvancedText",
+                  "type": "bullet-point"
+                }
+              ]
+            },
+            {
               "label": "OptiScaler Version 📦",
               "labelKey": "TxtHelpGMVersionLabel",
               "text": "Select which version of OptiScaler to install. You can switch between stable releases and beta builds.",
