@@ -686,4 +686,18 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFsr4DllSwapText">Yalnızca ilgili DLL'yi değiştirmek için OptiScaler'ı None yapın ve FSR 4 DLL seçin. Özgün dosya yedeklenir. amdxc64.dll yalnızca INT8 tarafından desteklenir.</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Varsayılan FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage ve Quick Install'da önceden seçilen FSR 4 DLL'yi belirleyin. None eklemeyi veya değiştirmeyi atlar.</x:String>
+    <x:String x:Key="TxtFrameGeneration">Kare oluşturma</x:String>
+    <x:String x:Key="TxtFgRoute">FG yolu</x:String>
+    <x:String x:Key="TxtFgOutput">FG çıkışı</x:String>
+    <x:String x:Key="TxtMfgMultiplier">MFG çarpanı</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">Gelişmiş yollar</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">FG yapılandırmasını uygula</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler içe aktar…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">Devre dışı</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">Streamline üzerinden DLSS-G</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">Yerel FSR 3.1 FG</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">Yerel FSR 3.0 FG</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (deneysel)</x:String>
 </ResourceDictionary>

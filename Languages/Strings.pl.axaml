@@ -687,4 +687,18 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpFsr4DllSwapText">Ustaw OptiScaler na None i wybierz DLL FSR 4, aby zastąpić tylko odpowiedni DLL. Oryginał jest kopiowany zapasowo. amdxc64.dll obsługuje tylko INT8.</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Domyślny DLL FSR 4</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Wybierz DLL FSR 4 wstępnie wybrany w Manage i Quick Install. None pomija wstrzyknięcie lub zamianę.</x:String>
+    <x:String x:Key="TxtFrameGeneration">Generowanie klatek</x:String>
+    <x:String x:Key="TxtFgRoute">Trasa FG</x:String>
+    <x:String x:Key="TxtFgOutput">Wyjście FG</x:String>
+    <x:String x:Key="TxtMfgMultiplier">Mnożnik MFG</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">Zaawansowane trasy</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">Zastosuj konfigurację FG</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">Importuj DLSS Enabler…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">Wyłączone</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G przez Streamline</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">Natywne FG FSR 3.1</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">Natywne FG FSR 3.0</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (eksperymentalne)</x:String>
 </ResourceDictionary>

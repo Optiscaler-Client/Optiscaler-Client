@@ -61,6 +61,12 @@ namespace OptiscalerClient.Models
         public bool IncludesNukemFG { get; set; }
         public bool IncludesExtras { get; set; }
         public bool IncludesOptiPatcher { get; set; }
+        public bool IncludesDlssEnabler { get; set; }
+        public string? DlssEnablerSourceFileName { get; set; }
+        public string? DlssEnablerInjectionName { get; set; }
+        public string? FrameGenerationRouteApplied { get; set; }
+        public string? FrameGenerationOutputApplied { get; set; }
+        public string? MfgModeApplied { get; set; }
 
         /// <summary>
         /// Name of the OptiScaler profile that was applied during installation

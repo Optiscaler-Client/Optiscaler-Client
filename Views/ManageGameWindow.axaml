@@ -126,6 +126,7 @@
                                     </StackPanel>
                                 </Button>
                             </Grid>
+
                         </StackPanel>
                     </StackPanel>
 
@@ -485,6 +486,36 @@
                                               Classes="BtnSelector"
                                               HorizontalContentAlignment="Left"
                                               VerticalContentAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Row 2, Col 1 : Compact per-game FG configuration -->
+                                <StackPanel Grid.Row="2" Grid.Column="1">
+                                    <TextBlock Text="{DynamicResource TxtFrameGeneration}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Button Name="BtnFrameGeneration"
+                                            Margin="0,4,0,0"
+                                            Classes="BtnBase"
+                                            MinHeight="40"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="10,7"
+                                            Click="BtnFrameGeneration_Click">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Name="TxtFrameGenerationSelection"
+                                                       Grid.Column="0"
+                                                       Foreground="{StaticResource BrTextPrimary}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="&#xF3DD;"
+                                                       FontFamily="{StaticResource FontIcons}"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="12,0,0,0"/>
+                                        </Grid>
+                                    </Button>
                                 </StackPanel>
 
                             <!-- Row 0, Col 1 : FSR 4 DLL -->

@@ -687,4 +687,18 @@
     <x:String x:Key="TxtHelpFsr4DllSwapText">OptiScaler를 None으로 설정하고 FSR 4 DLL을 선택하면 해당 DLL만 교체합니다. 원본은 백업됩니다. amdxc64.dll은 INT8만 지원합니다.</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">기본 FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage와 Quick Install에서 미리 선택할 FSR 4 DLL을 고릅니다. None은 주입 또는 교체를 건너뜁니다.</x:String>
+    <x:String x:Key="TxtFrameGeneration">프레임 생성</x:String>
+    <x:String x:Key="TxtFgRoute">FG 경로</x:String>
+    <x:String x:Key="TxtFgOutput">FG 출력</x:String>
+    <x:String x:Key="TxtMfgMultiplier">MFG 배율</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">고급 경로</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">FG 구성 적용</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler 가져오기…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">사용 안 함</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">Streamline을 통한 DLSS-G</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">네이티브 FSR 3.1 FG</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">네이티브 FSR 3.0 FG</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG(실험적)</x:String>
 </ResourceDictionary>

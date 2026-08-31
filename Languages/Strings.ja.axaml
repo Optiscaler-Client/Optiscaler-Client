@@ -687,4 +687,18 @@
     <x:String x:Key="TxtHelpFsr4DllSwapText">OptiScaler を None にし、FSR 4 DLL を選択するとゲームフォルダー内の対応 DLL だけを置換します。元の DLL はバックアップされます。amdxc64.dll は INT8 のみ対応です。</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">既定の FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage と Quick Install で事前選択する FSR 4 DLL を選択します。None は注入またはスワップを省略します。</x:String>
+    <x:String x:Key="TxtFrameGeneration">フレーム生成</x:String>
+    <x:String x:Key="TxtFgRoute">FG 方式</x:String>
+    <x:String x:Key="TxtFgOutput">FG 出力</x:String>
+    <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">詳細な方式</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">FG 設定を適用</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler をインポート…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">無効</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">Streamline 経由の DLSS-G</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">ネイティブ FSR 3.1 FG</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">ネイティブ FSR 3.0 FG</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG（実験的）</x:String>
 </ResourceDictionary>

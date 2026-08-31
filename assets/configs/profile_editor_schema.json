@@ -295,7 +295,7 @@
             { "Value": "auto", "Label": "Auto" },
             { "Value": "nofg", "Label": "No FG" },
             { "Value": "dlssg", "Label": "DLSSG" },
-            { "Value": "nukems", "Label": "Nukem FG" },
+            { "Value": "nvngxfg", "Label": "Nukem / NvNGX FG" },
             { "Value": "fsrfg", "Label": "FSR FG" },
             { "Value": "upscaler", "Label": "Upscaler FG" },
             { "Value": "fsrfg30", "Label": "FSR FG 3.0" }
@@ -312,7 +312,9 @@
             { "Value": "nofg", "Label": "No FG" },
             { "Value": "fsrfg", "Label": "FSR FG" },
             { "Value": "xefg", "Label": "XeFG" },
-            { "Value": "nukems", "Label": "Nukem FG" }
+            { "Value": "nvngxfg", "Label": "Nukem / NvNGX FG" },
+            { "Value": "dlssg", "Label": "DLSS-G" },
+            { "Value": "dlssgwithnvngx", "Label": "DLSS-G + NvNGX" }
           ],
           "Row": 1,
           "Column": 0

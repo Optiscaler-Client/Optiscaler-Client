@@ -493,12 +493,13 @@ namespace OptiscalerClient.Views
             AddRootNode(nodes, "CmbNukemFGVersion", 3, 5);
 
             AddRootNode(nodes, "CmbProfile", 4, 3);
-            AddRootNode(nodes, "BtnUninstall", 4, 5);
+            AddRootNode(nodes, "BtnFrameGeneration", 4, 4);
+            AddRootNode(nodes, "BtnUninstall", 5, 5);
 
-            AddRootNode(nodes, "BtnOpenFolder", 5, 1);
-            AddRootNode(nodes, "BtnFolderCleanup", 5, 3);
-            AddRootNode(nodes, "BtnInstallManual", 5, 4);
-            AddRootNode(nodes, "BtnInstall", 5, 5);
+            AddRootNode(nodes, "BtnOpenFolder", 6, 1);
+            AddRootNode(nodes, "BtnFolderCleanup", 6, 3);
+            AddRootNode(nodes, "BtnInstallManual", 6, 4);
+            AddRootNode(nodes, "BtnInstall", 6, 5);
 
             return nodes;
         }
@@ -649,12 +650,16 @@ namespace OptiscalerClient.Views
 
                 ("CmbProfile", NavigationDirection.Up) => new[] { "CmbInjectionMethod" },
                 ("CmbProfile", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
-                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnUninstall", "BtnInstallManual" },
+                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnFrameGeneration" },
                 ("CmbProfile", NavigationDirection.Left) => new[] { "BtnEditTitle" },
 
-                ("BtnUninstall", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("BtnFrameGeneration", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("BtnFrameGeneration", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion", "CmbNukemFGVersion" },
+                ("BtnFrameGeneration", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnInstall" },
+
+                ("BtnUninstall", NavigationDirection.Left) => new[] { "BtnFrameGeneration", "CmbProfile" },
                 ("BtnUninstall", NavigationDirection.Down) => new[] { "BtnInstall" },
-                ("BtnUninstall", NavigationDirection.Up) => new[] { "CmbNukemFGVersion" },
+                ("BtnUninstall", NavigationDirection.Up) => new[] { "BtnFrameGeneration", "CmbNukemFGVersion" },
 
                 ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
                 ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup" },
@@ -1636,6 +1641,7 @@ namespace OptiscalerClient.Views
             ConfigureAdditionalComponents();
             CheckIfAntiCheat();
             PopulateCompatibilitySidebar();
+            SetupFrameGenerationButton();
 
         }
 
@@ -1764,6 +1770,87 @@ namespace OptiscalerClient.Views
                 txtNotes.Text = entry.Notes;
             }
         }
+
+        private void SetupFrameGenerationButton()
+        {
+            if (_game.FrameGenerationSettings == null)
+            {
+                _game.FrameGenerationSettings = new GameFrameGenerationSettings
+                {
+                    Route = FrameGenerationRoute.Disabled,
+                    Output = FrameGenerationOutput.Auto,
+                    MultiFrameMode = MultiFrameGenerationMode.X2
+                };
+            }
+            UpdateFrameGenerationSummary();
+        }
+
+        private async void BtnFrameGeneration_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var componentService = new ComponentManagementService();
+                var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+                var dialog = new FrameGenerationSettingsWindow(this, _game, gpu);
+                var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
+                if (settings == null) return;
+
+                _game.FrameGenerationSettings = settings;
+                UpdateFrameGenerationSummary();
+
+                if (_game.IsOptiscalerInstalled)
+                {
+                    await Task.Run(() => new GameInstallationService().ApplyFrameGenerationSettings(_game, gpu: gpu));
+                    NeedsScan = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this, "Frame Generation", $"Could not apply frame generation configuration:\n{ex.Message}").ShowDialog<object>(this);
+            }
+        }
+
+        private void UpdateFrameGenerationSummary()
+        {
+            var button = this.FindControl<Button>("BtnFrameGeneration");
+            var selection = this.FindControl<TextBlock>("TxtFrameGenerationSelection");
+            var settings = _game.FrameGenerationSettings;
+            if (button == null || selection == null || settings == null) return;
+
+            var route = settings.Route == FrameGenerationRoute.Auto
+                ? GetResourceString("TxtFgRouteAuto", "Auto")
+                : GetFrameGenerationRouteSummary(settings.Route);
+            var output = GetFrameGenerationOutputSummary(settings.Output);
+            var multiplier = settings.MultiFrameMode == MultiFrameGenerationMode.Auto
+                ? "Auto"
+                : settings.MultiFrameMode.ToString().Replace("X", "x");
+            selection.Text = settings.Route == FrameGenerationRoute.Disabled ? route : output;
+            ToolTip.SetTip(button, settings.Route == FrameGenerationRoute.Disabled
+                ? route
+                : $"{route} → {output} · {multiplier}");
+        }
+
+        private string GetFrameGenerationRouteSummary(FrameGenerationRoute route) => route switch
+        {
+            FrameGenerationRoute.Disabled => GetResourceString("TxtFgRouteDisabled", "Disabled"),
+            FrameGenerationRoute.DlssGStreamline => GetResourceString("TxtFgRouteDlssStreamline", "DLSS-G via Streamline"),
+            FrameGenerationRoute.Nukem => GetResourceString("TxtFgRouteNukem", "Nukem DLSS-G → FSR3"),
+            FrameGenerationRoute.Fsr31Native => GetResourceString("TxtFgRouteFsr31", "Native FSR 3.1 FG"),
+            FrameGenerationRoute.Fsr30Native => GetResourceString("TxtFgRouteFsr30", "Native FSR 3.0 FG"),
+            FrameGenerationRoute.OptiFg => GetResourceString("TxtFgRouteOptiFg", "OptiFG (experimental)"),
+            _ => route.ToString()
+        };
+
+        private static string GetFrameGenerationOutputSummary(FrameGenerationOutput output) => output switch
+        {
+            FrameGenerationOutput.Auto => "Auto",
+            FrameGenerationOutput.FsrFg => "FSR FG",
+            FrameGenerationOutput.XeFg => "Intel XeFG",
+            FrameGenerationOutput.Nukem => "Nukem FSR3 FG",
+            FrameGenerationOutput.DlssG => "DLSS-G",
+            FrameGenerationOutput.DlssGWithNvngx => "DLSS-G + NvNGX",
+            _ => output.ToString()
+        };
 
         private void ShowCompatibilityListFetchingState()
         {

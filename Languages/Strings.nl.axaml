@@ -687,4 +687,18 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpFsr4DllSwapText">Zet OptiScaler op None en kies een FSR 4-DLL om alleen de overeenkomstige DLL te vervangen. Het origineel wordt geback-upt. amdxc64.dll wordt alleen door INT8 ondersteund.</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Standaard FSR 4-DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Kies de vooraf geselecteerde FSR 4-DLL in Manage en Quick Install. None slaat injectie of swap over.</x:String>
+    <x:String x:Key="TxtFrameGeneration">Framegeneratie</x:String>
+    <x:String x:Key="TxtFgRoute">FG-route</x:String>
+    <x:String x:Key="TxtFgOutput">FG-uitvoer</x:String>
+    <x:String x:Key="TxtMfgMultiplier">MFG-vermenigvuldiger</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">Geavanceerde routes</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">FG-configuratie toepassen</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">DLSS Enabler importeren…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">Uitgeschakeld</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G via Streamline</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">Native FSR 3.1 FG</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">Native FSR 3.0 FG</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (experimenteel)</x:String>
 </ResourceDictionary>

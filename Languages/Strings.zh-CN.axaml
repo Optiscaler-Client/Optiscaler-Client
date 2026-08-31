@@ -688,4 +688,18 @@
     <x:String x:Key="TxtHelpFsr4DllSwapText">将 OptiScaler 设为 None 并选择 FSR 4 DLL，只替换游戏目录中对应的 DLL。原始文件会备份。amdxc64.dll 仅支持 INT8 包。</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">默认 FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">选择在 Manage 和 Quick Install 中预选的 FSR 4 DLL。None 会跳过注入或交换。</x:String>
+    <x:String x:Key="TxtFrameGeneration">帧生成</x:String>
+    <x:String x:Key="TxtFgRoute">FG 路径</x:String>
+    <x:String x:Key="TxtFgOutput">FG 输出</x:String>
+    <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">高级路径</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">应用 FG 配置</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">导入 DLSS Enabler…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">已禁用</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">通过 Streamline 使用 DLSS-G</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">原生 FSR 3.1 FG</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">原生 FSR 3.0 FG</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG（实验性）</x:String>
 </ResourceDictionary>

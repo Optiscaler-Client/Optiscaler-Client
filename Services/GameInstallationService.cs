@@ -516,8 +516,9 @@ namespace OptiscalerClient.Services
                         if (!string.IsNullOrEmpty(game.DlssFrameGenVersion))
                         {
                             ModifyOptiScalerIni(gameDir, "Enabled", "true", "FrameGen");
-                            ModifyOptiScalerIni(gameDir, "FGInput", "nukems", "FrameGen");
-                            ModifyOptiScalerIni(gameDir, "FGOutput", "nukems", "FrameGen");
+                            // OptiScaler 0.9+ renamed the legacy "nukems" INI value to nvngxfg.
+                            ModifyOptiScalerIni(gameDir, "FGInput", "nvngxfg", "FrameGen");
+                            ModifyOptiScalerIni(gameDir, "FGOutput", "nvngxfg", "FrameGen");
                             DebugWindow.Log($"[Install] Modified OptiScaler.ini [FrameGen] for NukemFG");
                         }
                         else
@@ -538,6 +539,12 @@ namespace OptiscalerClient.Services
                     throw new Exception("Installation failed because the NukemFG package is corrupt or incomplete.");
                 }
             }
+
+            // This is deliberately the final INI layer: the selected profile was written in step
+            // 2.5, then component-specific adjustments ran, and only now do we patch the FG keys
+            // required by this game. Never regenerate or mutate the shared profile from here.
+            if (game.FrameGenerationSettings != null)
+                ApplyFrameGenerationSettings(game, gameDir);
 
             // Save manifest to external store
             manifest.ExpectedFinalMarkers = manifest.ExpectedFinalMarkers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -585,7 +592,107 @@ namespace OptiscalerClient.Services
             }
         }
 
+        /// <summary>
+        /// Applies the persisted per-game FG selection as a narrow patch over the existing INI.
+        /// The existing file may have been generated from a shared profile; only keys returned by
+        /// <see cref="FrameGenerationConfigurationService.BuildIniSettings"/> are overwritten.
+        /// </summary>
+        public void ApplyFrameGenerationSettings(Game game, string? resolvedGameDir = null, GpuInfo? gpu = null)
+        {
+            if (game.FrameGenerationSettings == null)
+                throw new InvalidOperationException("No per-game frame generation setting has been selected.");
+
+            var gameDir = resolvedGameDir ?? DetermineInstallDirectory(game);
+            if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+                throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
+
+            var service = new FrameGenerationConfigurationService();
+            var capabilities = service.DetectCapabilities(game, gpu);
+            var iniPatch = service.BuildIniSettings(game.FrameGenerationSettings, capabilities);
+            var patchedKeyCount = 0;
+            foreach (var section in iniPatch)
+            {
+                foreach (var key in section.Value)
+                {
+                    ModifyOptiScalerIni(gameDir, key.Key, key.Value, section.Key);
+                    patchedKeyCount++;
+                }
+            }
+
+            game.FrameGenerationSettings.AppliedAtUtc = DateTime.UtcNow;
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest != null)
+            {
+                manifest.FrameGenerationRouteApplied = game.FrameGenerationSettings.Route.ToString();
+                manifest.FrameGenerationOutputApplied = game.FrameGenerationSettings.Output.ToString();
+                manifest.MfgModeApplied = game.FrameGenerationSettings.MultiFrameMode.ToString();
+                _backupStore.SaveManifest(game.InstallPath, manifest);
+            }
+            DebugWindow.Log($"[FrameGen] Applied {patchedKeyCount} INI override(s) after the selected profile: {game.FrameGenerationSettings.Route} -> {game.FrameGenerationSettings.Output} for {game.Name}; restart required.");
+        }
+
         public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
+
+        /// <summary>Imports a user-provided DLSS Enabler proxy. It cannot coexist with an OptiScaler injector.</summary>
+        public void InstallDlssEnabler(Game game, string sourceDllPath, string injectionDllName = "dxgi.dll")
+        {
+            if (!File.Exists(sourceDllPath)) throw new FileNotFoundException("DLSS Enabler DLL was not found.");
+            if (!Path.GetExtension(sourceDllPath).Equals(".dll", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("DLSS Enabler must be imported from a DLL file.");
+            if (game.IsOptiscalerInstalled)
+                throw new InvalidOperationException("Uninstall OptiScaler before importing DLSS Enabler. The two injectors cannot coexist.");
+
+            var gameDir = DetermineInstallDirectory(game);
+            if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+                throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
+            var destination = Path.Combine(gameDir, injectionDllName);
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest?.IncludesOptiscaler == true)
+                throw new InvalidOperationException("A managed OptiScaler installation is still present. Remove it first.");
+            if (manifest == null || !string.Equals(manifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
+            {
+                manifest = new InstallationManifest
+                {
+                    OperationId = Guid.NewGuid().ToString("N"), OperationStatus = "in_progress",
+                    StartedAtUtc = DateTime.UtcNow.ToString("O"), InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    InstalledGameDirectory = gameDir, IncludesOptiscaler = false
+                };
+            }
+
+            bool existed = File.Exists(destination);
+            bool alreadyBackedUp = manifest.FilesOverwritten.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase));
+            string? hash = null;
+            if (existed && !alreadyBackedUp)
+            {
+                hash = ComputeSha256(destination);
+                if (!_backupStore.BackupFile(game.InstallPath, gameDir, injectionDllName))
+                    throw new IOException($"Could not back up '{injectionDllName}' before importing DLSS Enabler.");
+                manifest.BackedUpFiles.Add(injectionDllName);
+            }
+            File.Copy(sourceDllPath, destination, overwrite: true);
+            TrackManifestFileMutation(manifest, injectionDllName, existedBefore: existed, hash, ComputeSha256(destination));
+            if (!manifest.InstalledFiles.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase)) manifest.InstalledFiles.Add(injectionDllName);
+            if (!manifest.ExpectedFinalMarkers.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase)) manifest.ExpectedFinalMarkers.Add(injectionDllName);
+            manifest.IncludesDlssEnabler = true;
+            manifest.DlssEnablerSourceFileName = Path.GetFileName(sourceDllPath);
+            manifest.DlssEnablerInjectionName = injectionDllName;
+            manifest.OperationStatus = "committed";
+            manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
+            _backupStore.SaveManifest(game.InstallPath, manifest);
+            game.IsDlssEnablerInstalled = true;
+            DebugWindow.Log($"[DLSS Enabler] Imported '{Path.GetFileName(sourceDllPath)}' as {injectionDllName} for {game.Name}.");
+        }
+
+        /// <summary>Restores files tracked for a standalone DLSS Enabler import.</summary>
+        public void RemoveDlssEnabler(Game game)
+        {
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest?.IncludesDlssEnabler != true) return;
+            if (manifest.IncludesOptiscaler)
+                throw new InvalidOperationException("DLSS Enabler is part of a mixed manifest; use the normal uninstall flow.");
+            UninstallOptiScaler(game);
+            game.IsDlssEnablerInstalled = false;
+        }
 
         /// <summary>
         /// Replaces targetPath (a FSR4 INT8-related DLL already present in the game's root, one of
@@ -1001,6 +1108,7 @@ namespace OptiscalerClient.Services
             game.Fsr4ExtraVersion = null;
             game.IsFsr4DllSwapped = false;
             game.Fsr4DllSwapTargetFileName = null;
+            game.IsDlssEnablerInstalled = false;
 
             // Re-analyze to refresh DLSS/FSR/XeSS detection after files were removed/restored
             var analyzer = new GameAnalyzerService();

@@ -90,6 +90,10 @@ public class Game
     public bool IsFsr4DllSwapped { get; set; }
     public string? Fsr4DllSwapTargetFileName { get; set; }
 
+    /// <summary>Optional FG settings applied specifically to this game, never to a shared profile.</summary>
+    public GameFrameGenerationSettings? FrameGenerationSettings { get; set; }
+    public bool IsDlssEnablerInstalled { get; set; }
+
     public bool HasUpscaler => DlssVersion != null || DlssFrameGenVersion != null || FsrVersion != null || XessVersion != null || IsOptiscalerInstalled;
 
     // UI customization (not set by scanner)

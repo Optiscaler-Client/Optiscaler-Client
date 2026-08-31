@@ -687,4 +687,18 @@
     <x:String x:Key="TxtHelpFsr4DllSwapText">Установите OptiScaler на None и выберите DLL FSR 4 для замены только соответствующей DLL. Оригинал сохраняется. amdxc64.dll поддерживается только INT8.</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">DLL FSR 4 по умолчанию</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Выберите DLL FSR 4, предвыбранную в Manage и Quick Install. None пропускает внедрение или замену.</x:String>
+    <x:String x:Key="TxtFrameGeneration">Генерация кадров</x:String>
+    <x:String x:Key="TxtFgRoute">Маршрут FG</x:String>
+    <x:String x:Key="TxtFgOutput">Вывод FG</x:String>
+    <x:String x:Key="TxtMfgMultiplier">Множитель MFG</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutes">Расширенные маршруты</x:String>
+    <x:String x:Key="TxtApplyFgConfiguration">Применить конфигурацию FG</x:String>
+    <x:String x:Key="TxtImportDlssEnabler">Импортировать DLSS Enabler…</x:String>
+    <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
+    <x:String x:Key="TxtFgRouteDisabled">Отключено</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamline">DLSS-G через Streamline</x:String>
+    <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
+    <x:String x:Key="TxtFgRouteFsr31">Встроенный FG FSR 3.1</x:String>
+    <x:String x:Key="TxtFgRouteFsr30">Встроенный FG FSR 3.0</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (экспериментально)</x:String>
 </ResourceDictionary>
