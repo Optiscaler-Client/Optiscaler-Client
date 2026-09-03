@@ -471,7 +471,7 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 0 : Profile selector -->
+                                <!-- Row 2, Col 0 : Profile selector (position overridden at runtime by UpdateOptionsLayout) -->
                                 <StackPanel Name="PanelProfile" Grid.Row="2" Grid.Column="0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtProfileLbl}"
@@ -498,7 +498,7 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 1 : Compact per-game FG configuration -->
+                                <!-- Row 2, Col 1 : Compact per-game FG configuration (position overridden at runtime by UpdateOptionsLayout) -->
                                 <StackPanel Name="PanelFrameGeneration" Grid.Row="2" Grid.Column="1">
                                     <TextBlock Text="{DynamicResource TxtFrameGeneration}"
                                                Foreground="{StaticResource BrTextSecondary}"
@@ -535,7 +535,7 @@
                                     </Button>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 2 : Per-game upscaling quality override -->
+                                <!-- Row 2, Col 2 : Per-game upscaling quality override (position overridden at runtime by UpdateOptionsLayout) -->
                                 <StackPanel Name="PanelUpscalingQuality" Grid.Row="2" Grid.Column="2">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtUpscalingQuality}"
@@ -563,6 +563,34 @@
                                               DropDownOpened="CmbUpscalingQuality_DropDownOpened"
                                               DropDownClosed="CmbUpscalingQuality_DropDownClosed"
                                               SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
+                                </StackPanel>
+
+                                <!-- Row 3, Col 0 : Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
+                                <StackPanel Name="PanelOutputUpscaler" Grid.Row="3" Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtOutputUpscalerTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbOutputUpscaler"
+                                              Margin="0,4,0,0"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              VerticalContentAlignment="Center"
+                                              SelectionChanged="CmbOutputUpscaler_SelectionChanged"/>
                                 </StackPanel>
 
                             <!-- Row 0, Col 1 : FSR 4 DLL swap -->

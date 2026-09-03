@@ -332,7 +332,7 @@ namespace OptiscalerClient.Views
             }
 
             cmb.IsEnabled = true;
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             foreach (var ver in _componentService.ExtrasAvailableVersions)
             {
@@ -439,7 +439,7 @@ namespace OptiscalerClient.Views
 
             cmb.Items.Clear();
 
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             var versions = _componentService.OptiPatcherAvailableVersions;
             if (versions.Count == 0)

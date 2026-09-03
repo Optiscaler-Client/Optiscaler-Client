@@ -75,6 +75,7 @@ namespace OptiscalerClient.Views
         private bool _isControllerModeActive;
         private bool _isUpdatingUpscalingQuality;
         private bool _qualityCustomHandledForOpen;
+        private bool _isUpdatingOutputUpscaler;
 
         // Right-stick scroll for the compatibility sidebar — read-only content, deliberately not
         // part of the D-pad/left-stick focus navigation (see compatibility_list_sidebar_plan.md).
@@ -1275,7 +1276,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private void BtnOptiStable_Click(object? sender, RoutedEventArgs e)
+        private async void BtnOptiStable_Click(object? sender, RoutedEventArgs e)
         {
             if (!_optiShowingBeta && !_optiShowingNightly && !_optiShowingCustom) return;
             _optiShowingBeta = false;
@@ -1284,9 +1285,10 @@ namespace OptiscalerClient.Views
             UpdateOptiChannelButtons();
             if (_cachedComponentService != null)
                 PopulateOptiVersionCombo(_cachedComponentService);
+            await WarnIfMfgEnablerNeedsNightlyAsync();
         }
 
-        private void BtnOptiBeta_Click(object? sender, RoutedEventArgs e)
+        private async void BtnOptiBeta_Click(object? sender, RoutedEventArgs e)
         {
             if (_optiShowingBeta) return;
             _optiShowingBeta = true;
@@ -1295,6 +1297,20 @@ namespace OptiscalerClient.Views
             UpdateOptiChannelButtons();
             if (_cachedComponentService != null)
                 PopulateOptiVersionCombo(_cachedComponentService);
+            await WarnIfMfgEnablerNeedsNightlyAsync();
+        }
+
+        /// <summary>Warns when the user switches away from Nightly while this game has MFG with DLSS Enabler configured — that combination is not guaranteed to work outside Nightly builds.</summary>
+        private async Task WarnIfMfgEnablerNeedsNightlyAsync()
+        {
+            var settings = _game.FrameGenerationSettings;
+            var mfgWithEnabler = settings?.Output == FrameGenerationOutput.DlssG &&
+                settings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+            if (mfgWithEnabler)
+            {
+                await ShowToastAsync(GetResourceString("TxtMfgWrongChannelToast",
+                    "MFG may not work with the selected OptiScaler version — a Nightly version is recommended."));
+            }
         }
 
         private void BtnOptiNightly_Click(object? sender, RoutedEventArgs e)
@@ -1359,7 +1375,7 @@ namespace OptiscalerClient.Views
             cmb.IsEnabled = true;
 
             // Option 0: None
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             foreach (var ver in versions)
             {
@@ -1528,7 +1544,7 @@ namespace OptiscalerClient.Views
             cmb.Items.Clear();
 
             // Option 0: None (default — opt-in)
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             var versions = componentService.OptiPatcherAvailableVersions;
             foreach (var ver in versions)
@@ -1572,7 +1588,7 @@ namespace OptiscalerClient.Views
             cmb.Items.Clear();
 
             // Option 0: None (default — opt-in)
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             var versions = componentService.GetDownloadedNukemFGVersions();
             foreach (var ver in versions)
@@ -1623,7 +1639,7 @@ namespace OptiscalerClient.Views
             cmb.Items.Clear();
 
             // Option 0: None (default — opt-in)
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             var versions = componentService.FakenvapiAvailableVersions;
             foreach (var ver in versions)
@@ -1776,6 +1792,7 @@ namespace OptiscalerClient.Views
             PopulateCompatibilitySidebar();
             SetupFrameGenerationButton();
             SetupUpscalingQualitySelector();
+            SetupOutputUpscalerSelector();
 
         }
 
@@ -1918,14 +1935,18 @@ namespace OptiscalerClient.Views
             var profile = this.FindControl<StackPanel>("PanelProfile");
             var frameGeneration = this.FindControl<StackPanel>("PanelFrameGeneration");
             var upscalingQuality = this.FindControl<StackPanel>("PanelUpscalingQuality");
+            var outputUpscaler = this.FindControl<StackPanel>("PanelOutputUpscaler");
             var injectionLabel = this.FindControl<TextBlock>("LblInjectionMethod");
 
             if (opti == null || extras == null || injection == null || patcher == null
-                || profile == null || frameGeneration == null || upscalingQuality == null)
+                || profile == null || frameGeneration == null || upscalingQuality == null || outputUpscaler == null)
                 return;
 
-            // Full: Opti / FSR4 / Fakenvapi, then injection / patcher / NukemFG.
-            // Compact: Opti / FSR4 / injection, then patcher / profile / Frame Generation.
+            // Full: Opti / FSR4 / Fakenvapi, then injection / patcher / NukemFG, then profile /
+            // FrameGen / Quality (row 2 is fully packed — Output Upscaler has no room there and
+            // stays on its own row, beside Uninstall).
+            // Compact: Opti / FSR4 / injection, then patcher / profile / Frame Generation. Row 2
+            // only holds Quality, so Output Upscaler moves up next to it instead of row 3.
             Grid.SetRow(opti, 0); Grid.SetColumn(opti, 0);
             Grid.SetRow(extras, 0); Grid.SetColumn(extras, 1);
             Grid.SetRow(injection, useCompactLayout ? 0 : 1);
@@ -1937,7 +1958,9 @@ namespace OptiscalerClient.Views
             Grid.SetRow(frameGeneration, useCompactLayout ? 1 : 2);
             Grid.SetColumn(frameGeneration, useCompactLayout ? 2 : 1);
             Grid.SetRow(upscalingQuality, 2);
-            Grid.SetColumn(upscalingQuality, useCompactLayout ? 0 : 2);
+            Grid.SetColumn(upscalingQuality, useCompactLayout ? 1 : 2);
+            Grid.SetRow(outputUpscaler, useCompactLayout ? 2 : 3);
+            Grid.SetColumn(outputUpscaler, useCompactLayout ? 0 : 0);
 
             if (injectionLabel != null)
                 injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
@@ -1972,7 +1995,7 @@ namespace OptiscalerClient.Views
             try
             {
                 combo.Items.Clear();
-                AddUpscalingQualityItem(combo, GetResourceString("TxtQualityGameControlled", "Game controlled"), UpscalingQualityPreset.GameControlled);
+                AddUpscalingQualityItem(combo, GetResourceString("TxtQualityGameControlled", "Game controlled"), UpscalingQualityPreset.GameControlled, isSentinel: true);
                 AddUpscalingQualityItem(combo, "Native", UpscalingQualityPreset.NativeAa);
                 AddUpscalingQualityItem(combo, "Ultra Quality", UpscalingQualityPreset.UltraQuality);
                 AddUpscalingQualityItem(combo, "Quality", UpscalingQualityPreset.Quality);
@@ -1997,8 +2020,12 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private static void AddUpscalingQualityItem(ComboBox combo, string label, UpscalingQualityPreset preset)
-            => combo.Items.Add(new ComboBoxItem { Content = label, Tag = preset });
+        private static void AddUpscalingQualityItem(ComboBox combo, string label, UpscalingQualityPreset preset, bool isSentinel = false)
+        {
+            var item = new ComboBoxItem { Content = label, Tag = preset };
+            if (isSentinel) item.Classes.Add("SentinelOption");
+            combo.Items.Add(item);
+        }
 
         private void SelectUpscalingQualityPreset(UpscalingQualityPreset selected)
         {
@@ -2098,6 +2125,80 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private void SetupOutputUpscalerSelector()
+        {
+            _game.OutputUpscalerSettings ??= new GameOutputUpscalerSettings();
+            PopulateOutputUpscalerSelector(_game.OutputUpscalerSettings.Backend);
+        }
+
+        private void PopulateOutputUpscalerSelector(OutputUpscalerBackend selected)
+        {
+            var combo = this.FindControl<ComboBox>("CmbOutputUpscaler");
+            if (combo == null) return;
+
+            _isUpdatingOutputUpscaler = true;
+            try
+            {
+                combo.Items.Clear();
+                AddOutputUpscalerItem(combo, GetResourceString("TxtOutputUpscalerDefault", "Default"), OutputUpscalerBackend.Default, isSentinel: true);
+                AddOutputUpscalerItem(combo, "FSR 2", OutputUpscalerBackend.Fsr2);
+                AddOutputUpscalerItem(combo, "FSR 3", OutputUpscalerBackend.Fsr3);
+                AddOutputUpscalerItem(combo, "FSR 4", OutputUpscalerBackend.Fsr4);
+                AddOutputUpscalerItem(combo, "XeSS", OutputUpscalerBackend.XeSS);
+                AddOutputUpscalerItem(combo, "DLSS", OutputUpscalerBackend.Dlss);
+
+                for (var index = 0; index < combo.Items.Count; index++)
+                {
+                    if (combo.Items[index] is ComboBoxItem item && item.Tag is OutputUpscalerBackend backend && backend == selected)
+                    {
+                        combo.SelectedIndex = index;
+                        return;
+                    }
+                }
+                combo.SelectedIndex = 0;
+            }
+            finally
+            {
+                _isUpdatingOutputUpscaler = false;
+            }
+        }
+
+        private static void AddOutputUpscalerItem(ComboBox combo, string label, OutputUpscalerBackend backend, bool isSentinel = false)
+        {
+            var item = new ComboBoxItem { Content = label, Tag = backend };
+            if (isSentinel) item.Classes.Add("SentinelOption");
+            combo.Items.Add(item);
+        }
+
+        private async void CmbOutputUpscaler_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingOutputUpscaler || sender is not ComboBox combo
+                || combo.SelectedItem is not ComboBoxItem item
+                || item.Tag is not OutputUpscalerBackend selected)
+                return;
+
+            _game.OutputUpscalerSettings = new GameOutputUpscalerSettings
+            {
+                Backend = selected,
+                AppliedAtUtc = _game.OutputUpscalerSettings?.AppliedAtUtc
+            };
+
+            if (!_game.IsOptiscalerInstalled) return;
+
+            try
+            {
+                await Task.Run(() => new GameInstallationService().ApplyOutputUpscalerSettings(_game));
+                NeedsScan = true;
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this,
+                    GetResourceString("TxtOutputUpscaler", "Output Upscaler"),
+                    $"{GetResourceString("TxtOutputUpscalerApplyError", "Could not apply the output upscaler configuration:")}\n{ex.Message}")
+                    .ShowDialog<object>(this);
+            }
+        }
+
         private async void BtnFrameGeneration_Click(object? sender, RoutedEventArgs e)
         {
             try
@@ -2110,6 +2211,20 @@ namespace OptiscalerClient.Views
 
                 _game.FrameGenerationSettings = settings;
                 UpdateFrameGenerationSummary();
+
+                var needsNightly = settings.Output == FrameGenerationOutput.DlssG &&
+                    settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+                if (needsNightly && !_optiShowingNightly)
+                {
+                    _optiShowingNightly = true;
+                    _optiShowingBeta = false;
+                    _optiShowingCustom = false;
+                    UpdateOptiChannelButtons();
+                    if (_cachedComponentService != null)
+                        PopulateOptiVersionCombo(_cachedComponentService);
+                    await ShowToastAsync(GetResourceString("TxtMfgRequiresNightlyToast",
+                        "MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically."));
+                }
 
                 if (_game.IsOptiscalerInstalled)
                 {
@@ -2976,7 +3091,18 @@ namespace OptiscalerClient.Views
                     });
                 }
 
-                var installStreamline = componentService.IsNightlyOptiScalerVersion(optiscalerVersion);
+                // Streamline is no longer tied to "is this a Nightly version" — it's tied to
+                // whether the game's (Auto-resolved) FG configuration actually needs it: either
+                // FGInput=dlssg or FGOutput=dlssg (with or without DLSS Enabler as the NVNGX
+                // replacement). isNightlyChannel is kept separately below only for the
+                // Fakenvapi-bundling quirk of Nightly packages.
+                var fgConfigService = new FrameGenerationConfigurationService();
+                var installGpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+                var isNightlyChannel = componentService.IsNightlyOptiScalerVersion(optiscalerVersion);
+                var installStreamline = _game.FrameGenerationSettings != null &&
+                    fgConfigService.RequiresStreamline(_game.FrameGenerationSettings, fgConfigService.DetectCapabilities(_game, installGpu));
+                var mfgWithEnabler = _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
+                    _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                 var streamlineCacheDir = string.Empty;
                 if (installStreamline)
                 {
@@ -3031,7 +3157,7 @@ namespace OptiscalerClient.Views
                 // Nightly packages do not bundle Fakenvapi. Do not overwrite an existing game
                 // copy; otherwise resolve the current release and include it in this install.
                 var nightlyGameDir = overrideGameDir ?? installService.DetermineInstallDirectory(_game);
-                if (installStreamline && (string.IsNullOrWhiteSpace(nightlyGameDir) ||
+                if (isNightlyChannel && (string.IsNullOrWhiteSpace(nightlyGameDir) ||
                     !File.Exists(System.IO.Path.Combine(nightlyGameDir, "fakenvapi.dll"))))
                 {
                     try
@@ -3061,7 +3187,7 @@ namespace OptiscalerClient.Views
                 }
 
                 // Download Fakenvapi if not cached yet
-                if (!installStreamline && installFakenvapi && !componentService.IsFakenvapiCached(selectedFakenvapiVersion!))
+                if (!isNightlyChannel && installFakenvapi && !componentService.IsFakenvapiCached(selectedFakenvapiVersion!))
                 {
                     try
                     {
@@ -3130,6 +3256,21 @@ namespace OptiscalerClient.Views
                 var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
                 var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
 
+                var dlssEnablerCacheDir = string.Empty;
+                if (mfgWithEnabler)
+                {
+                    var enablerVersion = _game.FrameGenerationSettings!.DlssEnablerVersion;
+                    if (string.IsNullOrEmpty(enablerVersion))
+                    {
+                        var title = GetResourceString("TxtError", "Error");
+                        await new ConfirmDialog(this, title,
+                            GetResourceString("TxtNoDlssEnablerVersionSelected", "No DLSS Enabler version selected. Configure Frame Generation for this game first.")
+                        ).ShowDialog<object>(this);
+                        return;
+                    }
+                    dlssEnablerCacheDir = componentService.GetDlssEnablerCachePath(enablerVersion);
+                }
+
                 string? resolvedGameDir = null;
                 try
                 {
@@ -3143,7 +3284,9 @@ namespace OptiscalerClient.Views
                                                         isRdna4: isRdna4, isRdna2: isRdna2,
                                                         installStreamline: installStreamline,
                                                         streamlineCachePath: streamlineCacheDir,
-                                                        ensureFakenvapiIfMissing: installStreamline);
+                                                        ensureFakenvapiIfMissing: isNightlyChannel,
+                                                        installDlssEnabler: mfgWithEnabler,
+                                                        dlssEnablerCachePath: dlssEnablerCacheDir);
                     });
                 }
                 catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone)

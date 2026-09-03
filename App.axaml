@@ -212,6 +212,15 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
+        <!-- Marks sentinel/fallback dropdown entries (Default, Game controlled, None, ...) so they
+             read as distinct from real choices while the list is open. Italic only — no color
+             change, so it never reads as disabled and stays legible against the selected/purple
+             row. Only ComboBoxItem is styled, not the closed box — Avalonia's ComboBox shows the
+             selection via its own ContentPresenter, so the compact/closed display is unaffected. -->
+        <Style Selector="ComboBoxItem.SentinelOption">
+            <Setter Property="FontStyle" Value="Italic"/>
+        </Style>
+
         <Style Selector="CheckBox">
             <Setter Property="FontFamily"         Value="{StaticResource FontPrimary}"/>
             <Setter Property="FontSize"           Value="{StaticResource FontSizeBody}"/>
