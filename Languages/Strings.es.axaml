@@ -83,6 +83,15 @@
     <x:String x:Key="TxtCurrentSelection">Seleccionado actualmente</x:String>
     <x:String x:Key="TxtVersionStored">1 versión almacenada localmente.</x:String>
     <x:String x:Key="TxtVersionsStored">{0} versiones almacenadas localmente.</x:String>
+    <x:String x:Key="TxtDlssEnabler">DLSS Enabler</x:String>
+    <x:String x:Key="TxtStreamline">Streamline</x:String>
+    <x:String x:Key="TxtDlssEnablerImportBanner">Las versiones de DLSS Enabler se importan desde un archivo .dll o un archivo .zip/.7z/.rar que contenga version.dll o dlss-enabler-headless.dll.</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersions">No hay versiones de DLSS Enabler en caché.</x:String>
+    <x:String x:Key="TxtNoStreamlineVersions">No hay versiones del SDK de Streamline en caché.</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerTitle">Eliminar versión de DLSS Enabler</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">¿Estás seguro de que quieres eliminar DLSS Enabler '{0}' de la caché?</x:String>
+    <x:String x:Key="TxtDeleteStreamlineTitle">Eliminar versión de Streamline</x:String>
+    <x:String x:Key="TxtDeleteStreamlineMsgFormat">¿Estás seguro de que quieres eliminar Streamline '{0}' de la caché?</x:String>
 
     <!-- ComponentInfoWindow -->
     <x:String x:Key="TxtComponentTitle">Versiones de Componentes</x:String>
@@ -683,6 +692,12 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtAddFsr4DllNoFile">No se seleccionó ningún archivo</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Variante de modelo</x:String>
     <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Elegí un archivo .7z (también .zip/.rar) o un DLL directamente. Los únicos nombres admitidos para DLL directos son: amd_fidelityfx_upscaler_dx12.dll o amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddDlssEnablerTitle">Agregar versión de DLSS Enabler</x:String>
+    <x:String x:Key="TxtAddDlssEnablerDesc">Elegí un DLL o archivo de DLSS Enabler y ponele un nombre a esta versión para poder seleccionarla luego en la configuración de generación de fotogramas de un juego.</x:String>
+    <x:String x:Key="TxtAddDlssEnablerNoFile">No se seleccionó ningún archivo</x:String>
+    <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">Elegí un archivo .zip/.7z/.rar o un DLL directamente. Los nombres de DLL directos admitidos son: version.dll o dlss-enabler-headless.dll.</x:String>
+    <x:String x:Key="TxtDlssEnablerNameLbl">Nombre de la versión</x:String>
+    <x:String x:Key="TxtDlssEnablerNamePlaceholder">ej.: DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">DLL de FSR 4 (INT8 y FP8) ⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">Elegí un paquete DLL de FSR 4 para inyectar junto con OptiScaler. Cada versión indica si es INT8 o FP8. Los paquetes INT8 usan el fallback de compatibilidad necesario para GPU antiguas; los FP8 no lo habilitan.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">Intercambio de DLL (FSR 4) 🔁</x:String>
@@ -724,6 +739,25 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtMfgAutoTooltip">Deja que OptiScaler elija el multiplicador adecuado.</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">Ajusta el multiplicador dinámicamente cuando está disponible.</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">Genera hasta {0} fotogramas por cada fotograma renderizado cuando está disponible.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacement">Reemplazo NVNGX de FG</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementTooltip">Elige el proveedor de reemplazo de NVNGX/DLSS-G. Solo se aplica cuando la salida de FG es DLSS-G.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNone">Ninguno</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukems">Nukem</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfx">FSR 3/4 FG</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArturs">Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementCombo">FFX + Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNoneTooltip">Sin proveedor de reemplazo de NVNGX.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukemsTooltip">Usa NukemFG como reemplazo de NVNGX/DLSS-G.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfxTooltip">Usa AMD FSR 3/4 Frame Generation como reemplazo de NVNGX/DLSS-G.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">Usa DLSS Enabler (headless) para MFG de hasta x6. Requiere dlss-enabler-headless.dll y una versión Nightly de OptiScaler.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Combina FSR FG para los fotogramas intermedios con DLSS Enabler para el resto, permitiendo MFG de hasta x6.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionLbl">Versión de DLSS Enabler</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">Seleccioná una versión de DLSS Enabler importada localmente, o importá una nueva.</x:String>
+    <x:String x:Key="TxtSelectVersion">-- Seleccionar versión --</x:String>
+    <x:String x:Key="TxtNewOrImport">Nueva / Importar…</x:String>
+    <x:String x:Key="TxtMfgRequiresNightlyToast">MFG con DLSS Enabler requiere una versión Nightly de OptiScaler — se cambió automáticamente.</x:String>
+    <x:String x:Key="TxtMfgWrongChannelToast">Es posible que MFG no funcione con la versión de OptiScaler seleccionada — se recomienda una versión Nightly.</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersionSelected">No hay ninguna versión de DLSS Enabler seleccionada. Primero, configurá la generación de fotogramas para este juego.</x:String>
     <x:String x:Key="TxtHelpGMFrameGenerationLabel">Generación de fotogramas ⚡</x:String>
     <x:String x:Key="TxtHelpGMFrameGenerationText">Abre la configuración de generación de fotogramas por juego. Cuando el juego lo requiera, activá primero la generación de fotogramas dentro del juego.</x:String>
     <x:String x:Key="TxtHelpGMFgRouteTitle">Ruta de FG</x:String>
@@ -744,4 +778,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtOutputResolution">SALIDA</x:String>
     <x:String x:Key="TxtResolutionEstimateNote">Estimación basada en la resolución actual de la pantalla. El juego puede utilizar otra resolución de salida.</x:String>
     <x:String x:Key="TxtUpscalingQualityApplyError">No se pudo aplicar la configuración de calidad de escalado:</x:String>
+    <x:String x:Key="TxtOutputUpscaler">Upscaler de salida</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">Sobrescribe qué backend de upscaler usa OptiScaler para este juego, por encima del perfil seleccionado. "Predeterminado" deja intacta la elección del perfil.</x:String>
+    <x:String x:Key="TxtOutputUpscalerDefault">Predeterminado</x:String>
+    <x:String x:Key="TxtOutputUpscalerApplyError">No se pudo aplicar la configuración del upscaler de salida:</x:String>
 </ResourceDictionary>

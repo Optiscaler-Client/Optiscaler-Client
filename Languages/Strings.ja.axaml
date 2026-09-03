@@ -57,6 +57,8 @@
     <x:String x:Key="TxtRemoveGameTitle">ゲームを削除</x:String>
     <x:String x:Key="TxtRemoveGameConfirm">リストから '{0}' を削除してもよろしいですか？</x:String>
 
+    <x:String x:Key="TxtLinuxSteamOnlyNotice">Linuxで実行中: Steamのゲームのみ自動検出されます。その他のプラットフォームはサポートされていません。</x:String>
+
     <!-- ManageCacheWindow -->
     <x:String x:Key="TxtManageCacheTitle">ローカルバージョンを管理</x:String>
     <x:String x:Key="TxtLocalVersions">ローカルバージョン</x:String>
@@ -81,6 +83,15 @@
     <x:String x:Key="TxtCurrentSelection">現在選択中</x:String>
     <x:String x:Key="TxtVersionStored">1バージョンがローカルに保存されています。</x:String>
     <x:String x:Key="TxtVersionsStored">{0}バージョンがローカルに保存されています。</x:String>
+    <x:String x:Key="TxtDlssEnabler">DLSS Enabler</x:String>
+    <x:String x:Key="TxtStreamline">Streamline</x:String>
+    <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler のバージョンは、.dll ファイル、または version.dll もしくは dlss-enabler-headless.dll を含む .zip/.7z/.rar アーカイブからインポートされます。</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersions">キャッシュされた DLSS Enabler バージョンがありません。</x:String>
+    <x:String x:Key="TxtNoStreamlineVersions">キャッシュされた Streamline SDK バージョンがありません。</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler バージョンの削除</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">DLSS Enabler '{0}' をキャッシュから削除してもよろしいですか？</x:String>
+    <x:String x:Key="TxtDeleteStreamlineTitle">Streamline バージョンの削除</x:String>
+    <x:String x:Key="TxtDeleteStreamlineMsgFormat">Streamline '{0}' をキャッシュから削除してもよろしいですか？</x:String>
 
     <!-- ComponentInfoWindow -->
     <x:String x:Key="TxtComponentTitle">コンポーネントバージョン</x:String>
@@ -171,6 +182,11 @@
     <x:String x:Key="TxtCompatSidebarNotFound">このゲームの推奨設定が見つかりませんでした。詳細は Compatibility List 全体をご確認ください。</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">互換性情報を取得しています…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List を見る</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">ゲーム情報を取得しています…</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">このゲームのWikiページを見る</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">インジェクション方法</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">FG 入力</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} 件の既知の問題が報告されています — 詳細はWikiページをご覧ください。</x:String>
 
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">手動ファイルが必要</x:String>
@@ -248,6 +264,7 @@
     <x:String x:Key="TxtUpdateAvailableTitle">更新利用可能</x:String>
     <x:String x:Key="TxtUpdateAvailablePopupMessage">OptiScaler Clientの新しいバージョンが利用可能です: v{0}。現在お使いのバージョンはv{1}です。</x:String>
     <x:String x:Key="TxtUpdateAvailableViewGithub">GitHubで見る</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} が利用可能</x:String>
     <x:String x:Key="TxtUpdateAvailableMsg">Optiscaler Clientの新しいバージョンが利用可能です（v{0}）。&#x0a;今すぐダウンロードしてインストールしますか？</x:String>
     <x:String x:Key="TxtUpdatingApp">アプリを更新中...</x:String>
     <x:String x:Key="TxtUpdateReady">更新準備完了</x:String>
@@ -671,6 +688,9 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 修正: FSR4 INT8 が RDNA2 GPU でゲームの起動に失敗する場合がある問題を修正しました。原因は、クライアントが実際には提供していないファイルを指す内部設定でした。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正: NukemFG（DLSSG-to-FSR3）が、ネイティブのDLSSフレーム生成を持たないゲームでも強制的に有効化され、OptiScalerが満たす方法のないまま「フレーム生成を有効にしてください」と要求し続ける問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: ヘルプに「アップデートを確認」ボタンを追加しました。新しいリリースが利用可能な場合、アプリバージョンの横にバッジが表示されます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>
@@ -681,6 +701,12 @@
     <x:String x:Key="TxtAddFsr4DllNoFile">ファイルが選択されていません</x:String>
     <x:String x:Key="TxtFsr4DllVariant">モデルの種類</x:String>
     <x:String x:Key="TxtAddFsr4DllAcceptedFiles">.7z アーカイブ（.zip/.rar も可）または DLL を直接選択します。直接選択できる DLL 名: amd_fidelityfx_upscaler_dx12.dll または amdxcffx64.dll。</x:String>
+    <x:String x:Key="TxtAddDlssEnablerTitle">DLSS Enabler バージョンの追加</x:String>
+    <x:String x:Key="TxtAddDlssEnablerDesc">DLSS Enabler の DLL またはアーカイブを選択し、このバージョンに名前を付けてください。後でゲームのフレーム生成設定から選択できます。</x:String>
+    <x:String x:Key="TxtAddDlssEnablerNoFile">ファイルが選択されていません</x:String>
+    <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">.zip/.7z/.rar アーカイブ、または DLL を直接選択します。直接選択できる DLL 名: version.dll または dlss-enabler-headless.dll。</x:String>
+    <x:String x:Key="TxtDlssEnablerNameLbl">バージョン名</x:String>
+    <x:String x:Key="TxtDlssEnablerNamePlaceholder">例: DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL (INT8 &amp; FP8) ⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">OptiScaler と共に使用する FSR 4 DLL パッケージを選択します。各バージョンは INT8 または FP8 を表示します。INT8 は古い GPU 向けの互換フォールバックを使用し、FP8 では有効になりません。</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL スワップ (FSR 4) 🔁</x:String>
@@ -688,6 +714,8 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">既定の FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage と Quick Install で事前選択する FSR 4 DLL を選択します。None は注入またはスワップを省略します。</x:String>
     <x:String x:Key="TxtFrameGeneration">フレーム生成</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 スワップ</x:String>
+    <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 方式</x:String>
     <x:String x:Key="TxtFgOutput">FG 出力</x:String>
     <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
@@ -700,4 +728,67 @@
     <x:String x:Key="TxtFgRouteFsr31">ネイティブ FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">ネイティブ FSR 3.0 FG</x:String>
     <x:String x:Key="TxtFgRouteOptiFg">OptiFG（実験的）</x:String>
+    <x:String x:Key="TxtFgRouteTooltip">このゲームでOptiScalerがフレーム生成に使用する入力方式を選択します。</x:String>
+    <x:String x:Key="TxtFgOutputTooltip">OptiScalerがフレームを生成する際に使用する技術を選択します。</x:String>
+    <x:String x:Key="TxtMfgMultiplierTooltip">選択した方式・出力・ハードウェアが対応している場合に、マルチフレーム生成（MFG）の倍率を選択します。</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutesTooltip">手動および実験的な方式を表示します。特定の方式が必要な場合を除き、オフのままにしてください。</x:String>
+    <x:String x:Key="TxtFgRouteAutoTooltip">ゲームで検出されたFG入力から、OptiScalerが方式を自動選択します。</x:String>
+    <x:String x:Key="TxtFgRouteDisabledTooltip">このゲームのフレーム生成をオフにします。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">NVIDIA Streamlineを介して、ゲームのDLSSフレーム生成入力を使用します。</x:String>
+    <x:String x:Key="TxtFgRouteNukemTooltip">NukemFGを介して、DLSSフレーム生成入力をFSR 3に変換します。</x:String>
+    <x:String x:Key="TxtFgRouteFsr31Tooltip">ゲームのネイティブFSR 3.1フレーム生成入力を使用します。</x:String>
+    <x:String x:Key="TxtFgRouteFsr30Tooltip">ゲームのネイティブFSR 3.0フレーム生成入力を使用します。</x:String>
+    <x:String x:Key="TxtFgRouteOptiFgTooltip">OptiScalerの実験的な内蔵フレーム生成方式を使用します。</x:String>
+    <x:String x:Key="TxtFgOutputAutoTooltip">OptiScalerが自動的に選択した出力を維持します。</x:String>
+    <x:String x:Key="TxtFgOutputFsrTooltip">AMD FSRフレーム生成でフレームを生成します。</x:String>
+    <x:String x:Key="TxtFgOutputXeTooltip">Intel Xeフレーム生成でフレームを生成します。</x:String>
+    <x:String x:Key="TxtFgOutputNukemTooltip">NukemFGのFSR 3出力を使用します。</x:String>
+    <x:String x:Key="TxtFgOutputDlssTooltip">NVIDIA DLSSフレーム生成を出力します。</x:String>
+    <x:String x:Key="TxtFgOutputDlssNvngxTooltip">NVIDIAのNVNGXランタイムを介してDLSSフレーム生成を出力します。</x:String>
+    <x:String x:Key="TxtMfgAutoTooltip">OptiScalerが適切な倍率を自動選択します。</x:String>
+    <x:String x:Key="TxtMfgDynamicTooltip">対応している場合、倍率を動的に調整します。</x:String>
+    <x:String x:Key="TxtMfgFixedTooltipFmt">対応している場合、レンダリングされた1フレームごとに最大{0}フレームを生成します。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacement">FG NVNGX 置き換え</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementTooltip">NVNGX/DLSS-Gの置き換えプロバイダーを選択します。FG出力がDLSS-Gの場合のみ適用されます。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNone">なし</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukems">Nukem</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfx">FSR 3/4 FG</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArturs">Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementCombo">FFX + Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNoneTooltip">NVNGX置き換えプロバイダーを使用しません。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukemsTooltip">NukemFGをNVNGX/DLSS-Gの置き換えとして使用します。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfxTooltip">AMD FSR 3/4フレーム生成をNVNGX/DLSS-Gの置き換えとして使用します。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">DLSS Enabler（ヘッドレス）を使用し、最大x6までのMFGに対応します。dlss-enabler-headless.dll と Nightly 版の OptiScaler が必要です。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementComboTooltip">中間フレームにFSR FG、それ以外にDLSS Enablerを組み合わせて使用し、最大x6までのMFGを可能にします。</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler バージョン</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">ローカルにインポート済みのDLSS Enablerバージョンを選択するか、新しいバージョンをインポートします。</x:String>
+    <x:String x:Key="TxtSelectVersion">-- バージョンを選択 --</x:String>
+    <x:String x:Key="TxtNewOrImport">新規 / インポート…</x:String>
+    <x:String x:Key="TxtMfgRequiresNightlyToast">DLSS EnablerによるMFGにはNightly版のOptiScalerが必要なため、自動的に切り替えました。</x:String>
+    <x:String x:Key="TxtMfgWrongChannelToast">選択したOptiScalerバージョンではMFGが動作しない可能性があります — Nightly版を推奨します。</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersionSelected">DLSS Enablerバージョンが選択されていません。先にこのゲームのフレーム生成を設定してください。</x:String>
+    <x:String x:Key="TxtHelpGMFrameGenerationLabel">フレーム生成 ⚡</x:String>
+    <x:String x:Key="TxtHelpGMFrameGenerationText">ゲームごとのフレーム生成設定を開きます。ゲームがフレーム生成を必要とする場合は、ゲーム内でフレーム生成を有効にした後にのみ使用してください。</x:String>
+    <x:String x:Key="TxtHelpGMFgRouteTitle">FG 方式</x:String>
+    <x:String x:Key="TxtHelpGMFgRouteText">OptiScalerが使用するフレーム生成の入力経路を選択します。Autoはゲームで検出された入力に従い、Disabledはフレーム生成をオフにします。</x:String>
+    <x:String x:Key="TxtHelpGMFgOutputTitle">FG 出力</x:String>
+    <x:String x:Key="TxtHelpGMFgOutputText">生成フレームを作成する技術を選択します。AutoはOptiScalerに選択を委ねます。</x:String>
+    <x:String x:Key="TxtHelpGMFgMfgTitle">MFG 倍率</x:String>
+    <x:String x:Key="TxtHelpGMFgMfgText">レンダリングされた1フレームごとに生成できるフレーム数を選択します。対応する方式・出力・ハードウェアの場合のみ使用できます。</x:String>
+    <x:String x:Key="TxtHelpGMFgAdvancedTitle">詳細な方式</x:String>
+    <x:String x:Key="TxtHelpGMFgAdvancedText">手動および実験的な方式を表示します。特定の方式が必要だとわかっている場合を除き、オフのままにしてください。</x:String>
+    <x:String x:Key="TxtUpscalingQuality">アップスケーリング品質</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">ゲームのアップスケーリング品質比率を上書きします。「ゲーム制御」では入力解像度をゲーム側に委ねます。</x:String>
+    <x:String x:Key="TxtQualityGameControlled">ゲーム制御</x:String>
+    <x:String x:Key="TxtCustom">カスタム</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomTitle">カスタムアップスケーリング品質</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomDescription">出力解像度から内部入力解像度を計算する際に使用する除数を選択します。</x:String>
+    <x:String x:Key="TxtInputResolution">入力</x:String>
+    <x:String x:Key="TxtOutputResolution">出力</x:String>
+    <x:String x:Key="TxtResolutionEstimateNote">現在の画面解像度に基づく概算です。ゲームが異なる出力解像度を使用する場合があります。</x:String>
+    <x:String x:Key="TxtUpscalingQualityApplyError">アップスケーリング品質の設定を適用できませんでした:</x:String>
+    <x:String x:Key="TxtOutputUpscaler">出力アップスケーラー</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">選択したプロファイルの上に重ねて、このゲームで OptiScaler が使用するアップスケーラーのバックエンドを上書きします。「デフォルト」はプロファイルの選択をそのまま維持します。</x:String>
+    <x:String x:Key="TxtOutputUpscalerDefault">デフォルト</x:String>
+    <x:String x:Key="TxtOutputUpscalerApplyError">出力アップスケーラーの設定を適用できませんでした:</x:String>
 </ResourceDictionary>

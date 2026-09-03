@@ -85,6 +85,15 @@
     <x:String x:Key="TxtCurrentSelection">Currently selected</x:String>
     <x:String x:Key="TxtVersionStored">1 version stored locally.</x:String>
     <x:String x:Key="TxtVersionsStored">{0} versions stored locally.</x:String>
+    <x:String x:Key="TxtDlssEnabler">DLSS Enabler</x:String>
+    <x:String x:Key="TxtStreamline">Streamline</x:String>
+    <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler versions are imported from a .dll file or a .zip/.7z/.rar archive containing version.dll or dlss-enabler-headless.dll.</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersions">No DLSS Enabler versions cached.</x:String>
+    <x:String x:Key="TxtNoStreamlineVersions">No Streamline SDK versions cached.</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerTitle">Delete DLSS Enabler Version</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">Are you sure you want to delete DLSS Enabler '{0}' from cache?</x:String>
+    <x:String x:Key="TxtDeleteStreamlineTitle">Delete Streamline Version</x:String>
+    <x:String x:Key="TxtDeleteStreamlineMsgFormat">Are you sure you want to delete Streamline '{0}' from cache?</x:String>
 
     <!-- ComponentInfoWindow -->
     <x:String x:Key="TxtComponentTitle">Component Versions</x:String>
@@ -686,6 +695,12 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtAddFsr4DllNoFile">No file selected</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Model variant</x:String>
     <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choose a .7z archive (or .zip/.rar) or a DLL directly. Direct DLL names allowed: amd_fidelityfx_upscaler_dx12.dll or amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddDlssEnablerTitle">Add DLSS Enabler Version</x:String>
+    <x:String x:Key="TxtAddDlssEnablerDesc">Choose a DLSS Enabler DLL or archive, then give this version a name so you can pick it later from a game's Frame Generation settings.</x:String>
+    <x:String x:Key="TxtAddDlssEnablerNoFile">No file selected</x:String>
+    <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">Choose a .zip/.7z/.rar archive or a DLL directly. Direct DLL names allowed: version.dll or dlss-enabler-headless.dll.</x:String>
+    <x:String x:Key="TxtDlssEnablerNameLbl">Version name</x:String>
+    <x:String x:Key="TxtDlssEnablerNamePlaceholder">e.g. DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL (INT8 &amp; FP8) ⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">Choose an FSR 4 DLL package to inject alongside OptiScaler. Each version shows whether it is INT8 or FP8. INT8 packages use the compatibility fallback required by older GPUs; FP8 packages do not enable that fallback.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL Swap (FSR 4) 🔁</x:String>
@@ -727,6 +742,25 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtMfgAutoTooltip">Lets OptiScaler choose the appropriate multiplier.</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">Adjusts the multiplier dynamically when supported.</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">Generates up to {0} frames for each rendered frame when supported.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacement">FG Nvngx Replacement</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementTooltip">Selects the NVNGX/DLSS-G replacement provider. Only applies when FG output is DLSS-G.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNone">None</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukems">Nukem</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfx">FSR 3/4 FG</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArturs">Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementCombo">FFX + Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNoneTooltip">No NVNGX replacement provider.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukemsTooltip">Uses NukemFG as the NVNGX/DLSS-G replacement.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfxTooltip">Uses AMD FSR 3/4 Frame Generation as the NVNGX/DLSS-G replacement.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">Uses DLSS Enabler (headless) for MFG up to x6. Requires dlss-enabler-headless.dll and a Nightly OptiScaler version.</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Combines FSR FG for middle frames with DLSS Enabler for the rest, allowing MFG up to x6.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler version</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">Select a locally imported DLSS Enabler version, or import a new one.</x:String>
+    <x:String x:Key="TxtSelectVersion">-- Select version --</x:String>
+    <x:String x:Key="TxtNewOrImport">New / Import…</x:String>
+    <x:String x:Key="TxtMfgRequiresNightlyToast">MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically.</x:String>
+    <x:String x:Key="TxtMfgWrongChannelToast">MFG may not work with the selected OptiScaler version — a Nightly version is recommended.</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersionSelected">No DLSS Enabler version selected. Configure Frame Generation for this game first.</x:String>
     <x:String x:Key="TxtHelpGMFrameGenerationLabel">Frame Generation ⚡</x:String>
     <x:String x:Key="TxtHelpGMFrameGenerationText">Opens the per-game Frame Generation settings. Use it only after enabling Frame Generation in the game when the game requires it.</x:String>
     <x:String x:Key="TxtHelpGMFgRouteTitle">FG route</x:String>
@@ -747,4 +781,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtOutputResolution">OUTPUT</x:String>
     <x:String x:Key="TxtResolutionEstimateNote">Estimate based on the current screen resolution. The game may use a different output resolution.</x:String>
     <x:String x:Key="TxtUpscalingQualityApplyError">Could not apply the upscaling quality configuration:</x:String>
+    <x:String x:Key="TxtOutputUpscaler">Output Upscaler</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">Overrides which upscaler backend OptiScaler uses for this game, on top of the selected profile. Default leaves the profile's own choice untouched.</x:String>
+    <x:String x:Key="TxtOutputUpscalerDefault">Default</x:String>
+    <x:String x:Key="TxtOutputUpscalerApplyError">Could not apply the output upscaler configuration:</x:String>
 </ResourceDictionary>

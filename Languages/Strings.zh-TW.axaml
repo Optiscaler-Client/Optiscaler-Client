@@ -57,6 +57,8 @@
     <x:String x:Key="TxtRemoveGameTitle">刪除遊戲</x:String>
     <x:String x:Key="TxtRemoveGameConfirm">您確定要從清單中刪除 '{0}' 嗎？</x:String>
 
+    <x:String x:Key="TxtLinuxSteamOnlyNotice">在 Linux 上執行時，僅會自動偵測 Steam 遊戲，不支援其他平台。</x:String>
+
     <!-- ManageCacheWindow -->
     <x:String x:Key="TxtManageCacheTitle">管理本機版本</x:String>
     <x:String x:Key="TxtLocalVersions">本機版本</x:String>
@@ -81,6 +83,15 @@
     <x:String x:Key="TxtCurrentSelection">目前選擇</x:String>
     <x:String x:Key="TxtVersionStored">1個版本本機儲存。</x:String>
     <x:String x:Key="TxtVersionsStored">{0}個版本本機儲存。</x:String>
+    <x:String x:Key="TxtDlssEnabler">DLSS Enabler</x:String>
+    <x:String x:Key="TxtStreamline">Streamline</x:String>
+    <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler 版本透過 .dll 檔案或包含 version.dll 或 dlss-enabler-headless.dll 的 .zip/.7z/.rar 封存檔匯入。</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersions">尚未快取任何 DLSS Enabler 版本。</x:String>
+    <x:String x:Key="TxtNoStreamlineVersions">尚未快取任何 Streamline SDK 版本。</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerTitle">刪除 DLSS Enabler 版本</x:String>
+    <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">您確定要從快取中刪除 DLSS Enabler '{0}' 嗎？</x:String>
+    <x:String x:Key="TxtDeleteStreamlineTitle">刪除 Streamline 版本</x:String>
+    <x:String x:Key="TxtDeleteStreamlineMsgFormat">您確定要從快取中刪除 Streamline '{0}' 嗎？</x:String>
 
     <!-- ComponentInfoWindow -->
     <x:String x:Key="TxtComponentTitle">元件版本</x:String>
@@ -171,6 +182,11 @@
     <x:String x:Key="TxtCompatSidebarNotFound">找不到此遊戲的建議設定。請查看完整的 Compatibility List 以獲得更多資訊。</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">正在取得相容性資訊…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">查看 Compatibility List</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">正在取得遊戲資訊…</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">查看此遊戲的 wiki 頁面</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">注入方式</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">FG 輸入</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ 回報了 {0} 個已知問題 — 詳情請查看 wiki 頁面。</x:String>
 
     <!-- ManualDownloadDialog -->
     <x:String x:Key="TxtManualTitle">需要手動檔案</x:String>
@@ -248,6 +264,7 @@
     <x:String x:Key="TxtUpdateAvailableTitle">更新可用</x:String>
     <x:String x:Key="TxtUpdateAvailablePopupMessage">OptiScaler Client 有新版本可用：v{0}。你目前使用的是 v{1}。</x:String>
     <x:String x:Key="TxtUpdateAvailableViewGithub">在 GitHub 上查看</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} 可用</x:String>
     <x:String x:Key="TxtUpdateAvailableMsg">Optiscaler Client的新版本可用（v{0}）。&#x0a;您想現在下载並安裝嗎？</x:String>
     <x:String x:Key="TxtUpdatingApp">更新應用程式中...</x:String>
     <x:String x:Key="TxtUpdateReady">更新準備就緒</x:String>
@@ -670,6 +687,9 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日誌</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 修正：FSR4 INT8 可能因內部設定指向用戶端實際未提供的檔案，導致遊戲在 RDNA2 顯示卡上無法啟動。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正：即使遊戲沒有原生 DLSS 幀生成，NukemFG（DLSSG-to-FSR3）也會被強制啟用，導致 OptiScaler 持續要求「啟用幀生成」卻無法滿足該條件。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增：「說明」中的「檢查更新」按鈕，當有新版本可用時，會在應用程式版本號旁顯示徽章。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整變更和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日誌</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速入門</x:String>
@@ -680,6 +700,12 @@
     <x:String x:Key="TxtAddFsr4DllNoFile">未選擇檔案</x:String>
     <x:String x:Key="TxtFsr4DllVariant">模型變體</x:String>
     <x:String x:Key="TxtAddFsr4DllAcceptedFiles">選擇 .7z 封存檔（也可使用 .zip/.rar）或直接選擇 DLL。允許的 DLL 名稱：amd_fidelityfx_upscaler_dx12.dll 或 amdxcffx64.dll。</x:String>
+    <x:String x:Key="TxtAddDlssEnablerTitle">新增 DLSS Enabler 版本</x:String>
+    <x:String x:Key="TxtAddDlssEnablerDesc">選擇 DLSS Enabler DLL 或封存檔，然後為此版本命名，以便稍後在遊戲的幀生成設定中選擇它。</x:String>
+    <x:String x:Key="TxtAddDlssEnablerNoFile">未選擇檔案</x:String>
+    <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">選擇 .zip/.7z/.rar 封存檔或直接選擇 DLL。允許的直接 DLL 名稱：version.dll 或 dlss-enabler-headless.dll。</x:String>
+    <x:String x:Key="TxtDlssEnablerNameLbl">版本名稱</x:String>
+    <x:String x:Key="TxtDlssEnablerNamePlaceholder">例如 DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL（INT8 和 FP8）⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">選擇與 OptiScaler 一起使用的 FSR 4 DLL 套件。每個版本會顯示 INT8 或 FP8。INT8 使用舊 GPU 所需的相容性回退；FP8 不會啟用它。</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL 交換（FSR 4）🔁</x:String>
@@ -687,10 +713,16 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultLabel">預設 FSR 4 DLL</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">選擇在 Manage 和 Quick Install 中預先選取的 FSR 4 DLL。None 會略過注入或交換。</x:String>
     <x:String x:Key="TxtFrameGeneration">幀生成</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 交換</x:String>
+    <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 路徑</x:String>
+    <x:String x:Key="TxtFgRouteTooltip">選擇 OptiScaler 在此遊戲中用於幀生成的輸入路徑。</x:String>
     <x:String x:Key="TxtFgOutput">FG 輸出</x:String>
+    <x:String x:Key="TxtFgOutputTooltip">選擇 OptiScaler 用於生成幀的技術。</x:String>
     <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
+    <x:String x:Key="TxtMfgMultiplierTooltip">當所選路徑、輸出和硬體皆支援時，選擇多幀生成（Multi-Frame Generation）倍率。</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">進階路徑</x:String>
+    <x:String x:Key="TxtFgAdvancedRoutesTooltip">顯示手動與實驗性路徑。除非遊戲需要特定路徑，否則請保持關閉。</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">套用 FG 設定</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">已停用</x:String>
@@ -699,4 +731,63 @@
     <x:String x:Key="TxtFgRouteFsr31">原生 FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">原生 FSR 3.0 FG</x:String>
     <x:String x:Key="TxtFgRouteOptiFg">OptiFG（實驗性）</x:String>
+    <x:String x:Key="TxtFgRouteAutoTooltip">讓 OptiScaler 根據遊戲偵測到的 FG 輸入自動選擇路徑。</x:String>
+    <x:String x:Key="TxtFgRouteDisabledTooltip">關閉此遊戲的幀生成。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">透過 NVIDIA Streamline 使用遊戲的 DLSS 幀生成輸入。</x:String>
+    <x:String x:Key="TxtFgRouteNukemTooltip">透過 NukemFG 將 DLSS 幀生成輸入轉換為 FSR 3。</x:String>
+    <x:String x:Key="TxtFgRouteFsr31Tooltip">使用遊戲原生的 FSR 3.1 幀生成輸入。</x:String>
+    <x:String x:Key="TxtFgRouteFsr30Tooltip">使用遊戲原生的 FSR 3.0 幀生成輸入。</x:String>
+    <x:String x:Key="TxtFgRouteOptiFgTooltip">使用 OptiScaler 內建的實驗性幀生成路徑。</x:String>
+    <x:String x:Key="TxtFgOutputAutoTooltip">保持由 OptiScaler 自動選擇輸出。</x:String>
+    <x:String x:Key="TxtFgOutputFsrTooltip">使用 AMD FSR 幀生成來產生幀。</x:String>
+    <x:String x:Key="TxtFgOutputXeTooltip">使用 Intel Xe 幀生成來產生幀。</x:String>
+    <x:String x:Key="TxtFgOutputNukemTooltip">使用 NukemFG 的 FSR 3 輸出。</x:String>
+    <x:String x:Key="TxtFgOutputDlssTooltip">輸出 NVIDIA DLSS 幀生成。</x:String>
+    <x:String x:Key="TxtFgOutputDlssNvngxTooltip">透過 NVIDIA 的 NVNGX 執行環境輸出 DLSS 幀生成。</x:String>
+    <x:String x:Key="TxtMfgAutoTooltip">讓 OptiScaler 選擇合適的倍率。</x:String>
+    <x:String x:Key="TxtMfgDynamicTooltip">在支援的情況下動態調整倍率。</x:String>
+    <x:String x:Key="TxtMfgFixedTooltipFmt">在支援的情況下，每個渲染幀最多生成 {0} 幀。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacement">FG Nvngx 替代方案</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementTooltip">選擇 NVNGX/DLSS-G 替代提供者。僅在 FG 輸出為 DLSS-G 時生效。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNone">無</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukems">Nukem</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfx">FSR 3/4 FG</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArturs">Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementCombo">FFX + Enabler</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNoneTooltip">不使用 NVNGX 替代提供者。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementNukemsTooltip">使用 NukemFG 作為 NVNGX/DLSS-G 的替代方案。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementFfxTooltip">使用 AMD FSR 3/4 幀生成作為 NVNGX/DLSS-G 的替代方案。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">使用 DLSS Enabler（無介面版）實現最高 x6 的 MFG。需要 dlss-enabler-headless.dll 及 Nightly 版本的 OptiScaler。</x:String>
+    <x:String x:Key="TxtFgNvngxReplacementComboTooltip">結合 FSR FG 產生中間幀與 DLSS Enabler 產生其餘幀，實現最高 x6 的 MFG。</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler 版本</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">選擇一個已在本機匯入的 DLSS Enabler 版本，或匯入新版本。</x:String>
+    <x:String x:Key="TxtSelectVersion">-- 選擇版本 --</x:String>
+    <x:String x:Key="TxtNewOrImport">新增／匯入…</x:String>
+    <x:String x:Key="TxtMfgRequiresNightlyToast">使用 DLSS Enabler 的 MFG 需要 Nightly 版本的 OptiScaler — 已自動切換。</x:String>
+    <x:String x:Key="TxtMfgWrongChannelToast">所選的 OptiScaler 版本可能無法支援 MFG — 建議使用 Nightly 版本。</x:String>
+    <x:String x:Key="TxtNoDlssEnablerVersionSelected">未選擇 DLSS Enabler 版本。請先為此遊戲設定幀生成。</x:String>
+    <x:String x:Key="TxtHelpGMFrameGenerationLabel">幀生成 ⚡</x:String>
+    <x:String x:Key="TxtHelpGMFrameGenerationText">開啟該遊戲的幀生成設定。僅在遊戲需要時，先在遊戲內啟用幀生成後再使用。</x:String>
+    <x:String x:Key="TxtHelpGMFgRouteTitle">FG 路徑</x:String>
+    <x:String x:Key="TxtHelpGMFgRouteText">選擇 OptiScaler 使用的幀生成輸入路徑。Auto 會依循為該遊戲偵測到的輸入；已停用會關閉幀生成。</x:String>
+    <x:String x:Key="TxtHelpGMFgOutputTitle">FG 輸出</x:String>
+    <x:String x:Key="TxtHelpGMFgOutputText">選擇用於產生幀的技術。Auto 會將選擇權交給 OptiScaler。</x:String>
+    <x:String x:Key="TxtHelpGMFgMfgTitle">MFG 倍率</x:String>
+    <x:String x:Key="TxtHelpGMFgMfgText">選擇每個渲染幀可產生的幀數。僅在相容的路徑、輸出與硬體下可用。</x:String>
+    <x:String x:Key="TxtHelpGMFgAdvancedTitle">進階路徑</x:String>
+    <x:String x:Key="TxtHelpGMFgAdvancedText">顯示手動與實驗性路徑。除非您確定遊戲需要特定路徑，否則請保持關閉。</x:String>
+    <x:String x:Key="TxtUpscalingQuality">超解析度品質</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">覆寫遊戲的超解析度品質比例。「由遊戲控制」會將輸入解析度的選擇留給遊戲。</x:String>
+    <x:String x:Key="TxtQualityGameControlled">由遊戲控制</x:String>
+    <x:String x:Key="TxtCustom">自訂</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomTitle">自訂超解析度品質</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomDescription">選擇用於根據輸出解析度計算內部輸入解析度的除數。</x:String>
+    <x:String x:Key="TxtInputResolution">輸入</x:String>
+    <x:String x:Key="TxtOutputResolution">輸出</x:String>
+    <x:String x:Key="TxtResolutionEstimateNote">根據目前螢幕解析度的估算值。遊戲實際使用的輸出解析度可能不同。</x:String>
+    <x:String x:Key="TxtUpscalingQualityApplyError">無法套用超解析度品質設定：</x:String>
+    <x:String x:Key="TxtOutputUpscaler">輸出放大器</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">在所選設定檔之上，覆寫此遊戲使用的 OptiScaler 放大器後端。「預設」會保留設定檔本身的選擇不變。</x:String>
+    <x:String x:Key="TxtOutputUpscalerDefault">預設</x:String>
+    <x:String x:Key="TxtOutputUpscalerApplyError">無法套用輸出放大器設定：</x:String>
 </ResourceDictionary>
