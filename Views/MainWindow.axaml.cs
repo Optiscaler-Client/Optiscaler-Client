@@ -5385,7 +5385,17 @@ namespace OptiscalerClient.Views
                             }
                         }
 
-                        var installStreamline = _componentService.IsNightlyOptiScalerVersion(versionToInstall);
+                        // Streamline is no longer tied to "is this a Nightly version" — it's tied
+                        // to whether the game's (Auto-resolved) FG configuration actually needs it.
+                        // isNightlyChannel is kept separately only for the Fakenvapi-bundling quirk
+                        // of Nightly packages.
+                        var isNightlyChannel = _componentService.IsNightlyOptiScalerVersion(versionToInstall);
+                        var fgConfigService = new FrameGenerationConfigurationService();
+                        var quickInstallGpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                        var installStreamline = selectedGame.FrameGenerationSettings != null &&
+                            fgConfigService.RequiresStreamline(selectedGame.FrameGenerationSettings, fgConfigService.DetectCapabilities(selectedGame, quickInstallGpu));
+                        var mfgWithEnabler = selectedGame.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
+                            selectedGame.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                         var streamlineCacheDir = string.Empty;
                         if (installStreamline)
                         {
@@ -5430,7 +5440,7 @@ namespace OptiscalerClient.Views
                         // Nightly does not bundle Fakenvapi. Preserve a game's existing copy,
                         // otherwise use the latest official Fakenvapi release automatically.
                         var quickInstallDir = installService.DetermineInstallDirectory(selectedGame);
-                        var nightlyFakenvapiMissing = installStreamline &&
+                        var nightlyFakenvapiMissing = isNightlyChannel &&
                             (string.IsNullOrWhiteSpace(quickInstallDir) ||
                              !File.Exists(System.IO.Path.Combine(quickInstallDir, "fakenvapi.dll")));
                         if (nightlyFakenvapiMissing)
@@ -5448,7 +5458,7 @@ namespace OptiscalerClient.Views
                                 return;
                             }
                         }
-                        else if (!installStreamline && installFakenvapi && !_componentService.IsFakenvapiCached(configuredFakenvapi!))
+                        else if (!isNightlyChannel && installFakenvapi && !_componentService.IsFakenvapiCached(configuredFakenvapi!))
                         {
                             try
                             {
@@ -5479,6 +5489,21 @@ namespace OptiscalerClient.Views
                         var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
                         var isRdna2 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
 
+                        var quickInstallDlssEnablerCacheDir = string.Empty;
+                        if (mfgWithEnabler)
+                        {
+                            var enablerVersion = selectedGame.FrameGenerationSettings!.DlssEnablerVersion;
+                            if (string.IsNullOrEmpty(enablerVersion))
+                            {
+                                HideToast();
+                                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                                    GetResourceString("TxtNoDlssEnablerVersionSelected", "No DLSS Enabler version selected. Configure Frame Generation for this game first."),
+                                    isAlert: true).ShowDialog<bool>(this);
+                                return;
+                            }
+                            quickInstallDlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(enablerVersion);
+                        }
+
                         SetQuickInstallLoading(button);
                         string? resolvedGameDir = null;
                         await Task.Run(() =>
@@ -5496,7 +5521,9 @@ namespace OptiscalerClient.Views
                                 isRdna4: isRdna4, isRdna2: isRdna2,
                                 installStreamline: installStreamline,
                                 streamlineCachePath: streamlineCacheDir,
-                                ensureFakenvapiIfMissing: installStreamline
+                                ensureFakenvapiIfMissing: isNightlyChannel,
+                                installDlssEnabler: mfgWithEnabler,
+                                dlssEnablerCachePath: quickInstallDlssEnablerCacheDir
                             );
                         });
 

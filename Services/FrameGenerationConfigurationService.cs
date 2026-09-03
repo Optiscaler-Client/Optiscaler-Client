@@ -7,8 +7,10 @@ public interface IFrameGenerationConfigurationService
 {
     FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null);
     FrameGenerationRecommendation GetRecommendation(FrameGenerationCapabilities capabilities);
-    IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(FrameGenerationRoute route, FrameGenerationOutput output, FrameGenerationCapabilities capabilities);
+    IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(FrameGenerationRoute route, FrameGenerationOutput output, FrameGenerationCapabilities capabilities, FrameGenerationNvngxReplacement nvngxReplacement = FrameGenerationNvngxReplacement.None);
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
+    /// <summary>True when the effective (Auto-resolved) route or output needs the Streamline runtime DLLs in OptiScaler/streamline/.</summary>
+    bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities);
 }
 
 /// <summary>
@@ -54,7 +56,12 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
         if (!antiCheat)
         {
-            if (hasDlssG && hasStreamline && dx12) routes.Add(FrameGenerationRoute.DlssGStreamline);
+            // Streamline DLLs are not required to already be on disk to offer/recommend this
+            // route: the install pipeline downloads and copies them into OptiScaler/streamline/
+            // whenever the effective configuration needs them (see RequiresStreamline). Gating
+            // on pre-existing files would make DLSS-G via Streamline unavailable for every fresh
+            // install even when the game natively supports DLSS-G.
+            if (hasDlssG && dx12) routes.Add(FrameGenerationRoute.DlssGStreamline);
             if (hasDlssG && (hasNukem || !string.IsNullOrEmpty(game.DlssFrameGenVersion))) routes.Add(FrameGenerationRoute.Nukem);
             // FSR 3.1 is the safe automatic/native option. FSR 3.0 and OptiFG are
             // deliberately manual routes, exposed only through Advanced routes.
@@ -62,7 +69,8 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             if (hasFsrFg) outputs.Add(FrameGenerationOutput.FsrFg);
             if (hasXeFg) outputs.Add(FrameGenerationOutput.XeFg);
             if (hasNukem) outputs.Add(FrameGenerationOutput.Nukem);
-            if (hasDlssG && hasStreamline) outputs.Add(FrameGenerationOutput.DlssG);
+            // Same reasoning as the route above: don't require pre-existing streamline files.
+            if (hasDlssG) outputs.Add(FrameGenerationOutput.DlssG);
             if (hasDlssG && hasNukem) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
         }
 
@@ -86,7 +94,9 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
     {
         if (c.IsAntiCheatDetected)
             return new() { Route = FrameGenerationRoute.Disabled, Output = FrameGenerationOutput.Auto, MultiFrameMode = MultiFrameGenerationMode.Auto, Level = FrameGenerationRecommendationLevel.Unavailable, Reason = "Anti-cheat detected." };
-        if (c.HasNativeDlssG && c.HasStreamline && c.IsDirectX12)
+        // Prioritized regardless of whether Streamline files already exist on disk: the install
+        // pipeline supplies them whenever the effective route/output needs them.
+        if (c.HasNativeDlssG && c.IsDirectX12)
             return new() { Route = FrameGenerationRoute.DlssGStreamline, Output = c.HasXeFgDependencies ? FrameGenerationOutput.XeFg : FrameGenerationOutput.FsrFg, MultiFrameMode = MultiFrameGenerationMode.X2, Level = FrameGenerationRecommendationLevel.Recommended, Reason = "Native DLSS-G via Streamline was detected." };
         if (c.HasNativeDlssG)
             return new() { Route = FrameGenerationRoute.Nukem, Output = FrameGenerationOutput.Nukem, MultiFrameMode = MultiFrameGenerationMode.X2, Level = FrameGenerationRecommendationLevel.Recommended, Reason = "Native DLSS-G legacy route detected." };
@@ -100,7 +110,8 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
     public IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(
         FrameGenerationRoute route,
         FrameGenerationOutput output,
-        FrameGenerationCapabilities capabilities)
+        FrameGenerationCapabilities capabilities,
+        FrameGenerationNvngxReplacement nvngxReplacement = FrameGenerationNvngxReplacement.None)
     {
         if (route == FrameGenerationRoute.Disabled)
             return [MultiFrameGenerationMode.Auto];
@@ -116,7 +127,23 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             return modes;
         }
 
+        // MFG beyond x2 for the DLSS-G output requires DLSS Enabler's DLL (Arturs/Combo).
+        if (output == FrameGenerationOutput.DlssG &&
+            nvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
+        {
+            return [MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3,
+                    MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
+        }
+
         return [MultiFrameGenerationMode.X2];
+    }
+
+    public bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities)
+    {
+        var recommendation = GetRecommendation(capabilities);
+        var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
+        var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
+        return effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveOutput == FrameGenerationOutput.DlssG;
     }
 
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(
@@ -131,7 +158,7 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             throw new InvalidOperationException("Frame generation cannot be applied while anti-cheat is detected.");
         if (!settings.AdvancedMode && !c.AvailableRoutes.Contains(effectiveRoute))
             throw new InvalidOperationException("Selected frame-generation route is not available for this game.");
-        var availableMfgModes = GetAvailableMfgModes(effectiveRoute, effectiveOutput, c);
+        var availableMfgModes = GetAvailableMfgModes(effectiveRoute, effectiveOutput, c, settings.NvngxReplacement);
         // A multiplier is irrelevant while FG is disabled. Older saved game settings used
         // X2 as their default, so validating it here made a disabled FG configuration block
         // any OptiScaler install, including Nightly.
@@ -172,6 +199,33 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         {
             var count = settings.MultiFrameMode switch { MultiFrameGenerationMode.X2 => "1", MultiFrameGenerationMode.X3 => "2", MultiFrameGenerationMode.X4 => "3", _ => "auto" };
             result["XeFG"] = new Dictionary<string, string> { ["InterpolationCount"] = count };
+        }
+        // FGNvngxReplacement only does anything when FGOutput=dlssg. None keeps the ini default.
+        if (effectiveOutput == FrameGenerationOutput.DlssG && settings.NvngxReplacement != FrameGenerationNvngxReplacement.None)
+        {
+            frameGen["FGNvngxReplacement"] = settings.NvngxReplacement switch
+            {
+                FrameGenerationNvngxReplacement.Nukems => "Nukems",
+                FrameGenerationNvngxReplacement.Ffx => "FFX",
+                FrameGenerationNvngxReplacement.Arturs => "Arturs",
+                FrameGenerationNvngxReplacement.Combo => "Combo",
+                _ => "None"
+            };
+
+            // MFG multiplier beyond x2 is only meaningful for the DLSS Enabler providers.
+            if (settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
+            {
+                var dlssgCount = settings.MultiFrameMode switch
+                {
+                    MultiFrameGenerationMode.X2 => "1",
+                    MultiFrameGenerationMode.X3 => "2",
+                    MultiFrameGenerationMode.X4 => "3",
+                    MultiFrameGenerationMode.X5 => "4",
+                    MultiFrameGenerationMode.X6 => "5",
+                    _ => "auto"
+                };
+                result["DLSSG"] = new Dictionary<string, string> { ["InterpolationCount"] = dlssgCount };
+            }
         }
         if (effectiveRoute == FrameGenerationRoute.OptiFg && effectiveOutput == FrameGenerationOutput.FsrFg)
             result["HUDFix"] = new Dictionary<string, string> { ["HUDFix"] = "true" };

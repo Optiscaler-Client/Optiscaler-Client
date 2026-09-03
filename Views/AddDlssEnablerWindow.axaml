@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.AddDlssEnablerWindow"
+        Width="500" SizeToContent="Height" MinHeight="270"
+        WindowStartupLocation="CenterOwner" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent" CanResize="False" ShowInTaskbar="False">
+    <Panel Margin="20">
+        <Border CornerRadius="12" Background="{StaticResource BrBgBase}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1" BoxShadow="0 8 32 0 #80000000">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border Grid.Row="0" Background="{StaticResource BrBgDeep}" Padding="20,15" CornerRadius="12,12,0,0" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,0,1">
+                    <TextBlock Text="{DynamicResource TxtAddDlssEnablerTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}"/>
+                </Border>
+                <StackPanel Grid.Row="1" Margin="22,18" Spacing="12">
+                    <TextBlock Text="{DynamicResource TxtAddDlssEnablerDesc}" TextWrapping="Wrap" Foreground="{StaticResource BrTextSecondary}" FontSize="12"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox Name="TxtFilePath" IsReadOnly="True" Watermark="{DynamicResource TxtAddDlssEnablerNoFile}"/>
+                        <Button Grid.Column="1" Content="{DynamicResource TxtBrowse}" Classes="BtnSecondary" Click="BtnBrowse_Click"/>
+                    </Grid>
+                    <TextBlock Name="TxtAcceptedFiles"
+                               Text="{DynamicResource TxtAddDlssEnablerAcceptedFiles}"
+                               TextWrapping="Wrap"
+                               FontSize="11"
+                               Foreground="{StaticResource BrTextSecondary}"/>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="{DynamicResource TxtDlssEnablerNameLbl}" Foreground="{StaticResource BrTextSecondary}" FontSize="12"/>
+                        <TextBox Name="TxtName" Watermark="{DynamicResource TxtDlssEnablerNamePlaceholder}" TextChanged="TxtName_TextChanged"/>
+                    </StackPanel>
+                </StackPanel>
+                <Border Grid.Row="2" Background="{StaticResource BrBgDeep}" Padding="20,14" CornerRadius="0,0,12,12" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Content="{DynamicResource TxtCancel}" Classes="BtnBase" MinWidth="90" Click="BtnCancel_Click"/>
+                        <Button Name="BtnAdd" Content="{DynamicResource TxtAddDll}" Classes="BtnPrimary" MinWidth="100" IsEnabled="False" Click="BtnAdd_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

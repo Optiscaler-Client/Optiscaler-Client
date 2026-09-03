@@ -24,8 +24,20 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         FrameGenerationRoute.OptiFg
     ];
 
+    private static readonly FrameGenerationNvngxReplacement[] NvngxReplacementOptions =
+    [
+        FrameGenerationNvngxReplacement.None,
+        FrameGenerationNvngxReplacement.Nukems,
+        FrameGenerationNvngxReplacement.Ffx,
+        FrameGenerationNvngxReplacement.Arturs,
+        FrameGenerationNvngxReplacement.Combo
+    ];
+
+    private const string NewDlssEnablerTag = "__new__";
+
     private readonly FrameGenerationCapabilities _capabilities = new();
     private readonly GameFrameGenerationSettings _initialSettings = new();
+    private string _selectedDlssEnablerVersion = "";
     private bool _isUpdating;
     private GamepadDialogNavigationHelper? _gamepadHelper;
 
@@ -61,8 +73,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             MultiFrameMode = saved?.MultiFrameMode ?? MultiFrameGenerationMode.Auto,
             AdvancedMode = saved?.AdvancedMode ?? false,
             DynamicTargetFps = saved?.DynamicTargetFps,
-            AppliedAtUtc = saved?.AppliedAtUtc
+            AppliedAtUtc = saved?.AppliedAtUtc,
+            NvngxReplacement = saved?.NvngxReplacement ?? FrameGenerationNvngxReplacement.None,
+            DlssEnablerVersion = saved?.DlssEnablerVersion
         };
+        _selectedDlssEnablerVersion = _initialSettings.DlssEnablerVersion ?? "";
 
         var titleBar = this.FindControl<Border>("TitleBar");
         if (titleBar != null)
@@ -102,6 +117,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             if (advanced != null) advanced.IsChecked = _initialSettings.AdvancedMode;
             PopulateRoutes(_initialSettings.Route);
             PopulateOutputs(_initialSettings.Output);
+            PopulateNvngxReplacements(_initialSettings.NvngxReplacement);
+            var needsVersion = _initialSettings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+            var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
+            if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+            if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
             PopulateMfgModes(_initialSettings.MultiFrameMode);
             UpdateDependentControlState();
         }
@@ -109,6 +129,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         {
             _isUpdating = false;
         }
+        UpdateSaveButtonState();
     }
 
     private void PopulateRoutes(FrameGenerationRoute selected)
@@ -152,8 +173,9 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
         var output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput");
         var route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+        var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
         IReadOnlyList<MultiFrameGenerationMode> modes = new FrameGenerationConfigurationService()
-            .GetAvailableMfgModes(route, output, _capabilities);
+            .GetAvailableMfgModes(route, output, _capabilities, replacement);
 
         combo.Items.Clear();
         foreach (var mode in modes)
@@ -164,6 +186,37 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         }
         combo.IsEnabled = route != FrameGenerationRoute.Disabled && modes.Count > 1;
         SelectTag(combo, selected);
+    }
+
+    private void PopulateNvngxReplacements(FrameGenerationNvngxReplacement selected)
+    {
+        var combo = this.FindControl<ComboBox>("CmbFgNvngxReplacement");
+        if (combo == null) return;
+
+        combo.Items.Clear();
+        foreach (var replacement in NvngxReplacementOptions)
+        {
+            var item = new ComboBoxItem { Content = GetNvngxReplacementLabel(replacement), Tag = replacement };
+            ToolTip.SetTip(item, GetNvngxReplacementTooltip(replacement));
+            combo.Items.Add(item);
+        }
+
+        var outputIsDlssG = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.DlssG;
+        SelectTag(combo, outputIsDlssG ? selected : FrameGenerationNvngxReplacement.None);
+    }
+
+    private void PopulateDlssEnablerVersions(string selected)
+    {
+        var combo = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
+        if (combo == null) return;
+
+        combo.Items.Clear();
+        combo.Items.Add(new ComboBoxItem { Content = Resource("TxtSelectVersion", "-- Select version --"), Tag = "" });
+        foreach (var version in new ComponentManagementService().GetDownloadedDlssEnablerVersions())
+            combo.Items.Add(new ComboBoxItem { Content = version, Tag = version });
+        combo.Items.Add(new ComboBoxItem { Content = Resource("TxtNewOrImport", "New / Import..."), Tag = NewDlssEnablerTag });
+
+        SelectStringTag(combo, selected);
     }
 
     private void CmbFgRoute_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -183,9 +236,66 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     {
         if (_isUpdating) return;
         var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        var selectedReplacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
         _isUpdating = true;
-        try { PopulateMfgModes(selectedMfg); }
+        try
+        {
+            PopulateNvngxReplacements(selectedReplacement);
+            var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
+            var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+            var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
+            if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+            if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
+            PopulateMfgModes(selectedMfg);
+            UpdateDependentControlState();
+        }
         finally { _isUpdating = false; }
+        UpdateSaveButtonState();
+    }
+
+    private void CmbFgNvngxReplacement_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdating) return;
+        var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
+        var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+
+        var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
+        if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+
+        var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        _isUpdating = true;
+        try
+        {
+            if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
+            PopulateMfgModes(selectedMfg);
+            UpdateDependentControlState();
+        }
+        finally { _isUpdating = false; }
+        UpdateSaveButtonState();
+    }
+
+    private async void CmbDlssEnablerVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdating) return;
+        var tag = GetSelectedStringTag("CmbDlssEnablerVersion");
+        if (tag == NewDlssEnablerTag)
+        {
+            _isUpdating = true;
+            try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+            finally { _isUpdating = false; }
+
+            var cacheWindow = new CacheManagementWindow(this, "dlss-enabler");
+            await cacheWindow.ShowDialog(this);
+
+            _isUpdating = true;
+            try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+            finally { _isUpdating = false; }
+        }
+        else
+        {
+            _selectedDlssEnablerVersion = tag;
+        }
+        UpdateSaveButtonState();
     }
 
     private void ChkAdvancedRoutes_IsCheckedChanged(object? sender, RoutedEventArgs e)
@@ -206,15 +316,38 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var enabled = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") != FrameGenerationRoute.Disabled;
         var output = this.FindControl<ComboBox>("CmbFgOutput");
         var multiplier = this.FindControl<ComboBox>("CmbMfgMultiplier");
+        var nvngxReplacement = this.FindControl<ComboBox>("CmbFgNvngxReplacement");
+        var dlssEnablerVersion = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
         if (output != null) output.IsEnabled = enabled;
         if (multiplier != null)
             multiplier.IsEnabled = enabled && multiplier.Items.Count > 1;
+
+        var outputIsDlssG = enabled && GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.DlssG;
+        if (nvngxReplacement != null) nvngxReplacement.IsEnabled = outputIsDlssG;
+        if (dlssEnablerVersion != null) dlssEnablerVersion.IsEnabled = outputIsDlssG;
+    }
+
+    private void UpdateSaveButtonState()
+    {
+        var saveButton = this.FindControl<Button>("BtnSave");
+        if (saveButton == null) return;
+
+        var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
+        var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+        var selectedVersion = GetSelectedStringTag("CmbDlssEnablerVersion");
+        var hasVersion = !string.IsNullOrEmpty(selectedVersion) && selectedVersion != NewDlssEnablerTag;
+
+        saveButton.IsEnabled = !needsVersion || hasVersion;
     }
 
     private void BtnCancel_Click(object? sender, RoutedEventArgs e) => Close(null);
 
     private void BtnSave_Click(object? sender, RoutedEventArgs e)
     {
+        var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
+        var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+        var selectedVersion = GetSelectedStringTag("CmbDlssEnablerVersion");
+
         Close(new GameFrameGenerationSettings
         {
             Route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute"),
@@ -222,7 +355,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             MultiFrameMode = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier"),
             AdvancedMode = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true,
             DynamicTargetFps = _initialSettings.DynamicTargetFps,
-            AppliedAtUtc = _initialSettings.AppliedAtUtc
+            AppliedAtUtc = _initialSettings.AppliedAtUtc,
+            NvngxReplacement = replacement,
+            DlssEnablerVersion = needsVersion && !string.IsNullOrEmpty(selectedVersion) && selectedVersion != NewDlssEnablerTag
+                ? selectedVersion
+                : null
         });
     }
 
@@ -241,6 +378,22 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private T GetSelectedTag<T>(string name) where T : struct
         => (this.FindControl<ComboBox>(name)?.SelectedItem as ComboBoxItem)?.Tag is T value ? value : default;
+
+    private static void SelectStringTag(ComboBox combo, string selected)
+    {
+        for (var index = 0; index < combo.Items.Count; index++)
+        {
+            if (combo.Items[index] is ComboBoxItem item && item.Tag is string tag && tag == selected)
+            {
+                combo.SelectedIndex = index;
+                return;
+            }
+        }
+        combo.SelectedIndex = combo.Items.Count > 0 ? 0 : -1;
+    }
+
+    private string GetSelectedStringTag(string name)
+        => (this.FindControl<ComboBox>(name)?.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
 
     private string GetRouteLabel(FrameGenerationRoute route) => route switch
     {
@@ -286,6 +439,26 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         FrameGenerationOutput.DlssG => Resource("TxtFgOutputDlssTooltip", "Outputs NVIDIA DLSS Frame Generation."),
         FrameGenerationOutput.DlssGWithNvngx => Resource("TxtFgOutputDlssNvngxTooltip", "Outputs DLSS Frame Generation through NVIDIA's NVNGX runtime."),
         _ => output.ToString()
+    };
+
+    private static string GetNvngxReplacementLabel(FrameGenerationNvngxReplacement replacement) => replacement switch
+    {
+        FrameGenerationNvngxReplacement.None => Resource("TxtFgNvngxReplacementNone", "None"),
+        FrameGenerationNvngxReplacement.Nukems => Resource("TxtFgNvngxReplacementNukems", "Nukem"),
+        FrameGenerationNvngxReplacement.Ffx => Resource("TxtFgNvngxReplacementFfx", "FSR 3/4 FG"),
+        FrameGenerationNvngxReplacement.Arturs => Resource("TxtFgNvngxReplacementArturs", "Enabler"),
+        FrameGenerationNvngxReplacement.Combo => Resource("TxtFgNvngxReplacementCombo", "FFX + Enabler"),
+        _ => replacement.ToString()
+    };
+
+    private static string GetNvngxReplacementTooltip(FrameGenerationNvngxReplacement replacement) => replacement switch
+    {
+        FrameGenerationNvngxReplacement.None => Resource("TxtFgNvngxReplacementNoneTooltip", "No NVNGX replacement provider."),
+        FrameGenerationNvngxReplacement.Nukems => Resource("TxtFgNvngxReplacementNukemsTooltip", "Uses NukemFG as the NVNGX/DLSS-G replacement."),
+        FrameGenerationNvngxReplacement.Ffx => Resource("TxtFgNvngxReplacementFfxTooltip", "Uses AMD FSR 3/4 Frame Generation as the NVNGX/DLSS-G replacement."),
+        FrameGenerationNvngxReplacement.Arturs => Resource("TxtFgNvngxReplacementArtursTooltip", "Uses DLSS Enabler (headless) for MFG up to x6, requires dlss-enabler-headless.dll."),
+        FrameGenerationNvngxReplacement.Combo => Resource("TxtFgNvngxReplacementComboTooltip", "Combines FSR FG for middle frames with DLSS Enabler for the rest, allows MFG up to x6."),
+        _ => replacement.ToString()
     };
 
     private static string GetMfgLabel(MultiFrameGenerationMode mode) => mode switch

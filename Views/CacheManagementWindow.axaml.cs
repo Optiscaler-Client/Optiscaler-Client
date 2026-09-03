@@ -247,6 +247,14 @@ namespace OptiscalerClient.Views
             // ── nukemfg ──────────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("nukemfg",   "nukemfg",   "\uE619"));
 
+            // \u2500\u2500 DLSS Enabler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            sidebar.Children.Add(CreateTopButton("dlss-enabler",
+                Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uE9CE"));
+
+            // \u2500\u2500 Streamline (auto-downloaded, list + delete only) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            sidebar.Children.Add(CreateTopButton("streamline",
+                Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
+
             ShowSection("opti-stable");
             UpdateSidebarSelection("opti-stable");
         }
@@ -438,6 +446,8 @@ namespace OptiscalerClient.Views
                 case "fsr4":        RenderFsr4(content); break;
                 case "fakenvapi":   RenderFakenvapi(content); break;
                 case "nukemfg":     RenderNukemfg(content); break;
+                case "dlss-enabler": RenderDlssEnabler(content); break;
+                case "streamline":  RenderStreamline(content); break;
             }
         }
 
@@ -664,6 +674,68 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private void RenderDlssEnabler(StackPanel content)
+        {
+            // Import row
+            var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
+            var btnImport = new Button
+            {
+                Name = "BtnImportDlssEnabler",
+                Content = Application.Current?.FindResource("TxtImportArchive") as string ?? "Import Archive",
+                Padding = new Thickness(12, 5),
+                FontSize = 11
+            };
+            btnImport.Classes.Add("BtnBase");
+            btnImport.Click += BtnImportDlssEnabler_Click;
+
+            importRow.Children.Add(btnImport);
+            Grid.SetColumn(btnImport, 1);
+            content.Children.Add(importRow);
+
+            // Info banner
+            content.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 8),
+                Margin = new Thickness(0, 0, 0, 12),
+                Child = new TextBlock
+                {
+                    Text = Application.Current?.FindResource("TxtDlssEnablerImportBanner") as string ??
+                        "DLSS Enabler versions are imported from a .dll file or a .zip/.7z/.rar archive containing version.dll or dlss-enabler-headless.dll.",
+                    Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    FontSize = 11,
+                    TextWrapping = TextWrapping.Wrap
+                }
+            });
+
+            var versions = _componentService.GetDownloadedDlssEnablerVersions();
+            if (versions.Count == 0)
+            {
+                content.Children.Add(MakeEmptyLabel(Application.Current?.FindResource("TxtNoDlssEnablerVersions") as string ?? "No DLSS Enabler versions cached."));
+            }
+            else
+            {
+                foreach (var ver in versions)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true));
+            }
+        }
+
+        private void RenderStreamline(StackPanel content)
+        {
+            var versions = _componentService.GetDownloadedStreamlineVersions();
+            if (versions.Count == 0)
+            {
+                content.Children.Add(MakeEmptyLabel(Application.Current?.FindResource("TxtNoStreamlineVersions") as string ?? "No Streamline SDK versions cached."));
+                return;
+            }
+
+            foreach (var ver in versions)
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isStreamline: true));
+        }
+
         // ── Version card ──────────────────────────────────────────────────────
 
         private static bool IsOptiSection(string sectionId) =>
@@ -682,7 +754,7 @@ namespace OptiscalerClient.Views
             };
         }
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false)
         {
             var grid = new Grid
             {
@@ -749,7 +821,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -932,7 +1004,9 @@ namespace OptiscalerClient.Views
             var optiPatcher = _componentService.GetDownloadedOptiPatcherVersions();
             var nukemfg     = _componentService.GetDownloadedNukemFGVersions();
             var fakenvapi   = _componentService.GetDownloadedFakenvapiVersions();
-            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count;
+            var dlssEnabler = _componentService.GetDownloadedDlssEnablerVersions();
+            var streamline  = _componentService.GetDownloadedStreamlineVersions();
+            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
         }
 
@@ -945,6 +1019,8 @@ namespace OptiscalerClient.Views
             public bool IsOptiPatcher { get; set; }
             public bool IsNukemFG { get; set; }
             public bool IsFakenvapi { get; set; }
+            public bool IsDlssEnabler { get; set; }
+            public bool IsStreamline { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -961,6 +1037,16 @@ namespace OptiscalerClient.Views
                 {
                     title = "Delete NukemFG Version";
                     msg = $"Are you sure you want to delete NukemFG '{info.Version}' from cache?";
+                }
+                else if (info.IsDlssEnabler)
+                {
+                    title = Application.Current?.FindResource("TxtDeleteDlssEnablerTitle") as string ?? "Delete DLSS Enabler Version";
+                    msg = string.Format(Application.Current?.FindResource("TxtDeleteDlssEnablerMsgFormat") as string ?? "Are you sure you want to delete DLSS Enabler '{0}' from cache?", info.Version);
+                }
+                else if (info.IsStreamline)
+                {
+                    title = Application.Current?.FindResource("TxtDeleteStreamlineTitle") as string ?? "Delete Streamline Version";
+                    msg = string.Format(Application.Current?.FindResource("TxtDeleteStreamlineMsgFormat") as string ?? "Are you sure you want to delete Streamline '{0}' from cache?", info.Version);
                 }
                 else if (info.IsExtras)
                 {
@@ -984,6 +1070,10 @@ namespace OptiscalerClient.Views
                             _componentService.DeleteFakenvapiCache(info.Version);
                         else if (info.IsNukemFG)
                             _componentService.DeleteNukemFGCache(info.Version);
+                        else if (info.IsDlssEnabler)
+                            _componentService.DeleteDlssEnablerCache(info.Version);
+                        else if (info.IsStreamline)
+                            _componentService.DeleteStreamlineCache(info.Version);
                         else if (info.IsExtras)
                             _componentService.DeleteExtrasCache(info.Version);
                         else if (info.IsOptiPatcher)
@@ -1200,6 +1290,42 @@ namespace OptiscalerClient.Views
                 var innerMsg = ex.InnerException != null ? $"\n{ex.InnerException.Message}" : "";
                 await new ConfirmDialog(this, "Import Error",
                     $"Failed to import NukemFG version:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
+            }
+        }
+
+        // ── Import DLSS Enabler ──────────────────────────────────────────────
+
+        private async void BtnImportDlssEnabler_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var addDialog = new AddDlssEnablerWindow(this);
+                if (await addDialog.ShowDialog<bool>(this) != true || string.IsNullOrEmpty(addDialog.SelectedFilePath) || string.IsNullOrEmpty(addDialog.SelectedName))
+                    return;
+
+                var overlay = this.FindControl<Grid>("OverlayImporting");
+                if (overlay != null) overlay.IsVisible = true;
+                if (sender is Button btnSender) btnSender.IsEnabled = false;
+
+                var versionName = await _componentService.ImportDlssEnablerAsync(addDialog.SelectedFilePath, addDialog.SelectedName);
+                DebugWindow.Log($"[Cache] DLSS Enabler version imported: {versionName}");
+
+                if (overlay != null) overlay.IsVisible = false;
+                if (sender is Button btnSender2) btnSender2.IsEnabled = true;
+
+                ShowSection("dlss-enabler");
+                UpdateSidebarSelection("dlss-enabler");
+                UpdateCacheInfo();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Cache] Import DLSS Enabler failed: {ex}");
+                var overlay = this.FindControl<Grid>("OverlayImporting");
+                if (overlay != null) overlay.IsVisible = false;
+                if (sender is Button btnSender) btnSender.IsEnabled = true;
+                var innerMsg = ex.InnerException != null ? $"\n{ex.InnerException.Message}" : "";
+                await new ConfirmDialog(this, "Import Error",
+                    $"Failed to import DLSS Enabler version:\n{ex.Message}{innerMsg}").ShowDialog<object>(this);
             }
         }
 

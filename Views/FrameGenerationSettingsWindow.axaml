@@ -105,6 +105,54 @@
 
                     <StackPanel Spacing="4">
                         <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtFgNvngxReplacement}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="{StaticResource FontSizeCaption}"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtFgNvngxReplacementTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
+                        <ComboBox Name="CmbFgNvngxReplacement"
+                                  HorizontalAlignment="Stretch"
+                                  Classes="BtnSelector"
+                                  HorizontalContentAlignment="Left"
+                                  SelectionChanged="CmbFgNvngxReplacement_SelectionChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Name="PnlDlssEnablerVersion" Spacing="4" IsVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtDlssEnablerVersionLbl}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       FontSize="{StaticResource FontSizeCaption}"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtDlssEnablerVersionTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
+                        <ComboBox Name="CmbDlssEnablerVersion"
+                                  HorizontalAlignment="Stretch"
+                                  Classes="BtnSelector"
+                                  HorizontalContentAlignment="Left"
+                                  SelectionChanged="CmbDlssEnablerVersion_SelectionChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock Text="{DynamicResource TxtMfgMultiplier}"
                                        Foreground="{StaticResource BrTextSecondary}"
                                        FontSize="{StaticResource FontSizeCaption}"/>
@@ -139,7 +187,8 @@
                                 Classes="BtnBase"
                                 Padding="16,8"
                                 Click="BtnCancel_Click"/>
-                        <Button Content="{DynamicResource TxtSave}"
+                        <Button Name="BtnSave"
+                                Content="{DynamicResource TxtSave}"
                                 Classes="BtnPrimary"
                                 Padding="16,8"
                                 Click="BtnSave_Click"/>

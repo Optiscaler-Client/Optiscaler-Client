@@ -433,6 +433,20 @@
                                     </Button>
                                 </StackPanel>
 
+                                <!-- Output Upscaler -->
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="12"/>
+                                    <ComboBox Name="CmbOutputUpscaler"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              Background="{StaticResource BrBgBase}"
+                                              VerticalContentAlignment="Center"
+                                              SelectionChanged="CmbOutputUpscaler_SelectionChanged"/>
+                                </StackPanel>
+
                                 <!-- Divider -->
                                 <Border Height="1" Background="{StaticResource BrBorderSubtle}" Margin="0,2"/>
 

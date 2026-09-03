@@ -91,7 +91,8 @@ namespace OptiscalerClient.Services
                                      OptiScalerProfile? profile = null,
                                      bool isRdna4 = false, bool isRdna2 = false,
                                      bool installStreamline = false, string streamlineCachePath = "",
-                                     bool ensureFakenvapiIfMissing = false)
+                                     bool ensureFakenvapiIfMissing = false,
+                                     bool installDlssEnabler = false, string dlssEnablerCachePath = "")
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
             DebugWindow.Log($"[Install] Version: {optiscalerVersion}, Injection: {injectionDllName}");
@@ -440,6 +441,54 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Installed {streamlineFileCount} Streamline runtime DLL(s)");
             }
 
+            // Step 2.3: DLSS Enabler headless mode. A single DLL (already renamed to
+            // dlss-enabler-headless.dll at import time, see ComponentManagementService.ImportDlssEnablerAsync)
+            // copied into the root of the OptiScaler folder — not a subfolder, unlike Streamline.
+            if (installDlssEnabler)
+            {
+                var dlssEnablerSourceFile = Path.Combine(dlssEnablerCachePath, "dlss-enabler-headless.dll");
+                if (string.IsNullOrWhiteSpace(dlssEnablerCachePath) || !File.Exists(dlssEnablerSourceFile))
+                    throw new FileNotFoundException("The cached DLSS Enabler DLL is not available.");
+
+                var relativePath = Path.Combine("OptiScaler", "dlss-enabler-headless.dll");
+                var destinationPath = Path.Combine(gameDir, relativePath);
+                var destinationDirectory = Path.GetDirectoryName(destinationPath);
+
+                if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
+                {
+                    rollbackJournal.CaptureDirectoryChain(destinationDirectory);
+                    Directory.CreateDirectory(destinationDirectory);
+                    var relativeDirectory = Path.GetRelativePath(gameDir, destinationDirectory);
+                    if (!manifest.InstalledDirectories.Contains(relativeDirectory, StringComparer.OrdinalIgnoreCase))
+                        manifest.InstalledDirectories.Add(relativeDirectory);
+                }
+
+                var existedBefore = File.Exists(destinationPath);
+                var fileIsOriginal = priorBackedUpOriginals.Contains(relativePath);
+                var fileIsOptiCreated = priorCreatedByOptiScaler.Contains(relativePath);
+                string? preHash = null;
+                if (existedBefore && !fileIsOriginal && !fileIsOptiCreated)
+                {
+                    preHash = ComputeSha256(destinationPath);
+                    _backupStore.BackupFile(storeKey, gameDir, relativePath);
+                    manifest.BackedUpFiles.Add(relativePath);
+                    DebugWindow.Log($"[Install] Backed up existing DLSS Enabler file: {relativePath}");
+                }
+
+                rollbackJournal.CaptureFile(relativePath);
+                File.Copy(dlssEnablerSourceFile, destinationPath, overwrite: true);
+                manifest.InstalledFiles.Add(relativePath);
+                TrackManifestFileMutation(
+                    manifest,
+                    relativePath: relativePath,
+                    existedBefore: existedBefore && !fileIsOptiCreated,
+                    preInstallHash: (!fileIsOriginal && !fileIsOptiCreated) ? preHash : null,
+                    postInstallHash: ComputeSha256(destinationPath));
+
+                manifest.IncludesDlssEnabler = true;
+                DebugWindow.Log("[Install] Installed DLSS Enabler headless DLL");
+            }
+
             // Step 2.5: Generate OptiScaler.ini from profile if provided (skip for Default profile)
             if (effectiveProfile != null && effectiveProfile.IniSettings.Count > 0)
             {
@@ -636,6 +685,14 @@ namespace OptiscalerClient.Services
                 ApplyUpscalingQualitySettings(game, gameDir);
             }
 
+            // Apply the per-game output-upscaler backend after Quality, as another narrow INI
+            // patch. Default re-resolves the Upscalers keys from the applied profile.
+            if (game.OutputUpscalerSettings != null)
+            {
+                rollbackJournal.CaptureFile("OptiScaler.ini");
+                ApplyOutputUpscalerSettings(game, gameDir);
+            }
+
             // Save manifest to external store
             manifest.ExpectedFinalMarkers = manifest.ExpectedFinalMarkers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             manifest.OperationStatus = "committed";
@@ -772,6 +829,102 @@ namespace OptiscalerClient.Services
             DebugWindow.Log(isEnabled
                 ? $"[Quality] Applied {settings.Preset} ({settings.Ratio:0.00}x) after the selected profile for {game.Name}; restart required."
                 : $"[Quality] Disabled the quality ratio override for {game.Name}; the game controls input resolution.");
+        }
+
+        /// <summary>
+        /// Applies the persisted per-game output-upscaler backend as a narrow patch over the existing INI.
+        /// Default re-resolves the three Upscalers keys from the game's currently applied profile instead
+        /// of leaving stale values from a previous selection, so live-apply and reinstall behave the same.
+        /// </summary>
+        public void ApplyOutputUpscalerSettings(Game game, string? resolvedGameDir = null)
+        {
+            if (game.OutputUpscalerSettings == null)
+                throw new InvalidOperationException("No per-game output upscaler setting has been selected.");
+
+            var gameDir = resolvedGameDir ?? DetermineInstallDirectory(game);
+            if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+                throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
+
+            var settings = game.OutputUpscalerSettings;
+            (string dx11, string dx12, string vulkan, string upscalerIndex) values = settings.Backend switch
+            {
+                OutputUpscalerBackend.Fsr2 => ("fsr22", "fsr22", "fsr22", "auto"),
+                // Fsr3 forces UpscalerIndex=1 (FSR 3.1.5) so it never auto-upgrades to FSR4 on
+                // RDNA4. Fsr4 leaves it on auto — OptiScaler decides FSR4 vs FSR3.1 by GPU, and may
+                // fall back to FSR3 on hardware that doesn't support native FSR4.
+                OutputUpscalerBackend.Fsr3 => ("fsr31_12", "fsr31", "fsr31_12", "1"),
+                OutputUpscalerBackend.Fsr4 => ("fsr31_12", "fsr31", "fsr31_12", "auto"),
+                OutputUpscalerBackend.XeSS => ("xess", "xess", "xess", "auto"),
+                OutputUpscalerBackend.Dlss => ("dlss", "dlss", "dlss", "auto"),
+                _ => ResolveUpscalersFromAppliedProfile(game, gameDir)
+            };
+
+            ModifyOptiScalerIni(gameDir, "Dx11Upscaler", values.dx11, "Upscalers");
+            ModifyOptiScalerIni(gameDir, "Dx12Upscaler", values.dx12, "Upscalers");
+            ModifyOptiScalerIni(gameDir, "VulkanUpscaler", values.vulkan, "Upscalers");
+            ModifyOptiScalerIni(gameDir, "UpscalerIndex", values.upscalerIndex, "FSR");
+
+            settings.AppliedAtUtc = DateTime.UtcNow;
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest != null)
+            {
+                manifest.OutputUpscalerBackendApplied = settings.Backend.ToString();
+                _backupStore.SaveManifest(game.InstallPath, manifest);
+            }
+
+            DebugWindow.Log($"[OutputUpscaler] Applied {settings.Backend} after the selected profile for {game.Name}; restart required.");
+        }
+
+        /// <summary>
+        /// Default re-resolves the Upscalers keys (and UpscalerIndex, in case a prior Fsr3 selection
+        /// forced it) from the profile currently applied to this game (recorded on the manifest), by
+        /// generating that profile's INI in memory and reading the values back — reusing
+        /// ProfileManagementService's own template-substitution logic instead of guessing a fallback.
+        /// </summary>
+        private (string dx11, string dx12, string vulkan, string upscalerIndex) ResolveUpscalersFromAppliedProfile(Game game, string gameDir)
+        {
+            var profileService = new ProfileManagementService();
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            var profile = (!string.IsNullOrWhiteSpace(manifest?.AppliedProfileName)
+                ? profileService.GetProfileByName(manifest!.AppliedProfileName!)
+                : null) ?? OptiScalerProfile.CreateDefault();
+
+            var existingIniPath = Path.Combine(gameDir, "OptiScaler.ini");
+            var generated = profileService.GenerateOptiScalerIni(profile, existingIniPath);
+            return (
+                ExtractIniValue(generated, "Upscalers", "Dx11Upscaler") ?? "fsr22",
+                ExtractIniValue(generated, "Upscalers", "Dx12Upscaler") ?? "xess",
+                ExtractIniValue(generated, "Upscalers", "VulkanUpscaler") ?? "fsr22",
+                ExtractIniValue(generated, "FSR", "UpscalerIndex") ?? "auto"
+            );
+        }
+
+        /// <summary>Reads a single key's value out of an in-memory INI section, or null if absent.</summary>
+        private static string? ExtractIniValue(string iniContent, string section, string key)
+        {
+            var sectionHeader = $"[{section}]";
+            var lines = iniContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            bool inTargetSection = false;
+
+            foreach (var rawLine in lines)
+            {
+                var line = rawLine.Trim();
+
+                if (line.Equals(sectionHeader, StringComparison.OrdinalIgnoreCase))
+                {
+                    inTargetSection = true;
+                    continue;
+                }
+                if (line.StartsWith("[") && !line.Equals(sectionHeader, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (inTargetSection) break;
+                    continue;
+                }
+                if (inTargetSection && line.StartsWith($"{key}=", StringComparison.OrdinalIgnoreCase))
+                    return line[(key.Length + 1)..].Trim();
+            }
+
+            return null;
         }
 
         public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);

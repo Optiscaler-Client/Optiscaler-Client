@@ -2270,6 +2270,40 @@ namespace OptiscalerClient.Services
                    Directory.GetFiles(cacheDir, "*.dll", SearchOption.AllDirectories).Length > 0;
         }
 
+        /// <summary>Returns locally-cached Streamline SDK versions (subdirectory names under Cache/Streamline/).</summary>
+        public List<string> GetDownloadedStreamlineVersions()
+        {
+            var versions = new List<string>();
+            var streamlineDir = Path.Combine(_cacheDir, "Streamline");
+            if (!Directory.Exists(streamlineDir)) return versions;
+
+            foreach (var dir in Directory.GetDirectories(streamlineDir))
+            {
+                if (File.Exists(Path.Combine(dir, "sl.common.dll")))
+                    versions.Add(Path.GetFileName(dir));
+            }
+
+            static Version parseStreamlineVer(string v)
+            {
+                var clean = v.TrimStart('v');
+                var dash = clean.IndexOf('-');
+                if (dash >= 0) clean = clean[..dash];
+                return Version.TryParse(clean, out var p) ? p : new Version(0, 0);
+            }
+
+            return versions
+                .OrderByDescending(v => parseStreamlineVer(v))
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        public void DeleteStreamlineCache(string version)
+        {
+            var cachePath = GetStreamlineCachePath(version);
+            if (Directory.Exists(cachePath))
+                Directory.Delete(cachePath, true);
+        }
+
         private static int ExtractStreamlineRuntimeDlls(string archivePath, string destinationDir)
         {
             var extracted = 0;
@@ -2812,6 +2846,115 @@ namespace OptiscalerClient.Services
             finally
             {
                 // Cleanup temp extraction directory
+                if (Directory.Exists(tempExtractDir))
+                {
+                    try { Directory.Delete(tempExtractDir, true); } catch { /* best-effort */ }
+                }
+            }
+        }
+
+        // ── DLSS Enabler (headless MFG provider) ─────────────────────────────
+        // Manual import only, no remote release feed - same pattern as NukemFG above,
+        // except the cache folder name is the user-given display name (not derived from
+        // the archive/version), since there is nothing to key it off automatically.
+
+        private static readonly string[] KnownDlssEnablerFileNames = { "version.dll", "dlss-enabler-headless.dll" };
+
+        public string GetDlssEnablerCachePath() => Path.Combine(_cacheDir, "DlssEnabler");
+        public string GetDlssEnablerCachePath(string name) => Path.Combine(_cacheDir, "DlssEnabler", name);
+        public string GetDlssEnablerDllPath(string name) => Path.Combine(GetDlssEnablerCachePath(name), "dlss-enabler-headless.dll");
+
+        public bool IsDlssEnablerCached(string name) => File.Exists(GetDlssEnablerDllPath(name));
+
+        /// <summary>Returns locally-cached DLSS Enabler version names (subdirectory names under Cache/DlssEnabler/).</summary>
+        public List<string> GetDownloadedDlssEnablerVersions()
+        {
+            var versions = new List<string>();
+            var dlssEnablerDir = GetDlssEnablerCachePath();
+            if (!Directory.Exists(dlssEnablerDir)) return versions;
+
+            foreach (var dir in Directory.GetDirectories(dlssEnablerDir))
+            {
+                if (File.Exists(Path.Combine(dir, "dlss-enabler-headless.dll")))
+                    versions.Add(Path.GetFileName(dir));
+            }
+
+            return versions.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public void DeleteDlssEnablerCache(string name)
+        {
+            var cachePath = GetDlssEnablerCachePath(name);
+            if (Directory.Exists(cachePath))
+                Directory.Delete(cachePath, true);
+        }
+
+        /// <summary>
+        /// Imports a DLSS Enabler DLL from a direct .dll file or a .zip/.7z/.rar archive.
+        /// Validates the target filename (version.dll or dlss-enabler-headless.dll), renames it to
+        /// dlss-enabler-headless.dll, and caches it under Cache/DlssEnabler/{sanitized userGivenName}/.
+        /// </summary>
+        public async Task<string> ImportDlssEnablerAsync(string sourcePath, string userGivenName)
+        {
+            var sanitized = userGivenName.Trim();
+            foreach (var c in Path.GetInvalidFileNameChars())
+                sanitized = sanitized.Replace(c, '_');
+            if (string.IsNullOrWhiteSpace(sanitized))
+                throw new ArgumentException("A name is required.", nameof(userGivenName));
+
+            var versionDir = GetDlssEnablerCachePath(sanitized);
+            if (Directory.Exists(versionDir))
+                throw new InvalidOperationException($"A DLSS Enabler version named '{sanitized}' already exists.");
+            Directory.CreateDirectory(versionDir);
+
+            var tempExtractDir = Path.Combine(Path.GetTempPath(), "OptiScaler_DlssEnabler_" + Guid.NewGuid().ToString("N"));
+
+            try
+            {
+                string foundDll;
+                if (sourcePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    var fileName = Path.GetFileName(sourcePath);
+                    if (!KnownDlssEnablerFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                        throw new FileNotFoundException("Expected version.dll or dlss-enabler-headless.dll.");
+                    foundDll = sourcePath;
+                }
+                else
+                {
+                    Directory.CreateDirectory(tempExtractDir);
+                    await Task.Run(() =>
+                    {
+                        using var archive = ArchiveFactory.OpenArchive(sourcePath);
+                        foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+                        {
+                            entry.WriteToDirectory(tempExtractDir, new ExtractionOptions
+                            {
+                                ExtractFullPath = true,
+                                Overwrite = true
+                            });
+                        }
+                    });
+
+                    var dllFiles = Directory.GetFiles(tempExtractDir, "*.dll", SearchOption.AllDirectories)
+                        .Where(f => KnownDlssEnablerFileNames.Contains(Path.GetFileName(f), StringComparer.OrdinalIgnoreCase))
+                        .ToArray();
+                    if (dllFiles.Length == 0)
+                        throw new FileNotFoundException("The archive does not contain 'version.dll' or 'dlss-enabler-headless.dll'.");
+
+                    foundDll = dllFiles[0];
+                }
+
+                File.Copy(foundDll, Path.Combine(versionDir, "dlss-enabler-headless.dll"), true);
+                DebugWindow.Log($"[DlssEnabler] Imported version '{sanitized}'.");
+                return sanitized;
+            }
+            catch
+            {
+                if (Directory.Exists(versionDir)) Directory.Delete(versionDir, true);
+                throw;
+            }
+            finally
+            {
                 if (Directory.Exists(tempExtractDir))
                 {
                     try { Directory.Delete(tempExtractDir, true); } catch { /* best-effort */ }

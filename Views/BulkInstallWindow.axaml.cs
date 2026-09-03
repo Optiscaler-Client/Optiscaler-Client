@@ -43,6 +43,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         Output = FrameGenerationOutput.Auto,
         MultiFrameMode = MultiFrameGenerationMode.Auto
     };
+    private GameOutputUpscalerSettings _outputUpscalerSettings = new() { Backend = OutputUpscalerBackend.Default };
+    private bool _isUpdatingOutputUpscaler;
     private BulkGamepadNavigationHelper? _gamepadHelper;
 
     GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -149,6 +151,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         // Populate profile selector
         PopulateProfileSelector();
+
+        // Populate output upscaler selector
+        PopulateOutputUpscalerSelector();
 
         UpdateFrameGenerationSummary();
 
@@ -271,7 +276,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // "None" always comes first — lets the user do a batch DLL-only swap (see
         // RunBulkDllSwapAsync) without installing OptiScaler at all. Never auto-selected by the
         // logic below; only reached if the user picks it manually.
-        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
         if (allVersions.Count == 0 && !_optiShowingCustom)
         {
@@ -652,8 +657,19 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
         var isRdna4ForFsr4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
         var isRdna2ForFsr4 = GpuSelectionHelper.IsRdna2(preferredGpuForFsr4);
-        var installStreamline = _componentService.IsNightlyOptiScalerVersion(version);
+        // Streamline is no longer tied to "is this a Nightly version" — it's tied to whether
+        // the shared FG configuration actually needs it for at least one selected game (either
+        // FGInput=dlssg or FGOutput=dlssg). isNightlyChannel is kept separately only for the
+        // Fakenvapi-bundling quirk of Nightly packages. Per-game need is re-checked inside the
+        // loop below, since capabilities (and therefore Auto resolution) can differ per game.
+        var isNightlyChannel = _componentService.IsNightlyOptiScalerVersion(version);
+        var fgConfigService = new FrameGenerationConfigurationService();
+        var installStreamline = selectedGames.Any(item =>
+            fgConfigService.RequiresStreamline(_frameGenerationSettings, fgConfigService.DetectCapabilities(item.Game, preferredGpuForFsr4)));
+        var mfgWithEnabler = _frameGenerationSettings.Output == FrameGenerationOutput.DlssG &&
+            _frameGenerationSettings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
         var streamlineCacheDir = string.Empty;
+        var dlssEnablerCacheDir = string.Empty;
         string? nightlyFakenvapiCacheDir = null;
 
         if (installStreamline)
@@ -675,6 +691,21 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             }
         }
 
+        if (mfgWithEnabler)
+        {
+            if (string.IsNullOrEmpty(_frameGenerationSettings.DlssEnablerVersion))
+            {
+                _isInstalling = false;
+                if (progressSection != null) progressSection.IsVisible = false;
+                if (btnInstall != null) btnInstall.IsEnabled = true;
+                if (btnCancel != null) btnCancel.IsEnabled = true;
+                await new ConfirmDialog(this, "Error",
+                    "No DLSS Enabler version selected. Configure Frame Generation before installing.", isAlert: true).ShowDialog<bool>(this);
+                return;
+            }
+            dlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(_frameGenerationSettings.DlssEnablerVersion);
+        }
+
         foreach (var gameItem in selectedGames)
         {
             currentGame++;
@@ -694,6 +725,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // writes this as the final, narrow INI override after the selected profile.
                 gameItem.Game.FrameGenerationSettings = CloneFrameGenerationSettings(_frameGenerationSettings);
 
+                // Apply the shared output-upscaler selection as a per-game copy, same pattern as FG.
+                gameItem.Game.OutputUpscalerSettings = new GameOutputUpscalerSettings { Backend = _outputUpscalerSettings.Backend };
+
                 // Get cache paths
                 var optiCacheDir = _componentService.GetOptiScalerCachePath(version);
                 var installFakenvapiForGame = installFakenvapi;
@@ -704,7 +738,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     ? _componentService.GetNukemFGCachePath(selectedNukemFGVersion!)
                     : "";
 
-                if (installStreamline)
+                if (isNightlyChannel)
                 {
                     var gameDir = _installService.DetermineInstallDirectory(gameItem.Game);
                     var fakenvapiMissing = string.IsNullOrWhiteSpace(gameDir) ||
@@ -726,6 +760,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                 }
 
+                // Re-checked per game: capabilities (and therefore Auto resolution) can differ
+                // per game even though the FG configuration itself is shared across the batch.
+                var installStreamlineForGame = fgConfigService.RequiresStreamline(
+                    gameItem.Game.FrameGenerationSettings!, fgConfigService.DetectCapabilities(gameItem.Game, preferredGpuForFsr4));
+
                 string? resolvedGameDir = null;
                 await Task.Run(() =>
                 {
@@ -740,9 +779,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         optiscalerVersion: version,
                         profile: selectedProfile,
                         isRdna4: isRdna4ForFsr4, isRdna2: isRdna2ForFsr4,
-                        installStreamline: installStreamline,
+                        installStreamline: installStreamlineForGame,
                         streamlineCachePath: streamlineCacheDir,
-                        ensureFakenvapiIfMissing: installStreamline
+                        ensureFakenvapiIfMissing: isNightlyChannel,
+                        installDlssEnabler: mfgWithEnabler,
+                        dlssEnablerCachePath: dlssEnablerCacheDir
                     );
                 });
 
@@ -1135,6 +1176,44 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         _isUpdatingProfiles = false;
     }
 
+    private void PopulateOutputUpscalerSelector()
+    {
+        var combo = this.FindControl<ComboBox>("CmbOutputUpscaler");
+        if (combo == null) return;
+
+        _isUpdatingOutputUpscaler = true;
+        try
+        {
+            combo.Items.Clear();
+            combo.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtOutputUpscalerDefault", "Default"), Tag = OutputUpscalerBackend.Default, Classes = { "SentinelOption" } });
+            combo.Items.Add(new ComboBoxItem { Content = "FSR 2", Tag = OutputUpscalerBackend.Fsr2 });
+            combo.Items.Add(new ComboBoxItem { Content = "FSR 3", Tag = OutputUpscalerBackend.Fsr3 });
+            combo.Items.Add(new ComboBoxItem { Content = "FSR 4", Tag = OutputUpscalerBackend.Fsr4 });
+            combo.Items.Add(new ComboBoxItem { Content = "XeSS", Tag = OutputUpscalerBackend.XeSS });
+            combo.Items.Add(new ComboBoxItem { Content = "DLSS", Tag = OutputUpscalerBackend.Dlss });
+            combo.SelectedIndex = 0;
+        }
+        finally
+        {
+            _isUpdatingOutputUpscaler = false;
+        }
+    }
+
+    private void CmbOutputUpscaler_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdatingOutputUpscaler || sender is not ComboBox combo
+            || combo.SelectedItem is not ComboBoxItem item
+            || item.Tag is not OutputUpscalerBackend selected)
+            return;
+
+        _outputUpscalerSettings.Backend = selected;
+    }
+
+    private string GetResourceString(string key, string fallback)
+    {
+        return Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
+    }
+
     private void CmbProfile_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdatingProfiles) return;
@@ -1291,7 +1370,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         Output = source.Output,
         MultiFrameMode = source.MultiFrameMode,
         AdvancedMode = source.AdvancedMode,
-        DynamicTargetFps = source.DynamicTargetFps
+        DynamicTargetFps = source.DynamicTargetFps,
+        NvngxReplacement = source.NvngxReplacement,
+        DlssEnablerVersion = source.DlssEnablerVersion
     };
 
     /// <summary>
@@ -1484,7 +1565,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmb == null) return;
 
         cmb.Items.Clear();
-        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
         var versions = _componentService.OptiPatcherAvailableVersions;
         foreach (var ver in versions)
@@ -1518,7 +1599,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmb == null) return;
 
         cmb.Items.Clear();
-        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
         var versions = _componentService.FakenvapiAvailableVersions;
         foreach (var ver in versions)
@@ -1561,7 +1642,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmb == null) return;
 
         cmb.Items.Clear();
-        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none" });
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
         var versions = _componentService.GetDownloadedNukemFGVersions();
         foreach (var ver in versions)

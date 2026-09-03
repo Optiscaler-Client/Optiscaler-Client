@@ -60,6 +60,7 @@ namespace OptiscalerClient.Models
         public bool IncludesFakenvapi { get; set; }
         public bool IncludesNukemFG { get; set; }
         public bool IncludesStreamline { get; set; }
+        public bool IncludesDlssEnabler { get; set; }
         public bool IncludesExtras { get; set; }
         public bool IncludesOptiPatcher { get; set; }
         public string? FrameGenerationRouteApplied { get; set; }
@@ -67,6 +68,7 @@ namespace OptiscalerClient.Models
         public string? MfgModeApplied { get; set; }
         public string? UpscalingQualityPresetApplied { get; set; }
         public double? UpscalingQualityRatioApplied { get; set; }
+        public string? OutputUpscalerBackendApplied { get; set; }
 
         /// <summary>
         /// Name of the OptiScaler profile that was applied during installation

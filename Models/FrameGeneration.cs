@@ -37,6 +37,18 @@ public enum MultiFrameGenerationMode
     Dynamic = 6
 }
 
+/// <summary>Nvngx FG replacement provider. Only meaningful when FGOutput=dlssg. Persisted, append-only.</summary>
+public enum FrameGenerationNvngxReplacement
+{
+    None = 0,
+    Nukems = 1,
+    Ffx = 2,
+    /// <summary>DLSS Enabler headless mode (dlss-enabler-headless.dll).</summary>
+    Arturs = 3,
+    /// <summary>FFX for middle frames + DLSS Enabler for the rest.</summary>
+    Combo = 4
+}
+
 /// <summary>Persisted per-game choice. It deliberately does not modify a shared OptiScaler profile.</summary>
 public sealed class GameFrameGenerationSettings
 {
@@ -46,6 +58,10 @@ public sealed class GameFrameGenerationSettings
     public bool AdvancedMode { get; set; }
     public double? DynamicTargetFps { get; set; }
     public DateTime? AppliedAtUtc { get; set; }
+    /// <summary>Only meaningful when Output resolves to DlssG. Default None keeps the legacy INI output untouched.</summary>
+    public FrameGenerationNvngxReplacement NvngxReplacement { get; set; } = FrameGenerationNvngxReplacement.None;
+    /// <summary>Cache folder name (Cache/DlssEnabler/{name}/) of the DLSS Enabler version selected for this game. Required when NvngxReplacement is Arturs or Combo.</summary>
+    public string? DlssEnablerVersion { get; set; }
 }
 
 public enum FrameGenerationRecommendationLevel

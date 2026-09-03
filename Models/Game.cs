@@ -95,6 +95,9 @@ public class Game
 
     /// <summary>Optional upscaling quality override applied specifically to this game.</summary>
     public GameUpscalingQualitySettings? UpscalingQualitySettings { get; set; }
+
+    /// <summary>Optional output-upscaler backend override applied specifically to this game.</summary>
+    public GameOutputUpscalerSettings? OutputUpscalerSettings { get; set; }
     public bool HasUpscaler => DlssVersion != null || DlssFrameGenVersion != null || FsrVersion != null || XessVersion != null || IsOptiscalerInstalled;
 
     // UI customization (not set by scanner)
