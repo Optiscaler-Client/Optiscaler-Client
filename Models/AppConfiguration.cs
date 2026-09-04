@@ -96,6 +96,7 @@ namespace OptiscalerClient.Models
         public RepositoryConfig Fakenvapi { get; set; } = new();
         public RepositoryConfig NukemFG { get; set; } = new();
         public RepositoryConfig OptiPatcher { get; set; } = new();
+        public RepositoryConfig DlssEnablerMirror { get; set; } = new();
         public string Language { get; set; } = "en";
         public bool Debug { get; set; } = false;
         public string DefaultProfileName { get; set; } = OptiScalerProfile.BuiltInDefaultName;
@@ -351,5 +352,25 @@ namespace OptiscalerClient.Models
     {
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
         public List<FakenvapiReleaseEntry> Releases { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A single DLSS Enabler mirror release entry stored in the local cache.
+    /// Sourced from the Optiscaler-Client/OptiScaler-DlssEnabler unofficial mirror repo.
+    /// </summary>
+    public class DlssEnablerMirrorReleaseEntry
+    {
+        public string Version { get; set; } = string.Empty;
+        public string? DownloadUrl { get; set; }
+        public bool IsLatest { get; set; }
+    }
+
+    /// <summary>
+    /// Local cache of DLSS Enabler mirror release metadata.
+    /// </summary>
+    public class DlssEnablerMirrorReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<DlssEnablerMirrorReleaseEntry> Releases { get; set; } = new();
     }
 }

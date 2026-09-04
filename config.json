@@ -35,6 +35,10 @@
         "RepoOwner": "Nukem9",
         "RepoName": "dlssg-to-fsr3"
     },
+    "DlssEnablerMirror": {
+        "RepoOwner": "Optiscaler-Client",
+        "RepoName": "OptiScaler-DlssEnabler"
+    },
     "ScanExclusions": [
         {
             "Name": "Wallpaper Engine",

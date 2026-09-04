@@ -80,6 +80,10 @@ namespace OptiscalerClient.Services
         private static FakenvapiReleasesCache _fakenvapiCache = new();
         private static System.Collections.Generic.List<string>? _cachedFakenvapiVersions = null;
         private static string? _cachedLatestFakenvapiVersion = null;
+        // Persistent local cache of DLSS Enabler mirror release metadata
+        private static DlssEnablerMirrorReleasesCache _dlssEnablerMirrorCache = new();
+        private static System.Collections.Generic.List<string>? _cachedDlssEnablerMirrorVersions = null;
+        private static string? _cachedLatestDlssEnablerMirrorVersion = null;
 
         public System.Collections.Generic.List<string> OptiScalerAvailableVersions
         {
@@ -167,6 +171,13 @@ namespace OptiscalerClient.Services
         /// <summary>The latest Fakenvapi version tag, or null if none fetched yet.</summary>
         public string? LatestFakenvapiVersion => _cachedLatestFakenvapiVersion;
 
+        /// <summary>All DLSS Enabler versions known from the unofficial mirror repo's releases
+        /// (whether downloaded locally yet or not) — the "Mirror" tab in version pickers.</summary>
+        public System.Collections.Generic.List<string> DlssEnablerMirrorAvailableVersions
+            => _cachedDlssEnablerMirrorVersions ?? new System.Collections.Generic.List<string>();
+        /// <summary>The latest DLSS Enabler mirror version tag, or null if none fetched yet.</summary>
+        public string? LatestDlssEnablerMirrorVersion => _cachedLatestDlssEnablerMirrorVersion;
+
         public string? OptiScalerVersion => _localVersions.OptiScalerVersion;
         public string? FakenvapiVersion => _localVersions.FakenvapiVersion;
         public string? NukemFGVersion => _localVersions.NukemFGVersion;
@@ -200,6 +211,7 @@ namespace OptiscalerClient.Services
             LoadExtrasCache();
             LoadOptiPatcherCache();
             LoadFakenvapiCache();
+            LoadDlssEnablerMirrorCache();
         }
 
         private void LoadConfiguration()
@@ -287,6 +299,7 @@ namespace OptiscalerClient.Services
                 if (!string.IsNullOrEmpty(template.Fakenvapi.RepoOwner))      target.Fakenvapi      = template.Fakenvapi;
                 if (!string.IsNullOrEmpty(template.NukemFG.RepoOwner))        target.NukemFG        = template.NukemFG;
                 if (!string.IsNullOrEmpty(template.OptiPatcher.RepoOwner))    target.OptiPatcher    = template.OptiPatcher;
+                if (!string.IsNullOrEmpty(template.DlssEnablerMirror.RepoOwner)) target.DlssEnablerMirror = template.DlssEnablerMirror;
 
                 if (target.ScanExclusions.Count == 0 && template.ScanExclusions.Count > 0)
                     target.ScanExclusions = template.ScanExclusions;
@@ -673,8 +686,10 @@ namespace OptiscalerClient.Services
                         var extrasTask = FetchExtrasReleasesAsync();
                         await Task.Delay(150);
                         var optiPatcherTask = FetchOptiPatcherReleasesAsync();
+                        await Task.Delay(150);
+                        var dlssEnablerMirrorTask = FetchDlssEnablerMirrorReleasesAsync();
 
-                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, optiPatcherTask);
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, optiPatcherTask, dlssEnablerMirrorTask);
 
                         var stableEntries = await optiVersionsTask;
                         var betaEntries = await optiBetasTask;
@@ -769,6 +784,32 @@ namespace OptiscalerClient.Services
                             RebuildInMemoryOptiPatcherCache();
                         }
 
+                        var newDlssEnablerMirror = await dlssEnablerMirrorTask;
+                        if (newDlssEnablerMirror.Count > 0)
+                        {
+                            var existingMirror = new System.Collections.Generic.HashSet<string>(
+                                _dlssEnablerMirrorCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+                            foreach (var e in _dlssEnablerMirrorCache.Releases) e.IsLatest = false;
+                            foreach (var entry in newDlssEnablerMirror)
+                            {
+                                if (!existingMirror.Contains(entry.Version))
+                                    _dlssEnablerMirrorCache.Releases.Add(entry);
+                                else
+                                {
+                                    var ex = _dlssEnablerMirrorCache.Releases.FirstOrDefault(
+                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                                    if (ex != null)
+                                    {
+                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                                        ex.IsLatest = entry.IsLatest;
+                                    }
+                                }
+                            }
+                            _dlssEnablerMirrorCache.LastUpdated = DateTime.Now;
+                            SaveDlssEnablerMirrorCache();
+                            RebuildInMemoryDlssEnablerMirrorCache();
+                        }
+
                     }
                     catch (Exception apiEx)
                     {
@@ -780,6 +821,7 @@ namespace OptiscalerClient.Services
                         RebuildInMemoryExtrasCache();
                         RebuildInMemoryOptiPatcherCache();
                         RebuildInMemoryFakenvapiCache();
+                        RebuildInMemoryDlssEnablerMirrorCache();
                         // Rate limit must propagate so the UI can show a warning dialog
                         if (apiEx is GitHubRateLimitException) throw;
                     }
@@ -1456,6 +1498,147 @@ namespace OptiscalerClient.Services
                 .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
                 .ToList();
             DebugWindow.Log($"[FakenvapiCache] Rebuilt in-memory: {_cachedFakenvapiVersions.Count} version(s), latest={_cachedLatestFakenvapiVersion}");
+        }
+
+        // ── DLSS Enabler mirror cache ────────────────────────────────────────────
+        // Releases published by Optiscaler-Client/OptiScaler-DlssEnabler — an unofficial mirror of
+        // the official DLSS Enabler builds (which are Nexus Mods-only). Each release is a zip
+        // containing a single version.dll, tagged with the DLL's own embedded version.
+
+        private void LoadDlssEnablerMirrorCache()
+        {
+            if (_dlssEnablerMirrorCache.Releases.Count > 0) return;
+            var file = Path.Combine(_baseDir, "dlss_enabler_mirror_cache.json");
+            if (!File.Exists(file)) return;
+            try
+            {
+                var json = File.ReadAllText(file);
+                var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.DlssEnablerMirrorReleasesCache);
+                if (loaded != null)
+                {
+                    _dlssEnablerMirrorCache = loaded;
+                    RebuildInMemoryDlssEnablerMirrorCache();
+                    DebugWindow.Log($"[DlssEnablerMirrorCache] Loaded {_dlssEnablerMirrorCache.Releases.Count} entries from local cache.");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DlssEnablerMirrorCache] Failed to load: {ex.Message}");
+            }
+        }
+
+        private void SaveDlssEnablerMirrorCache()
+        {
+            try
+            {
+                var file = Path.Combine(_baseDir, "dlss_enabler_mirror_cache.json");
+                var json = JsonSerializer.Serialize(_dlssEnablerMirrorCache, OptimizerContext.Default.DlssEnablerMirrorReleasesCache);
+                File.WriteAllText(file, json);
+                DebugWindow.Log($"[DlssEnablerMirrorCache] Saved {_dlssEnablerMirrorCache.Releases.Count} entries.");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DlssEnablerMirrorCache] Failed to save: {ex.Message}");
+            }
+        }
+
+        private void RebuildInMemoryDlssEnablerMirrorCache()
+        {
+            if (_dlssEnablerMirrorCache.Releases == null || _dlssEnablerMirrorCache.Releases.Count == 0)
+            {
+                _cachedDlssEnablerMirrorVersions = new System.Collections.Generic.List<string>();
+                return;
+            }
+            _cachedLatestDlssEnablerMirrorVersion = _dlssEnablerMirrorCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
+                ?? _dlssEnablerMirrorCache.Releases.FirstOrDefault()?.Version;
+
+            _cachedDlssEnablerMirrorVersions = _dlssEnablerMirrorCache.Releases
+                .Select(r => r.Version)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(ParseVersionForSort)
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            DebugWindow.Log($"[DlssEnablerMirrorCache] Rebuilt in-memory: {_cachedDlssEnablerMirrorVersions.Count} version(s), latest={_cachedLatestDlssEnablerMirrorVersion}");
+        }
+
+        /// <summary>
+        /// Fetches all releases from the DLSS Enabler mirror repo. Looks for a .zip asset per release.
+        /// </summary>
+        private async Task<System.Collections.Generic.List<DlssEnablerMirrorReleaseEntry>> FetchDlssEnablerMirrorReleasesAsync()
+        {
+            var entries = new System.Collections.Generic.List<DlssEnablerMirrorReleaseEntry>();
+            var config = _config.DlssEnablerMirror;
+            var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
+
+            try
+            {
+                if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
+                {
+                    DebugWindow.Log($"[DlssEnablerMirrorVersions] Skipping {repoLabel}: empty config");
+                    return entries;
+                }
+
+                var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=30";
+                var response = await GetWithRetryAsync(() => _httpClient, url);
+                DebugWindow.Log($"[DlssEnablerMirrorVersions] GET {url} → HTTP {(int)response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                bool latestMarked = false;
+
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    DebugWindow.Log($"[DlssEnablerMirrorVersions] ERROR: Expected JSON array, got {doc.RootElement.ValueKind}");
+                    return entries;
+                }
+
+                foreach (var element in doc.RootElement.EnumerateArray())
+                {
+                    if (!element.TryGetProperty("tag_name", out var tagName)) continue;
+                    var version = tagName.GetString();
+                    if (string.IsNullOrEmpty(version)) continue;
+
+                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        version = version.Substring(1);
+
+                    string? downloadUrl = null;
+                    if (element.TryGetProperty("assets", out var assets))
+                    {
+                        foreach (var asset in assets.EnumerateArray())
+                        {
+                            if (asset.TryGetProperty("browser_download_url", out var urlProp) &&
+                                asset.TryGetProperty("name", out var nameProp))
+                            {
+                                var assetName = nameProp.GetString() ?? "";
+                                var assetUrl = urlProp.GetString();
+                                if (assetUrl != null && assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    downloadUrl = assetUrl;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (downloadUrl == null) continue; // no usable asset — skip this release entirely
+
+                    entries.Add(new DlssEnablerMirrorReleaseEntry
+                    {
+                        Version = version,
+                        DownloadUrl = downloadUrl,
+                        IsLatest = !latestMarked,
+                    });
+                    latestMarked = true;
+                }
+
+                DebugWindow.Log($"[DlssEnablerMirrorVersions] {repoLabel} → {entries.Count} release(s)");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DlssEnablerMirrorVersions] {repoLabel} → ERROR: {ex.Message}");
+            }
+
+            return entries;
         }
 
         /// <summary>
@@ -2901,6 +3084,11 @@ namespace OptiscalerClient.Services
                 sanitized = sanitized.Replace(c, '_');
             if (string.IsNullOrWhiteSpace(sanitized))
                 throw new ArgumentException("A name is required.", nameof(userGivenName));
+            // "Mirror" is reserved: it's the container directory for DownloadDlssEnablerMirrorAsync's
+            // per-version subfolders. Allowing a Custom import with that exact name would let
+            // DeleteDlssEnablerCache("Mirror") wipe out every downloaded Mirror version at once.
+            if (string.Equals(sanitized, "Mirror", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("'Mirror' is a reserved name. Choose a different one.", nameof(userGivenName));
 
             var versionDir = GetDlssEnablerCachePath(sanitized);
             if (Directory.Exists(versionDir))
@@ -2959,6 +3147,151 @@ namespace OptiscalerClient.Services
                 {
                     try { Directory.Delete(tempExtractDir, true); } catch { /* best-effort */ }
                 }
+            }
+        }
+
+        // ── DLSS Enabler — Mirror versions ───────────────────────────────────
+        // Versions downloaded from the Optiscaler-Client/OptiScaler-DlssEnabler unofficial mirror
+        // (see FetchDlssEnablerMirrorReleasesAsync above). Kept in a separate "Mirror" subfolder so
+        // they never collide with, or get confused for, a manually-imported "Custom" name.
+
+        /// <summary>Prefix used to tag a GameFrameGenerationSettings.DlssEnablerVersion value as
+        /// coming from the Mirror source rather than a manually-imported Custom one.</summary>
+        public const string DlssEnablerMirrorTagPrefix = "mirror:";
+
+        public static bool IsDlssEnablerMirrorTag(string? tag)
+            => !string.IsNullOrEmpty(tag) && tag.StartsWith(DlssEnablerMirrorTagPrefix, StringComparison.OrdinalIgnoreCase);
+
+        public static string BuildDlssEnablerMirrorTag(string version) => DlssEnablerMirrorTagPrefix + version;
+
+        public static string StripDlssEnablerMirrorTag(string tag) => tag.Substring(DlssEnablerMirrorTagPrefix.Length);
+
+        public string GetDlssEnablerMirrorCachePath() => Path.Combine(_cacheDir, "DlssEnabler", "Mirror");
+        public string GetDlssEnablerMirrorCachePath(string version) => Path.Combine(_cacheDir, "DlssEnabler", "Mirror", version);
+        public string GetDlssEnablerMirrorDllPath(string version) => Path.Combine(GetDlssEnablerMirrorCachePath(version), "dlss-enabler-headless.dll");
+
+        public bool IsDlssEnablerMirrorCached(string version) => File.Exists(GetDlssEnablerMirrorDllPath(version));
+
+        /// <summary>Returns locally-cached DLSS Enabler Mirror version names (subdirectory names under Cache/DlssEnabler/Mirror/).</summary>
+        public List<string> GetDownloadedDlssEnablerMirrorVersions()
+        {
+            var versions = new List<string>();
+            var dir = GetDlssEnablerMirrorCachePath();
+            if (!Directory.Exists(dir)) return versions;
+
+            foreach (var sub in Directory.GetDirectories(dir))
+            {
+                if (File.Exists(Path.Combine(sub, "dlss-enabler-headless.dll")))
+                    versions.Add(Path.GetFileName(sub));
+            }
+
+            return versions.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public void DeleteDlssEnablerMirrorCache(string version)
+        {
+            var cachePath = GetDlssEnablerMirrorCachePath(version);
+            if (Directory.Exists(cachePath))
+                Directory.Delete(cachePath, true);
+        }
+
+        /// <summary>
+        /// Downloads a DLSS Enabler build from the unofficial mirror for the given version and
+        /// caches it under Cache/DlssEnabler/Mirror/{version}/dlss-enabler-headless.dll. No-op if
+        /// already cached. Mirrors DownloadFakenvapiAsync's cache-first/API-fallback URL resolution.
+        /// </summary>
+        public async Task<string> DownloadDlssEnablerMirrorAsync(string version, IProgress<double>? progress = null)
+        {
+            var cacheDir = GetDlssEnablerMirrorCachePath(version);
+
+            if (IsDlssEnablerMirrorCached(version))
+            {
+                DebugWindow.Log($"[DlssEnablerMirrorDownload] v{version} already cached at {cacheDir}");
+                return cacheDir;
+            }
+
+            string? downloadUrl = _dlssEnablerMirrorCache.Releases
+                .FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
+                ?.DownloadUrl;
+
+            if (string.IsNullOrEmpty(downloadUrl))
+            {
+                var config = _config.DlssEnablerMirror;
+                foreach (var prefix in new[] { "v", "" })
+                {
+                    try
+                    {
+                        var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
+                        var resp = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                        if (!resp.IsSuccessStatusCode) continue;
+
+                        var json = await resp.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(json);
+                        if (doc.RootElement.TryGetProperty("assets", out var assets))
+                        {
+                            foreach (var asset in assets.EnumerateArray())
+                            {
+                                if (asset.TryGetProperty("browser_download_url", out var urlProp) &&
+                                    asset.TryGetProperty("name", out var nameProp))
+                                {
+                                    var assetName = nameProp.GetString() ?? "";
+                                    var assetUrl = urlProp.GetString();
+                                    if (assetUrl != null && assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        downloadUrl = assetUrl;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!string.IsNullOrEmpty(downloadUrl)) break;
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[DlssEnablerMirrorDownload] API lookup attempt failed: {ex.Message}"); }
+                }
+            }
+
+            if (string.IsNullOrEmpty(downloadUrl))
+                throw new VersionUnavailableException(version, "No downloadable asset found on the DLSS Enabler mirror.");
+
+            var tempFile = Path.Combine(Path.GetTempPath(), $"DlssEnablerMirror_{Guid.NewGuid()}.zip");
+            var tempExtractDir = Path.Combine(Path.GetTempPath(), "OptiScaler_DlssEnablerMirror_" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                DebugWindow.Log($"[DlssEnablerMirrorDownload] Downloading {downloadUrl}");
+                await StreamToFileAsync(() => _httpClient, downloadUrl, tempFile, progress);
+
+                Directory.CreateDirectory(tempExtractDir);
+                await Task.Run(() =>
+                {
+                    using var archive = ArchiveFactory.OpenArchive(tempFile);
+                    foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+                    {
+                        entry.WriteToDirectory(tempExtractDir, new ExtractionOptions
+                        {
+                            ExtractFullPath = true,
+                            Overwrite = true
+                        });
+                    }
+                });
+
+                var dllFiles = Directory.GetFiles(tempExtractDir, "*.dll", SearchOption.AllDirectories)
+                    .Where(f => KnownDlssEnablerFileNames.Contains(Path.GetFileName(f), StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
+                if (dllFiles.Length == 0)
+                    throw new FileNotFoundException("The mirror archive does not contain 'version.dll' or 'dlss-enabler-headless.dll'.");
+
+                if (Directory.Exists(cacheDir))
+                    Directory.Delete(cacheDir, true);
+                Directory.CreateDirectory(cacheDir);
+                File.Copy(dllFiles[0], Path.Combine(cacheDir, "dlss-enabler-headless.dll"), true);
+
+                DebugWindow.Log($"[DlssEnablerMirrorDownload] Extracted v{version} to {cacheDir}");
+                return cacheDir;
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                try { if (Directory.Exists(tempExtractDir)) Directory.Delete(tempExtractDir, true); } catch { }
             }
         }
     }

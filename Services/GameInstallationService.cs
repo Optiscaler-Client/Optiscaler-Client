@@ -59,6 +59,16 @@ namespace OptiscalerClient.Services
             "D3D12_Optiscaler",
             "Licenses",
             "plugins",
+            // Nightly's dependency-DLL folder (OptiScaler.ini's default OptiDllPath=.\OptiScaler),
+            // also used by this client for Streamline (OptiScaler/streamline/) and the DLSS Enabler
+            // headless DLL. Directory.CreateDirectory in the Streamline/DLSS Enabler install steps
+            // creates "OptiScaler" recursively as a byproduct of creating a deeper path (e.g.
+            // "OptiScaler/streamline"), but manifest.InstalledDirectories only ever records that
+            // deepest leaf path, never the intermediate "OptiScaler" folder itself — so Step 3's
+            // manifest-driven cleanup never targets it and it was left behind on uninstall. This
+            // unconditional entry (recursively removed regardless of manifest state, same as the
+            // three above) is the actual fix: it always exists only because we put files there.
+            "OptiScaler",
         };
 
         // Sensitive files that OptiScaler may place in the game folder but that could also
@@ -147,25 +157,20 @@ namespace OptiscalerClient.Services
                 string.Equals(priorManifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
             if (!hasValidBackup) priorManifest = null; // only trust committed manifests
 
-            // Files the game originally owned (backed up during first install) — must NOT be overwritten.
+            // Files the game originally owned / files a previous OptiScaler install created — used
+            // below to decide whether an existing file needs backing up before being overwritten.
+            // Deliberately left EMPTY (never populated from priorManifest) rather than the old
+            // "skip backup, this is known OptiScaler output" special-casing: when priorManifest
+            // exists, CleanupPriorInstallForUpdate() below fully restores/removes everything from
+            // the previous install (any channel — Stable, Beta, Nightly) before this method's normal
+            // copy loop runs, so by the time these sets would be consulted, whatever is on disk is
+            // either genuinely-original (just restored) or nonexistent — exactly the fresh-install
+            // case these checks already handle correctly when left empty. Populating them from a
+            // channel that may ship a different file set than the one being installed now is what
+            // let stale per-channel files go untracked and survive as residue after a later
+            // uninstall (e.g. Stable -> Nightly reinstall leaving orphaned Stable-only files).
             var priorBackedUpOriginals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            // Files created by a previous OptiScaler install — must be deleted (not restored) on uninstall.
             var priorCreatedByOptiScaler = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (priorManifest != null)
-            {
-                foreach (var r in priorManifest.FilesOverwritten)
-                    priorBackedUpOriginals.Add(r.RelativePath);
-                foreach (var f in priorManifest.BackedUpFiles)
-                    priorBackedUpOriginals.Add(f); // legacy v1 fallback
-                foreach (var r in priorManifest.FilesCreated)
-                    priorCreatedByOptiScaler.Add(r.RelativePath);
-                // Legacy v1: files listed in InstalledFiles but not backed up were created by OptiScaler.
-                foreach (var f in priorManifest.InstalledFiles)
-                    if (!priorBackedUpOriginals.Contains(f))
-                        priorCreatedByOptiScaler.Add(f);
-                DebugWindow.Log($"[Install] Update mode — preserving {priorBackedUpOriginals.Count} original game file backup(s), tracking {priorCreatedByOptiScaler.Count} OptiScaler-created file(s)");
-            }
 
             // ── Auto-preserve existing OptiScaler.ini settings across updates ─────────
             // Step 2 below copies the new version's OptiScaler.ini over the game folder
@@ -216,7 +221,6 @@ namespace OptiscalerClient.Services
                 InstalledGameDirectory = gameDir
             };
 
-            manifest.PreInstallKeyFiles = CapturePreInstallKeySnapshot(gameDir, injectionDllName);
             manifest.ExpectedFinalMarkers.Add(injectionDllName);
             manifest.AppliedProfileName = profile?.Name;
 
@@ -234,6 +238,19 @@ namespace OptiscalerClient.Services
 
             try
             {
+
+            // ── Update mode: fully clean up the previous install first ──────────────
+            // Equivalent to the user manually clicking Uninstall, switching channel/version,
+            // then Install — but inside this same rollback transaction, so a failure further
+            // down still restores the previous, working install instead of leaving the game
+            // with neither version. Must run before PreInstallKeyFiles is captured (that
+            // snapshot should reflect the state this fresh copy actually starts from) and
+            // before the residue-cleanup block below (which only applies to the no-prior-
+            // manifest case).
+            if (priorManifest != null)
+                CleanupPriorInstallForUpdate(gameDir, storeKey, priorManifest, rollbackJournal);
+
+            manifest.PreInstallKeyFiles = CapturePreInstallKeySnapshot(gameDir, injectionDllName);
 
             // ── Pre-install: detect and remove residues from previous dirty installs ──
             // This must happen inside the transaction. If the new installation fails later,
@@ -1428,6 +1445,103 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[Recovery] Completed. Restored={rollbackSummary.Restored}, Deleted={rollbackSummary.Deleted}");
             return true;
+        }
+
+        /// <summary>
+        /// Fully undoes a previous OptiScaler install before this update's own files are copied in —
+        /// deletes what it created, restores what it overwrote, and sweeps the same known
+        /// artifacts/directories <see cref="UninstallOptiScaler"/> does. Mirrors that method's Steps
+        /// 1/1b/2/3/3b exactly, with two differences: every mutation goes through
+        /// <paramref name="rollbackJournal"/> first (so a failure later in this same install still
+        /// rolls back to the previous, working install instead of leaving neither version behind),
+        /// and it never touches the manifest/game-state bookkeeping UninstallOptiScaler owns (backup
+        /// store deletion, Game fields, re-analysis) — that's for the NEW install below to redo.
+        /// </summary>
+        private void CleanupPriorInstallForUpdate(string gameDir, string storeKey, InstallationManifest priorManifest, InstallationRollbackJournal rollbackJournal)
+        {
+            // Step 1: delete files the previous install created.
+            var filesToDelete = priorManifest.FilesCreated.Count > 0
+                ? priorManifest.FilesCreated.Select(f => f.RelativePath)
+                : priorManifest.InstalledFiles;
+            foreach (var relativePath in filesToDelete.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var filePath = Path.Combine(gameDir, relativePath);
+                    if (File.Exists(filePath))
+                    {
+                        rollbackJournal.CaptureFile(relativePath);
+                        File.Delete(filePath);
+                        DebugWindow.Log($"[Install] Update cleanup: removed prior-install file '{relativePath}'");
+                    }
+                }
+                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove prior file '{relativePath}': {ex.Message}"); }
+            }
+
+            // Step 1b: unconditionally sweep known OptiScaler files even if untracked in the manifest
+            // (e.g. the FSR4 INT8 Extras DLL / OptiPatcher.asi, installed through separate flows).
+            foreach (var artifact in KnownOptiscalerArtifacts)
+            {
+                try
+                {
+                    var artifactPath = Path.Combine(gameDir, artifact);
+                    if (File.Exists(artifactPath))
+                    {
+                        rollbackJournal.CaptureFile(artifact);
+                        File.Delete(artifactPath);
+                        DebugWindow.Log($"[Install] Update cleanup: removed known artifact '{artifact}'");
+                    }
+                }
+                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known artifact '{artifact}': {ex.Message}"); }
+            }
+
+            // Step 2: restore files the previous install overwrote.
+            IEnumerable<(string RelativePath, string? BackupRelativePath)> overwritten = priorManifest.FilesOverwritten.Count > 0
+                ? priorManifest.FilesOverwritten.Select(r => (r.RelativePath, r.BackupRelativePath))
+                : priorManifest.BackedUpFiles.Select(f => (f, (string?)null));
+            foreach (var (relativePath, backupRelativePath) in overwritten)
+            {
+                try
+                {
+                    rollbackJournal.CaptureFile(relativePath);
+                    if (_backupStore.RestoreFile(storeKey, gameDir, relativePath, backupRelativePath))
+                        DebugWindow.Log($"[Install] Update cleanup: restored original '{relativePath}'");
+                }
+                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to restore '{relativePath}': {ex.Message}"); }
+            }
+
+            // Step 3: remove now-empty installed subdirectories, deepest first.
+            foreach (var installedDir in priorManifest.InstalledDirectories.OrderByDescending(d => d.Length))
+            {
+                try
+                {
+                    var dirPath = Path.Combine(gameDir, installedDir);
+                    if (Directory.Exists(dirPath) && !Directory.EnumerateFileSystemEntries(dirPath).Any())
+                    {
+                        rollbackJournal.CaptureDirectoryChain(dirPath);
+                        Directory.Delete(dirPath, recursive: false);
+                    }
+                }
+                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove directory '{installedDir}': {ex.Message}"); }
+            }
+
+            // Step 3b: unconditionally sweep known OptiScaler directories. Capture every file inside
+            // individually before the recursive delete — CaptureDirectoryChain only remembers whether
+            // the directory shell existed, not its contents, so a bare Directory.Delete(recursive)
+            // here would be unrecoverable if a later step in this same install fails and rolls back.
+            foreach (var knownDir in KnownOptiscalerDirectories)
+            {
+                var dirPath = Path.Combine(gameDir, knownDir);
+                if (!Directory.Exists(dirPath)) continue;
+                try
+                {
+                    foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
+                        rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, filePath));
+                    Directory.Delete(dirPath, recursive: true);
+                    DebugWindow.Log($"[Install] Update cleanup: removed known directory '{knownDir}'");
+                }
+                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known directory '{knownDir}': {ex.Message}"); }
+            }
         }
 
         private List<KeyFileSnapshot> CapturePreInstallKeySnapshot(string gameDir, string injectionDllName)
