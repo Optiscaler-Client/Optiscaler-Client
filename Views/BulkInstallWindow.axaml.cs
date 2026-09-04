@@ -71,6 +71,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         InitializeComponent();
         DialogDimHelper.Register(this);
+        WindowScreenFitHelper.FitToScreen(this);
 
         _componentService = componentService;
         _installService = installService;

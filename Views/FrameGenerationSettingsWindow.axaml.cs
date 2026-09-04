@@ -73,6 +73,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     {
         InitializeComponent();
         DialogDimHelper.Register(this);
+        WindowScreenFitHelper.FitToScreen(this);
 
         _capabilities = capabilities;
         _gpuVendor = gpu?.Vendor ?? GpuVendor.Unknown;
