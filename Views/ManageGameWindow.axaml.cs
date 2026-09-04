@@ -25,6 +25,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using OptiscalerClient.Models;
 using System.Collections.ObjectModel;
@@ -76,6 +77,9 @@ namespace OptiscalerClient.Views
         private bool _isUpdatingUpscalingQuality;
         private bool _qualityCustomHandledForOpen;
         private bool _isUpdatingOutputUpscaler;
+        private bool _compatSidebarCollapsed;
+        private const double CompatSidebarExpandedWidth = 320;
+        private const double CompatSidebarCollapsedWidth = 76; // fits margins + the combined icon/arrow toggle button
 
         // Right-stick scroll for the compatibility sidebar — read-only content, deliberately not
         // part of the D-pad/left-stick focus navigation (see compatibility_list_sidebar_plan.md).
@@ -227,6 +231,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _game = game;
             _ownerWindow = owner;
             _originalCoverPath = game.CoverImageUrl;
@@ -268,8 +273,10 @@ namespace OptiscalerClient.Views
             var titleBar = this.FindControl<Border>("TitleBar");
             if (titleBar != null)
             {
-                titleBar.PointerPressed += (s, e) => this.BeginMoveDrag(e);
+                WindowDragHelper.EnableDrag(this, titleBar);
             }
+
+            SetupCompatSidebarToggle();
 
             this.Opened += (s, e) =>
             {
@@ -1978,6 +1985,219 @@ namespace OptiscalerClient.Views
 
             if (injectionLabel != null)
                 injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
+        }
+
+        // ── Recommended Config sidebar collapse ──────────────────────────────────
+        // The sidebar's Width drives the outer Grid's Auto-sized 3rd column directly (see XAML
+        // comment), so animating it reclaims the space instead of just hiding content behind a
+        // fixed-width column. Starts expanded every time the window opens — no persisted state,
+        // matches the ask ("por defecto desplegada") without over-building a settings entry
+        // nobody asked for.
+        private void SetupCompatSidebarToggle()
+        {
+            var sidebar = this.FindControl<Border>("PnlCompatSidebar");
+            var scrollViewer = this.FindControl<ScrollViewer>("ScrollCompatSidebar");
+            var titleText = this.FindControl<TextBlock>("TxtCompatSidebarTitleText");
+            var collapsedLinks = this.FindControl<StackPanel>("PnlCompatSidebarCollapsedLinks");
+            if (sidebar == null) return;
+
+            var duration = AnimationHelper.GetPanelAnimationDuration();
+            sidebar.Transitions = new Avalonia.Animation.Transitions
+            {
+                new Avalonia.Animation.DoubleTransition
+                {
+                    Property = Border.WidthProperty,
+                    Duration = duration,
+                    Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                }
+            };
+
+            // The content (wrapped notes, badge WrapPanels) reflows on every frame while the
+            // sidebar's width animates, which looks like a squished, re-shuffling mess mid-expand.
+            // Fading it in — kept invisible via Opacity until the width settles, then faded — hides
+            // that reflow entirely instead of trying to prevent it.
+            if (scrollViewer != null)
+            {
+                scrollViewer.Transitions = new Avalonia.Animation.Transitions
+                {
+                    new Avalonia.Animation.DoubleTransition
+                    {
+                        Property = Visual.OpacityProperty,
+                        Duration = duration,
+                        Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                    }
+                };
+            }
+
+            if (titleText != null)
+            {
+                titleText.Transitions = new Avalonia.Animation.Transitions
+                {
+                    new Avalonia.Animation.DoubleTransition
+                    {
+                        Property = Visual.OpacityProperty,
+                        Duration = duration,
+                        Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                    }
+                };
+            }
+
+            if (collapsedLinks != null)
+            {
+                collapsedLinks.Transitions = new Avalonia.Animation.Transitions
+                {
+                    new Avalonia.Animation.DoubleTransition
+                    {
+                        Property = Visual.OpacityProperty,
+                        Duration = duration,
+                        Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                    }
+                };
+            }
+
+            // The clipboard icon "flies" between sitting beside the title (expanded) and merging
+            // into the toggle button next to the arrow (collapsed) — fade + slide + scale on both
+            // copies, timed together so it reads as one icon travelling rather than two swapping.
+            var titleIcon = this.FindControl<TextBlock>("TxtCompatSidebarClipboardIcon");
+            var btnIcon = this.FindControl<TextBlock>("TxtCompatSidebarBtnClipboardIcon");
+            foreach (var icon in new[] { titleIcon, btnIcon })
+            {
+                if (icon == null) continue;
+                icon.Transitions = new Avalonia.Animation.Transitions
+                {
+                    new Avalonia.Animation.DoubleTransition
+                    {
+                        Property = Visual.OpacityProperty,
+                        Duration = duration,
+                        Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                    },
+                    new Avalonia.Animation.TransformOperationsTransition
+                    {
+                        Property = Visual.RenderTransformProperty,
+                        Duration = duration,
+                        Easing = new Avalonia.Animation.Easings.CubicEaseOut()
+                    }
+                };
+            }
+        }
+
+        private async void BtnToggleCompatSidebar_Click(object? sender, RoutedEventArgs e)
+        {
+            var sidebar = this.FindControl<Border>("PnlCompatSidebar");
+            var header = this.FindControl<Grid>("PnlCompatSidebarHeader");
+            var titleText = this.FindControl<TextBlock>("TxtCompatSidebarTitleText");
+            var scrollViewer = this.FindControl<ScrollViewer>("ScrollCompatSidebar");
+            var toggleBtn = this.FindControl<Button>("BtnToggleCompatSidebar");
+            var toggleIcon = this.FindControl<TextBlock>("TxtCompatSidebarToggleIcon");
+            var titleIcon = this.FindControl<TextBlock>("TxtCompatSidebarClipboardIcon");
+            var btnIcon = this.FindControl<TextBlock>("TxtCompatSidebarBtnClipboardIcon");
+            var collapsedLinks = this.FindControl<StackPanel>("PnlCompatSidebarCollapsedLinks");
+            if (sidebar == null) return;
+
+            _compatSidebarCollapsed = !_compatSidebarCollapsed;
+
+            if (toggleIcon != null) toggleIcon.Text = _compatSidebarCollapsed ? "›" : "‹";
+            if (toggleBtn != null)
+                ToolTip.SetTip(toggleBtn, GetResourceString(
+                    _compatSidebarCollapsed ? "TxtCompatSidebarExpand" : "TxtCompatSidebarCollapse",
+                    _compatSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"));
+
+            if (_compatSidebarCollapsed)
+            {
+                // Hide content immediately — no fade needed on the way out, only the reflow while
+                // expanding looks bad.
+                if (titleText != null) { titleText.Opacity = 0; titleText.IsVisible = false; }
+                if (scrollViewer != null) { scrollViewer.Opacity = 0; scrollViewer.IsVisible = false; }
+                sidebar.Width = CompatSidebarCollapsedWidth;
+
+                // The title column ("*") still claims its layout share even with the title
+                // hidden, so the Auto-sized button column sits pinned to the right edge — make
+                // the button span both columns and center itself so it lands mid-rail instead.
+                if (header != null) header.Margin = new Thickness(0, 14, 0, 10);
+                if (toggleBtn != null)
+                {
+                    Grid.SetColumn(toggleBtn, 0);
+                    Grid.SetColumnSpan(toggleBtn, 2);
+                    toggleBtn.HorizontalAlignment = HorizontalAlignment.Center;
+                }
+
+                // Merge: the title's clipboard icon shrinks/fades toward the button while the
+                // button's own copy grows/fades in to take its place, reading as one icon
+                // travelling into the button rather than two icons swapping.
+                if (titleIcon != null)
+                {
+                    titleIcon.Opacity = 0;
+                    titleIcon.RenderTransform = TransformOperations.Parse("translateX(14px) scale(0.5)");
+                }
+                if (btnIcon != null)
+                {
+                    btnIcon.IsVisible = true;
+                    btnIcon.Opacity = 1;
+                    btnIcon.RenderTransform = TransformOperations.Parse("translateX(0px) scale(1)");
+                }
+
+                // Same reveal-after-settle treatment as the title text on expand: the collapsed
+                // rail's own quick-link icons only get their fade-in once the width has actually
+                // reached CompatSidebarCollapsedWidth, instead of getting wipe-revealed mid-shrink.
+                if (collapsedLinks != null)
+                {
+                    await Task.Delay(AnimationHelper.GetPanelAnimationDuration());
+                    collapsedLinks.IsVisible = true;
+                    collapsedLinks.Opacity = 1;
+                }
+            }
+            else
+            {
+                if (collapsedLinks != null) { collapsedLinks.Opacity = 0; collapsedLinks.IsVisible = false; }
+                sidebar.Width = CompatSidebarExpandedWidth;
+
+                if (header != null) header.Margin = new Thickness(16, 14, 10, 10);
+                if (toggleBtn != null)
+                {
+                    Grid.SetColumn(toggleBtn, 1);
+                    Grid.SetColumnSpan(toggleBtn, 1);
+                    toggleBtn.HorizontalAlignment = HorizontalAlignment.Stretch;
+                }
+
+                // Reverse the merge: the button's icon shrinks/fades back out while the title's
+                // copy grows/fades back in beside the title text.
+                if (titleIcon != null)
+                {
+                    titleIcon.Opacity = 1;
+                    titleIcon.RenderTransform = TransformOperations.Parse("translateX(0px) scale(1)");
+                }
+                if (btnIcon != null)
+                {
+                    btnIcon.Opacity = 0;
+                    btnIcon.RenderTransform = TransformOperations.Parse("translateX(-14px) scale(0.5)");
+                }
+
+                // Keep the content out of layout (IsVisible=false, not just Opacity=0) for the
+                // whole width animation — a narrow in-between width forces the wrapped text/badges
+                // to reflow much taller, and since it's still SizeToContent="Height", the whole
+                // window would visibly stretch and snap back as that transient reflow happens.
+                // Only bringing it into layout once the width has actually settled avoids that.
+                if (scrollViewer != null || btnIcon != null || titleText != null)
+                {
+                    await Task.Delay(AnimationHelper.GetPanelAnimationDuration());
+                    if (scrollViewer != null)
+                    {
+                        scrollViewer.IsVisible = true;
+                        scrollViewer.Opacity = 1;
+                    }
+                    // Only reveal the title once the rail has reached full width — showing it
+                    // earlier let it get wipe-revealed by the still-animating clip, looking like
+                    // it slid in from the right over the button instead of fading in cleanly.
+                    if (titleText != null)
+                    {
+                        titleText.IsVisible = true;
+                        titleText.Opacity = 1;
+                    }
+                    // Only pull it out of layout once it's fully faded out, so the button
+                    // smoothly shrinks back down to just the arrow instead of snapping.
+                    if (btnIcon != null) btnIcon.IsVisible = false;
+                }
+            }
         }
 
         private void SetupFrameGenerationButton()

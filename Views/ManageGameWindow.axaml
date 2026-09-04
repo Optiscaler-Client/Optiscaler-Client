@@ -64,6 +64,39 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
+
+        <!-- Unlike IconBtn, this one needs a border visible at rest (not only on hover/press),
+             so it can't reuse the transparent/borderless IconBtn chrome. -->
+        <Style Selector="Button.SidebarToggleBtn">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Button.SidebarToggleBtn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A8B73F8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+        </Style>
+        <Style Selector="Button.SidebarToggleBtn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#3D8B73F8"/>
+        </Style>
+
+        <!-- These two open an external browser via Process.Start, which hands OS focus to that
+             other app; Avalonia's own focus tracking never gets a "clicked elsewhere" signal to
+             clear it, so the global Button:focus accent ring (App.axaml) stays stuck on the
+             button until the window closes. Narrowed to :focus-visible (keyboard/gamepad only)
+             just for these two so a plain click settles back to the resting border instead. -->
+        <Style Selector="Button#BtnCompatSidebarLinkCollapsed:focus /template/ ContentPresenter#PART_ContentPresenter,
+                         Button#BtnGameWikiLinkCollapsed:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Button#BtnCompatSidebarLinkCollapsed:focus-visible /template/ ContentPresenter#PART_ContentPresenter,
+                         Button#BtnGameWikiLinkCollapsed:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
     </Window.Styles>
 
     <Panel Margin="12" Name="RootPanel" Opacity="0">
@@ -72,7 +105,7 @@
                 BoxShadow="0 8 32 0 #80000000"
                 BorderBrush="{StaticResource BrBorderSubtle}"
                 BorderThickness="1">
-            <Grid ColumnDefinitions="3*,7*,320" RowDefinitions="*">
+            <Grid ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
                 <!-- LEFT COLUMN -->
                 <Grid Grid.Column="0" Margin="16" RowDefinitions="*,Auto">
                     <StackPanel Grid.Row="0" Spacing="12">
@@ -101,7 +134,11 @@
                         </Border>
 
                         <StackPanel Spacing="8">
-                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                            <!-- MaxWidth matches the cover's own cap so both pick up the exact
+                                 same Stretch-with-leftover-space centering offset and their left
+                                 edges line up, instead of this Grid filling the full (wider)
+                                 column and sitting flush against the window edge. -->
+                            <Grid ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                                 <TextBlock Name="TxtGameName"
                                            Text="Game Name"
                                            FontSize="{StaticResource FontSizeSubtitle}"
@@ -130,16 +167,25 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Path & Open Folder bottom aligned -->
-                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" VerticalAlignment="Bottom">
-                        <TextBlock Name="TxtInstallPath"
-                                   Grid.Column="0"
-                                   Text=""
-                                   FontSize="{StaticResource FontSizeCaption}"
-                                   Foreground="{StaticResource BrTextSecondary}"
-                                   TextTrimming="CharacterEllipsis"
-                                   VerticalAlignment="Center"
-                                   MaxWidth="260"/>
+                    <!-- Path & Open Folder bottom aligned. Same MaxWidth as the title Grid above
+                         so both pick up the identical Stretch centering offset as the cover and
+                         line up with it (see comment on the title Grid). -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+                        <Border Grid.Column="0"
+                                Background="{StaticResource BrBgBase}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusSmall}"
+                                Padding="8,5"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center">
+                            <TextBlock Name="TxtInstallPath"
+                                       Text=""
+                                       FontSize="{StaticResource FontSizeCaption}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"/>
+                        </Border>
 
                         <Button Grid.Column="1"
                                 Name="BtnOpenFolder"
@@ -790,26 +836,68 @@
                          never overlaps BtnClose / the status readout in the TitleBar above. -->
                 </Grid>
 
-                <!-- RECOMMENDED CONFIG SIDEBAR (Compatibility List) -->
+                <!-- RECOMMENDED CONFIG SIDEBAR (Compatibility List) — collapsible, default expanded.
+                     Width drives the outer Grid's Auto-sized 3rd column directly, so animating it
+                     (see ManageGameWindow.axaml.cs) reflows the whole layout, actually reclaiming
+                     the space instead of just hiding content behind a fixed-width column. -->
                 <Border Grid.Column="2"
+                        Name="PnlCompatSidebar"
+                        Width="320"
                         Margin="0,10,16,12"
                         Background="{StaticResource BrBgCard}"
                         BorderBrush="{StaticResource BrBorderSubtle}"
                         BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusLarge}">
-                    <Grid RowDefinitions="Auto,*">
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,14,16,10" Spacing="8">
-                            <TextBlock Text="&#xE34B;"
-                                       FontFamily="{StaticResource FontIcons}"
-                                       FontSize="16"
-                                       Foreground="{StaticResource BrAccent}"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text="{DynamicResource TxtCompatSidebarTitle}"
-                                       FontSize="{StaticResource FontSizeBodyLarge}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource BrTextPrimary}"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
+                        CornerRadius="{StaticResource RadiusLarge}"
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Stays in Row 0, top-aligned, in both states. Expanded: the clipboard
+                             icon sits beside the title and the toggle button holds only the
+                             arrow. Collapsed: the clipboard icon flies into the button next to
+                             the arrow, so the button reads as one merged control. -->
+                        <Grid Grid.Row="0" Name="PnlCompatSidebarHeader" Margin="16,14,10,10" ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Name="TxtCompatSidebarClipboardIcon"
+                                           Text="&#xE34B;"
+                                           FontFamily="{StaticResource FontIcons}"
+                                           FontSize="14"
+                                           Foreground="{StaticResource BrAccent}"
+                                           RenderTransformOrigin="0.5,0.5"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Name="TxtCompatSidebarTitleText"
+                                           Text="{DynamicResource TxtCompatSidebarTitle}"
+                                           FontSize="{StaticResource FontSizeBodyLarge}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrTextPrimary}"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="NoWrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Name="BtnToggleCompatSidebar"
+                                    Classes="SidebarToggleBtn"
+                                    Width="44" Height="28"
+                                    ToolTip.Tip="{DynamicResource TxtCompatSidebarCollapse}"
+                                    Click="BtnToggleCompatSidebar_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Name="TxtCompatSidebarBtnClipboardIcon"
+                                               Text="&#xE34B;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="14"
+                                               Foreground="{StaticResource BrAccent}"
+                                               Opacity="0"
+                                               IsVisible="False"
+                                               RenderTransform="translateX(-14px) scale(0.5)"
+                                               RenderTransformOrigin="0.5,0.5"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Name="TxtCompatSidebarToggleIcon"
+                                               Text="&#x2039;"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource BrAccent}"
+                                               Margin="0,-6,0,0"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
 
                         <ScrollViewer Grid.Row="1" Name="ScrollCompatSidebar" MaxHeight="640" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="16,0,16,16" Spacing="16">
@@ -1010,6 +1098,60 @@
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
+
+                        <!-- COLLAPSED-ONLY QUICK LINKS — same destinations as the footer links
+                             above, as icon buttons at the bottom of the rail since the text links
+                             are hidden while collapsed. Shown/faded in only once the collapse
+                             width animation has settled (see code-behind). -->
+                        <StackPanel Grid.Row="2"
+                                    Name="PnlCompatSidebarCollapsedLinks"
+                                    Spacing="8"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,0,0,14"
+                                    Opacity="0"
+                                    IsVisible="False">
+                            <Button Name="BtnCompatSidebarLinkCollapsed"
+                                    Classes="SidebarToggleBtn"
+                                    Width="48" Height="28"
+                                    ToolTip.Tip="{DynamicResource TxtCompatSidebarViewMore}"
+                                    Click="BtnCompatSidebarLink_Click">
+                                <!-- Icon + trailing "external link" arrow side by side, same
+                                     layout as the header's clipboard+arrow toggle button. -->
+                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xF7A9;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="14"
+                                               Foreground="{StaticResource BrAccent}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="&#xE12E;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource BrAccent}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <!-- Only shown once PopulateWikiDetailsAsync resolves this game's own
+                                 page, same condition as BtnGameWikiLink above. -->
+                            <Button Name="BtnGameWikiLinkCollapsed"
+                                    Classes="SidebarToggleBtn"
+                                    Width="48" Height="28"
+                                    ToolTip.Tip="{DynamicResource TxtCompatSidebarViewGamePage}"
+                                    IsVisible="{Binding IsVisible, ElementName=BtnGameWikiLink}"
+                                    Click="BtnGameWikiLink_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xEEB9;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="14"
+                                               Foreground="{StaticResource BrAccent}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="&#xE12E;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource BrAccent}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
