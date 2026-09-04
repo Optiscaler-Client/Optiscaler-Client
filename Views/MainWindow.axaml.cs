@@ -5343,13 +5343,18 @@ namespace OptiscalerClient.Views
                             return;
                         }
 
+                        // Loading state must cover every step below (Streamline/Fakenvapi/DLSS
+                        // Enabler downloads included) — not just the OptiScaler download — otherwise
+                        // the button looks idle while those still run, and the game row only flips
+                        // to "installed" once RefreshGameLists() runs at the very end.
+                        SetQuickInstallLoading(button);
+
                         // Get cache paths
                         var optiCacheDir = _componentService.GetOptiScalerCachePath(versionToInstall);
 
                         // Download OptiScaler if not in cache
                         if (!Directory.Exists(optiCacheDir) || Directory.GetFiles(optiCacheDir, "*.*", SearchOption.AllDirectories).Length == 0)
                         {
-                            SetQuickInstallLoading(button);
                             ShowToast(string.Format(GetResourceString("TxtInstallingFormat", "Downloading OptiScaler v{0}... {1}%"), versionToInstall, 0), showProgress: true, progressPercent: 0);
 
                             try
@@ -5393,7 +5398,7 @@ namespace OptiscalerClient.Views
                         var fgConfigService = new FrameGenerationConfigurationService();
                         var quickInstallGpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
                         var installStreamline = selectedGame.FrameGenerationSettings != null &&
-                            fgConfigService.RequiresStreamline(selectedGame.FrameGenerationSettings, fgConfigService.DetectCapabilities(selectedGame, quickInstallGpu));
+                            fgConfigService.RequiresStreamline(selectedGame.FrameGenerationSettings, fgConfigService.DetectCapabilities(selectedGame, quickInstallGpu), versionToInstall);
                         var mfgWithEnabler = selectedGame.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
                             selectedGame.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                         var streamlineCacheDir = string.Empty;
@@ -5501,10 +5506,40 @@ namespace OptiscalerClient.Views
                                     isAlert: true).ShowDialog<bool>(this);
                                 return;
                             }
-                            quickInstallDlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(enablerVersion);
+
+                            if (ComponentManagementService.IsDlssEnablerMirrorTag(enablerVersion))
+                            {
+                                var mirrorVersion = ComponentManagementService.StripDlssEnablerMirrorTag(enablerVersion);
+                                quickInstallDlssEnablerCacheDir = _componentService.GetDlssEnablerMirrorCachePath(mirrorVersion);
+                                if (!_componentService.IsDlssEnablerMirrorCached(mirrorVersion))
+                                {
+                                    try
+                                    {
+                                        ShowToast($"Downloading DLSS Enabler v{mirrorVersion}...", showProgress: true, progressPercent: 0);
+                                        var dlssEnablerProgress = new Progress<double>(p =>
+                                            UpdateToastProgress($"Downloading DLSS Enabler v{mirrorVersion}... {(int)p}%", p));
+                                        quickInstallDlssEnablerCacheDir = await _componentService.DownloadDlssEnablerMirrorAsync(mirrorVersion, dlssEnablerProgress);
+                                    }
+                                    catch (Exception downloadEx)
+                                    {
+                                        HideToast();
+                                        await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), downloadEx.Message, isAlert: true)
+                                            .ShowDialog<bool>(this);
+                                        return;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                quickInstallDlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(enablerVersion);
+                            }
                         }
 
-                        SetQuickInstallLoading(button);
+                        // Re-show a distinct status here: if the DLSS Enabler Mirror download above
+                        // ran, the toast is otherwise left frozen at "Downloading... 100%" for the
+                        // whole file-copy/hash install step below, which looks stuck.
+                        ShowToast(string.Format(GetResourceString("TxtExtractingFormat", "Extracting and installing v{0}..."), versionToInstall), showProgress: true, progressPercent: null);
+
                         string? resolvedGameDir = null;
                         await Task.Run(() =>
                         {

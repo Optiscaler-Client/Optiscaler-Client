@@ -223,11 +223,68 @@
                             </Grid>
 
                         <!-- PROGRESS BAR (Oculto por defecto, dentro del Status Card) -->
-                        <Border Name="BdProgress" Margin="0,12,0,0" IsVisible="False">
+                        <!-- Same card look as BdToast below (BrBgElevated/BrAccent/RadiusMedium) so
+                             both transient-status pieces read as one visual language. -->
+                        <Border Name="BdProgress"
+                                Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrAccent}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMedium}"
+                                Padding="14,8,10,8"
+                                Margin="0,12,0,0"
+                                ClipToBounds="True"
+                                IsVisible="False">
                             <StackPanel>
                                 <TextBlock Name="TxtProgressState" Text="Downloading OptiScaler..."
+                                           FontSize="{StaticResource FontSizeBody}"
                                            Foreground="{StaticResource BrTextPrimary}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <ProgressBar Name="PrgDownload" Height="6" Minimum="0" Maximum="100" />
+                                <ProgressBar Name="PrgDownload"
+                                             Height="3"
+                                             Minimum="0" Maximum="100"
+                                             Background="Transparent"
+                                             Foreground="{StaticResource BrAccent}"
+                                             BorderThickness="0"
+                                             CornerRadius="0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- TOAST NOTIFICATION -->
+                        <!-- Lives in the same StackPanel slot as BdProgress, right below it — if a
+                             toast needs to fire while a download/extract/install is showing progress
+                             above, the StackPanel just stacks it as an extra row (see investigation
+                             note in ManageGameWindow.axaml.cs near ShowToastAsync). -->
+                        <Border Name="BdToast"
+                                Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrAccent}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMedium}"
+                                Padding="0"
+                                Margin="0,12,0,0"
+                                ClipToBounds="True"
+                                IsVisible="False">
+                            <StackPanel>
+                                <Grid Margin="14,8,10,8" ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock Name="TxtToastIcon" Text="&#x2713;" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource BrAccent}" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Name="TxtToastMessage" Text="{DynamicResource TxtToastSuccess}" FontSize="{StaticResource FontSizeBody}" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Name="BtnToastClose"
+                                            Classes="IconBtn"
+                                            Width="20" Height="20"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Click="BtnToastClose_Click">
+                                        <TextBlock Text="&#x2715;" FontSize="10" Foreground="{StaticResource BrTextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                </Grid>
+                                <ProgressBar Name="PrgToastDuration"
+                                             Height="3"
+                                             Minimum="0" Maximum="100" Value="100"
+                                             Background="Transparent"
+                                             Foreground="{StaticResource BrAccent}"
+                                             BorderThickness="0"
+                                             CornerRadius="0"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -560,6 +617,7 @@
                                               Classes="BtnSelector"
                                               HorizontalContentAlignment="Left"
                                               VerticalContentAlignment="Center"
+                                              MaxDropDownHeight="420"
                                               DropDownOpened="CmbUpscalingQuality_DropDownOpened"
                                               DropDownClosed="CmbUpscalingQuality_DropDownClosed"
                                               SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
@@ -725,6 +783,11 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+
+                    <!-- TOAST NOTIFICATION -->
+                    <!-- Anchored to the right column only (not ColumnSpan across the whole modal),
+                         bottom-aligned across rows 0-1 so it sits just above the tab content and
+                         never overlaps BtnClose / the status readout in the TitleBar above. -->
                 </Grid>
 
                 <!-- RECOMMENDED CONFIG SIDEBAR (Compatibility List) -->
@@ -948,25 +1011,6 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
-                </Border>
-
-                <!-- TOAST NOTIFICATION -->
-                <Border Name="BdToast"
-                        Grid.ColumnSpan="3"
-                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        Background="{StaticResource BrBgElevated}"
-                        BorderBrush="{StaticResource BrAccent}"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusMedium}"
-                        BoxShadow="0 6 16 0 #80000000"
-                        Margin="0,0,36,80"
-                        Padding="16,10"
-                        IsVisible="False"
-                        ZIndex="100">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Name="TxtToastIcon" Text="&#x2713;" Foreground="{StaticResource BrAccent}" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Name="TxtToastMessage" Text="{DynamicResource TxtToastSuccess}" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
-                    </StackPanel>
                 </Border>
 
                 <!-- FOLDER CLEANUP CONFIRMATION MODAL -->

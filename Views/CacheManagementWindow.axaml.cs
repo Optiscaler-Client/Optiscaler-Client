@@ -255,8 +255,10 @@ namespace OptiscalerClient.Views
             sidebar.Children.Add(CreateTopButton("streamline",
                 Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
 
-            ShowSection("opti-stable");
-            UpdateSidebarSelection("opti-stable");
+            // Section rendering/selection is the caller's responsibility (each constructor calls
+            // ShowSection(_currentSection)/UpdateSidebarSelection(_currentSection) right after
+            // BuildSidebar()). Doing it here too used to clobber a requested initialSection other
+            // than "opti-stable", since ShowSection mutates _currentSection as a side effect.
         }
 
         private Button CreateCategoryButton(string expandIcon, string icon, string label)
@@ -721,6 +723,22 @@ namespace OptiscalerClient.Views
                 foreach (var ver in versions)
                     content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true));
             }
+
+            // Versions downloaded via the Mirror tab (Frame Generation modal) — separate cache
+            // folder from the manually-imported ones above, listed here so they're deletable too.
+            var mirrorVersions = _componentService.GetDownloadedDlssEnablerMirrorVersions();
+            if (mirrorVersions.Count > 0)
+            {
+                content.Children.Add(new TextBlock
+                {
+                    Text = Application.Current?.FindResource("TxtDlssEnablerMirrorSectionLbl") as string ?? "Downloaded from Mirror",
+                    Foreground = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray,
+                    FontSize = 11,
+                    Margin = new Thickness(0, 16, 0, 8)
+                });
+                foreach (var ver in mirrorVersions)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnablerMirror: true));
+            }
         }
 
         private void RenderStreamline(StackPanel content)
@@ -754,7 +772,7 @@ namespace OptiscalerClient.Views
             };
         }
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false)
         {
             var grid = new Grid
             {
@@ -821,7 +839,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -1021,6 +1039,7 @@ namespace OptiscalerClient.Views
             public bool IsFakenvapi { get; set; }
             public bool IsDlssEnabler { get; set; }
             public bool IsStreamline { get; set; }
+            public bool IsDlssEnablerMirror { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -1037,6 +1056,11 @@ namespace OptiscalerClient.Views
                 {
                     title = "Delete NukemFG Version";
                     msg = $"Are you sure you want to delete NukemFG '{info.Version}' from cache?";
+                }
+                else if (info.IsDlssEnablerMirror)
+                {
+                    title = Application.Current?.FindResource("TxtDeleteDlssEnablerTitle") as string ?? "Delete DLSS Enabler Version";
+                    msg = string.Format(Application.Current?.FindResource("TxtDeleteDlssEnablerMsgFormat") as string ?? "Are you sure you want to delete DLSS Enabler '{0}' from cache?", info.Version);
                 }
                 else if (info.IsDlssEnabler)
                 {
@@ -1070,6 +1094,8 @@ namespace OptiscalerClient.Views
                             _componentService.DeleteFakenvapiCache(info.Version);
                         else if (info.IsNukemFG)
                             _componentService.DeleteNukemFGCache(info.Version);
+                        else if (info.IsDlssEnablerMirror)
+                            _componentService.DeleteDlssEnablerMirrorCache(info.Version);
                         else if (info.IsDlssEnabler)
                             _componentService.DeleteDlssEnablerCache(info.Version);
                         else if (info.IsStreamline)

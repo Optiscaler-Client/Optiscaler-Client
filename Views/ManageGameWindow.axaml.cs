@@ -153,11 +153,7 @@ namespace OptiscalerClient.Views
                 cmbProfile.Items.Add(item);
             }
 
-            cmbProfile.Items.Add(new ComboBoxItem
-            {
-                Content = "+ New Profile",
-                Tag = NewProfileTag
-            });
+            cmbProfile.Items.Add(ComboActionItemHelper.Build(this, "New Profile", NewProfileTag));
 
             var targetName = selectedName;
             if (string.IsNullOrWhiteSpace(targetName))
@@ -1300,17 +1296,34 @@ namespace OptiscalerClient.Views
             await WarnIfMfgEnablerNeedsNightlyAsync();
         }
 
-        /// <summary>Warns when the user switches away from Nightly while this game has MFG with DLSS Enabler configured — that combination is not guaranteed to work outside Nightly builds.</summary>
+        /// <summary>Warns when the user switches to an OptiScaler version that doesn't ship
+        /// FGNvngxReplacement while this game has MFG with DLSS Enabler configured. Known-old
+        /// stable/beta versions (&lt;= 0.9.5) always warn, same as before; a newer version is only
+        /// warned about if it's not already confirmed (via its own cached OptiScaler.ini) to
+        /// support it — see FrameGenerationConfigurationService.UsesNightlyFrameGenerationSchema.</summary>
         private async Task WarnIfMfgEnablerNeedsNightlyAsync()
         {
             var settings = _game.FrameGenerationSettings;
             var mfgWithEnabler = settings?.Output == FrameGenerationOutput.DlssG &&
                 settings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
-            if (mfgWithEnabler)
+            if (mfgWithEnabler && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
             {
                 await ShowToastAsync(GetResourceString("TxtMfgWrongChannelToast",
                     "MFG may not work with the selected OptiScaler version — a Nightly version is recommended."));
             }
+        }
+
+        /// <summary>True when the OptiScaler version currently selected in CmbOptiVersion is known
+        /// (by channel, by version number, or by probing its cached OptiScaler.ini) to ship
+        /// FGNvngxReplacement/[DLSSG]. See FrameGenerationConfigurationService.UsesNightlyFrameGenerationSchema
+        /// for how unverified future versions are resolved without needing a client update.</summary>
+        private bool CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement()
+        {
+            var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
+            var selectedVersion = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            if (string.IsNullOrEmpty(selectedVersion) || selectedVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+                return false;
+            return FrameGenerationConfigurationService.UsesNightlyFrameGenerationSchema(selectedVersion);
         }
 
         private void BtnOptiNightly_Click(object? sender, RoutedEventArgs e)
@@ -1597,7 +1610,7 @@ namespace OptiscalerClient.Views
             }
 
             // Last option: Manage versions...
-            cmb.Items.Add(new ComboBoxItem { Content = "Manage versions…", Tag = "__manage__" });
+            cmb.Items.Add(ComboActionItemHelper.Build(this, "Manage versions…", "__manage__"));
 
             // Pre-select configured default
             var savedNukemFG = componentService.Config.DefaultNukemFGVersion;
@@ -1649,7 +1662,7 @@ namespace OptiscalerClient.Views
             }
 
             // Last option: Manage versions…
-            cmb.Items.Add(new ComboBoxItem { Content = "Manage versions…", Tag = "__manage__" });
+            cmb.Items.Add(ComboActionItemHelper.Build(this, "Manage versions…", "__manage__"));
 
             // Pre-select configured default
             var savedFakenvapi = componentService.Config.DefaultFakenvapiVersion;
@@ -1944,23 +1957,24 @@ namespace OptiscalerClient.Views
 
             // Full: Opti / FSR4 / Fakenvapi, then injection / patcher / NukemFG, then profile /
             // FrameGen / Quality (row 2 is fully packed — Output Upscaler has no room there and
-            // stays on its own row, beside Uninstall).
-            // Compact: Opti / FSR4 / injection, then patcher / profile / Frame Generation. Row 2
-            // only holds Quality, so Output Upscaler moves up next to it instead of row 3.
+            // stays on its own row, beside Uninstall). Unchanged from before — no Fakenvapi/NukemFG
+            // game to verify this layout against, so only the compact order below was touched.
+            // Compact: Opti / FSR4 / injection, then patcher / Output Upscaler / Quality, then
+            // Frame Generation / Profile.
             Grid.SetRow(opti, 0); Grid.SetColumn(opti, 0);
             Grid.SetRow(extras, 0); Grid.SetColumn(extras, 1);
             Grid.SetRow(injection, useCompactLayout ? 0 : 1);
             Grid.SetColumn(injection, useCompactLayout ? 2 : 0);
             Grid.SetRow(patcher, useCompactLayout ? 1 : 1);
             Grid.SetColumn(patcher, useCompactLayout ? 0 : 1);
-            Grid.SetRow(profile, useCompactLayout ? 1 : 2);
+            Grid.SetRow(outputUpscaler, useCompactLayout ? 1 : 3);
+            Grid.SetColumn(outputUpscaler, useCompactLayout ? 1 : 0);
+            Grid.SetRow(upscalingQuality, useCompactLayout ? 1 : 2);
+            Grid.SetColumn(upscalingQuality, useCompactLayout ? 2 : 2);
+            Grid.SetRow(frameGeneration, useCompactLayout ? 2 : 2);
+            Grid.SetColumn(frameGeneration, useCompactLayout ? 0 : 1);
+            Grid.SetRow(profile, useCompactLayout ? 2 : 2);
             Grid.SetColumn(profile, useCompactLayout ? 1 : 0);
-            Grid.SetRow(frameGeneration, useCompactLayout ? 1 : 2);
-            Grid.SetColumn(frameGeneration, useCompactLayout ? 2 : 1);
-            Grid.SetRow(upscalingQuality, 2);
-            Grid.SetColumn(upscalingQuality, useCompactLayout ? 1 : 2);
-            Grid.SetRow(outputUpscaler, useCompactLayout ? 2 : 3);
-            Grid.SetColumn(outputUpscaler, useCompactLayout ? 0 : 0);
 
             if (injectionLabel != null)
                 injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
@@ -1996,13 +2010,15 @@ namespace OptiscalerClient.Views
             {
                 combo.Items.Clear();
                 AddUpscalingQualityItem(combo, GetResourceString("TxtQualityGameControlled", "Game controlled"), UpscalingQualityPreset.GameControlled, isSentinel: true);
-                AddUpscalingQualityItem(combo, "Native", UpscalingQualityPreset.NativeAa);
+                AddUpscalingQualityItem(combo, "Native AA", UpscalingQualityPreset.NativeAa);
                 AddUpscalingQualityItem(combo, "Ultra Quality", UpscalingQualityPreset.UltraQuality);
                 AddUpscalingQualityItem(combo, "Quality", UpscalingQualityPreset.Quality);
                 AddUpscalingQualityItem(combo, "Balanced", UpscalingQualityPreset.Balanced);
                 AddUpscalingQualityItem(combo, "Performance", UpscalingQualityPreset.Performance);
                 AddUpscalingQualityItem(combo, "Ultra Performance", UpscalingQualityPreset.UltraPerformance);
-                AddUpscalingQualityItem(combo, GetResourceString("TxtCustom", "Custom"), UpscalingQualityPreset.Custom);
+                var fontIcons = this.FindResource("FontIcons") as FontFamily;
+                combo.Items.Add(ComboActionItemHelper.Build(this, GetResourceString("TxtCustom", "Custom"),
+                    UpscalingQualityPreset.Custom, glyph: "", glyphFontFamily: fontIcons));
 
                 for (var index = 0; index < combo.Items.Count; index++)
                 {
@@ -2214,7 +2230,7 @@ namespace OptiscalerClient.Views
 
                 var needsNightly = settings.Output == FrameGenerationOutput.DlssG &&
                     settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
-                if (needsNightly && !_optiShowingNightly)
+                if (needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
                 {
                     _optiShowingNightly = true;
                     _optiShowingBeta = false;
@@ -2252,7 +2268,7 @@ namespace OptiscalerClient.Views
             var multiplier = settings.MultiFrameMode == MultiFrameGenerationMode.Auto
                 ? "Auto"
                 : settings.MultiFrameMode.ToString().Replace("X", "x");
-            selection.Text = settings.Route == FrameGenerationRoute.Disabled ? route : output;
+            selection.Text = settings.Route == FrameGenerationRoute.Disabled ? route : $"{output} {multiplier}";
             ToolTip.SetTip(button, settings.Route == FrameGenerationRoute.Disabled
                 ? route
                 : $"{route} → {output} · {multiplier}");
@@ -3100,7 +3116,7 @@ namespace OptiscalerClient.Views
                 var installGpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
                 var isNightlyChannel = componentService.IsNightlyOptiScalerVersion(optiscalerVersion);
                 var installStreamline = _game.FrameGenerationSettings != null &&
-                    fgConfigService.RequiresStreamline(_game.FrameGenerationSettings, fgConfigService.DetectCapabilities(_game, installGpu));
+                    fgConfigService.RequiresStreamline(_game.FrameGenerationSettings, fgConfigService.DetectCapabilities(_game, installGpu), optiscalerVersion);
                 var mfgWithEnabler = _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
                     _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                 var streamlineCacheDir = string.Empty;
@@ -3268,8 +3284,72 @@ namespace OptiscalerClient.Views
                         ).ShowDialog<object>(this);
                         return;
                     }
-                    dlssEnablerCacheDir = componentService.GetDlssEnablerCachePath(enablerVersion);
+
+                    if (ComponentManagementService.IsDlssEnablerMirrorTag(enablerVersion))
+                    {
+                        var mirrorVersion = ComponentManagementService.StripDlssEnablerMirrorTag(enablerVersion);
+                        dlssEnablerCacheDir = componentService.GetDlssEnablerMirrorCachePath(mirrorVersion);
+                        if (!componentService.IsDlssEnablerMirrorCached(mirrorVersion))
+                        {
+                            try
+                            {
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    if (btnInstall != null) btnInstall.IsEnabled = false;
+                                    if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
+                                    if (btnUninstall != null) btnUninstall.IsEnabled = false;
+                                    if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = false;
+                                    if (bdProgress != null) bdProgress.IsVisible = true;
+                                    if (prgDownload != null) prgDownload.IsIndeterminate = false;
+                                    if (txtProgressState != null) txtProgressState.Text = $"Downloading DLSS Enabler v{mirrorVersion}...";
+                                });
+                                var dlssEnablerProgress = new Progress<double>(p =>
+                                    Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
+                                dlssEnablerCacheDir = await componentService.DownloadDlssEnablerMirrorAsync(mirrorVersion, dlssEnablerProgress);
+                            }
+                            catch (Exception ex)
+                            {
+                                var title = GetResourceString("TxtError", "Error");
+                                await new ConfirmDialog(this, title, ex.Message).ShowDialog<object>(this);
+                                return;
+                            }
+                            finally
+                            {
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    if (prgDownload != null) prgDownload.IsIndeterminate = false;
+                                    if (bdProgress != null) bdProgress.IsVisible = false;
+                                    if (btnInstall != null) btnInstall.IsEnabled = true;
+                                    if (btnInstallManual != null) btnInstallManual.IsEnabled = true;
+                                    if (btnUninstall != null) btnUninstall.IsEnabled = true;
+                                    if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = true;
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dlssEnablerCacheDir = componentService.GetDlssEnablerCachePath(enablerVersion);
+                    }
                 }
+
+                // Re-show progress here: the DLSS Enabler Mirror download above (if it ran) hides
+                // bdProgress and re-enables the buttons in its own finally block, which otherwise
+                // leaves the UI looking idle while the file-copy/hash install step below still runs.
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (btnInstall != null) btnInstall.IsEnabled = false;
+                    if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
+                    if (btnUninstall != null) btnUninstall.IsEnabled = false;
+                    if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = false;
+                    if (bdProgress != null) bdProgress.IsVisible = true;
+                    if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                    if (txtProgressState != null)
+                    {
+                        var extractFormat = GetResourceString("TxtExtractingFormat", "Extracting and installing v{0}...");
+                        txtProgressState.Text = string.Format(extractFormat, optiscalerVersion);
+                    }
+                });
 
                 string? resolvedGameDir = null;
                 try
@@ -3492,6 +3572,10 @@ namespace OptiscalerClient.Views
                 Dispatcher.UIThread.Post(() =>
                 {
                     if (bdProgress != null) bdProgress.IsVisible = false;
+                    if (btnInstall != null) btnInstall.IsEnabled = true;
+                    if (btnInstallManual != null) btnInstallManual.IsEnabled = true;
+                    if (btnUninstall != null) btnUninstall.IsEnabled = true;
+                    if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = true;
                 });
                 await new ConfirmDialog(this, "Error", $"Installation failed: {ex.Message}"). ShowDialog<object>(this);
             }
@@ -3941,23 +4025,55 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private static readonly TimeSpan ToastDuration = TimeSpan.FromMilliseconds(3500);
+        private int _toastCallId;
+
+        // Ticks PrgToastDuration.Value down by hand instead of relying on Avalonia's
+        // property Transitions: repeatedly re-triggering a Transition on the same
+        // property (this toast can fire several times per FG-settings session) left the
+        // animation stuck on a later call even though the reset/hide logic itself was fine.
+        // _toastCallId also supersedes any earlier still-running call so its tail end can't
+        // fight over PrgToastDuration/BdToast with a newer toast.
         private async Task ShowToastAsync(string message)
         {
             var txtToastMessage = this.FindControl<TextBlock>("TxtToastMessage");
             var bdToast = this.FindControl<Border>("BdToast");
+            var prgToastDuration = this.FindControl<ProgressBar>("PrgToastDuration");
+
+            var myToastId = ++_toastCallId;
 
             Dispatcher.UIThread.Post(() =>
             {
                 if (txtToastMessage != null) txtToastMessage.Text = message;
                 if (bdToast != null) bdToast.IsVisible = true;
+                if (prgToastDuration != null) prgToastDuration.Value = 100;
             });
 
-            await Task.Delay(3500);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.Elapsed < ToastDuration)
+            {
+                await Task.Delay(30);
+                if (myToastId != _toastCallId) return;
 
+                var remaining = 100.0 * (1 - sw.Elapsed.TotalMilliseconds / ToastDuration.TotalMilliseconds);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (prgToastDuration != null) prgToastDuration.Value = Math.Max(0, remaining);
+                });
+            }
+
+            if (myToastId != _toastCallId) return;
             Dispatcher.UIThread.Post(() =>
             {
                 if (bdToast != null) bdToast.IsVisible = false;
             });
+        }
+
+        private void BtnToastClose_Click(object? sender, RoutedEventArgs e)
+        {
+            _toastCallId++; // invalidate the running tick loop so it doesn't re-show/hide over this
+            var bdToast = this.FindControl<Border>("BdToast");
+            if (bdToast != null) bdToast.IsVisible = false;
         }
 
         private void UpdateStatus()
@@ -4007,6 +4123,7 @@ namespace OptiscalerClient.Views
                 if (btnUninstall != null)
                 {
                     btnUninstall.IsVisible = true;
+                    btnUninstall.IsEnabled = true;
                     btnUninstall.Content = GetResourceString("TxtUninstall", "Uninstall");
                 }
             }
@@ -4035,6 +4152,7 @@ namespace OptiscalerClient.Views
                 if (btnUninstall != null)
                 {
                     btnUninstall.IsVisible = _game.IsFsr4DllSwapped;
+                    btnUninstall.IsEnabled = true;
                     btnUninstall.Content = GetResourceString("TxtRestoreOriginalDll", "Restore original DLL");
                 }
             }
@@ -4329,6 +4447,13 @@ namespace OptiscalerClient.Views
 
             var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
             var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
+
+            // This is the resync point called after every install/uninstall/swap completes (via
+            // UpdateStatus) as well as on every combo change — ExecuteInstallAsync disables the
+            // combo before its "extracting and installing" step but only re-enables it in the
+            // download-phase finally blocks, not after that final step, so this is what actually
+            // clears it back to usable once the operation is done.
+            if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = true;
             var optiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var extrasTag = (cmbExtrasVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
 

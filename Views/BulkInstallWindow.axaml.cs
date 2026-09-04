@@ -665,7 +665,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var isNightlyChannel = _componentService.IsNightlyOptiScalerVersion(version);
         var fgConfigService = new FrameGenerationConfigurationService();
         var installStreamline = selectedGames.Any(item =>
-            fgConfigService.RequiresStreamline(_frameGenerationSettings, fgConfigService.DetectCapabilities(item.Game, preferredGpuForFsr4)));
+            fgConfigService.RequiresStreamline(_frameGenerationSettings, fgConfigService.DetectCapabilities(item.Game, preferredGpuForFsr4), version));
         var mfgWithEnabler = _frameGenerationSettings.Output == FrameGenerationOutput.DlssG &&
             _frameGenerationSettings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
         var streamlineCacheDir = string.Empty;
@@ -693,7 +693,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         if (mfgWithEnabler)
         {
-            if (string.IsNullOrEmpty(_frameGenerationSettings.DlssEnablerVersion))
+            var enablerVersion = _frameGenerationSettings.DlssEnablerVersion;
+            if (string.IsNullOrEmpty(enablerVersion))
             {
                 _isInstalling = false;
                 if (progressSection != null) progressSection.IsVisible = false;
@@ -703,7 +704,41 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     "No DLSS Enabler version selected. Configure Frame Generation before installing.", isAlert: true).ShowDialog<bool>(this);
                 return;
             }
-            dlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(_frameGenerationSettings.DlssEnablerVersion);
+
+            if (ComponentManagementService.IsDlssEnablerMirrorTag(enablerVersion))
+            {
+                var mirrorVersion = ComponentManagementService.StripDlssEnablerMirrorTag(enablerVersion);
+                dlssEnablerCacheDir = _componentService.GetDlssEnablerMirrorCachePath(mirrorVersion);
+                if (!_componentService.IsDlssEnablerMirrorCached(mirrorVersion))
+                {
+                    try
+                    {
+                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading DLSS Enabler v{mirrorVersion}...";
+                        if (progressBar != null) progressBar.IsIndeterminate = false;
+                        var dlssEnablerProgress = new Progress<double>(p =>
+                            Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.Value = p; }));
+                        dlssEnablerCacheDir = await _componentService.DownloadDlssEnablerMirrorAsync(mirrorVersion, dlssEnablerProgress);
+                    }
+                    catch (Exception ex)
+                    {
+                        _isInstalling = false;
+                        if (progressBar != null) progressBar.IsIndeterminate = false;
+                        if (progressSection != null) progressSection.IsVisible = false;
+                        if (btnInstall != null) btnInstall.IsEnabled = true;
+                        if (btnCancel != null) btnCancel.IsEnabled = true;
+                        await new ConfirmDialog(this, "Error", ex.Message, isAlert: true).ShowDialog<bool>(this);
+                        return;
+                    }
+                    finally
+                    {
+                        if (progressBar != null) progressBar.IsIndeterminate = false;
+                    }
+                }
+            }
+            else
+            {
+                dlssEnablerCacheDir = _componentService.GetDlssEnablerCachePath(enablerVersion);
+            }
         }
 
         foreach (var gameItem in selectedGames)
@@ -763,7 +798,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // Re-checked per game: capabilities (and therefore Auto resolution) can differ
                 // per game even though the FG configuration itself is shared across the batch.
                 var installStreamlineForGame = fgConfigService.RequiresStreamline(
-                    gameItem.Game.FrameGenerationSettings!, fgConfigService.DetectCapabilities(gameItem.Game, preferredGpuForFsr4));
+                    gameItem.Game.FrameGenerationSettings!, fgConfigService.DetectCapabilities(gameItem.Game, preferredGpuForFsr4), version);
 
                 string? resolvedGameDir = null;
                 await Task.Run(() =>
@@ -1269,7 +1304,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 return BuildSharedFrameGenerationCapabilities(capabilities);
             });
 
-            var dialog = new FrameGenerationSettingsWindow(this, sharedCapabilities, _frameGenerationSettings);
+            var dialog = new FrameGenerationSettingsWindow(this, sharedCapabilities, _frameGenerationSettings, gpu);
             var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
             if (settings == null) return;
 
@@ -1331,7 +1366,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             ? "Auto"
             : _frameGenerationSettings.MultiFrameMode.ToString().Replace("X", "x");
 
-        selection.Text = _frameGenerationSettings.Route == FrameGenerationRoute.Disabled ? route : output;
+        selection.Text = _frameGenerationSettings.Route == FrameGenerationRoute.Disabled ? route : $"{output} {multiplier}";
         ToolTip.SetTip(button, _frameGenerationSettings.Route == FrameGenerationRoute.Disabled
             ? route
             : $"{route} → {output} · {multiplier}");
@@ -1608,7 +1643,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.Items.Add(BuildVersionItem(ver, isBeta: false, isLatest: isLatest));
         }
 
-        cmb.Items.Add(new ComboBoxItem { Content = "Manage versions\u2026", Tag = "__manage__" });
+        cmb.Items.Add(ComboActionItemHelper.Build(this, "Manage versions\u2026", "__manage__"));
 
         // Pre-select configured default
         var savedFakenvapi = _componentService.Config.DefaultFakenvapiVersion;
@@ -1650,7 +1685,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.Items.Add(new ComboBoxItem { Content = ver, Tag = ver });
         }
 
-        cmb.Items.Add(new ComboBoxItem { Content = "Manage versions\u2026", Tag = "__manage__" });
+        cmb.Items.Add(ComboActionItemHelper.Build(this, "Manage versions\u2026", "__manage__"));
 
         // Pre-select configured default
         var savedNukemFG = _componentService.Config.DefaultNukemFGVersion;

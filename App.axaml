@@ -212,13 +212,60 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
+        <!-- FluentTheme's disabled ComboBox falls back to its own light-grey border/foreground
+             resource keys, which we never overrode — clashes against this app's dark card
+             backgrounds. Dimming the whole control instead (same trick as Button:disabled) fades
+             it uniformly into the surrounding dark chrome rather than flashing grey. -->
+        <Style Selector="ComboBox:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+
         <!-- Marks sentinel/fallback dropdown entries (Default, Game controlled, None, ...) so they
-             read as distinct from real choices while the list is open. Italic only — no color
-             change, so it never reads as disabled and stays legible against the selected/purple
-             row. Only ComboBoxItem is styled, not the closed box — Avalonia's ComboBox shows the
-             selection via its own ContentPresenter, so the compact/closed display is unaffected. -->
+             read as distinct from real choices while the list is open — same rounded-pill
+             language as .ActionOption below, but neutral/muted (BgElevated + BorderSubtle, no
+             accent color) since these are fallbacks, not actions. Only ComboBoxItem is styled,
+             not the closed box — Avalonia's ComboBox shows the selection via its own
+             ContentPresenter, so the compact/closed display is unaffected. -->
         <Style Selector="ComboBoxItem.SentinelOption">
             <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Margin" Value="6,4,6,2"/>
+        </Style>
+        <!-- FluentTheme's ComboBoxItem paints :pointerover directly on its own
+             /template/ ContentPresenter (a hardcoded rule inside its ControlTheme), bypassing
+             whatever the control's own Background property says — same reason :selected above
+             has to target /template/ ContentPresenter too instead of the plain Background
+             property. A setter on the bare control (tried first) is silently ignored for this
+             pseudo-class specifically. BrBgElevated is also already the lightest neutral
+             background token in the palette, so a plain resource swap (e.g. BrBgCard) would be
+             darker — invisible/backwards; a translucent white overlay guarantees lighter, always. -->
+        <Style Selector="ComboBoxItem.SentinelOption:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#22FFFFFF"/>
+        </Style>
+
+        <!-- Marks "add new" / "manage" dropdown entries (+ New Profile, Manage versions…,
+             New / Import…) as an action rather than another value to pick — pill-shaped and
+             accent-tinted so it reads like a compact button embedded in the list, echoing
+             this app's real buttons (RadiusMedium, accent border) instead of an unstyled row. -->
+        <Style Selector="ComboBoxItem.ActionOption">
+            <Setter Property="Background" Value="#1F8B73F8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Margin" Value="6,4,6,2"/>
+        </Style>
+        <Style Selector="ComboBoxItem.ActionOption /template/ ContentPresenter">
+            <Setter Property="Foreground" Value="{StaticResource BrAccent}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <!-- Stronger tint on hover, not solid — the badge/text stay accent-on-dark instead of
+             needing a separate white variant once the row itself goes fully accent-colored.
+             Targets /template/ ContentPresenter for the same reason as SentinelOption above. -->
+        <Style Selector="ComboBoxItem.ActionOption:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3D8B73F8"/>
         </Style>
 
         <Style Selector="CheckBox">
