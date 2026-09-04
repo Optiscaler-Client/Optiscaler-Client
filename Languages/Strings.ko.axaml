@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">권장 설정</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">사이드바 접기</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">사이드바 펼치기</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">호환성</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">OptiScaler와 호환됨</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">호환되지 않음</x:String>

@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Önerilen Yapılandırma</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Kenar çubuğunu daralt</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Kenar çubuğunu genişlet</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Uyumluluk</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">OptiScaler ile Uyumlu</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Uyumlu Değil</x:String>

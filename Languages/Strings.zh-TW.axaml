@@ -170,6 +170,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">建議設定</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">收合側邊欄</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">展開側邊欄</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">相容性</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">與 OptiScaler 相容</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">不相容</x:String>

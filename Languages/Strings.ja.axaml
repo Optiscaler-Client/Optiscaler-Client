@@ -170,6 +170,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">推奨設定</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">サイドバーを折りたたむ</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">サイドバーを展開</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">互換性</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">OptiScaler と互換性あり</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">互換性なし</x:String>

@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Empfohlene Konfiguration</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Seitenleiste einklappen</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Seitenleiste ausklappen</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Kompatibilität</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Kompatibel mit OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Nicht kompatibel</x:String>

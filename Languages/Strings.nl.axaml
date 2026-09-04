@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Aanbevolen Configuratie</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Zijbalk inklappen</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Zijbalk uitklappen</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibiliteit</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatibel met OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Niet compatibel</x:String>

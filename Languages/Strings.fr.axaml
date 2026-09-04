@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Configuration Recommandée</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Réduire la barre latérale</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Développer la barre latérale</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibilité</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatible avec OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Non compatible</x:String>

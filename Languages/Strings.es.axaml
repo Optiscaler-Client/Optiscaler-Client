@@ -184,6 +184,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Configuración Recomendada</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Colapsar barra lateral</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Expandir barra lateral</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibilidad</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatible con OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">No compatible</x:String>

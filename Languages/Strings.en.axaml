@@ -186,6 +186,8 @@ This version is unavailable for download. Check your internet connection and try
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Recommended Config</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Collapse sidebar</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Expand sidebar</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibility</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatible with OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Not compatible</x:String>

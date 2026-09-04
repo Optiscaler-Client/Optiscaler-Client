@@ -166,6 +166,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Configuração Recomendada</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Recolher barra lateral</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Expandir barra lateral</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Compatibilidade</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Compatível com OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Não compatível</x:String>

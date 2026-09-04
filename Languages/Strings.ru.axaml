@@ -168,6 +168,8 @@
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
     <x:String x:Key="TxtCompatSidebarTitle">Рекомендуемая конфигурация</x:String>
+    <x:String x:Key="TxtCompatSidebarCollapse">Свернуть боковую панель</x:String>
+    <x:String x:Key="TxtCompatSidebarExpand">Развернуть боковую панель</x:String>
     <x:String x:Key="TxtCompatSidebarCompatLbl">Совместимость</x:String>
     <x:String x:Key="TxtCompatSidebarStatusCompatible">Совместимо с OptiScaler</x:String>
     <x:String x:Key="TxtCompatSidebarStatusNotCompatible">Несовместимо</x:String>
