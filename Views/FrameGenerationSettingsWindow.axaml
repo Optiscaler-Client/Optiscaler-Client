@@ -38,140 +38,231 @@
                 </Border>
 
                 <StackPanel Grid.Row="1" Margin="22,18" Spacing="13">
-                    <StackPanel Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="{DynamicResource TxtFgRoute}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="{StaticResource FontSizeCaption}"/>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtFgRouteTooltip}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                           FontSize="10" FontWeight="Bold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Margin="0,-1,0,0"/>
-                            </Border>
+                    <Grid ColumnDefinitions="*,12,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{DynamicResource TxtFgOutput}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="{StaticResource FontSizeCaption}"/>
+                                <Border Background="{StaticResource BrBgElevated}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Width="16" Height="16"
+                                        ToolTip.ShowDelay="100" Cursor="Help"
+                                        ToolTip.Tip="{DynamicResource TxtFgOutputTooltip}">
+                                    <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="0,-1,0,0"/>
+                                </Border>
+                            </StackPanel>
+                            <ComboBox Name="CmbFgOutput"
+                                      HorizontalAlignment="Stretch"
+                                      Classes="BtnSelector"
+                                      HorizontalContentAlignment="Left"
+                                      SelectionChanged="CmbFgOutput_SelectionChanged"/>
                         </StackPanel>
-                        <ComboBox Name="CmbFgRoute"
-                                  HorizontalAlignment="Stretch"
-                                  Classes="BtnSelector"
-                                  HorizontalContentAlignment="Left"
-                                  SelectionChanged="CmbFgRoute_SelectionChanged"/>
-                    </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <CheckBox Name="ChkAdvancedRoutes"
-                                  Content="{DynamicResource TxtFgAdvancedRoutes}"
-                                  IsCheckedChanged="ChkAdvancedRoutes_IsCheckedChanged"/>
-                        <Border Background="{StaticResource BrBgElevated}"
-                                BorderBrush="{StaticResource BrBorderSubtle}"
-                                BorderThickness="1" CornerRadius="8"
-                                Width="16" Height="16"
-                                ToolTip.ShowDelay="100" Cursor="Help"
-                                ToolTip.Tip="{DynamicResource TxtFgAdvancedRoutesTooltip}">
-                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="10" FontWeight="Bold"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Margin="0,-1,0,0"/>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="{DynamicResource TxtFgOutput}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="{StaticResource FontSizeCaption}"/>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtFgOutputTooltip}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                           FontSize="10" FontWeight="Bold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Margin="0,-1,0,0"/>
-                            </Border>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{DynamicResource TxtMfgMultiplier}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="{StaticResource FontSizeCaption}"/>
+                                <Border Background="{StaticResource BrBgElevated}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Width="16" Height="16"
+                                        ToolTip.ShowDelay="100" Cursor="Help"
+                                        ToolTip.Tip="{DynamicResource TxtMfgMultiplierTooltip}">
+                                    <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="0,-1,0,0"/>
+                                </Border>
+                            </StackPanel>
+                            <ComboBox Name="CmbMfgMultiplier"
+                                      HorizontalAlignment="Stretch"
+                                      Classes="BtnSelector"
+                                      HorizontalContentAlignment="Left"
+                                      SelectionChanged="CmbMfgMultiplier_SelectionChanged"/>
                         </StackPanel>
-                        <ComboBox Name="CmbFgOutput"
-                                  HorizontalAlignment="Stretch"
-                                  Classes="BtnSelector"
-                                  HorizontalContentAlignment="Left"
-                                  SelectionChanged="CmbFgOutput_SelectionChanged"/>
-                    </StackPanel>
+                    </Grid>
 
-                    <StackPanel Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="{DynamicResource TxtFgNvngxReplacement}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="{StaticResource FontSizeCaption}"/>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtFgNvngxReplacementTooltip}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                           FontSize="10" FontWeight="Bold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Margin="0,-1,0,0"/>
-                            </Border>
-                        </StackPanel>
-                        <ComboBox Name="CmbFgNvngxReplacement"
-                                  HorizontalAlignment="Stretch"
-                                  Classes="BtnSelector"
-                                  HorizontalContentAlignment="Left"
-                                  SelectionChanged="CmbFgNvngxReplacement_SelectionChanged"/>
-                    </StackPanel>
+                    <StackPanel Name="PnlAdvancedOptions" Spacing="10">
+                        <Button Name="BtnToggleAdvanced"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="4,6"
+                                Margin="-4,0"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                Cursor="Hand"
+                                Click="BtnToggleAdvanced_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Name="TxtAdvancedChevron"
+                                           Text="&#xF2B6;"
+                                           FontFamily="{StaticResource FontIcons}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource TxtFgAdvancedOptions}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <StackPanel Name="PnlDlssEnablerVersion" Spacing="4" IsVisible="False">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="{DynamicResource TxtDlssEnablerVersionLbl}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="{StaticResource FontSizeCaption}"/>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtDlssEnablerVersionTooltip}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                           FontSize="10" FontWeight="Bold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Margin="0,-1,0,0"/>
-                            </Border>
-                        </StackPanel>
-                        <ComboBox Name="CmbDlssEnablerVersion"
-                                  HorizontalAlignment="Stretch"
-                                  Classes="BtnSelector"
-                                  HorizontalContentAlignment="Left"
-                                  SelectionChanged="CmbDlssEnablerVersion_SelectionChanged"/>
-                    </StackPanel>
+                        <StackPanel Name="PnlAdvancedOptionsContent" Spacing="13" IsVisible="False">
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="{DynamicResource TxtFgRoute}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Border Background="{StaticResource BrBgElevated}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Width="16" Height="16"
+                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                            ToolTip.Tip="{DynamicResource TxtFgRouteTooltip}">
+                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Margin="0,-1,0,0"/>
+                                    </Border>
+                                </StackPanel>
+                                <ComboBox Name="CmbFgRoute"
+                                          HorizontalAlignment="Stretch"
+                                          Classes="BtnSelector"
+                                          HorizontalContentAlignment="Left"
+                                          SelectionChanged="CmbFgRoute_SelectionChanged"/>
+                            </StackPanel>
 
-                    <StackPanel Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="{DynamicResource TxtMfgMultiplier}"
-                                       Foreground="{StaticResource BrTextSecondary}"
-                                       FontSize="{StaticResource FontSizeCaption}"/>
-                            <Border Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
-                                    BorderThickness="1" CornerRadius="8"
-                                    Width="16" Height="16"
-                                    ToolTip.ShowDelay="100" Cursor="Help"
-                                    ToolTip.Tip="{DynamicResource TxtMfgMultiplierTooltip}">
-                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                           FontSize="10" FontWeight="Bold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                           Margin="0,-1,0,0"/>
+                            <Border Name="PnlDlssStreamlineRouteInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,8,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="#4A90E2"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Column="2"
+                                               Text="{DynamicResource TxtFgRouteDlssStreamlineRequiresNativeInfo}"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
                             </Border>
+
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <CheckBox Name="ChkAdvancedRoutes"
+                                          Content="{DynamicResource TxtFgAdvancedRoutes}"
+                                          IsCheckedChanged="ChkAdvancedRoutes_IsCheckedChanged"/>
+                                <Border Background="{StaticResource BrBgElevated}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Width="16" Height="16"
+                                        ToolTip.ShowDelay="100" Cursor="Help"
+                                        ToolTip.Tip="{DynamicResource TxtFgAdvancedRoutesTooltip}">
+                                    <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="0,-1,0,0"/>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="{DynamicResource TxtFgNvngxReplacement}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Border Background="{StaticResource BrBgElevated}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Width="16" Height="16"
+                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                            ToolTip.Tip="{DynamicResource TxtFgNvngxReplacementTooltip}">
+                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Margin="0,-1,0,0"/>
+                                    </Border>
+                                </StackPanel>
+                                <ComboBox Name="CmbFgNvngxReplacement"
+                                          HorizontalAlignment="Stretch"
+                                          Classes="BtnSelector"
+                                          HorizontalContentAlignment="Left"
+                                          SelectionChanged="CmbFgNvngxReplacement_SelectionChanged"/>
+                            </StackPanel>
+
+                            <StackPanel Name="PnlDlssEnablerVersion" Spacing="4" IsVisible="False">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="{DynamicResource TxtDlssEnablerVersionLbl}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Border Background="{StaticResource BrBgElevated}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Width="16" Height="16"
+                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                            ToolTip.Tip="{DynamicResource TxtDlssEnablerVersionTooltip}">
+                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Margin="0,-1,0,0"/>
+                                    </Border>
+                                    <Border Name="BdgDlssEnablerMirrorInfo"
+                                            Background="{StaticResource BrBgElevated}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Width="16" Height="16"
+                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                            IsVisible="False"
+                                            ToolTip.Tip="{DynamicResource TxtDlssEnablerMirrorInfoTooltip}">
+                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Margin="0,-1,0,0"/>
+                                    </Border>
+                                </StackPanel>
+                                <Grid Name="GridDlssEnablerTabs" ColumnDefinitions="*,*">
+                                    <Button Name="BtnDlssEnablerMirror"
+                                            Grid.Column="0"
+                                            Content="{DynamicResource TxtDlssEnablerTabMirror}"
+                                            Classes="BtnPrimary"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center"
+                                            FontSize="11"
+                                            Padding="8,5"
+                                            Margin="0,0,2,0"
+                                            Click="BtnDlssEnablerMirror_Click"/>
+                                    <Button Name="BtnDlssEnablerCustom"
+                                            Grid.Column="1"
+                                            Content="{DynamicResource TxtDlssEnablerTabCustom}"
+                                            Classes="BtnSecondary"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center"
+                                            FontSize="11"
+                                            Padding="8,5"
+                                            Margin="2,0,0,0"
+                                            Click="BtnDlssEnablerCustom_Click"/>
+                                </Grid>
+                                <ComboBox Name="CmbDlssEnablerVersion"
+                                          HorizontalAlignment="Stretch"
+                                          Classes="BtnSelector"
+                                          HorizontalContentAlignment="Left"
+                                          SelectionChanged="CmbDlssEnablerVersion_SelectionChanged"/>
+                            </StackPanel>
                         </StackPanel>
-                        <ComboBox Name="CmbMfgMultiplier"
-                                  HorizontalAlignment="Stretch"
-                                  Classes="BtnSelector"
-                                  HorizontalContentAlignment="Left"/>
                     </StackPanel>
 
                 </StackPanel>

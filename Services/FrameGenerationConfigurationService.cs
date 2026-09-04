@@ -10,7 +10,7 @@ public interface IFrameGenerationConfigurationService
     IReadOnlyList<MultiFrameGenerationMode> GetAvailableMfgModes(FrameGenerationRoute route, FrameGenerationOutput output, FrameGenerationCapabilities capabilities, FrameGenerationNvngxReplacement nvngxReplacement = FrameGenerationNvngxReplacement.None);
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
     /// <summary>True when the effective (Auto-resolved) route or output needs the Streamline runtime DLLs in OptiScaler/streamline/.</summary>
-    bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities);
+    bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
 }
 
 /// <summary>
@@ -138,12 +138,16 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         return [MultiFrameGenerationMode.X2];
     }
 
-    public bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities)
+    public bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null)
     {
         var recommendation = GetRecommendation(capabilities);
         var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
         var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
-        return effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveOutput == FrameGenerationOutput.DlssG;
+        // FGInput=nvngxfg ("Uses Streamline swapchain for pacing" per OptiScaler.ini) is only
+        // reached on the nightly vocabulary — pre-nightly builds map this route to the legacy
+        // "nukems" FGInput value instead, which does not carry the same Streamline requirement.
+        var usesNvngxFgInput = effectiveRoute == FrameGenerationRoute.Nukem && UsesNightlyFrameGenerationSchema(optiscalerVersion);
+        return effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveOutput == FrameGenerationOutput.DlssG || usesNvngxFgInput;
     }
 
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(
@@ -232,6 +236,12 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         return result;
     }
 
+    /// <summary>Last stable/beta release confirmed (by inspecting its shipped OptiScaler.ini) to
+    /// NOT carry FGNvngxReplacement/[DLSSG]. Versions at or below this keep the old, deterministic
+    /// answer with no disk access, so already-verified behavior never changes. Versions above it are
+    /// unverified by us — resolved by probing the real release instead of guessing from the number.</summary>
+    private static readonly Version LastConfirmedUnsupportedVersion = new(0, 9, 5);
+
     /// <summary>0.10/nightly changed the NVNGX/Nukem INI vocabulary from 0.9.x.</summary>
     public static bool UsesNightlyFrameGenerationSchema(string? optiscalerVersion)
     {
@@ -239,7 +249,42 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         if (optiscalerVersion.StartsWith("nightly-", StringComparison.OrdinalIgnoreCase)) return true;
 
         var numericPart = optiscalerVersion.TrimStart('v', 'V').Split('-', 2)[0];
-        return Version.TryParse(numericPart, out var parsed) && parsed >= new Version(0, 10);
+        if (!Version.TryParse(numericPart, out var parsed)) return false;
+        if (parsed <= LastConfirmedUnsupportedVersion) return false;
+
+        // Newer than anything we've verified: don't guess from the version number a future
+        // release might be numbered however the OptiScaler team decides. If we already have this
+        // exact release cached, its own OptiScaler.ini is authoritative on whether it ships
+        // FGNvngxReplacement — new releases are recognized automatically, no client update needed.
+        if (TryProbeCachedIniForNvngxReplacement(optiscalerVersion, out var probedSupport))
+            return probedSupport;
+
+        // Not cached yet (nothing downloaded to inspect): fall back to the old >=0.10 assumption
+        // as a best guess. Once the real release is downloaded, BuildIniSettings re-evaluates this
+        // from the actual file, so an incorrect guess here only affects UI-level warnings/prompts,
+        // never what actually gets written to the game's ini.
+        return parsed >= new Version(0, 10);
+    }
+
+    /// <summary>Looks for the exact release's own OptiScaler.ini in the local download cache and
+    /// checks whether it ships the FGNvngxReplacement key. Returns false (nothing to report) if the
+    /// release hasn't been downloaded/cached yet.</summary>
+    private static bool TryProbeCachedIniForNvngxReplacement(string optiscalerVersion, out bool supportsNvngxReplacement)
+    {
+        supportsNvngxReplacement = false;
+        try
+        {
+            var cachedIniPath = Path.Combine(new ComponentManagementService().GetOptiScalerCachePath(optiscalerVersion), "OptiScaler.ini");
+            if (!File.Exists(cachedIniPath))
+                return false;
+
+            supportsNvngxReplacement = File.ReadAllText(cachedIniPath).Contains("FGNvngxReplacement", StringComparison.OrdinalIgnoreCase);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool IsOptiScalerRuntimeFile(string gameRoot, string filePath)

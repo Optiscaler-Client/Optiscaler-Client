@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Services;
@@ -34,10 +35,16 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     ];
 
     private const string NewDlssEnablerTag = "__new__";
+    private const string OutputDisabledTag = "__disabled__";
 
     private readonly FrameGenerationCapabilities _capabilities = new();
     private readonly GameFrameGenerationSettings _initialSettings = new();
+    private readonly GpuVendor _gpuVendor;
     private string _selectedDlssEnablerVersion = "";
+    // Mirror is the default tab: it's the automated path (download-on-select), Custom is the
+    // manual-import fallback. Starts on Custom only when a previously-saved selection is a
+    // Custom name (i.e. not tagged with the DlssEnablerMirrorTagPrefix).
+    private bool _dlssEnablerShowingMirror = true;
     private bool _isUpdating;
     private GamepadDialogNavigationHelper? _gamepadHelper;
 
@@ -53,19 +60,22 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         : this(
             owner,
             new FrameGenerationConfigurationService().DetectCapabilities(game, gpu),
-            game.FrameGenerationSettings)
+            game.FrameGenerationSettings,
+            gpu)
     {
     }
 
     public FrameGenerationSettingsWindow(
         Window owner,
         FrameGenerationCapabilities capabilities,
-        GameFrameGenerationSettings? saved)
+        GameFrameGenerationSettings? saved,
+        GpuInfo? gpu = null)
     {
         InitializeComponent();
         DialogDimHelper.Register(this);
 
         _capabilities = capabilities;
+        _gpuVendor = gpu?.Vendor ?? GpuVendor.Unknown;
         _initialSettings = new GameFrameGenerationSettings
         {
             Route = saved?.Route ?? FrameGenerationRoute.Disabled,
@@ -78,6 +88,8 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             DlssEnablerVersion = saved?.DlssEnablerVersion
         };
         _selectedDlssEnablerVersion = _initialSettings.DlssEnablerVersion ?? "";
+        _dlssEnablerShowingMirror = string.IsNullOrEmpty(_initialSettings.DlssEnablerVersion)
+            || ComponentManagementService.IsDlssEnablerMirrorTag(_initialSettings.DlssEnablerVersion);
 
         var titleBar = this.FindControl<Border>("TitleBar");
         if (titleBar != null)
@@ -116,13 +128,14 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             var advanced = this.FindControl<CheckBox>("ChkAdvancedRoutes");
             if (advanced != null) advanced.IsChecked = _initialSettings.AdvancedMode;
             PopulateRoutes(_initialSettings.Route);
-            PopulateOutputs(_initialSettings.Output);
+            UpdateDlssStreamlineRouteInfo();
+            PopulateOutputs(_initialSettings.Route, _initialSettings.Output);
             PopulateNvngxReplacements(_initialSettings.NvngxReplacement);
             var needsVersion = _initialSettings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
             var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
             if (versionPanel != null) versionPanel.IsVisible = needsVersion;
             if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
-            PopulateMfgModes(_initialSettings.MultiFrameMode);
+            PopulateFgMultiplier(_initialSettings.MultiFrameMode);
             UpdateDependentControlState();
         }
         finally
@@ -152,30 +165,46 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         SelectTag(combo, selected);
     }
 
-    private void PopulateOutputs(FrameGenerationOutput selected)
+    /// <summary>The Output combo carries its own "Disabled" entry (mirrors FGRoute=Disabled) so the
+    /// top-level UI never needs to show FG route/input at all for the simple on/off case.</summary>
+    private void PopulateOutputs(FrameGenerationRoute currentRoute, FrameGenerationOutput selected)
     {
         var combo = this.FindControl<ComboBox>("CmbFgOutput");
         if (combo == null) return;
         combo.Items.Clear();
+
+        var disabledItem = new ComboBoxItem { Content = GetRouteLabel(FrameGenerationRoute.Disabled), Tag = OutputDisabledTag };
+        ToolTip.SetTip(disabledItem, GetRouteTooltip(FrameGenerationRoute.Disabled));
+        combo.Items.Add(disabledItem);
+
         foreach (var output in _capabilities.AvailableOutputs)
         {
             var item = new ComboBoxItem { Content = GetOutputLabel(output), Tag = output };
             ToolTip.SetTip(item, GetOutputTooltip(output));
             combo.Items.Add(item);
         }
-        SelectTag(combo, selected);
+
+        if (currentRoute == FrameGenerationRoute.Disabled)
+            combo.SelectedIndex = 0;
+        else
+            SelectTag(combo, selected);
     }
 
-    private void PopulateMfgModes(MultiFrameGenerationMode selected)
+    private bool IsOutputDisabledSelected()
+        => (this.FindControl<ComboBox>("CmbFgOutput")?.SelectedItem as ComboBoxItem)?.Tag is string tag && tag == OutputDisabledTag;
+
+    /// <summary>Simplified top-level multiplier: x2 only, unless the output is DLSS-G (x2..x6).
+    /// Anything beyond x2 on DLSS-G requires DLSS Enabler, which <see cref="ApplyAutoNvngxReplacement"/>
+    /// selects automatically, so no capability lookup is needed here.</summary>
+    private void PopulateFgMultiplier(MultiFrameGenerationMode selected)
     {
         var combo = this.FindControl<ComboBox>("CmbMfgMultiplier");
         if (combo == null) return;
 
         var output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput");
-        var route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
-        var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
-        IReadOnlyList<MultiFrameGenerationMode> modes = new FrameGenerationConfigurationService()
-            .GetAvailableMfgModes(route, output, _capabilities, replacement);
+        IReadOnlyList<MultiFrameGenerationMode> modes = output == FrameGenerationOutput.DlssG
+            ? [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6]
+            : [MultiFrameGenerationMode.X2];
 
         combo.Items.Clear();
         foreach (var mode in modes)
@@ -184,8 +213,54 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             ToolTip.SetTip(item, GetMfgTooltip(mode));
             combo.Items.Add(item);
         }
-        combo.IsEnabled = route != FrameGenerationRoute.Disabled && modes.Count > 1;
+        combo.IsEnabled = !IsOutputDisabledSelected() && modes.Count > 1;
         SelectTag(combo, selected);
+    }
+
+    /// <summary>Picks the FG Nvngx Replacement (and, when needed, the DLSS Enabler version) that best
+    /// fits the selected output/multiplier and detected GPU. Only runs from direct user interaction
+    /// with the top-level Output/Multiplier controls, never on initial load (which restores the saved
+    /// value as-is) and never from advanced-panel edits (which must not feed back into the top two).</summary>
+    private void ApplyAutoNvngxReplacement()
+    {
+        var output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput");
+        var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
+
+        if (output != FrameGenerationOutput.DlssG)
+        {
+            PopulateNvngxReplacements(FrameGenerationNvngxReplacement.None);
+            if (versionPanel != null) versionPanel.IsVisible = false;
+            return;
+        }
+
+        var multiplier = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        // x2 needs no replacement provider on NVIDIA: real DLSS-G already runs natively there. AMD
+        // gets FSR 3/4 FG, everything else (Intel/unknown) falls back to Nukem. Anything above x2
+        // always needs DLSS Enabler regardless of vendor — native MFG needs a specific GPU
+        // generation we can't reliably detect from GpuInfo alone.
+        var replacement = multiplier != MultiFrameGenerationMode.X2
+            ? FrameGenerationNvngxReplacement.Arturs
+            : _gpuVendor switch
+            {
+                GpuVendor.NVIDIA => FrameGenerationNvngxReplacement.None,
+                GpuVendor.AMD => FrameGenerationNvngxReplacement.Ffx,
+                _ => FrameGenerationNvngxReplacement.Nukems
+            };
+
+        PopulateNvngxReplacements(replacement);
+
+        var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+        if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+        if (!needsVersion) return;
+
+        _dlssEnablerShowingMirror = true;
+        PopulateDlssEnablerVersions("");
+        var versionCombo = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
+        // Index 0 is the "-- Select version --" placeholder; index 1 is the newest mirror version,
+        // since PopulateDlssEnablerVersions sorts them descending.
+        if (versionCombo != null && versionCombo.Items.Count > 1)
+            versionCombo.SelectedIndex = 1;
+        _selectedDlssEnablerVersion = GetSelectedStringTag("CmbDlssEnablerVersion");
     }
 
     private void PopulateNvngxReplacements(FrameGenerationNvngxReplacement selected)
@@ -210,49 +285,130 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var combo = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
         if (combo == null) return;
 
+        var componentService = new ComponentManagementService();
         combo.Items.Clear();
         combo.Items.Add(new ComboBoxItem { Content = Resource("TxtSelectVersion", "-- Select version --"), Tag = "" });
-        foreach (var version in new ComponentManagementService().GetDownloadedDlssEnablerVersions())
-            combo.Items.Add(new ComboBoxItem { Content = version, Tag = version });
-        combo.Items.Add(new ComboBoxItem { Content = Resource("TxtNewOrImport", "New / Import..."), Tag = NewDlssEnablerTag });
+
+        if (_dlssEnablerShowingMirror)
+        {
+            // Union of remotely-known releases and anything already cached locally (covers the
+            // case where a version was downloaded before but the GitHub API call just failed).
+            // Sorted by parsed Version, not raw string — "4.10.0.0" must sort above "4.9.0.15".
+            var versions = componentService.DlssEnablerMirrorAvailableVersions
+                .Concat(componentService.GetDownloadedDlssEnablerMirrorVersions())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(v => Version.TryParse(v, out var parsed) ? parsed : new Version(0, 0))
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase);
+            foreach (var version in versions)
+            {
+                var tag = ComponentManagementService.BuildDlssEnablerMirrorTag(version);
+                combo.Items.Add(new ComboBoxItem { Content = version, Tag = tag });
+            }
+        }
+        else
+        {
+            foreach (var version in componentService.GetDownloadedDlssEnablerVersions())
+                combo.Items.Add(new ComboBoxItem { Content = version, Tag = version });
+            combo.Items.Add(ComboActionItemHelper.Build(this, Resource("TxtNewOrImport", "New / Import..."), NewDlssEnablerTag));
+        }
 
         SelectStringTag(combo, selected);
+
+        var infoBadge = this.FindControl<Border>("BdgDlssEnablerMirrorInfo");
+        if (infoBadge != null) infoBadge.IsVisible = _dlssEnablerShowingMirror;
+        UpdateDlssEnablerTabButtons();
     }
 
+    private void UpdateDlssEnablerTabButtons()
+    {
+        var btnMirror = this.FindControl<Button>("BtnDlssEnablerMirror");
+        var btnCustom = this.FindControl<Button>("BtnDlssEnablerCustom");
+        if (btnMirror == null || btnCustom == null) return;
+
+        void SetActive(Button b) { b.Classes.Remove("BtnSecondary"); b.Classes.Add("BtnPrimary"); }
+        void SetInactive(Button b) { b.Classes.Remove("BtnPrimary"); b.Classes.Add("BtnSecondary"); }
+
+        if (_dlssEnablerShowingMirror) { SetActive(btnMirror); SetInactive(btnCustom); }
+        else { SetInactive(btnMirror); SetActive(btnCustom); }
+    }
+
+    private void BtnDlssEnablerMirror_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_dlssEnablerShowingMirror) return;
+        _dlssEnablerShowingMirror = true;
+        _isUpdating = true;
+        try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+        finally { _isUpdating = false; }
+        UpdateSaveButtonState();
+    }
+
+    private void BtnDlssEnablerCustom_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!_dlssEnablerShowingMirror) return;
+        _dlssEnablerShowingMirror = false;
+        _isUpdating = true;
+        try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+        finally { _isUpdating = false; }
+        UpdateSaveButtonState();
+    }
+
+    // Advanced-panel edit: per spec this must never feed back into the top-level Output/Multiplier
+    // controls, so it only updates its own local banner.
     private void CmbFgRoute_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
-        var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
-        _isUpdating = true;
-        try
-        {
-            PopulateMfgModes(selectedMfg);
-            UpdateDependentControlState();
-        }
-        finally { _isUpdating = false; }
+        UpdateDlssStreamlineRouteInfo();
+    }
+
+    /// <summary>Shows an info banner reminding the user that "DLSS-G via Streamline" needs
+    /// NVIDIA's native Frame Generation enabled in the game itself — OptiScaler taps into it,
+    /// it doesn't generate frames on its own for this route (unlike OptiFG, which does).</summary>
+    private void UpdateDlssStreamlineRouteInfo()
+    {
+        var panel = this.FindControl<Border>("PnlDlssStreamlineRouteInfo");
+        if (panel == null) return;
+        panel.IsVisible = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") == FrameGenerationRoute.DlssGStreamline;
     }
 
     private void CmbFgOutput_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
-        var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
-        var selectedReplacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
+        var outputDisabled = IsOutputDisabledSelected();
         _isUpdating = true;
         try
         {
-            PopulateNvngxReplacements(selectedReplacement);
-            var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
-            var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
-            var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
-            if (versionPanel != null) versionPanel.IsVisible = needsVersion;
-            if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
-            PopulateMfgModes(selectedMfg);
+            var routeCombo = this.FindControl<ComboBox>("CmbFgRoute");
+            if (routeCombo != null)
+            {
+                if (outputDisabled)
+                    SelectTag(routeCombo, FrameGenerationRoute.Disabled);
+                else if (GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") == FrameGenerationRoute.Disabled)
+                    SelectTag(routeCombo, FrameGenerationRoute.Auto);
+            }
+            UpdateDlssStreamlineRouteInfo();
+            PopulateFgMultiplier(MultiFrameGenerationMode.X2);
+            ApplyAutoNvngxReplacement();
             UpdateDependentControlState();
         }
         finally { _isUpdating = false; }
         UpdateSaveButtonState();
     }
 
+    private void CmbMfgMultiplier_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdating) return;
+        _isUpdating = true;
+        try
+        {
+            ApplyAutoNvngxReplacement();
+            UpdateDependentControlState();
+        }
+        finally { _isUpdating = false; }
+        UpdateSaveButtonState();
+    }
+
+    // Advanced-panel edit: per spec this must never feed back into the top-level Output/Multiplier
+    // controls, so it only manages its own dependent DLSS Enabler version panel.
     private void CmbFgNvngxReplacement_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
@@ -262,39 +418,43 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
         if (versionPanel != null) versionPanel.IsVisible = needsVersion;
 
-        var selectedMfg = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
         _isUpdating = true;
         try
         {
             if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
-            PopulateMfgModes(selectedMfg);
             UpdateDependentControlState();
         }
         finally { _isUpdating = false; }
         UpdateSaveButtonState();
     }
 
-    private async void CmbDlssEnablerVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void CmbDlssEnablerVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
         var tag = GetSelectedStringTag("CmbDlssEnablerVersion");
         if (tag == NewDlssEnablerTag)
         {
-            _isUpdating = true;
-            try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
-            finally { _isUpdating = false; }
+            // Avalonia's ComboBox crashes if its Items are mutated (Clear/re-add) synchronously
+            // from within its own SelectionChanged handler — defer to the next dispatcher cycle,
+            // same pattern used for combo repopulation elsewhere in this codebase.
+            Dispatcher.UIThread.Post(async () =>
+            {
+                _isUpdating = true;
+                try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+                finally { _isUpdating = false; }
 
-            var cacheWindow = new CacheManagementWindow(this, "dlss-enabler");
-            await cacheWindow.ShowDialog(this);
+                var cacheWindow = new CacheManagementWindow(this, "dlss-enabler");
+                await cacheWindow.ShowDialog(this);
 
-            _isUpdating = true;
-            try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
-            finally { _isUpdating = false; }
+                _isUpdating = true;
+                try { PopulateDlssEnablerVersions(_selectedDlssEnablerVersion); }
+                finally { _isUpdating = false; }
+                UpdateSaveButtonState();
+            });
+            return;
         }
-        else
-        {
-            _selectedDlssEnablerVersion = tag;
-        }
+
+        _selectedDlssEnablerVersion = tag;
         UpdateSaveButtonState();
     }
 
@@ -313,18 +473,27 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private void UpdateDependentControlState()
     {
-        var enabled = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") != FrameGenerationRoute.Disabled;
-        var output = this.FindControl<ComboBox>("CmbFgOutput");
+        var enabled = !IsOutputDisabledSelected();
         var multiplier = this.FindControl<ComboBox>("CmbMfgMultiplier");
+        var advanced = this.FindControl<StackPanel>("PnlAdvancedOptions");
         var nvngxReplacement = this.FindControl<ComboBox>("CmbFgNvngxReplacement");
         var dlssEnablerVersion = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
-        if (output != null) output.IsEnabled = enabled;
         if (multiplier != null)
             multiplier.IsEnabled = enabled && multiplier.Items.Count > 1;
+        if (advanced != null) advanced.IsEnabled = enabled;
 
         var outputIsDlssG = enabled && GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.DlssG;
         if (nvngxReplacement != null) nvngxReplacement.IsEnabled = outputIsDlssG;
         if (dlssEnablerVersion != null) dlssEnablerVersion.IsEnabled = outputIsDlssG;
+    }
+
+    private void BtnToggleAdvanced_Click(object? sender, RoutedEventArgs e)
+    {
+        var content = this.FindControl<StackPanel>("PnlAdvancedOptionsContent");
+        var chevron = this.FindControl<TextBlock>("TxtAdvancedChevron");
+        if (content == null || chevron == null) return;
+        content.IsVisible = !content.IsVisible;
+        chevron.Text = content.IsVisible ? "" : "";
     }
 
     private void UpdateSaveButtonState()
@@ -344,13 +513,30 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private void BtnSave_Click(object? sender, RoutedEventArgs e)
     {
+        var route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+        if (route == FrameGenerationRoute.Disabled)
+        {
+            Close(new GameFrameGenerationSettings
+            {
+                Route = FrameGenerationRoute.Disabled,
+                Output = FrameGenerationOutput.Auto,
+                MultiFrameMode = MultiFrameGenerationMode.Auto,
+                AdvancedMode = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true,
+                DynamicTargetFps = _initialSettings.DynamicTargetFps,
+                AppliedAtUtc = _initialSettings.AppliedAtUtc,
+                NvngxReplacement = FrameGenerationNvngxReplacement.None,
+                DlssEnablerVersion = null
+            });
+            return;
+        }
+
         var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
         var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
         var selectedVersion = GetSelectedStringTag("CmbDlssEnablerVersion");
 
         Close(new GameFrameGenerationSettings
         {
-            Route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute"),
+            Route = route,
             Output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput"),
             MultiFrameMode = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier"),
             AdvancedMode = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true,
