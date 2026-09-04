@@ -85,6 +85,7 @@
     <x:String x:Key="TxtStreamline">Streamline</x:String>
     <x:String x:Key="TxtDlssEnablerImportBanner">Les versions de DLSS Enabler sont importées à partir d'un fichier .dll ou d'une archive .zip/.7z/.rar contenant version.dll ou dlss-enabler-headless.dll.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">Aucune version de DLSS Enabler en cache.</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">Téléchargé depuis un miroir</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">Aucune version du SDK Streamline en cache.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">Supprimer la version de DLSS Enabler</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">Êtes-vous sûr de vouloir supprimer DLSS Enabler '{0}' du cache ?</x:String>
@@ -705,7 +706,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFrameGeneration">Génération d'images</x:String>
     <x:String x:Key="TxtFgRoute">Chemin FG</x:String>
     <x:String x:Key="TxtFgOutput">Sortie FG</x:String>
-    <x:String x:Key="TxtMfgMultiplier">Multiplicateur MFG</x:String>
+    <x:String x:Key="TxtMfgMultiplier">Multiplicateur FG</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Chemins avancés</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">Appliquer la configuration FG</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
@@ -719,9 +720,11 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFgOutputTooltip">Sélectionne la technologie qu'OptiScaler utilise pour générer les images.</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">Sélectionne le multiplicateur de Multi-Frame Generation lorsque le chemin, la sortie et le matériel sélectionnés le prennent en charge.</x:String>
     <x:String x:Key="TxtFgAdvancedRoutesTooltip">Affiche les chemins manuels et expérimentaux. Laissez cette option désactivée, sauf si un jeu nécessite un chemin spécifique.</x:String>
+    <x:String x:Key="TxtFgAdvancedOptions">Options avancées</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">Laisse OptiScaler choisir le chemin en fonction de l'entrée FG détectée du jeu.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Désactive la génération d'images pour ce jeu.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Utilise l'entrée DLSS Frame Generation du jeu via NVIDIA Streamline.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G via Streamline nécessite d'activer la Frame Generation native de NVIDIA dans les paramètres graphiques propres au jeu. Si le jeu ne propose pas cette option, essayez plutôt OptiFG comme entrée FG.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Convertit une entrée DLSS Frame Generation en FSR 3 via NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Utilise l'entrée FSR 3.1 Frame Generation native du jeu.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Utilise l'entrée FSR 3.0 Frame Generation native du jeu.</x:String>
@@ -748,7 +751,10 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">Utilise DLSS Enabler (headless) pour MFG jusqu'à x6. Nécessite dlss-enabler-headless.dll et une version Nightly d'OptiScaler.</x:String>
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Combine FSR FG pour les images intermédiaires avec DLSS Enabler pour le reste, permettant un MFG jusqu'à x6.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">Version de DLSS Enabler</x:String>
-    <x:String x:Key="TxtDlssEnablerVersionTooltip">Sélectionnez une version de DLSS Enabler importée localement, ou importez-en une nouvelle.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">Sélectionnez une version de DLSS Enabler à utiliser, ou importez-en une personnalisée.</x:String>
+    <x:String x:Key="TxtDlssEnablerTabMirror">Miroir</x:String>
+    <x:String x:Key="TxtDlssEnablerTabCustom">Personnalisé</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">Miroir non officiel de DLSS Enabler. Besoin d'une build spécifique ? Ajoutez-la depuis l'onglet Personnalisé.</x:String>
     <x:String x:Key="TxtSelectVersion">-- Sélectionner une version --</x:String>
     <x:String x:Key="TxtNewOrImport">Nouveau / Importer…</x:String>
     <x:String x:Key="TxtMfgRequiresNightlyToast">MFG avec DLSS Enabler nécessite une version Nightly d'OptiScaler — basculement automatique effectué.</x:String>

@@ -86,6 +86,7 @@
     <x:String x:Key="TxtStreamline">Streamline</x:String>
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler 版本通过 .dll 文件或包含 version.dll 或 dlss-enabler-headless.dll 的 .zip/.7z/.rar 压缩包导入。</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">尚未缓存任何 DLSS Enabler 版本。</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">从镜像下载</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">尚未缓存任何 Streamline SDK 版本。</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">删除 DLSS Enabler 版本</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">确定要从缓存中删除 DLSS Enabler '{0}' 吗？</x:String>
@@ -719,10 +720,11 @@
     <x:String x:Key="TxtFgRouteTooltip">选择 OptiScaler 在此游戏中用于帧生成的输入路径。</x:String>
     <x:String x:Key="TxtFgOutput">FG 输出</x:String>
     <x:String x:Key="TxtFgOutputTooltip">选择 OptiScaler 用于生成帧的技术。</x:String>
-    <x:String x:Key="TxtMfgMultiplier">MFG 倍率</x:String>
+    <x:String x:Key="TxtMfgMultiplier">FG 倍率</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">当所选路径、输出和硬件均支持时，选择多帧生成（Multi-Frame Generation）倍率。</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">高级路径</x:String>
     <x:String x:Key="TxtFgAdvancedRoutesTooltip">显示手动和实验性路径。除非游戏需要特定路径，否则请保持关闭。</x:String>
+    <x:String x:Key="TxtFgAdvancedOptions">高级选项</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">应用 FG 配置</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">已禁用</x:String>
@@ -734,6 +736,7 @@
     <x:String x:Key="TxtFgRouteAutoTooltip">让 OptiScaler 根据游戏检测到的 FG 输入自动选择路径。</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">关闭此游戏的帧生成。</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">通过 NVIDIA Streamline 使用游戏的 DLSS 帧生成输入。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">通过 Streamline 使用 DLSS-G 需要在游戏自身的图形设置中启用 NVIDIA 的原生帧生成功能。如果游戏没有该选项，请改用 OptiFG 作为 FG 输入。</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">通过 NukemFG 将 DLSS 帧生成输入转换为 FSR 3。</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">使用游戏原生的 FSR 3.1 帧生成输入。</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">使用游戏原生的 FSR 3.0 帧生成输入。</x:String>
@@ -760,7 +763,10 @@
     <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">使用 DLSS Enabler（无界面版）实现最高 x6 的 MFG。需要 dlss-enabler-headless.dll 和 Nightly 版本的 OptiScaler。</x:String>
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">结合 FSR FG 生成中间帧与 DLSS Enabler 生成其余帧，实现最高 x6 的 MFG。</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler 版本</x:String>
-    <x:String x:Key="TxtDlssEnablerVersionTooltip">选择一个已在本地导入的 DLSS Enabler 版本，或导入新版本。</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">选择要使用的 DLSS Enabler 版本，或导入自定义版本。</x:String>
+    <x:String x:Key="TxtDlssEnablerTabMirror">镜像</x:String>
+    <x:String x:Key="TxtDlssEnablerTabCustom">自定义</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">非官方 DLSS Enabler 镜像。需要特定版本？请从 '自定义' 选项卡添加。</x:String>
     <x:String x:Key="TxtSelectVersion">-- 选择版本 --</x:String>
     <x:String x:Key="TxtNewOrImport">新建 / 导入…</x:String>
     <x:String x:Key="TxtMfgRequiresNightlyToast">使用 DLSS Enabler 的 MFG 需要 Nightly 版本的 OptiScaler — 已自动切换。</x:String>

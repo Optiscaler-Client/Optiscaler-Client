@@ -89,6 +89,7 @@
     <x:String x:Key="TxtStreamline">Streamline</x:String>
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler versions are imported from a .dll file or a .zip/.7z/.rar archive containing version.dll or dlss-enabler-headless.dll.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">No DLSS Enabler versions cached.</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">Downloaded from Mirror</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">No Streamline SDK versions cached.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">Delete DLSS Enabler Version</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">Are you sure you want to delete DLSS Enabler '{0}' from cache?</x:String>
@@ -714,10 +715,11 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtFgRouteTooltip">Selects the input route that OptiScaler uses for Frame Generation in this game.</x:String>
     <x:String x:Key="TxtFgOutput">FG output</x:String>
     <x:String x:Key="TxtFgOutputTooltip">Selects the technology OptiScaler uses to generate frames.</x:String>
-    <x:String x:Key="TxtMfgMultiplier">MFG multiplier</x:String>
+    <x:String x:Key="TxtMfgMultiplier">FG multiplier</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">Selects the Multi-Frame Generation multiplier when the selected route, output and hardware support it.</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Advanced routes</x:String>
     <x:String x:Key="TxtFgAdvancedRoutesTooltip">Shows manual and experimental routes. Leave this off unless a game needs a specific route.</x:String>
+    <x:String x:Key="TxtFgAdvancedOptions">Advanced options</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">Apply FG configuration</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Disabled</x:String>
@@ -729,6 +731,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtFgRouteAutoTooltip">Lets OptiScaler choose the route from the game's detected FG input.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Turns off Frame Generation for this game.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Uses the game's DLSS Frame Generation input through NVIDIA Streamline.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G via Streamline requires enabling NVIDIA's native Frame Generation in the game's own graphics settings. If the game doesn't have that option, try OptiFG as the FG input instead.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Converts a DLSS Frame Generation input to FSR 3 through NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Uses the game's native FSR 3.1 Frame Generation input.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Uses the game's native FSR 3.0 Frame Generation input.</x:String>
@@ -755,7 +758,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">Uses DLSS Enabler (headless) for MFG up to x6. Requires dlss-enabler-headless.dll and a Nightly OptiScaler version.</x:String>
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Combines FSR FG for middle frames with DLSS Enabler for the rest, allowing MFG up to x6.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler version</x:String>
-    <x:String x:Key="TxtDlssEnablerVersionTooltip">Select a locally imported DLSS Enabler version, or import a new one.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">Select a DLSS Enabler version to use, or import a custom one.</x:String>
+    <x:String x:Key="TxtDlssEnablerTabMirror">Mirror</x:String>
+    <x:String x:Key="TxtDlssEnablerTabCustom">Custom</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">Unofficial DLSS Enabler mirror. Need a specific build? Add it from the Custom tab.</x:String>
     <x:String x:Key="TxtSelectVersion">-- Select version --</x:String>
     <x:String x:Key="TxtNewOrImport">New / Import…</x:String>
     <x:String x:Key="TxtMfgRequiresNightlyToast">MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically.</x:String>

@@ -85,6 +85,7 @@
     <x:String x:Key="TxtStreamline">Streamline</x:String>
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler 버전은 .dll 파일 또는 version.dll이나 dlss-enabler-headless.dll을 포함하는 .zip/.7z/.rar 압축 파일에서 가져옵니다.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">캐시된 DLSS Enabler 버전이 없습니다.</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">미러에서 다운로드됨</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">캐시된 Streamline SDK 버전이 없습니다.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler 버전 삭제</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">캐시에서 DLSS Enabler '{0}'을(를) 삭제하시겠습니까?</x:String>
@@ -707,10 +708,11 @@
     <x:String x:Key="TxtFgRouteTooltip">이 게임에서 OptiScaler가 프레임 생성에 사용하는 입력 경로를 선택합니다.</x:String>
     <x:String x:Key="TxtFgOutput">FG 출력</x:String>
     <x:String x:Key="TxtFgOutputTooltip">OptiScaler가 프레임을 생성하는 데 사용하는 기술을 선택합니다.</x:String>
-    <x:String x:Key="TxtMfgMultiplier">MFG 배율</x:String>
+    <x:String x:Key="TxtMfgMultiplier">FG 배율</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">선택한 경로, 출력 및 하드웨어가 지원하는 경우 멀티 프레임 생성(MFG) 배율을 선택합니다.</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">고급 경로</x:String>
     <x:String x:Key="TxtFgAdvancedRoutesTooltip">수동 및 실험적 경로를 표시합니다. 게임에 특정 경로가 필요한 경우가 아니라면 꺼두세요.</x:String>
+    <x:String x:Key="TxtFgAdvancedOptions">고급 옵션</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">FG 구성 적용</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">사용 안 함</x:String>
@@ -722,6 +724,7 @@
     <x:String x:Key="TxtFgRouteAutoTooltip">게임에서 감지된 FG 입력을 바탕으로 OptiScaler가 경로를 선택하도록 합니다.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">이 게임의 프레임 생성을 끕니다.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">NVIDIA Streamline을 통해 게임의 DLSS 프레임 생성 입력을 사용합니다.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Streamline을 통한 DLSS-G를 사용하려면 게임 자체 그래픽 설정에서 NVIDIA의 네이티브 프레임 생성을 활성화해야 합니다. 게임에 해당 옵션이 없으면 대신 FG 입력으로 OptiFG를 사용해 보세요.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">NukemFG를 통해 DLSS 프레임 생성 입력을 FSR 3로 변환합니다.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">게임의 네이티브 FSR 3.1 프레임 생성 입력을 사용합니다.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">게임의 네이티브 FSR 3.0 프레임 생성 입력을 사용합니다.</x:String>
@@ -748,7 +751,10 @@
     <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">MFG를 최대 x6까지 사용하기 위해 DLSS Enabler(헤드리스)를 사용합니다. dlss-enabler-headless.dll과 Nightly OptiScaler 버전이 필요합니다.</x:String>
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">중간 프레임에는 FSR FG를, 나머지에는 DLSS Enabler를 결합하여 MFG를 최대 x6까지 지원합니다.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler 버전</x:String>
-    <x:String x:Key="TxtDlssEnablerVersionTooltip">로컬로 가져온 DLSS Enabler 버전을 선택하거나 새 버전을 가져옵니다.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">사용할 DLSS Enabler 버전을 선택하거나 사용자 지정 버전을 가져오세요.</x:String>
+    <x:String x:Key="TxtDlssEnablerTabMirror">미러</x:String>
+    <x:String x:Key="TxtDlssEnablerTabCustom">사용자 지정</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">비공식 DLSS Enabler 미러입니다. 특정 빌드가 필요하신가요? 사용자 지정 탭에서 추가하세요.</x:String>
     <x:String x:Key="TxtSelectVersion">-- 버전 선택 --</x:String>
     <x:String x:Key="TxtNewOrImport">새로 만들기 / 가져오기…</x:String>
     <x:String x:Key="TxtMfgRequiresNightlyToast">DLSS Enabler를 사용한 MFG에는 Nightly OptiScaler 버전이 필요합니다 — 자동으로 전환되었습니다.</x:String>

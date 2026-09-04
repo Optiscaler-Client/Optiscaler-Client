@@ -85,6 +85,7 @@
     <x:String x:Key="TxtStreamline">Streamline</x:String>
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler sürümleri bir .dll dosyasından veya version.dll ya da dlss-enabler-headless.dll içeren bir .zip/.7z/.rar arşivinden içe aktarılır.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">Önbellekte DLSS Enabler sürümü yok.</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">Mirror'dan İndirildi</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">Önbellekte Streamline SDK sürümü yok.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler Sürümünü Sil</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">DLSS Enabler '{0}' öğesini önbellekten silmek istediğinizden emin misiniz?</x:String>
@@ -708,10 +709,11 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgRouteTooltip">OptiScaler'ın bu oyunda Kare oluşturma için kullandığı giriş yolunu seçer.</x:String>
     <x:String x:Key="TxtFgOutput">FG çıkışı</x:String>
     <x:String x:Key="TxtFgOutputTooltip">OptiScaler'ın kare oluşturmak için kullandığı teknolojiyi seçer.</x:String>
-    <x:String x:Key="TxtMfgMultiplier">MFG çarpanı</x:String>
+    <x:String x:Key="TxtMfgMultiplier">FG çarpanı</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">Seçili yol, çıkış ve donanım destekliyorsa Çoklu Kare Oluşturma (MFG) çarpanını seçer.</x:String>
     <x:String x:Key="TxtFgAdvancedRoutes">Gelişmiş yollar</x:String>
     <x:String x:Key="TxtFgAdvancedRoutesTooltip">Manuel ve deneysel yolları gösterir. Bir oyun belirli bir yol gerektirmedikçe bunu kapalı bırakın.</x:String>
+    <x:String x:Key="TxtFgAdvancedOptions">Gelişmiş seçenekler</x:String>
     <x:String x:Key="TxtApplyFgConfiguration">FG yapılandırmasını uygula</x:String>
     <x:String x:Key="TxtFgRouteAuto">Auto</x:String>
     <x:String x:Key="TxtFgRouteDisabled">Devre dışı</x:String>
@@ -723,6 +725,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgRouteAutoTooltip">OptiScaler'ın oyunda algılanan FG girişine göre yolu seçmesini sağlar.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Bu oyun için Kare oluşturmayı kapatır.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Oyunun DLSS Kare Oluşturma girişini NVIDIA Streamline üzerinden kullanır.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Streamline üzerinden DLSS-G, NVIDIA'nın yerel Kare Oluşturma özelliğinin oyunun kendi grafik ayarlarından etkinleştirilmesini gerektirir. Oyunda bu seçenek yoksa, bunun yerine FG girişi olarak OptiFG'yi deneyin.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">NukemFG aracılığıyla bir DLSS Kare Oluşturma girişini FSR 3'e dönüştürür.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Oyunun yerel FSR 3.1 Kare Oluşturma girişini kullanır.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Oyunun yerel FSR 3.0 Kare Oluşturma girişini kullanır.</x:String>
@@ -749,7 +752,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgNvngxReplacementArtursTooltip">x6'ya kadar MFG için DLSS Enabler (headless) kullanır. dlss-enabler-headless.dll ve Nightly bir OptiScaler sürümü gerektirir.</x:String>
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Ara kareler için FSR FG'yi, geri kalanı için DLSS Enabler'ı birleştirerek x6'ya kadar MFG'ye olanak tanır.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler sürümü</x:String>
-    <x:String x:Key="TxtDlssEnablerVersionTooltip">Yerel olarak içe aktarılmış bir DLSS Enabler sürümü seçin veya yeni bir tane içe aktarın.</x:String>
+    <x:String x:Key="TxtDlssEnablerVersionTooltip">Kullanılacak bir DLSS Enabler sürümü seçin veya özel bir sürüm içe aktarın.</x:String>
+    <x:String x:Key="TxtDlssEnablerTabMirror">Mirror</x:String>
+    <x:String x:Key="TxtDlssEnablerTabCustom">Özel</x:String>
+    <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">Resmi olmayan DLSS Enabler mirror'ı. Belirli bir sürüme mi ihtiyacınız var? Özel sekmesinden ekleyin.</x:String>
     <x:String x:Key="TxtSelectVersion">-- Sürüm seçin --</x:String>
     <x:String x:Key="TxtNewOrImport">Yeni / İçe Aktar…</x:String>
     <x:String x:Key="TxtMfgRequiresNightlyToast">DLSS Enabler ile MFG, Nightly bir OptiScaler sürümü gerektirir — otomatik olarak değiştirildi.</x:String>
