@@ -7,8 +7,8 @@
     <x:String x:Key="TxtGamepadDisconnected">Gamepad disconnected</x:String>
     <x:String x:Key="TxtSettingsDesc">Manage application preferences</x:String>
     <x:String x:Key="TxtAppPrefs">App Preferences</x:String>
-    <x:String x:Key="TxtCacheMgmt">Local cache &amp; Default version management</x:String>
-    <x:String x:Key="TxtCacheDesc">View and manage downloaded component versions, set default versions for Quick Install and game management, and free up local storage space.</x:String>
+    <x:String x:Key="TxtCacheMgmt">Manage Local Versions</x:String>
+    <x:String x:Key="TxtCacheDesc">View, import and delete downloaded component versions, and free up local storage space.</x:String>
     <x:String x:Key="TxtManage">&#xE8B7;  Manage</x:String>
     <x:String x:Key="TxtLanguage">Application Language</x:String>
     <x:String x:Key="TxtLanguageDesc">Change the user interface language.</x:String>
@@ -273,13 +273,19 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtDefaultGpuDesc">Used for defaults and GPU-specific guidance.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Default OptiScaler Version</x:String>
     <x:String x:Key="TxtDefaultOptiVersionDesc">Pre-selected version when opening Manage or using Quick Install. 'Auto' picks the latest recommended release.</x:String>
-    <x:String x:Key="TxtDefaultVersionsTitle">Default Versions</x:String>
-    <x:String x:Key="TxtDefaultVersionsDesc">Manage default component versions for game management and Quick Install</x:String>
-    <x:String x:Key="TxtManageDefaultVersions">Manage Default Versions</x:String>
+    <x:String x:Key="TxtDefaultVersionsTitle">Default Versions &amp; Quick Install Settings Management</x:String>
+    <x:String x:Key="TxtDefaultVersionsDesc">Manages default component versions, quick settings, and what's pre-selected when opening game management or using Quick Install.</x:String>
+    <x:String x:Key="TxtManageDefaultVersions">Default Versions &amp; Quick Install Settings</x:String>
     <x:String x:Key="TxtManageDefaultVersionsDesc">Configure which component versions are pre-selected when opening the game management window or using Quick Install.</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultTitle">Default OptiPatcher Version</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultDesc">Pre-selected OptiPatcher version when opening Manage or using Quick Install. Select None to skip OptiPatcher installation.</x:String>
     <x:String x:Key="TxtOptiPatcherSupportLinkText">View supported games list</x:String>
+    <x:String x:Key="TxtDefaultVersionsCompatInfo">For more information about these settings, check the compatibility list:</x:String>
+    <x:String x:Key="TxtDefaultFakenvapiDesc">Default Fakenvapi version pre-selected when opening Manage or using Quick Install. Select None to skip it.</x:String>
+    <x:String x:Key="TxtDefaultNukemFGDesc">Default NukemFG version pre-selected when opening Manage or using Quick Install. Select None to skip it.</x:String>
+    <x:String x:Key="TxtDefaultInjectionMethodDesc">Default injection DLL pre-selected when opening Manage. Auto resolves it per game from the compatibility list.</x:String>
+    <x:String x:Key="TxtDefaultProfileDesc">Default profile pre-selected when opening Manage for a game that doesn't have one of its own yet.</x:String>
+    <x:String x:Key="TxtDefaultFrameGenerationDesc">Default Frame Generation configuration pre-selected when opening Manage for a game that doesn't have one of its own yet.</x:String>
     <x:String x:Key="TxtClearAppCacheTitle">Clear Application Cache</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Remove scanned games, cover art and cached version data. The app will re-scan and re-download on next launch.</x:String>
     <x:String x:Key="TxtClearCacheBtn">Clear Cache</x:String>
@@ -666,6 +672,7 @@ This version is unavailable for download. Check your internet connection and try
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">An ASI Plugin for OptiScaler that exposes DLSS/DLSS-FG inputs without spoofing in supported games. Helps AMD and Intel users avoid D3D12 errors and prevents performance overhead or crashes caused by Dxgi spoofing.</x:String>
+    <x:String x:Key="TxtDefaultOptiPatcherTooltip">An ASI Plugin for OptiScaler that exposes DLSS/DLSS-FG inputs without spoofing in supported games. Helps AMD and Intel users avoid D3D12 errors and prevents performance overhead or crashes caused by Dxgi spoofing. Auto installs the latest version automatically when the compatibility list flags a game as needing it; pick a specific version, or None, to always use that instead.</x:String>
     <x:String x:Key="TxtProfileLbl">Profile (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">A profile is a saved OptiScaler .ini configuration. Pick one to reuse a specific set of settings when installing OptiScaler for this game.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Downloading OptiPatcher...</x:String>
@@ -706,10 +713,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpFsr4DllText">Choose an FSR 4 DLL package to inject alongside OptiScaler. Each version shows whether it is INT8 or FP8. INT8 packages use the compatibility fallback required by older GPUs; FP8 packages do not enable that fallback.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL Swap (FSR 4) 🔁</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapText">Set OptiScaler Version to 'None' and keep an FSR 4 DLL selected to replace only the matching DLL in the game folder. Auto-Swap finds it automatically; Manual-Swap lets you choose it. The original DLL is backed up and can be restored later. INT8 and FP8 packages can both be swapped; amdxc64.dll is only supported by INT8 packages.</x:String>
-    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">FSR 4 DLL Default</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">FSR 4 DLL (Swap)</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Select the FSR 4 DLL version pre-selected in Manage and Quick Install. Choose None to skip the DLL injection or swap.</x:String>
     <x:String x:Key="TxtFrameGeneration">Frame Generation</x:String>
-    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 Swap</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL (Swap)</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG route</x:String>
     <x:String x:Key="TxtFgRouteTooltip">Selects the input route that OptiScaler uses for Frame Generation in this game.</x:String>

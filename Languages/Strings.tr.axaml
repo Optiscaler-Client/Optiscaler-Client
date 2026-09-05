@@ -7,8 +7,8 @@
     <x:String x:Key="TxtGamepadDisconnected">Gamepad bağlantısı kesildi</x:String>
     <x:String x:Key="TxtSettingsDesc">Uygulama tercihlerini yönet</x:String>
     <x:String x:Key="TxtAppPrefs">Uygulama Tercihleri</x:String>
-    <x:String x:Key="TxtCacheMgmt">Yerel önbellek &amp; Varsayılan sürüm yönetimi</x:String>
-    <x:String x:Key="TxtCacheDesc">Yüklenen bileşen sürümlerini görüntüleyin ve yönetin, Hızlı Kurulum ve oyun yönetimi için varsayılan sürümleri ayarlayın ve yerel depolama alanı açın.</x:String>
+    <x:String x:Key="TxtCacheMgmt">Yerel Sürümleri Yönet</x:String>
+    <x:String x:Key="TxtCacheDesc">İndirilen bileşen sürümlerini görüntüleyin, içe aktarın ve silin, yerel depolama alanı açın.</x:String>
     <x:String x:Key="TxtManage">&#xE8B7;  Yönet</x:String>
     <x:String x:Key="TxtLanguage">Uygulama Dili</x:String>
     <x:String x:Key="TxtLanguageDesc">Kullanıcı arayüzü dilini değiştir.</x:String>
@@ -345,13 +345,19 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDefaultGpuDesc">Varsayılan değerler ve GPU'ya özgü kılavuz için kullanılır.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Varsayılan OptiScaler Sürümü</x:String>
     <x:String x:Key="TxtDefaultOptiVersionDesc">Yönet penceresi açılırken veya Hızlı Yükleme kullanılırken önceden seçilen sürüm. 'Otomatik' en son önerilen sürümü seçer.</x:String>
-    <x:String x:Key="TxtDefaultVersionsTitle">Varsayılan Sürümler</x:String>
-    <x:String x:Key="TxtDefaultVersionsDesc">Oyun yönetimi ve Hızlı Yükleme için varsayılan bileşen sürümlerini yönetin</x:String>
-    <x:String x:Key="TxtManageDefaultVersions">Varsayılan Sürümleri Yönet</x:String>
+    <x:String x:Key="TxtDefaultVersionsTitle">Varsayılan Sürümler ve Hızlı Kurulum Ayarları Yönetimi</x:String>
+    <x:String x:Key="TxtDefaultVersionsDesc">Varsayılan bileşen sürümlerini, hızlı ayarları ve oyun yönetimi açıldığında veya Hızlı Kurulum kullanıldığında önceden seçilenleri yönetir.</x:String>
+    <x:String x:Key="TxtManageDefaultVersions">Varsayılan Sürümler ve Hızlı Kurulum Ayarları</x:String>
     <x:String x:Key="TxtManageDefaultVersionsDesc">Oyun yönetim penceresi açılırken veya Hızlı Yükleme kullanılırken önceden seçilen bileşen sürümlerini yapılandırın.</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultTitle">Varsayılan OptiPatcher Sürümü</x:String>
         <x:String x:Key="TxtOptiPatcherDefaultDesc">Yönetim penceresi açılırken veya Hızlı Yükleme kullanılırken önceden seçilen OptiPatcher sürümü. Yüklemeyi atlamak için 'Yok' seçin.</x:String>
         <x:String x:Key="TxtOptiPatcherSupportLinkText">Uyumlu oyunlar listesini görüntüle</x:String>
+    <x:String x:Key="TxtDefaultVersionsCompatInfo">Bu ayarlar hakkında daha fazla bilgi için uyumluluk listesine bakın:</x:String>
+    <x:String x:Key="TxtDefaultFakenvapiDesc">Yönet penceresi açıldığında veya Hızlı Kurulum kullanıldığında önceden seçilen varsayılan Fakenvapi sürümü. Atlamak için Yok seçin.</x:String>
+    <x:String x:Key="TxtDefaultNukemFGDesc">Yönet penceresi açıldığında veya Hızlı Kurulum kullanıldığında önceden seçilen varsayılan NukemFG sürümü. Atlamak için Yok seçin.</x:String>
+    <x:String x:Key="TxtDefaultInjectionMethodDesc">Yönet penceresi açıldığında önceden seçilen varsayılan enjeksiyon DLL'si. Otomatik, uyumluluk listesine göre oyuna özel belirler.</x:String>
+    <x:String x:Key="TxtDefaultProfileDesc">Kendi profili henüz olmayan bir oyun için Yönet penceresi açıldığında önceden seçilen varsayılan profil.</x:String>
+    <x:String x:Key="TxtDefaultFrameGenerationDesc">Kendi ayarları henüz olmayan bir oyun için Yönet penceresi açıldığında önceden seçilen varsayılan Kare Oluşturma yapılandırması.</x:String>
         <x:String x:Key="TxtClearAppCacheTitle">Uygulama Önbelleğini Temizle</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Taranan oyunları, kapak resimleri ve önbelleğe alınmış sürüm verilerini kaldırır. Uygulama bir sonraki başlatılmada yeniden tarar.</x:String>
     <x:String x:Key="TxtClearCacheBtn">Önbelleği Temizle</x:String>
@@ -641,6 +647,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">Desteklenen oyunlarda spoofing olmadan DLSS/DLSS-FG girişlerini açığa çıkaran OptiScaler için bir ASI Eklentisi. Intel Arc kullanıcılarının D3D12 hatalarından kaçınmasına yardımcı olur ve Dxgi spoofing'in neden olduğu performans düşüşlerini veya çökmeleri önler.</x:String>
+    <x:String x:Key="TxtDefaultOptiPatcherTooltip">Desteklenen oyunlarda spoofing olmadan DLSS/DLSS-FG girişlerini açığa çıkaran OptiScaler için bir ASI Eklentisi. Intel Arc kullanıcılarının D3D12 hatalarından kaçınmasına yardımcı olur ve Dxgi spoofing'in neden olduğu performans düşüşlerini veya çökmeleri önler. Otomatik, uyumluluk listesi bir oyunun buna ihtiyacı olduğunu belirttiğinde en son sürümü otomatik olarak yükler; bunun yerine her zaman kullanmak için belirli bir sürüm veya Yok seçin.</x:String>
     <x:String x:Key="TxtProfileLbl">Profil (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Profil, kaydedilmiş bir OptiScaler .ini yapılandırmasıdır. Bu oyun için OptiScaler kurulurken belirli bir ayar grubunu yeniden kullanmak için birini seçin.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
@@ -700,10 +707,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFsr4DllText">OptiScaler için bir FSR 4 DLL paketi seçin. Her sürüm INT8 veya FP8 olduğunu gösterir. INT8 eski GPU'lar için uyumluluk geri dönüşünü kullanır; FP8 bunu etkinleştirmez.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL Değiştirme (FSR 4) 🔁</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapText">Yalnızca ilgili DLL'yi değiştirmek için OptiScaler'ı None yapın ve FSR 4 DLL seçin. Özgün dosya yedeklenir. amdxc64.dll yalnızca INT8 tarafından desteklenir.</x:String>
-    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Varsayılan FSR 4 DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">FSR 4 DLL (Değiştirme)</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage ve Quick Install'da önceden seçilen FSR 4 DLL'yi belirleyin. None eklemeyi veya değiştirmeyi atlar.</x:String>
     <x:String x:Key="TxtFrameGeneration">Kare oluşturma</x:String>
-    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 Değiştirme</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL (Değiştirme)</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG yolu</x:String>
     <x:String x:Key="TxtFgRouteTooltip">OptiScaler'ın bu oyunda Kare oluşturma için kullandığı giriş yolunu seçer.</x:String>

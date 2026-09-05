@@ -7,8 +7,8 @@
     <x:String x:Key="TxtGamepadDisconnected">Gamepad losgekoppeld</x:String>
     <x:String x:Key="TxtSettingsDesc">Beheer applicatievoorkeuren</x:String>
     <x:String x:Key="TxtAppPrefs">Applicatievoorkeuren</x:String>
-    <x:String x:Key="TxtCacheMgmt">Lokale cache &amp; Standaard versiebeheer</x:String>
-    <x:String x:Key="TxtCacheDesc">Bekijk en beheer gedownloade componentversies, stel standaardversies in voor Snelle installatie en gamebeheer, en maak lokale opslagruimte vrij.</x:String>
+    <x:String x:Key="TxtCacheMgmt">Beheer Lokale Versies</x:String>
+    <x:String x:Key="TxtCacheDesc">Bekijk, importeer en verwijder gedownloade componentversies, en maak lokale opslagruimte vrij.</x:String>
     <x:String x:Key="TxtManage">&#xE8B7;  Beheer</x:String>
     <x:String x:Key="TxtLanguage">Applicatietaal</x:String>
     <x:String x:Key="TxtLanguageDesc">Wijzig de gebruikersinterfacetaal.</x:String>
@@ -241,13 +241,19 @@
     <x:String x:Key="TxtDefaultGpuDesc">Gebruikt voor standaardwaarden en GPU-specifieke begeleiding.</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">Standaard OptiScaler-versie</x:String>
     <x:String x:Key="TxtDefaultOptiVersionDesc">Vooraf geselecteerde versie bij het openen van Beheren of Snel installeren. 'Auto' kiest de nieuwste aanbevolen versie.</x:String>
-    <x:String x:Key="TxtDefaultVersionsTitle">Standaardversies</x:String>
-    <x:String x:Key="TxtDefaultVersionsDesc">Standaard componentversies beheren voor spelbeheer en Snel installeren</x:String>
-    <x:String x:Key="TxtManageDefaultVersions">Standaardversies beheren</x:String>
+    <x:String x:Key="TxtDefaultVersionsTitle">Beheer van standaardversies &amp; snelle installatie-instellingen</x:String>
+    <x:String x:Key="TxtDefaultVersionsDesc">Beheert standaard componentversies, snelle instellingen en wat er vooraf wordt geselecteerd bij het openen van gamebeheer of Snelle installatie.</x:String>
+    <x:String x:Key="TxtManageDefaultVersions">Standaardversies &amp; Snelle installatie-instellingen</x:String>
     <x:String x:Key="TxtManageDefaultVersionsDesc">Configureer welke componentversies vooraf geselecteerd worden bij het openen van het spelbeheervenster of bij Snel installeren.</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultTitle">Standaard OptiPatcher-versie</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultDesc">Vooraf geselecteerde OptiPatcher-versie bij het openen van Beheren of Snel installeren. Selecteer Geen om installatie over te slaan.</x:String>
     <x:String x:Key="TxtOptiPatcherSupportLinkText">Zie lijst van ondersteunde spellen</x:String>
+    <x:String x:Key="TxtDefaultVersionsCompatInfo">Voor meer informatie over deze instellingen, bekijk de compatibiliteitslijst:</x:String>
+    <x:String x:Key="TxtDefaultFakenvapiDesc">Standaard Fakenvapi-versie die vooraf wordt geselecteerd bij het openen van Beheren of bij Snelle installatie. Kies Geen om over te slaan.</x:String>
+    <x:String x:Key="TxtDefaultNukemFGDesc">Standaard NukemFG-versie die vooraf wordt geselecteerd bij het openen van Beheren of bij Snelle installatie. Kies Geen om over te slaan.</x:String>
+    <x:String x:Key="TxtDefaultInjectionMethodDesc">Standaard injectie-DLL die vooraf wordt geselecteerd bij het openen van Beheren. Automatisch bepaalt dit per spel op basis van de compatibiliteitslijst.</x:String>
+    <x:String x:Key="TxtDefaultProfileDesc">Standaardprofiel dat vooraf wordt geselecteerd bij het openen van Beheren voor een spel dat nog geen eigen profiel heeft.</x:String>
+    <x:String x:Key="TxtDefaultFrameGenerationDesc">Standaard Frame Generation-configuratie die vooraf wordt geselecteerd bij het openen van Beheren voor een spel dat nog geen eigen instellingen heeft.</x:String>
     <x:String x:Key="TxtClearAppCacheTitle">Applicatiecache wissen</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Verwijdert gescande spellen, omslagafbeeldingen en gecachte versiegegevens. De app scant opnieuw bij de volgende start.</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache wissen</x:String>
@@ -642,6 +648,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">Een ASI-plugin voor OptiScaler die DLSS/DLSS-FG-invoer blootlegt zonder spoofing in ondersteunde spellen. Helpt Intel Arc-gebruikers D3D12-fouten te vermijden en voorkomt prestatieproblemen of crashes door Dxgi-spoofing.</x:String>
+    <x:String x:Key="TxtDefaultOptiPatcherTooltip">Een ASI-plugin voor OptiScaler die DLSS/DLSS-FG-invoer blootlegt zonder spoofing in ondersteunde spellen. Helpt Intel Arc-gebruikers D3D12-fouten te vermijden en voorkomt prestatieproblemen of crashes door Dxgi-spoofing. Automatisch installeert automatisch de nieuwste versie wanneer de compatibiliteitslijst aangeeft dat een game deze nodig heeft; kies een specifieke versie, of Geen, om altijd die te gebruiken.</x:String>
     <x:String x:Key="TxtProfileLbl">Profiel (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Een profiel is een opgeslagen OptiScaler .ini-configuratie. Kies er een om een specifieke set instellingen te hergebruiken bij het installeren van OptiScaler voor deze game.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher downloaden...</x:String>
@@ -701,9 +708,10 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpFsr4DllText">Kies een FSR 4-DLL-pakket voor OptiScaler. Elke versie toont INT8 of FP8. INT8 gebruikt de compatibiliteitsfallback voor oudere GPU's; FP8 niet.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL-swap (FSR 4) 🔁</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapText">Zet OptiScaler op None en kies een FSR 4-DLL om alleen de overeenkomstige DLL te vervangen. Het origineel wordt geback-upt. amdxc64.dll wordt alleen door INT8 ondersteund.</x:String>
-    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">Standaard FSR 4-DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">FSR 4-DLL (Wisselen)</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Kies de vooraf geselecteerde FSR 4-DLL in Manage en Quick Install. None slaat injectie of swap over.</x:String>
     <x:String x:Key="TxtFrameGeneration">Framegeneratie</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4-DLL (Wisselen)</x:String>
     <x:String x:Key="TxtFgRoute">FG-route</x:String>
     <x:String x:Key="TxtFgRouteTooltip">Selecteert de invoerroute die OptiScaler gebruikt voor Framegeneratie in deze game.</x:String>
     <x:String x:Key="TxtFgOutput">FG-uitvoer</x:String>

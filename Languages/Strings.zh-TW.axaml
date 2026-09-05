@@ -7,8 +7,8 @@
     <x:String x:Key="TxtGamepadDisconnected">遊戲手把已中斷連接</x:String>
     <x:String x:Key="TxtSettingsDesc">管理應用程式偏好設定</x:String>
     <x:String x:Key="TxtAppPrefs">應用程式偏好設定</x:String>
-    <x:String x:Key="TxtCacheMgmt">本機快取與預設版本管理</x:String>
-    <x:String x:Key="TxtCacheDesc">檢視和管理已下載的元件版本，設定快速安裝和遊戲管理的預設版本，並釋放本機儲存空間。</x:String>
+    <x:String x:Key="TxtCacheMgmt">管理本機版本</x:String>
+    <x:String x:Key="TxtCacheDesc">檢視、匯入及刪除已下載的元件版本，並釋放本機儲存空間。</x:String>
     <x:String x:Key="TxtManage">&#xE8B7;  管理</x:String>
     <x:String x:Key="TxtLanguage">應用程式語言</x:String>
     <x:String x:Key="TxtLanguageDesc">變更使用者介面語言。</x:String>
@@ -353,13 +353,19 @@
     <x:String x:Key="TxtDefaultGpuDesc">用於預設值和 GPU 特定指引。</x:String>
     <x:String x:Key="TxtDefaultOptiVersionTitle">預設 OptiScaler 版本</x:String>
     <x:String x:Key="TxtDefaultOptiVersionDesc">開啟「管理」視窗或使用快速安裝時預先選取的版本。「自動」將選取最新建議版本。</x:String>
-    <x:String x:Key="TxtDefaultVersionsTitle">預設版本</x:String>
-    <x:String x:Key="TxtDefaultVersionsDesc">管理遊戲管理和快速安裝的預設元件版本</x:String>
-    <x:String x:Key="TxtManageDefaultVersions">管理預設版本</x:String>
+    <x:String x:Key="TxtDefaultVersionsTitle">預設版本與快速安裝設定管理</x:String>
+    <x:String x:Key="TxtDefaultVersionsDesc">管理預設元件版本、快速設定，以及開啟遊戲管理或使用快速安裝時預先選取的內容。</x:String>
+    <x:String x:Key="TxtManageDefaultVersions">預設版本與快速安裝設定</x:String>
     <x:String x:Key="TxtManageDefaultVersionsDesc">設定開啟遊戲管理視窗或使用快速安裝時預先選取的元件版本。</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultTitle">預設 OptiPatcher 版本</x:String>
     <x:String x:Key="TxtOptiPatcherDefaultDesc">開啟「管理」視窗或使用快速安裝時預先選取的 OptiPatcher 版本。選取「無」以跳過安裝。</x:String>
     <x:String x:Key="TxtOptiPatcherSupportLinkText">查看相容遊戲清單</x:String>
+    <x:String x:Key="TxtDefaultVersionsCompatInfo">如需這些設定的詳細資訊，請查看相容性清單：</x:String>
+    <x:String x:Key="TxtDefaultFakenvapiDesc">開啟管理或使用快速安裝時預先選取的預設 Fakenvapi 版本。選擇「無」可略過安裝。</x:String>
+    <x:String x:Key="TxtDefaultNukemFGDesc">開啟管理或使用快速安裝時預先選取的預設 NukemFG 版本。選擇「無」可略過安裝。</x:String>
+    <x:String x:Key="TxtDefaultInjectionMethodDesc">開啟管理時預先選取的預設注入 DLL。選擇「自動」會依相容性清單為每個遊戲自動解析。</x:String>
+    <x:String x:Key="TxtDefaultProfileDesc">為尚未擁有自己設定的遊戲開啟管理時預先選取的預設設定檔。</x:String>
+    <x:String x:Key="TxtDefaultFrameGenerationDesc">為尚未擁有自己設定的遊戲開啟管理時預先選取的預設畫面生成設定。</x:String>
     <x:String x:Key="TxtClearAppCacheTitle">清除應用程式快取</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">刪除已掃描的遊戲、封面圖片和已快取的版本資料。應用程式將在下次啟動時重新掃描。</x:String>
     <x:String x:Key="TxtClearCacheBtn">清除快取</x:String>
@@ -649,6 +655,7 @@
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
     <x:String x:Key="TxtOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支援的遊戲中無需欺騙即可公開 DLSS/DLSS-FG 輸入。幫助 Intel Arc 使用者避免 D3D12 錯誤，並防止 Dxgi 欺騙導致的效能負擔或崩潰。</x:String>
+    <x:String x:Key="TxtDefaultOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支援的遊戲中無需欺騙即可公開 DLSS/DLSS-FG 輸入。幫助 Intel Arc 使用者避免 D3D12 錯誤，並防止 Dxgi 欺騙導致的效能負擔或崩潰。自動會在相容性清單標記某遊戲需要時自動安裝最新版本；選擇特定版本或「無」則一律改用該選項。</x:String>
     <x:String x:Key="TxtProfileLbl">設定檔 (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">設定檔是已儲存的 OptiScaler .ini 設定。選擇一個設定檔，可在為此遊戲安裝 OptiScaler 時重複使用一組特定的設定。</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下載 OptiPatcher...</x:String>
@@ -711,10 +718,10 @@
     <x:String x:Key="TxtHelpFsr4DllText">選擇與 OptiScaler 一起使用的 FSR 4 DLL 套件。每個版本會顯示 INT8 或 FP8。INT8 使用舊 GPU 所需的相容性回退；FP8 不會啟用它。</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL 交換（FSR 4）🔁</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapText">將 OptiScaler 設為 None 並選擇 FSR 4 DLL，只會替換遊戲資料夾中相應的 DLL。原始檔會備份。amdxc64.dll 僅支援 INT8 套件。</x:String>
-    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">預設 FSR 4 DLL</x:String>
+    <x:String x:Key="TxtHelpFsr4DllDefaultLabel">FSR 4 DLL（替換）</x:String>
     <x:String x:Key="TxtHelpFsr4DllDefaultText">選擇在 Manage 和 Quick Install 中預先選取的 FSR 4 DLL。None 會略過注入或交換。</x:String>
     <x:String x:Key="TxtFrameGeneration">幀生成</x:String>
-    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 交換</x:String>
+    <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL（替換）</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 路徑</x:String>
     <x:String x:Key="TxtFgRouteTooltip">選擇 OptiScaler 在此遊戲中用於幀生成的輸入路徑。</x:String>
