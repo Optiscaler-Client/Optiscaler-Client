@@ -1476,6 +1476,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             .Where(version => _componentService.GetExtrasDllVariant(version) == _extrasVariant)
             .ToList();
         var latestInVariant = versions.FirstOrDefault();
+        var customExtrasVersions = _componentService.CustomExtrasVersions;
         foreach (var ver in versions)
         {
             var isLatest = string.Equals(ver, latestInVariant, StringComparison.OrdinalIgnoreCase);
@@ -1490,6 +1491,18 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     Padding = new Thickness(5, 1),
                     Margin = new Thickness(0, 0, 4, 0),
                     Child = new TextBlock { Text = "LATEST", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center }
+                };
+                stack.Children.Add(badge);
+            }
+            if (customExtrasVersions.Contains(ver))
+            {
+                var badge = new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#6B7280")),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(5, 1),
+                    Margin = new Thickness(0, 0, 4, 0),
+                    Child = new TextBlock { Text = "CUSTOM", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center }
                 };
                 stack.Children.Add(badge);
             }

@@ -103,6 +103,12 @@ namespace OptiscalerClient.Services
         public System.Collections.Generic.HashSet<string> NightlyVersions => _cachedNightlyVersions;
 
         /// <summary>
+        /// Sentinel stored in DefaultExtrasVersion/DefaultFakenvapiVersion/DefaultNukemFGVersion to mean
+        /// "always resolve to whatever is currently the latest available", set from Manage Default Versions.
+        /// </summary>
+        public const string LatestAvailableTag = "__latest__";
+
+        /// <summary>
         /// Effective OptiScaler default: null when auto-latest is on (callers already fall back to the
         /// latest version in whichever channel is showing), otherwise the explicitly pinned version.
         /// </summary>

@@ -297,8 +297,6 @@ namespace OptiscalerClient.Views
             _gpuService = PlatformServiceFactory.CreateGpuDetectionService()!;
             _games = new ObservableCollection<Game>();
 
-            EnsureDefaultProfileAutoAssigned();
-
             // Debug Window check
             if (_componentService.Config.Debug)
             {
@@ -1987,55 +1985,6 @@ namespace OptiscalerClient.Views
         private string _profileSearchTextView = string.Empty;
         private readonly ProfileManagementService _profileService = new ProfileManagementService();
         public bool IsProfileEditorOpen { get; private set; }
-
-        /// <summary>
-        /// One-time (per install) GPU-based default profile selection. The built-in "FSR 4" and
-        /// "FSR 4 (INT8)" profiles are always ensured to exist (see ProfileManagementService), but the
-        /// default profile itself is only auto-picked once: if the user has already changed the default
-        /// away from "OptiScaler Standard" (manually, or from a previous run of this same check), it's
-        /// left untouched. Gated by HasAutoAssignedDefaultProfile so it never fights the user's choice
-        /// again after this first pass.
-        /// </summary>
-        private void EnsureDefaultProfileAutoAssigned()
-        {
-            try
-            {
-                if (_componentService.Config.HasAutoAssignedDefaultProfile)
-                {
-                    DebugWindow.Log("[Startup] Default profile auto-assignment already ran previously — skipping.");
-                    return;
-                }
-
-                var currentDefault = _componentService.Config.DefaultProfileName;
-                if (!string.IsNullOrWhiteSpace(currentDefault) &&
-                    !currentDefault.Equals(OptiScalerProfile.BuiltInDefaultName, StringComparison.OrdinalIgnoreCase))
-                {
-                    DebugWindow.Log($"[Startup] Default profile already set to '{currentDefault}' — leaving as-is.");
-                    _componentService.Config.HasAutoAssignedDefaultProfile = true;
-                    _componentService.SaveConfiguration();
-                    return;
-                }
-
-                var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                DebugWindow.Log($"[Startup] Auto-assigning default profile based on detected GPU: {gpu?.Name ?? "none"}.");
-                if (GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu))
-                {
-                    _componentService.Config.DefaultProfileName = OptiScalerProfile.BuiltInFsr4Name;
-                }
-                else if (GpuSelectionHelper.IsRdna2(gpu))
-                {
-                    _componentService.Config.DefaultProfileName = OptiScalerProfile.BuiltInFsr4Int8Name;
-                }
-                DebugWindow.Log($"[Startup] Default profile set to '{_componentService.Config.DefaultProfileName}'.");
-
-                _componentService.Config.HasAutoAssignedDefaultProfile = true;
-                _componentService.SaveConfiguration();
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[Profiles] Failed to auto-assign default profile: {ex.Message}");
-            }
-        }
 
         private void LoadProfilesView(bool forceRefresh = true)
         {
@@ -5390,6 +5339,25 @@ namespace OptiscalerClient.Views
                             }
                         }
 
+                        // Quick Install never opened Manage for this game, so it has no per-game FG
+                        // settings of its own yet — seed one from the configured default (cloned, so
+                        // ApplyFrameGenerationSettings below stamping AppliedAtUtc on it doesn't mutate
+                        // the shared default object).
+                        var defaultFgSettings = _componentService.Config.DefaultFrameGenerationSettings;
+                        if (selectedGame.FrameGenerationSettings == null && defaultFgSettings != null)
+                        {
+                            selectedGame.FrameGenerationSettings = new GameFrameGenerationSettings
+                            {
+                                Route = defaultFgSettings.Route,
+                                Output = defaultFgSettings.Output,
+                                MultiFrameMode = defaultFgSettings.MultiFrameMode,
+                                AdvancedMode = defaultFgSettings.AdvancedMode,
+                                DynamicTargetFps = defaultFgSettings.DynamicTargetFps,
+                                NvngxReplacement = defaultFgSettings.NvngxReplacement,
+                                DlssEnablerVersion = defaultFgSettings.DlssEnablerVersion
+                            };
+                        }
+
                         // Streamline is no longer tied to "is this a Nightly version" — it's tied
                         // to whether the game's (Auto-resolved) FG configuration actually needs it.
                         // isNightlyChannel is kept separately only for the Fakenvapi-bundling quirk
@@ -5428,10 +5396,14 @@ namespace OptiscalerClient.Views
                         }
 
                         var configuredFakenvapi = versionIncludesBundled ? null : _componentService.Config.DefaultFakenvapiVersion;
+                        if (configuredFakenvapi == ComponentManagementService.LatestAvailableTag)
+                            configuredFakenvapi = _componentService.LatestFakenvapiVersion;
                         bool installFakenvapi = !string.IsNullOrEmpty(configuredFakenvapi) &&
                                                 !configuredFakenvapi.Equals("none", StringComparison.OrdinalIgnoreCase);
 
                         var configuredNukemFG = versionIncludesBundled ? null : _componentService.Config.DefaultNukemFGVersion;
+                        if (configuredNukemFG == ComponentManagementService.LatestAvailableTag)
+                            configuredNukemFG = _componentService.GetDownloadedNukemFGVersions().FirstOrDefault();
                         bool installNukemFG = !string.IsNullOrEmpty(configuredNukemFG) &&
                                               !configuredNukemFG.Equals("none", StringComparison.OrdinalIgnoreCase);
 
@@ -5488,6 +5460,12 @@ namespace OptiscalerClient.Views
                         OptiScalerProfile? defaultProfile = null;
                         if (!string.Equals(defaultProfileName, OptiScalerProfile.BuiltInDefaultName, StringComparison.OrdinalIgnoreCase))
                             defaultProfile = profileService.GetProfileByName(defaultProfileName);
+
+                        // Resolve the configured default injection DLL ("Auto" / unset → dxgi.dll,
+                        // matching ManageGameWindow's own fallback when no compatibility-list hint exists).
+                        var injectionMethod = _componentService.Config.DefaultInjectionMethod;
+                        if (string.IsNullOrEmpty(injectionMethod) || injectionMethod.Equals("auto", StringComparison.OrdinalIgnoreCase))
+                            injectionMethod = "dxgi.dll";
 
                         // Install with default settings (backup always enabled)
                         var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
@@ -5546,7 +5524,7 @@ namespace OptiscalerClient.Views
                             resolvedGameDir = installService.InstallOptiScaler(
                                 selectedGame,
                                 optiCacheDir,
-                                "dxgi.dll",
+                                injectionMethod,
                                 installFakenvapi: installFakenvapi,
                                 fakenvapiCachePath: fakeCacheDir,
                                 installNukemFG: installNukemFG,
@@ -5564,6 +5542,8 @@ namespace OptiscalerClient.Views
 
                         // ── FSR4 INT8 DLL injection (respect configured default extras)
                         var configuredExtras = _componentService.Config.DefaultExtrasVersion;
+                        if (configuredExtras == ComponentManagementService.LatestAvailableTag)
+                            configuredExtras = _componentService.LatestExtrasVersion;
                         if (!string.IsNullOrEmpty(configuredExtras) && !configuredExtras.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
                             var configuredExtrasIsInt8 = _componentService.GetExtrasDllVariant(configuredExtras) == Fsr4DllVariant.Int8;
@@ -5613,9 +5593,12 @@ namespace OptiscalerClient.Views
                         // Compatibility List flags this game as needing it; otherwise respect
                         // the user's configured default)
                         var configuredPatcher = _componentService.Config.DefaultOptiPatcherVersion;
+                        var patcherIsAuto = string.IsNullOrEmpty(configuredPatcher) ||
+                                            configuredPatcher.Equals("auto", StringComparison.OrdinalIgnoreCase);
                         try
                         {
-                            if (new CompatibilityListService().TryGetForGame(selectedGame.Name, out var compatEntryForPatcher) &&
+                            if (patcherIsAuto &&
+                                new CompatibilityListService().TryGetForGame(selectedGame.Name, out var compatEntryForPatcher) &&
                                 compatEntryForPatcher != null && compatEntryForPatcher.OptiPatcherSupported &&
                                 !string.IsNullOrEmpty(_componentService.LatestOptiPatcherVersion))
                             {
@@ -5680,6 +5663,40 @@ namespace OptiscalerClient.Views
                                     isAlert: true
                                 ).ShowDialog<bool>(this);
                             }
+                        }
+
+                        // ── Frame Generation / Upscaling Quality / Output Upscaler (respect configured defaults)
+                        try
+                        {
+                            var postInstallSvc = new GameInstallationService();
+                            var postInstallGameDir = resolvedGameDir ?? postInstallSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+
+                            if (selectedGame.FrameGenerationSettings != null && selectedGame.FrameGenerationSettings.Route != FrameGenerationRoute.Disabled)
+                            {
+                                postInstallSvc.ApplyFrameGenerationSettings(selectedGame, postInstallGameDir, quickInstallGpu, versionToInstall);
+                            }
+
+                            var defaultQuality = _componentService.Config.DefaultUpscalingQualityPreset;
+                            if (defaultQuality.HasValue && defaultQuality.Value != UpscalingQualityPreset.GameControlled)
+                            {
+                                selectedGame.UpscalingQualitySettings = new GameUpscalingQualitySettings
+                                {
+                                    Preset = defaultQuality.Value,
+                                    CustomRatio = _componentService.Config.DefaultUpscalingCustomRatio ?? 1.5
+                                };
+                                postInstallSvc.ApplyUpscalingQualitySettings(selectedGame, postInstallGameDir);
+                            }
+
+                            var defaultOutputUpscaler = _componentService.Config.DefaultOutputUpscalerBackend;
+                            if (defaultOutputUpscaler.HasValue && defaultOutputUpscaler.Value != OutputUpscalerBackend.Default)
+                            {
+                                selectedGame.OutputUpscalerSettings = new GameOutputUpscalerSettings { Backend = defaultOutputUpscaler.Value };
+                                postInstallSvc.ApplyOutputUpscalerSettings(selectedGame, postInstallGameDir);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugWindow.Log($"[QuickInstall] Failed to apply default Frame Generation/Quality/Output Upscaler settings: {ex.Message}");
                         }
 
                         // Update game status

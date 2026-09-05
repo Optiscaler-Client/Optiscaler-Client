@@ -100,12 +100,6 @@ namespace OptiscalerClient.Models
         public string Language { get; set; } = "en";
         public bool Debug { get; set; } = false;
         public string DefaultProfileName { get; set; } = OptiScalerProfile.BuiltInDefaultName;
-        /// <summary>
-        /// Whether the one-time GPU-based auto-selection of the default profile (FSR 4 for RDNA4/RDNA3,
-        /// FSR 4 INT8 for RDNA2) has already run. Prevents re-running it on every startup once the user
-        /// has had a chance to change <see cref="DefaultProfileName"/> themselves.
-        /// </summary>
-        public bool HasAutoAssignedDefaultProfile { get; set; } = false;
         public bool AutoScan { get; set; } = true;
         public bool AnimationsEnabled { get; set; } = true;
         public bool PreferGridView { get; set; } = true;
@@ -155,6 +149,28 @@ namespace OptiscalerClient.Models
         /// Null or "none" means "do not install".
         /// </summary>
         public string? DefaultNukemFGVersion { get; set; } = null;
+        /// <summary>
+        /// The default injection DLL name to pre-select in ManageGameWindow. Null means "auto"
+        /// (resolved per-game from the compatibility list, falling back to dxgi.dll).
+        /// </summary>
+        public string? DefaultInjectionMethod { get; set; } = null;
+        /// <summary>
+        /// The default upscaling quality preset to pre-select in ManageGameWindow. Null means
+        /// "Game controlled" (no override).
+        /// </summary>
+        public UpscalingQualityPreset? DefaultUpscalingQualityPreset { get; set; } = null;
+        /// <summary>Custom render-scale ratio, only used when DefaultUpscalingQualityPreset is Custom.</summary>
+        public double? DefaultUpscalingCustomRatio { get; set; } = null;
+        /// <summary>
+        /// The default output upscaler backend to pre-select in ManageGameWindow. Null means "Default"
+        /// (no override).
+        /// </summary>
+        public OutputUpscalerBackend? DefaultOutputUpscalerBackend { get; set; } = null;
+        /// <summary>
+        /// The default Frame Generation configuration to pre-select in ManageGameWindow for a game
+        /// with no saved FG settings of its own. Null means the built-in defaults (Disabled/Auto/Auto).
+        /// </summary>
+        public GameFrameGenerationSettings? DefaultFrameGenerationSettings { get; set; } = null;
         public ScanSourcesConfig ScanSources { get; set; } = new();
         public string SteamGridDBApiKey { get; set; } = string.Empty;
         public List<ScanExclusion> ScanExclusions { get; set; } = new();

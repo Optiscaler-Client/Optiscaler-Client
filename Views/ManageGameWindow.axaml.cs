@@ -125,6 +125,12 @@ namespace OptiscalerClient.Views
         // overwrites a selection the user may have since picked by hand.
         private bool _injectionMethodAutoSelected;
 
+        // True once an explicit (non-"Auto") Config.DefaultInjectionMethod pin has been applied in
+        // LoadVersionsAsync. Unlike _injectionMethodAutoSelected (reset on every compat-entry render),
+        // this never resets for the life of the window, so a global pin always outranks the
+        // per-game wiki suggestion instead of being silently overwritten by it.
+        private bool _injectionMethodPinnedByConfig;
+
         // Must match the Tag values on CmbInjectionMethod's ComboBoxItems in the .axaml exactly.
         private static readonly string[] KnownInjectionDllNames =
         {
@@ -1013,7 +1019,7 @@ namespace OptiscalerClient.Views
             });
         }
 
-        private static ComboBoxItem BuildVersionItem(string ver, bool isBeta, bool isLatest)
+        internal static ComboBoxItem BuildVersionItem(string ver, bool isBeta, bool isLatest)
         {
             var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
             stack.Children.Add(new TextBlock { Text = ver, VerticalAlignment = VerticalAlignment.Center });
@@ -1057,6 +1063,27 @@ namespace OptiscalerClient.Views
                 && profiles.Any(p => p.Name.Equals(defaultProfileName, StringComparison.OrdinalIgnoreCase))
                     ? defaultProfileName
                     : profileService.GetDefaultProfile().Name;
+
+            // Default injection DLL: an explicit pin from Manage Default Versions wins outright and
+            // is never overridden by the wiki's per-game suggestion (see _injectionMethodPinnedByConfig).
+            // "Auto"/unset leaves the XAML's dxgi.dll default in place for that suggestion to resolve.
+            var defaultInjectionMethod = componentService.Config.DefaultInjectionMethod;
+            if (!string.IsNullOrEmpty(defaultInjectionMethod) && !defaultInjectionMethod.Equals("auto", StringComparison.OrdinalIgnoreCase))
+            {
+                var cmbInjection = this.FindControl<ComboBox>("CmbInjectionMethod");
+                if (cmbInjection != null)
+                {
+                    for (int i = 0; i < cmbInjection.Items.Count; i++)
+                    {
+                        if ((cmbInjection.Items[i] as ComboBoxItem)?.Tag?.ToString() == defaultInjectionMethod)
+                        {
+                            cmbInjection.SelectedIndex = i;
+                            _injectionMethodPinnedByConfig = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             // Immediately populate ALL selectors from disk cache (no API wait).
             // This eliminates the ~1s "popup" delay when versions are already cached.
@@ -1402,6 +1429,7 @@ namespace OptiscalerClient.Views
             // Option 0: None
             cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
+            var customExtrasVersions = componentService.CustomExtrasVersions;
             foreach (var ver in versions)
             {
                 var isLatest = string.Equals(ver, latestInVariant, StringComparison.OrdinalIgnoreCase);
@@ -1415,6 +1443,16 @@ namespace OptiscalerClient.Views
                         Background = new SolidColorBrush(Color.Parse("#7C3AED")),
                         Padding = new Thickness(5, 1),
                         Child = new TextBlock { Text = "LATEST", FontSize = 10, Foreground = Brushes.White, FontWeight = Avalonia.Media.FontWeight.Bold, VerticalAlignment = VerticalAlignment.Center }
+                    });
+                }
+                if (customExtrasVersions.Contains(ver))
+                {
+                    stack.Children.Add(new Border
+                    {
+                        CornerRadius = new CornerRadius(4),
+                        Background = new SolidColorBrush(Color.Parse("#6B7280")),
+                        Padding = new Thickness(5, 1),
+                        Child = new TextBlock { Text = "CUSTOM", FontSize = 10, Foreground = Brushes.White, FontWeight = Avalonia.Media.FontWeight.Bold, VerticalAlignment = VerticalAlignment.Center }
                     });
                 }
                 cmb.Items.Add(new ComboBoxItem { Content = stack, Tag = ver });
@@ -1438,7 +1476,14 @@ namespace OptiscalerClient.Views
             int targetIndex = 0; // Default to None (index 0)
             var globalDefault = componentService.Config.DefaultExtrasVersion;
 
-            if (!string.IsNullOrEmpty(globalDefault))
+            if (globalDefault == ComponentManagementService.LatestAvailableTag)
+            {
+                // "Latest version available" (set from Manage Default Versions) always means the
+                // newest release in whichever variant tab is showing — no GPU gating, unlike the
+                // "no preference configured" fallback below.
+                targetIndex = versions.Count > 0 ? 1 : 0;
+            }
+            else if (!string.IsNullOrEmpty(globalDefault))
             {
                 if (globalDefault.Equals("none", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1583,8 +1628,14 @@ namespace OptiscalerClient.Views
             // The wiki's Compatibility List flags this game as needing OptiPatcher — auto-select
             // the latest version instead of falling back to the user's saved global default.
             var latestVersion = componentService.LatestOptiPatcherVersion;
-            var wantsAutoLatest = _compatEntry != null && _compatEntry.OptiPatcherSupported && !string.IsNullOrEmpty(latestVersion);
-            var targetVersion = wantsAutoLatest ? latestVersion : componentService.Config.DefaultOptiPatcherVersion;
+            // "Auto" (or unset) is the default from Manage Default Versions — only then does the
+            // compatibility list get to auto-pick the latest version. An explicitly pinned default
+            // is now respected instead of always being overridden.
+            var configuredPatcherDefault = componentService.Config.DefaultOptiPatcherVersion;
+            var patcherIsAuto = string.IsNullOrEmpty(configuredPatcherDefault) ||
+                                 configuredPatcherDefault.Equals("auto", StringComparison.OrdinalIgnoreCase);
+            var wantsAutoLatest = patcherIsAuto && _compatEntry != null && _compatEntry.OptiPatcherSupported && !string.IsNullOrEmpty(latestVersion);
+            var targetVersion = wantsAutoLatest ? latestVersion : configuredPatcherDefault;
 
             if (!string.IsNullOrEmpty(targetVersion) && !targetVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
@@ -1626,6 +1677,8 @@ namespace OptiscalerClient.Views
 
             // Pre-select configured default
             var savedNukemFG = componentService.Config.DefaultNukemFGVersion;
+            if (savedNukemFG == ComponentManagementService.LatestAvailableTag)
+                savedNukemFG = versions.FirstOrDefault();
             cmb.SelectedIndex = 0;
             if (!string.IsNullOrEmpty(savedNukemFG) && !savedNukemFG.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
@@ -1678,6 +1731,8 @@ namespace OptiscalerClient.Views
 
             // Pre-select configured default
             var savedFakenvapi = componentService.Config.DefaultFakenvapiVersion;
+            if (savedFakenvapi == ComponentManagementService.LatestAvailableTag)
+                savedFakenvapi = componentService.LatestFakenvapiVersion;
             cmb.SelectedIndex = 0;
             if (!string.IsNullOrEmpty(savedFakenvapi) && !savedFakenvapi.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
@@ -1808,7 +1863,7 @@ namespace OptiscalerClient.Views
             if (cmbOutputUpscaler != null) cmbOutputUpscaler.IsEnabled = enabled;
         }
 
-        private static bool IsVersionGreaterOrEqual(string? ver, int targetMajor, int targetMinor)
+        internal static bool IsVersionGreaterOrEqual(string? ver, int targetMajor, int targetMinor)
         {
             if (string.IsNullOrEmpty(ver)) return false;
 
@@ -2290,21 +2345,51 @@ namespace OptiscalerClient.Views
 
         private void SetupFrameGenerationButton()
         {
-            if (_game.FrameGenerationSettings == null)
+            // AppliedAtUtc is only ever stamped by GameInstallationService.ApplyFrameGenerationSettings,
+            // i.e. once this game's .ini has actually been patched with it. Until then, this is just a
+            // preview of "what would install" and must keep tracking the current app-wide default —
+            // otherwise merely opening Manage once (with no default configured yet) permanently freezes
+            // the game on the built-in Disabled/Auto, ignoring any default set afterwards.
+            if (_game.FrameGenerationSettings == null || _game.FrameGenerationSettings.AppliedAtUtc == null)
             {
-                _game.FrameGenerationSettings = new GameFrameGenerationSettings
-                {
-                    Route = FrameGenerationRoute.Disabled,
-                    Output = FrameGenerationOutput.Auto,
-                    MultiFrameMode = MultiFrameGenerationMode.Auto
-                };
+                // A game that has never had FG actually applied starts from the app-wide default set in
+                // Manage Default Versions (cloned, so this window stamping AppliedAtUtc on it later
+                // doesn't mutate the shared default object), falling back to the built-in Disabled/Auto.
+                var defaultFg = new ComponentManagementService().Config.DefaultFrameGenerationSettings;
+                _game.FrameGenerationSettings = defaultFg != null
+                    ? new GameFrameGenerationSettings
+                    {
+                        Route = defaultFg.Route,
+                        Output = defaultFg.Output,
+                        MultiFrameMode = defaultFg.MultiFrameMode,
+                        AdvancedMode = defaultFg.AdvancedMode,
+                        DynamicTargetFps = defaultFg.DynamicTargetFps,
+                        NvngxReplacement = defaultFg.NvngxReplacement,
+                        DlssEnablerVersion = defaultFg.DlssEnablerVersion
+                    }
+                    : new GameFrameGenerationSettings
+                    {
+                        Route = FrameGenerationRoute.Disabled,
+                        Output = FrameGenerationOutput.Auto,
+                        MultiFrameMode = MultiFrameGenerationMode.Auto
+                    };
             }
             UpdateFrameGenerationSummary();
         }
 
         private void SetupUpscalingQualitySelector()
         {
-            _game.UpscalingQualitySettings ??= new GameUpscalingQualitySettings();
+            // Same AppliedAtUtc reasoning as SetupFrameGenerationButton: keep tracking the current
+            // default until this game has actually had a quality override written to its .ini.
+            if (_game.UpscalingQualitySettings == null || _game.UpscalingQualitySettings.AppliedAtUtc == null)
+            {
+                var config = new ComponentManagementService().Config;
+                _game.UpscalingQualitySettings = new GameUpscalingQualitySettings
+                {
+                    Preset = config.DefaultUpscalingQualityPreset ?? UpscalingQualityPreset.GameControlled,
+                    CustomRatio = config.DefaultUpscalingCustomRatio ?? 1.5
+                };
+            }
             PopulateUpscalingQualitySelector(_game.UpscalingQualitySettings.Preset);
         }
 
@@ -2344,7 +2429,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private static void AddUpscalingQualityItem(ComboBox combo, string label, UpscalingQualityPreset preset, bool isSentinel = false)
+        internal static void AddUpscalingQualityItem(ComboBox combo, string label, UpscalingQualityPreset preset, bool isSentinel = false)
         {
             var item = new ComboBoxItem { Content = label, Tag = preset };
             if (isSentinel) item.Classes.Add("SentinelOption");
@@ -2451,7 +2536,13 @@ namespace OptiscalerClient.Views
 
         private void SetupOutputUpscalerSelector()
         {
-            _game.OutputUpscalerSettings ??= new GameOutputUpscalerSettings();
+            // Same AppliedAtUtc reasoning as SetupFrameGenerationButton: keep tracking the current
+            // default until this game has actually had an output-upscaler override written to its .ini.
+            if (_game.OutputUpscalerSettings == null || _game.OutputUpscalerSettings.AppliedAtUtc == null)
+            {
+                var backend = new ComponentManagementService().Config.DefaultOutputUpscalerBackend ?? OutputUpscalerBackend.Default;
+                _game.OutputUpscalerSettings = new GameOutputUpscalerSettings { Backend = backend };
+            }
             PopulateOutputUpscalerSelector(_game.OutputUpscalerSettings.Backend);
         }
 
@@ -2487,7 +2578,7 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private static void AddOutputUpscalerItem(ComboBox combo, string label, OutputUpscalerBackend backend, bool isSentinel = false)
+        internal static void AddOutputUpscalerItem(ComboBox combo, string label, OutputUpscalerBackend backend, bool isSentinel = false)
         {
             var item = new ComboBoxItem { Content = label, Tag = backend };
             if (isSentinel) item.Classes.Add("SentinelOption");
@@ -2684,7 +2775,7 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void RenderWikiDetails(GameWikiDetails details)
         {
-            if (!_injectionMethodAutoSelected)
+            if (!_injectionMethodAutoSelected && !_injectionMethodPinnedByConfig)
             {
                 _injectionMethodAutoSelected = true;
                 ApplySuggestedInjectionMethod(details.Filename);

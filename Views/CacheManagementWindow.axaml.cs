@@ -23,8 +23,6 @@ namespace OptiscalerClient.Views
         private readonly ComponentManagementService _componentService;
         private bool _isAnimatingClose;
         private string _currentSection = "opti-stable";
-        private string? _selectedVersion;
-        private Button? _setDefaultButton;
         private GamepadDialogNavigationHelper? _gamepadHelper;
 
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -45,6 +43,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _componentService = new ComponentManagementService();
             _currentSection = initialSection;
 
@@ -155,6 +154,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _componentService = new ComponentManagementService();
             _currentSection = initialSection;
 
@@ -429,9 +429,7 @@ namespace OptiscalerClient.Views
 
         private void ShowSection(string sectionId)
         {
-            bool sectionChanged = _currentSection != sectionId;
             _currentSection = sectionId;
-            if (sectionChanged) _selectedVersion = null;
 
             var content = this.FindControl<StackPanel>("CacheContentArea");
             if (content == null) return;
@@ -455,8 +453,6 @@ namespace OptiscalerClient.Views
 
         private void RenderOptiScalerVersions(StackPanel content, bool showBeta, bool showNightly = false)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             var allVersions = _componentService.GetDownloadedOptiScalerVersions();
             var betaSet     = _componentService.BetaVersions;
             var nightlySet  = _componentService.NightlyVersions;
@@ -480,8 +476,6 @@ namespace OptiscalerClient.Views
 
         private void RenderOptiScalerCustom(StackPanel content)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             // Import button
             var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Margin = new Thickness(0, 0, 0, 16) };
             var txtStatus = new TextBlock
@@ -544,8 +538,6 @@ namespace OptiscalerClient.Views
 
         private void RenderOptiPatcher(StackPanel content)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             var versions = _componentService.GetDownloadedOptiPatcherVersions();
 
             if (versions.Count == 0)
@@ -560,8 +552,6 @@ namespace OptiscalerClient.Views
 
         private void RenderFsr4(StackPanel content)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             // Add DLL button row
             var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
             var btnImport = new Button
@@ -611,8 +601,6 @@ namespace OptiscalerClient.Views
 
         private void RenderFakenvapi(StackPanel content)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             var downloadedVersions = _componentService.GetDownloadedFakenvapiVersions();
 
             if (downloadedVersions.Count == 0)
@@ -627,8 +615,6 @@ namespace OptiscalerClient.Views
 
         private void RenderNukemfg(StackPanel content)
         {
-            content.Children.Add(CreateSetDefaultRow());
-
             // Import archive button row
             var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
             var btnImport = new Button
@@ -756,22 +742,6 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private static bool IsOptiSection(string sectionId) =>
-            sectionId is "opti-stable" or "opti-beta" or "opti-nightly" or "opti-custom";
-
-        private string? GetCurrentDefault()
-        {
-            return _currentSection switch
-            {
-                "opti-stable" or "opti-beta" or "opti-nightly" or "opti-custom" => _componentService.Config.DefaultOptiScalerVersion,
-                "optipatcher" => _componentService.Config.DefaultOptiPatcherVersion,
-                "fsr4" => _componentService.Config.DefaultExtrasVersion,
-                "fakenvapi" => _componentService.Config.DefaultFakenvapiVersion,
-                "nukemfg" => _componentService.Config.DefaultNukemFGVersion,
-                _ => null
-            };
-        }
-
         private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false)
         {
             var grid = new Grid
@@ -803,31 +773,6 @@ namespace OptiscalerClient.Views
             //     });
             // }
 
-            // Show DEFAULT badge if this version is the configured default
-            // (suppressed for OptiScaler while auto-latest is active — the pinned value is ignored then)
-            var currentDefault = GetCurrentDefault();
-            bool autoLatestActive = IsOptiSection(_currentSection) && _componentService.Config.AutoLatestOptiScalerDefault;
-            if (!autoLatestActive && !string.IsNullOrEmpty(currentDefault) &&
-                currentDefault.Equals(version, StringComparison.OrdinalIgnoreCase))
-            {
-                stack.Children.Add(new Border
-                {
-                    CornerRadius = new CornerRadius(4),
-                    Background = new SolidColorBrush(Color.Parse("#7C3AED")),
-                    Padding = new Thickness(5, 1),
-                    Margin = new Thickness(0, 2, 0, 0),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Child = new TextBlock
-                    {
-                        Text = Application.Current?.FindResource("TxtDefaultBadge") as string ?? "DEFAULT",
-                        FontSize = 9,
-                        Foreground = Brushes.White,
-                        FontWeight = FontWeight.Bold,
-                        VerticalAlignment = VerticalAlignment.Center
-                    }
-                });
-            }
-
             grid.Children.Add(stack);
             Grid.SetColumn(stack, 0);
 
@@ -850,22 +795,12 @@ namespace OptiscalerClient.Views
             var border = new Border
             {
                 Background = this.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
-                BorderBrush = (_selectedVersion == version)
-                    ? this.FindResource("BrAccent") as IBrush ?? Brushes.DeepSkyBlue
-                    : this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(16, 10),
-                Cursor = new Cursor(StandardCursorType.Hand),
                 Tag = version,
                 Child = grid
-            };
-
-            border.PointerPressed += (s, e) =>
-            {
-                _selectedVersion = version;
-                if (_setDefaultButton != null) _setDefaultButton.IsEnabled = true;
-                ShowSection(_currentSection); // re-render to update highlight
             };
 
             return border;
@@ -887,124 +822,6 @@ namespace OptiscalerClient.Views
             }
         };
 
-        /// <summary>
-        /// Creates the "Set Default" header block shown at the top of each section.
-        /// For the OptiScaler sections, also includes the "always use latest available version" toggle.
-        /// </summary>
-        private Control CreateSetDefaultRow()
-        {
-            bool isOptiSection = IsOptiSection(_currentSection);
-            bool autoLatest = isOptiSection && _componentService.Config.AutoLatestOptiScalerDefault;
-
-            var container = new StackPanel { Spacing = 8, Margin = new Thickness(0, 0, 0, 12) };
-
-            if (isOptiSection)
-            {
-                var toggleRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto") };
-
-                var toggleLabel = new TextBlock
-                {
-                    Text = Application.Current?.FindResource("TxtAutoLatestOptiDefault") as string
-                           ?? "Always use latest available version as default",
-                    FontSize = 11,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = this.FindResource("BrTextSecondary") as IBrush
-                };
-                toggleRow.Children.Add(toggleLabel);
-                Grid.SetColumn(toggleLabel, 0);
-
-                var tglAutoLatest = new ToggleSwitch
-                {
-                    OnContent = "",
-                    OffContent = "",
-                    IsChecked = autoLatest,
-                    Focusable = false,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                tglAutoLatest.IsCheckedChanged += TglAutoLatestOpti_IsCheckedChanged;
-                toggleRow.Children.Add(tglAutoLatest);
-                Grid.SetColumn(tglAutoLatest, 1);
-
-                container.Children.Add(toggleRow);
-            }
-
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto") };
-
-            var currentDefault = GetCurrentDefault();
-            var defaultLabel = new TextBlock
-            {
-                FontSize = 11,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            };
-
-            if (autoLatest)
-            {
-                var latest = _componentService.LatestStableVersion;
-                var fmt = Application.Current?.FindResource("TxtAutoLatestCurrentFormat") as string ?? "Auto: latest available (v{0})";
-                defaultLabel.Text = string.IsNullOrEmpty(latest)
-                    ? (Application.Current?.FindResource("TxtNoDefaultSet") as string ?? "No default set")
-                    : string.Format(fmt, latest);
-            }
-            else if (!string.IsNullOrEmpty(currentDefault) &&
-                !currentDefault.Equals("none", StringComparison.OrdinalIgnoreCase))
-            {
-                var fmt = Application.Current?.FindResource("TxtCurrentDefaultFormat") as string ?? "Current default: {0}";
-                defaultLabel.Text = string.Format(fmt, currentDefault);
-            }
-            else
-            {
-                defaultLabel.Text = Application.Current?.FindResource("TxtNoDefaultSet") as string ?? "No default set";
-            }
-
-            row.Children.Add(defaultLabel);
-            Grid.SetColumn(defaultLabel, 0);
-
-            var btnStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-
-            // Clear default button
-            var btnClear = new Button
-            {
-                Content = Application.Current?.FindResource("TxtClearDefault") as string ?? "Clear",
-                Padding = new Thickness(10, 5),
-                FontSize = 11,
-                IsEnabled = !autoLatest &&
-                            !string.IsNullOrEmpty(currentDefault) &&
-                            !currentDefault.Equals("none", StringComparison.OrdinalIgnoreCase)
-            };
-            btnClear.Classes.Add("BtnSecondary");
-            btnClear.Click += BtnClearDefault_Click;
-            btnStack.Children.Add(btnClear);
-
-            // Set Default button
-            var btnSetDefault = new Button
-            {
-                Content = Application.Current?.FindResource("TxtSetDefault") as string ?? "Set Default",
-                Padding = new Thickness(12, 5),
-                FontSize = 11,
-                IsEnabled = !autoLatest && _selectedVersion != null
-            };
-            btnSetDefault.Classes.Add("BtnBase");
-            btnSetDefault.Click += BtnSetDefault_Click;
-            _setDefaultButton = btnSetDefault;
-            btnStack.Children.Add(btnSetDefault);
-
-            row.Children.Add(btnStack);
-            Grid.SetColumn(btnStack, 1);
-
-            container.Children.Add(row);
-            return container;
-        }
-
-        private void TglAutoLatestOpti_IsCheckedChanged(object? sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleSwitch tgl)
-            {
-                _componentService.Config.AutoLatestOptiScalerDefault = tgl.IsChecked ?? true;
-                _componentService.SaveConfiguration();
-                ShowSection(_currentSection);
-            }
-        }
 
         private TextBlock MakeEmptyLabel(string text) => new TextBlock
         {
@@ -1120,67 +937,6 @@ namespace OptiscalerClient.Views
             }
         }
 
-        // ── Set Default ────────────────────────────────────────────────────────
-
-        private void BtnSetDefault_Click(object? sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(_selectedVersion)) return;
-
-            switch (_currentSection)
-            {
-                case "opti-stable":
-                case "opti-beta":
-                case "opti-nightly":
-                case "opti-custom":
-                    _componentService.Config.DefaultOptiScalerVersion = _selectedVersion;
-                    break;
-                case "optipatcher":
-                    _componentService.Config.DefaultOptiPatcherVersion = _selectedVersion;
-                    break;
-                case "fsr4":
-                    _componentService.Config.DefaultExtrasVersion = _selectedVersion;
-                    break;
-                case "fakenvapi":
-                    _componentService.Config.DefaultFakenvapiVersion = _selectedVersion;
-                    break;
-                case "nukemfg":
-                    _componentService.Config.DefaultNukemFGVersion = _selectedVersion;
-                    break;
-            }
-
-            _componentService.SaveConfiguration();
-            _selectedVersion = null;
-            ShowSection(_currentSection);
-        }
-
-        private void BtnClearDefault_Click(object? sender, RoutedEventArgs e)
-        {
-            switch (_currentSection)
-            {
-                case "opti-stable":
-                case "opti-beta":
-                case "opti-nightly":
-                case "opti-custom":
-                    _componentService.Config.DefaultOptiScalerVersion = null;
-                    break;
-                case "optipatcher":
-                    _componentService.Config.DefaultOptiPatcherVersion = null;
-                    break;
-                case "fsr4":
-                    _componentService.Config.DefaultExtrasVersion = null;
-                    break;
-                case "fakenvapi":
-                    _componentService.Config.DefaultFakenvapiVersion = null;
-                    break;
-                case "nukemfg":
-                    _componentService.Config.DefaultNukemFGVersion = null;
-                    break;
-            }
-
-            _componentService.SaveConfiguration();
-            _selectedVersion = null;
-            ShowSection(_currentSection);
-        }
 
         // ── Import ─────────────────────────────────────────────────────────────
 

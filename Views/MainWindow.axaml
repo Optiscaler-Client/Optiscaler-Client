@@ -1769,6 +1769,47 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Default Versions -->
+                            <Border Background="{StaticResource BrBgCard}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusLarge}"
+                                    Padding="20,16"
+                                    Margin="0,0,16,16"
+                                    HorizontalAlignment="Left">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource TxtDefaultVersionsTitle}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource BrTextPrimary}"/>
+                                        <TextBlock Text="{DynamicResource TxtDefaultVersionsDesc}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,16,0"
+                                                   FontSize="{StaticResource FontSizeCaption}"/>
+                                    </StackPanel>
+                                    <Button Name="BtnManageDefaultVersions"
+                                            Grid.Column="1"
+                                            Classes="BtnBase"
+                                            Padding="16,8"
+                                            VerticalAlignment="Center"
+                                            Click="BtnManageDefaultVersions_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xF419;"
+                                                       FontFamily="{StaticResource FontIcons}"
+                                                       FontSize="14"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="Manage"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
                             <!-- Scan Sources -->
                             <Border Background="{StaticResource BrBgCard}"
                                     BorderBrush="{StaticResource BrBorderSubtle}"
