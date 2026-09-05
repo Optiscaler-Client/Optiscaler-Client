@@ -874,14 +874,16 @@ namespace OptiscalerClient.Views
         private static Border CreateFsr4VariantBadge(Fsr4DllVariant variant) => new()
         {
             CornerRadius = new CornerRadius(4),
-            Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#16A34A")),
+            Background = new SolidColorBrush(Color.Parse(variant == Fsr4DllVariant.Fp8 ? "#2563EB" : "#0EA5E9")),
             Padding = new Thickness(5, 1),
+            VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
                 Text = variant == Fsr4DllVariant.Fp8 ? "FP8" : "INT8",
                 FontSize = 9,
                 Foreground = Brushes.White,
-                FontWeight = FontWeight.Bold
+                FontWeight = FontWeight.Bold,
+                VerticalAlignment = VerticalAlignment.Center
             }
         };
 

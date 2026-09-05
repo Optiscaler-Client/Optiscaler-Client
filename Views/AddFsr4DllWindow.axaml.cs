@@ -2,8 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
-using Avalonia.Media;
-using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 
 namespace OptiscalerClient.Views;
@@ -30,13 +28,13 @@ public partial class AddFsr4DllWindow : Window
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select FSR 4 DLL package",
+            Title = "Select FSR 4 DLL archive",
             AllowMultiple = false,
             FileTypeFilter = new[]
             {
-                new FilePickerFileType("Archives (7z, zip, rar) or DLL")
+                new FilePickerFileType("Archives (7z, zip, rar)")
                 {
-                    Patterns = new[] { "*.7z", "*.zip", "*.rar", "*.dll" }
+                    Patterns = new[] { "*.7z", "*.zip", "*.rar" }
                 }
             }
         });
@@ -45,24 +43,9 @@ public partial class AddFsr4DllWindow : Window
         SelectedFilePath = files[0].Path.IsAbsoluteUri ? files[0].Path.LocalPath : files[0].TryGetLocalPath();
         var textBox = this.FindControl<TextBox>("TxtFilePath");
         var addButton = this.FindControl<Button>("BtnAdd");
-        var help = this.FindControl<TextBlock>("TxtAcceptedFiles");
-        var isDirectDll = SelectedFilePath?.EndsWith(".dll", System.StringComparison.OrdinalIgnoreCase) == true;
-        var hasKnownName = !isDirectDll || Fsr4Int8DllHelper.IsKnownFileName(System.IO.Path.GetFileName(SelectedFilePath ?? string.Empty));
-
-        if (!hasKnownName)
-        {
-            SelectedFilePath = null;
-            if (textBox != null) textBox.Text = null;
-            if (addButton != null) addButton.IsEnabled = false;
-            if (help != null)
-                help.Foreground = Brushes.OrangeRed;
-            return;
-        }
 
         if (textBox != null) textBox.Text = SelectedFilePath;
         if (addButton != null) addButton.IsEnabled = true;
-        if (help != null)
-            help.Foreground = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray;
     }
 
     private void BtnCancel_Click(object? sender, RoutedEventArgs e) => Close(false);

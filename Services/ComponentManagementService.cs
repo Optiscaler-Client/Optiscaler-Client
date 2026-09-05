@@ -432,16 +432,18 @@ namespace OptiscalerClient.Services
                 return;
             }
 
-            _cachedLatestExtrasVersion = _extrasCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
-                ?? _extrasCache.Releases.FirstOrDefault()?.Version;
-
             _cachedExtrasVersions = _extrasCache.Releases
                 .Select(r => r.Version)
                 .Distinct()
                 .OrderByDescending(ParseVersionForSort)
+                .ThenByDescending(ParseVersionLetterSuffixValue)
                 .ThenByDescending(ParseVersionSuffixValue)
                 .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            // Trust the version-sorted list, not each release's IsLatest flag: GitHub's releases API
+            // orders by created_at, which the Extras repo sets identically on every release (they were
+            // all created in one batch and only differ by published_at), so array order != recency.
+            _cachedLatestExtrasVersion = _cachedExtrasVersions.FirstOrDefault();
             DebugWindow.Log($"[ExtrasCache] Rebuilt in-memory: {_cachedExtrasVersions.Count} version(s), latest={_cachedLatestExtrasVersion}");
         }
 
@@ -498,13 +500,30 @@ namespace OptiscalerClient.Services
         /// <summary>
         /// Rebuilds the static in-memory version lists from the persistent releases cache.
         /// </summary>
-        /// <summary>Parses the leading numeric dotted portion of a version string (e.g. "v1.2.3-beta" → 1.2.3) for descending sort.</summary>
+        /// <summary>
+        /// Parses the first numeric dotted run anywhere in a version string (e.g. "v1.2.3-beta" → 1.2.3,
+        /// "FSR_4.1.1b" → 4.1.1) for descending sort. Searches instead of taking a leading prefix because
+        /// some repos tag releases with a non-numeric prefix (e.g. OptiScaler-Extras' "FSR_" tags).
+        /// </summary>
         private static Version ParseVersionForSort(string v)
         {
             if (string.IsNullOrEmpty(v)) return new Version(0, 0);
-            var clean = new string(v.TakeWhile(c => char.IsDigit(c) || c == '.').ToArray()).TrimEnd('.');
-            if (!string.IsNullOrEmpty(clean) && Version.TryParse(clean, out var parsed)) return parsed;
+            var match = System.Text.RegularExpressions.Regex.Match(v, @"\d+(?:\.\d+)*");
+            if (match.Success && Version.TryParse(match.Value, out var parsed)) return parsed;
             return new Version(0, 0);
+        }
+
+        /// <summary>
+        /// Trailing hotfix letter directly appended to the numeric version (e.g. "4.1.1b" → 'b', "4.0.2c" → 'c')
+        /// used as a tiebreaker after ParseVersionForSort, since that strips letters and ties "4.1.1"/"4.1.1b"
+        /// together otherwise. Must run before ParseVersionSuffixValue: a bare "4.1.1" has no letter (0) but
+        /// would otherwise win on ParseVersionSuffixValue's trailing-digit match against its own version number.
+        /// </summary>
+        private static int ParseVersionLetterSuffixValue(string v)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(v, @"\d[a-zA-Z]$");
+            if (match.Success) return char.ToLowerInvariant(v[^1]) - 'a' + 1;
+            return 0;
         }
 
         /// <summary>Trailing numeric suffix (e.g. build/patch number) used as a tiebreaker after ParseVersionForSort.</summary>
@@ -523,12 +542,14 @@ namespace OptiscalerClient.Services
 
             var stablesList = all.Where(r => !r.IsBeta && !r.IsNightly)
                                  .OrderByDescending(r => ParseVersionForSort(r.Version))
+                                 .ThenByDescending(r => ParseVersionLetterSuffixValue(r.Version))
                                  .ThenByDescending(r => ParseVersionSuffixValue(r.Version))
                                  .ThenByDescending(r => r.Version, StringComparer.OrdinalIgnoreCase)
                                  .ToList();
 
             var betasList = all.Where(r => r.IsBeta && !r.IsNightly)
                                .OrderByDescending(r => ParseVersionForSort(r.Version))
+                               .ThenByDescending(r => ParseVersionLetterSuffixValue(r.Version))
                                .ThenByDescending(r => ParseVersionSuffixValue(r.Version))
                                .ThenByDescending(r => r.Version, StringComparer.OrdinalIgnoreCase)
                                .ToList();
@@ -1187,12 +1208,12 @@ namespace OptiscalerClient.Services
             => Fsr4Int8DllHelper.ExistsIn(GetExtrasDllCachePath(version));
 
         /// <summary>
-        /// Imports a manually-picked FSR 4 DLL package (a .zip/.7z/.rar archive, or a single .dll) into
-        /// its own Cache/Extras/{versionName}/ folder, named after the source file — same convention as
-        /// ImportCustomOptiScalerVersionAsync. Recognizes any combination of the known upscaler DLL names
-        /// (legacy or current) plus the optional RDNA2 amdxc64.dll companion. Registers the new name in
-        /// CustomExtrasVersions so it shows up in every FSR 4 DLL picker alongside real downloads.
-        /// Returns the derived version name.
+        /// Imports a manually-picked FSR 4 DLL package (a .zip/.7z/.rar archive — never a loose .dll,
+        /// so the file's origin/contents can always be verified) into its own Cache/Extras/{versionName}/
+        /// folder, named after the source file — same convention as ImportCustomOptiScalerVersionAsync.
+        /// Recognizes any combination of the known upscaler DLL names (legacy or current) plus the
+        /// optional RDNA2 amdxc64.dll companion. Registers the new name in CustomExtrasVersions so it
+        /// shows up in every FSR 4 DLL picker alongside real downloads. Returns the derived version name.
         /// </summary>
         public async Task<string> ImportCustomExtrasArchiveAsync(string sourcePath, Fsr4DllVariant variant = Fsr4DllVariant.Int8)
         {
@@ -1206,41 +1227,28 @@ namespace OptiscalerClient.Services
 
             try
             {
-                if (sourcePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                await Task.Run(() =>
                 {
-                    var dllName = Path.GetFileName(sourcePath);
-                    if (!Fsr4Int8DllHelper.IsKnownFileName(dllName))
+                    using var archive = SharpCompress.Archives.ArchiveFactory.OpenArchive(sourcePath);
+                    bool extractedMainDll = false;
+                    foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
                     {
-                        throw new InvalidOperationException(
-                            $"Unrecognized file name '{dllName}'. Expected: {Fsr4Int8DllHelper.LegacyFileName} or {Fsr4Int8DllHelper.CurrentFileName}.");
+                        var entryFileName = Path.GetFileName(entry.Key ?? "");
+                        bool isMainDll = Fsr4Int8DllHelper.IsKnownFileName(entryFileName);
+                        bool isCustomAmdxc64 = string.Equals(entryFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase);
+                        if (!isMainDll && !isCustomAmdxc64) continue;
+
+                        var dest = SafeDestinationPath(extractDir, entryFileName);
+                        using var entryStream = entry.OpenEntryStream();
+                        using var outStream = File.Create(dest);
+                        entryStream.CopyTo(outStream, 81920);
+                        extractedMainDll |= isMainDll;
                     }
 
-                    File.Copy(sourcePath, Path.Combine(extractDir, dllName), overwrite: true);
-                }
-                else
-                {
-                    await Task.Run(() =>
-                    {
-                        using var archive = SharpCompress.Archives.ArchiveFactory.OpenArchive(sourcePath);
-                        bool extractedMainDll = false;
-                        foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
-                        {
-                            var entryFileName = Path.GetFileName(entry.Key ?? "");
-                            bool isMainDll = Fsr4Int8DllHelper.IsKnownFileName(entryFileName);
-                            bool isCustomAmdxc64 = string.Equals(entryFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase);
-                            if (!isMainDll && !isCustomAmdxc64) continue;
-
-                            var dest = SafeDestinationPath(extractDir, entryFileName);
-                            using var entryStream = entry.OpenEntryStream();
-                            using var outStream = File.Create(dest);
-                            entryStream.CopyTo(outStream, 81920);
-                            extractedMainDll |= isMainDll;
-                        }
-
-                        if (!extractedMainDll)
-                            throw new InvalidOperationException("No recognized FSR 4 DLL found in the selected archive.");
-                    });
-                }
+                    if (!extractedMainDll)
+                        throw new InvalidOperationException(
+                            $"No recognized FSR 4 DLL found in the selected archive. Expected one of: {Fsr4Int8DllHelper.LegacyFileName}, {Fsr4Int8DllHelper.CurrentFileName}.");
+                });
             }
             catch
             {
@@ -1428,6 +1436,7 @@ namespace OptiscalerClient.Services
                 // "rolling" is a continuously-updated build, not a dated release — always keep it first.
                 .OrderByDescending(v => string.Equals(v, "rolling", StringComparison.OrdinalIgnoreCase))
                 .ThenByDescending(ParseVersionForSort)
+                .ThenByDescending(ParseVersionLetterSuffixValue)
                 .ThenByDescending(ParseVersionSuffixValue)
                 .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
                 .ToList();

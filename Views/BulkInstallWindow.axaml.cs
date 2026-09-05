@@ -851,7 +851,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     {
                         var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
                         var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
-                        System.IO.File.Copy(extrasDllPath, destPath, overwrite: true);
+                        _installService.InjectExtrasDll(gameItem.Game, destPath, extrasDllPath);
                         if (selectedExtrasIsInt8)
                         {
                             var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
@@ -963,8 +963,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     /// <summary>
     /// Batch counterpart to ManageGameWindow.ExecuteDllSwapAsync — replaces the FSR4 INT8 DLL
     /// directly in each selected game's folder, without installing OptiScaler. Auto-detection only
-    /// (no per-game manual file picker makes sense in a batch context): games where none of
-    /// Fsr4Int8DllHelper.SwapTargetFileNames is found are skipped, not treated as a batch failure.
+    /// (no per-game manual file picker makes sense in a batch context). If none of
+    /// Fsr4Int8DllHelper.SwapTargetFileNames exists yet, the DLL is still copied in under its
+    /// current canonical name — a game is only skipped for a real failure (missing directory,
+    /// download error, no RDNA2 companion available), never just because there was nothing to
+    /// overwrite.
     /// </summary>
     private async Task RunBulkDllSwapAsync(List<BulkGameItem> selectedGames, string extrasVersion)
     {
@@ -1007,20 +1010,18 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     continue;
                 }
 
-                var targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
+                // Null only when none of the known names exist yet — filled in below with the
+                // downloaded package's own filename, never a forced/renamed one.
+                string? targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
                     _componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
-                if (targetPath == null)
-                {
-                    DebugWindow.Log($"[BulkInstall][DllSwap] No swap target found in '{gameDir}' for {gameItem.Name}, skipping.");
-                    skippedCount++;
-                    continue;
-                }
 
                 // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
                 // for a given version — everything else comes from the regular Extras package.
-                var targetFileName = System.IO.Path.GetFileName(targetPath);
+                // targetPath is only null here for "nothing found", which is never the RDNA2
+                // companion case (that requires an existing amdxc64.dll to have been found).
+                var targetFileName = targetPath != null ? System.IO.Path.GetFileName(targetPath) : null;
                 string sourcePath;
-                if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (_componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
                     {
@@ -1047,6 +1048,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     var extrasProgress = new Progress<double>(p =>
                         Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.Value = p; }));
                     sourcePath = await _componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+
+                    // Nothing existed to replace — place the file under its own name from the
+                    // package, exactly as extracted, instead of forcing it to a canonical name.
+                    if (targetPath == null)
+                        targetPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(sourcePath));
                 }
 
                 Dispatcher.UIThread.Post(() =>
@@ -1055,7 +1061,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     if (progressBar != null) progressBar.IsIndeterminate = true;
                 });
 
-                await Task.Run(() => _installService.SwapFsr4Dll(gameItem.Game, targetPath, sourcePath, extrasVersion));
+                await Task.Run(() => _installService.SwapFsr4Dll(gameItem.Game, targetPath!, sourcePath, extrasVersion));
 
                 Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
 
@@ -1123,12 +1129,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var selectedTag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         bool isBeta = !string.IsNullOrEmpty(selectedTag) && _componentService.BetaVersions.Contains(selectedTag);
         bool isNightly = !string.IsNullOrEmpty(selectedTag) && _componentService.NightlyVersions.Contains(selectedTag);
+        bool isNone = string.Equals(selectedTag, "none", StringComparison.OrdinalIgnoreCase);
 
         // Stable/Beta 0.9+ bundle both components. Nightly resolves Fakenvapi automatically
         // per game when fakenvapi.dll is absent, so its manual selector remains disabled.
+        // "None" means no OptiScaler install at all, so neither component applies either.
         bool includedInPackage = !isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9);
-        bool disableFakenvapi = isNightly || includedInPackage;
-        bool disableNukemFG = isNightly || includedInPackage;
+        bool disableFakenvapi = isNightly || includedInPackage || isNone;
+        bool disableNukemFG = isNightly || includedInPackage || isNone;
+
+        UpdateLockedOptionsForNoneSelection(isNone);
 
         var cmbFakenvapi = this.FindControl<ComboBox>("CmbFakenvapiVersion");
         var cmbNukemFG = this.FindControl<ComboBox>("CmbNukemFGVersion");
@@ -1162,6 +1172,27 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmbNukemFG.IsEnabled = true;
             ToolTip.SetTip(cmbNukemFG, null);
         }
+    }
+
+    /// <summary>
+    /// OptiScaler = "None" means there's nothing installed to configure, so lock every option
+    /// that only makes sense alongside an actual OptiScaler install (a bare FSR4 DLL swap
+    /// doesn't touch any of these). Mirrors ManageGameWindow.UpdateLockedOptionsForNoneSelection.
+    /// </summary>
+    private void UpdateLockedOptionsForNoneSelection(bool isNone)
+    {
+        var cmbInjection = this.FindControl<ComboBox>("CmbInjectionMethod");
+        var cmbOptiPatcher = this.FindControl<ComboBox>("CmbOptiPatcherVersion");
+        var cmbProfile = this.FindControl<ComboBox>("CmbProfile");
+        var btnFrameGeneration = this.FindControl<Button>("BtnFrameGeneration");
+        var cmbOutputUpscaler = this.FindControl<ComboBox>("CmbOutputUpscaler");
+
+        bool enabled = !isNone;
+        if (cmbInjection != null) cmbInjection.IsEnabled = enabled;
+        if (cmbOptiPatcher != null) cmbOptiPatcher.IsEnabled = enabled;
+        if (cmbProfile != null) cmbProfile.IsEnabled = enabled;
+        if (btnFrameGeneration != null) btnFrameGeneration.IsEnabled = enabled;
+        if (cmbOutputUpscaler != null) cmbOutputUpscaler.IsEnabled = enabled;
     }
 
     private static bool IsVersionGreaterOrEqual(string? ver, int targetMajor, int targetMinor)

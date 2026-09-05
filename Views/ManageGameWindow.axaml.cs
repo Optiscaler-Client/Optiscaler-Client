@@ -1719,12 +1719,16 @@ namespace OptiscalerClient.Views
             var selectedTag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             bool isBeta = !string.IsNullOrEmpty(selectedTag) && _betaVersions.Contains(selectedTag);
             bool isNightly = !string.IsNullOrEmpty(selectedTag) && _nightlyVersions.Contains(selectedTag);
+            bool isNone = string.Equals(selectedTag, "none", StringComparison.OrdinalIgnoreCase);
 
             // Stable/Beta 0.9+ bundle both components. Nightly resolves Fakenvapi automatically
             // per game when fakenvapi.dll is absent, so its manual selector remains disabled.
+            // "None" means no OptiScaler install at all, so neither component applies either.
             bool includedInPackage = !isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9);
-            bool disableFakenvapi = isNightly || includedInPackage;
-            bool disableNukemFG = isNightly || includedInPackage;
+            bool disableFakenvapi = isNightly || includedInPackage || isNone;
+            bool disableNukemFG = isNightly || includedInPackage || isNone;
+
+            UpdateLockedOptionsForNoneSelection(isNone);
 
             var cmbFakenvapi = this.FindControl<ComboBox>("CmbFakenvapiVersion");
             var cmbNukemFG = this.FindControl<ComboBox>("CmbNukemFGVersion");
@@ -1774,6 +1778,29 @@ namespace OptiscalerClient.Views
                 cmbNukemFG.IsEnabled = true;
                 ToolTip.SetTip(cmbNukemFG, null);
             }
+        }
+
+        /// <summary>
+        /// OptiScaler = "None" means there's nothing installed to configure, so lock every option
+        /// that only makes sense alongside an actual OptiScaler install (a bare FSR4 DLL swap
+        /// doesn't touch any of these).
+        /// </summary>
+        private void UpdateLockedOptionsForNoneSelection(bool isNone)
+        {
+            var cmbInjection = this.FindControl<ComboBox>("CmbInjectionMethod");
+            var cmbOptiPatcher = this.FindControl<ComboBox>("CmbOptiPatcherVersion");
+            var cmbProfile = this.FindControl<ComboBox>("CmbProfile");
+            var btnFrameGeneration = this.FindControl<Button>("BtnFrameGeneration");
+            var cmbUpscalingQuality = this.FindControl<ComboBox>("CmbUpscalingQuality");
+            var cmbOutputUpscaler = this.FindControl<ComboBox>("CmbOutputUpscaler");
+
+            bool enabled = !isNone;
+            if (cmbInjection != null) cmbInjection.IsEnabled = enabled;
+            if (cmbOptiPatcher != null) cmbOptiPatcher.IsEnabled = enabled;
+            if (cmbProfile != null) cmbProfile.IsEnabled = enabled;
+            if (btnFrameGeneration != null) btnFrameGeneration.IsEnabled = enabled;
+            if (cmbUpscalingQuality != null) cmbUpscalingQuality.IsEnabled = enabled;
+            if (cmbOutputUpscaler != null) cmbOutputUpscaler.IsEnabled = enabled;
         }
 
         private static bool IsVersionGreaterOrEqual(string? ver, int targetMajor, int targetMinor)
@@ -3657,7 +3684,7 @@ namespace OptiscalerClient.Views
                             var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                             if (!File.Exists(extrasDllPath))
                                 throw new Exception("Installation failed because the FSR4 INT8 package is corrupt or incomplete.");
-                            File.Copy(extrasDllPath, destPath, overwrite: true);
+                            installSvc.InjectExtrasDll(_game, destPath, extrasDllPath);
                             if (selectedExtrasIsInt8)
                             {
                                 var customAmdxc64Path = componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
@@ -4009,7 +4036,10 @@ namespace OptiscalerClient.Views
                     return;
                 }
 
-                string targetPath;
+                // Null only in auto mode when nothing was found to replace — filled in below with
+                // the downloaded package's own filename once we know it, so we never rename a DLL
+                // to some other known name; we just place it under whatever name it actually has.
+                string? targetPath;
                 if (isManualMode)
                 {
                     var files = await this.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
@@ -4039,18 +4069,12 @@ namespace OptiscalerClient.Views
                 }
                 else
                 {
-                    var found = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
+                    // If none of the known names exist yet, there's nothing to "swap" against — the
+                    // copy still happens below, under whatever filename the downloaded package itself
+                    // uses (never a forced/renamed one), tracked as a created file so uninstall
+                    // deletes it instead of trying to "restore" an original that never existed.
+                    targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
                         componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
-                    if (found == null)
-                    {
-                        await new ConfirmDialog(this,
-                            GetResourceString("TxtSwapDllNotFoundTitle", "No DLL found to replace"),
-                            GetResourceString("TxtSwapDllNotFoundText",
-                                "Could not find amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll or amdxc64.dll in the game folder. Try Manual-Swap DLL instead.")
-                        ).ShowDialog<object>(this);
-                        return;
-                    }
-                    targetPath = found;
                 }
 
                 if (btnInstall != null) btnInstall.IsEnabled = false;
@@ -4065,9 +4089,11 @@ namespace OptiscalerClient.Views
                 // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
                 // for a given version — everything else (both names of the main DLL) comes from the
                 // regular Extras package, regardless of how the target was found (auto or manual).
-                var targetFileName = System.IO.Path.GetFileName(targetPath);
+                // targetPath is only null here for "nothing found" auto mode, which is never the
+                // RDNA2 companion case (that requires an existing amdxc64.dll to have been found).
+                var targetFileName = targetPath != null ? System.IO.Path.GetFileName(targetPath) : null;
                 string sourcePath;
-                if (string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
+                if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
                         throw new InvalidOperationException("amdxc64.dll can only be replaced with an INT8 package.");
@@ -4088,6 +4114,14 @@ namespace OptiscalerClient.Views
                     var extrasProgress = new Progress<double>(p =>
                         Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
                     sourcePath = await componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+
+                    // Nothing existed to replace — place the file under its own name from the
+                    // package, exactly as extracted, instead of forcing it to a canonical name.
+                    if (targetPath == null)
+                    {
+                        targetPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(sourcePath));
+                        targetFileName = System.IO.Path.GetFileName(targetPath);
+                    }
                 }
 
                 Dispatcher.UIThread.Post(() =>
@@ -4096,7 +4130,7 @@ namespace OptiscalerClient.Views
                     if (prgDownload != null) prgDownload.IsIndeterminate = true;
                 });
 
-                await Task.Run(() => installService.SwapFsr4Dll(_game, targetPath, sourcePath, extrasVersion));
+                await Task.Run(() => installService.SwapFsr4Dll(_game, targetPath!, sourcePath, extrasVersion));
 
                 NeedsScan = true;
                 UpdateStatus();
@@ -4737,7 +4771,8 @@ namespace OptiscalerClient.Views
             // the disabled state for those versions.
             var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
             var selectedOptiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-            if (IsVersionGreaterOrEqual(selectedOptiTag, 0, 9))
+            if (IsVersionGreaterOrEqual(selectedOptiTag, 0, 9) ||
+                string.Equals(selectedOptiTag, "none", StringComparison.OrdinalIgnoreCase))
                 return;
 
             if (gpu != null && gpu.Vendor == GpuVendor.NVIDIA)

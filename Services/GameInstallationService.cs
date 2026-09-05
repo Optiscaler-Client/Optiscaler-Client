@@ -947,24 +947,24 @@ namespace OptiscalerClient.Services
         public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
 
         /// <summary>
-        /// Replaces targetPath (a FSR4 INT8-related DLL already present in the game's root, one of
-        /// Fsr4Int8DllHelper.SwapTargetFileNames) with sourceContentPath's bytes, without touching
-        /// OptiScaler or any other file. Backs up the original into the same external backup store
-        /// (same storeKey = game.InstallPath) InstallOptiScaler/UninstallOptiScaler use, so a later
-        /// UninstallOptiScaler restores it automatically — whether or not OptiScaler ever got
-        /// installed on top of this in the meantime (both flags can coexist on one manifest).
+        /// Replaces targetPath (one of Fsr4Int8DllHelper.SwapTargetFileNames, in the game's root)
+        /// with sourceContentPath's bytes, without touching OptiScaler or any other file. targetPath
+        /// need not exist yet — e.g. Opti=None DLL-swap-only mode still copies the file in even when
+        /// there's nothing to replace. A genuine pre-existing original gets backed up into the same
+        /// external backup store (same storeKey = game.InstallPath) InstallOptiScaler/UninstallOptiScaler
+        /// use, so a later UninstallOptiScaler restores it automatically; a file that didn't exist
+        /// before is tracked as created instead, so uninstall deletes it rather than "restoring"
+        /// something that never existed. Works whether or not OptiScaler ever got installed on top
+        /// of this in the meantime (both flags can coexist on one manifest).
         /// </summary>
         public DllSwapResult SwapFsr4Dll(Game game, string targetPath, string sourceContentPath, string extrasVersion)
         {
-            if (!File.Exists(targetPath))
-                throw new FileNotFoundException($"Target DLL not found: {targetPath}");
             if (!File.Exists(sourceContentPath))
                 throw new FileNotFoundException("FSR4 INT8 replacement content not found (download/cache missing).");
 
             var gameDir = Path.GetDirectoryName(targetPath)!;
             var targetFileName = Path.GetFileName(targetPath);
             var storeKey = game.InstallPath;
-            var relativePath = Path.GetRelativePath(gameDir, targetPath);
 
             // Reuse (don't clobber) an existing committed manifest — e.g. OptiScaler already
             // installed for this game, or a previous swap of a different target file — so this
@@ -985,33 +985,9 @@ namespace OptiscalerClient.Services
                 };
             }
 
-            // Don't re-backup if this exact file already has a tracked original — that original
-            // (from the very first time this path was touched) must never be replaced by a backup
-            // of already-swapped content, or a later restore would bring back the wrong bytes.
-            bool alreadyBackedUp = manifest!.FilesOverwritten.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase))
-                                 || manifest.BackedUpFiles.Contains(relativePath, StringComparer.OrdinalIgnoreCase);
+            CopyWithBackupTracking(manifest!, storeKey, gameDir, targetPath, sourceContentPath);
 
-            string? preHash = null;
-            if (!alreadyBackedUp)
-            {
-                preHash = ComputeSha256(targetPath);
-                if (!_backupStore.BackupFile(storeKey, gameDir, relativePath))
-                    throw new Exception($"Could not back up '{targetFileName}' before swapping.");
-            }
-
-            try
-            {
-                File.Copy(sourceContentPath, targetPath, overwrite: true);
-            }
-            catch (Exception ex)
-            {
-                if (!alreadyBackedUp)
-                    _backupStore.RestoreFile(storeKey, gameDir, relativePath);
-                throw new Exception($"Failed to write swapped DLL: {ex.Message}", ex);
-            }
-
-            TrackManifestFileMutation(manifest, relativePath, existedBefore: true, preHash, ComputeSha256(targetPath));
-            manifest.IncludesDllSwap = true;
+            manifest!.IncludesDllSwap = true;
             manifest.DllSwapTargetFileName = targetFileName;
             manifest.DllSwapExtrasVersion = extrasVersion;
             manifest.OperationStatus = "committed";
@@ -1030,6 +1006,87 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[DllSwap] Swapped '{targetFileName}' for '{game.Name}' with FSR4 INT8 v{extrasVersion}");
             return new DllSwapResult(targetFileName, extrasVersion);
+        }
+
+        /// <summary>
+        /// Copies the FSR4 DLL onto destPath as part of a normal Opti+Extras install (called right
+        /// after InstallOptiScaler committed its manifest for the same game). Shares the exact backup
+        /// rules SwapFsr4Dll uses for the swap-only (Opti=None) mode: a genuine pre-existing game DLL
+        /// is backed up and restorable on uninstall, while a file that didn't exist before is tracked
+        /// as created and simply deleted on uninstall — never "restored" from a backup that doesn't
+        /// exist. Without this, a normal install with an original game DLL of the same name would be
+        /// silently clobbered with no way back.
+        /// </summary>
+        public void InjectExtrasDll(Game game, string destPath, string sourceContentPath)
+        {
+            var gameDir = Path.GetDirectoryName(destPath)!;
+            var storeKey = game.InstallPath;
+
+            var manifest = _backupStore.LoadManifest(storeKey);
+            bool hasCommittedManifest = manifest != null &&
+                string.Equals(manifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
+            if (!hasCommittedManifest)
+            {
+                manifest = new InstallationManifest
+                {
+                    OperationId = Guid.NewGuid().ToString("N"),
+                    OperationStatus = "in_progress",
+                    StartedAtUtc = DateTime.UtcNow.ToString("O"),
+                    InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    InstalledGameDirectory = gameDir,
+                    IncludesOptiscaler = false
+                };
+            }
+
+            CopyWithBackupTracking(manifest!, storeKey, gameDir, destPath, sourceContentPath);
+
+            manifest!.OperationStatus = "committed";
+            manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
+            _backupStore.SaveManifest(storeKey, manifest);
+        }
+
+        /// <summary>
+        /// Backup-aware copy of sourceContentPath onto destPath, mutating manifest in place: a genuine
+        /// pre-existing file at destPath is backed up via the external store and tracked as overwritten
+        /// (restorable on uninstall); a destPath that doesn't exist yet (or was itself created by an
+        /// earlier call for this same manifest) is tracked as created instead (deleted, not restored,
+        /// on uninstall). Shared by SwapFsr4Dll and InjectExtrasDll so both follow the same rules.
+        /// </summary>
+        private void CopyWithBackupTracking(InstallationManifest manifest, string storeKey, string gameDir, string destPath, string sourceContentPath)
+        {
+            var fileName = Path.GetFileName(destPath);
+            var relativePath = Path.GetRelativePath(gameDir, destPath);
+
+            // A file already tracked as overwritten has a known original backed up — never re-backup
+            // (that would replace the real original with a backup of already-swapped content, and a
+            // later restore would bring back the wrong bytes). A file already tracked as created is
+            // ours from an earlier call: it may exist on disk now only because we put it there, so it
+            // must stay classified as "created" even though File.Exists(destPath) is true at this point.
+            bool trackedAsOverwritten = manifest.FilesOverwritten.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase))
+                                     || manifest.BackedUpFiles.Contains(relativePath, StringComparer.OrdinalIgnoreCase);
+            bool trackedAsCreated = manifest.FilesCreated.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
+            bool isOriginalFile = trackedAsOverwritten || (!trackedAsCreated && File.Exists(destPath));
+
+            string? preHash = null;
+            if (isOriginalFile && !trackedAsOverwritten)
+            {
+                preHash = ComputeSha256(destPath);
+                if (!_backupStore.BackupFile(storeKey, gameDir, relativePath))
+                    throw new Exception($"Could not back up '{fileName}' before installing.");
+            }
+
+            try
+            {
+                File.Copy(sourceContentPath, destPath, overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                if (isOriginalFile && !trackedAsOverwritten)
+                    _backupStore.RestoreFile(storeKey, gameDir, relativePath);
+                throw new Exception($"Failed to write '{fileName}': {ex.Message}", ex);
+            }
+
+            TrackManifestFileMutation(manifest, relativePath, existedBefore: isOriginalFile, preHash, ComputeSha256(destPath));
         }
 
         public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
