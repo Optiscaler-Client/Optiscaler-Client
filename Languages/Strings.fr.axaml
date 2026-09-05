@@ -130,8 +130,6 @@
     <x:String x:Key="TxtRestoreOriginalDll">↺ Restaurer la DLL d'origine</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Rien à installer</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Sélectionnez une version d'OptiScaler ou une version de FSR4 INT8 avant d'installer.</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundTitle">Aucune DLL à remplacer trouvée</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundText">Impossible de trouver amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll ou amdxc64.dll dans le dossier du jeu. Essayez plutôt « Échange manuel de la DLL ».</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Le fichier sélectionné doit se trouver dans le dossier du jeu.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">Cette version de FSR4 INT8 n'inclut pas de remplacement pour amdxc64.dll. Choisissez une autre version ou un autre fichier cible.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} échangé dans {1}.</x:String>
@@ -339,7 +337,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtDonateDesc">OptiScaler Client est gratuit et développé sur mon temps libre. S'il vous a fait gagner du temps, vous pouvez envisager de soutenir son développement sur Ko-fi. C'est entièrement facultatif et jamais requis pour utiliser l'application.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Soutenir sur Ko-fi</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Cette version inclut déjà Fakenvapi et NukemFG</x:String>
-    <x:String x:Key="TxtNothingToInstallInfo">Sélectionnez soit une version d'OptiScaler, soit une version de FSR4 INT8 (échange de DLL).</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Sélectionnez soit une version d'Optiscaler, soit une DLL FSR 4 (Échange).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 par défaut</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Version du mod FSR4 INT8 présélectionnée à l'ouverture d'un jeu. Les GPU RDNA 4 (série RX 9000) utilisent automatiquement Aucun.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Importez un paquet .zip/.7z/.rar (ou un simple .dll) contenant amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll et/ou amdxc64.dll pour tester une build pas encore publiée.</x:String>
@@ -689,10 +687,10 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtWelcomeGuideContent">Je recommande vivement de consulter le guide intégré dans l’onglet Aide pour vous orienter dans l’application ou résoudre des questions spécifiques.</x:String>
     <x:String x:Key="TxtAddDll">Ajouter un DLL</x:String>
     <x:String x:Key="TxtAddFsr4DllTitle">Ajouter un DLL FSR 4</x:String>
-    <x:String x:Key="TxtAddFsr4DllDesc">Choisissez un DLL ou une archive FSR 4, puis sa variante. Le nom du DLL ne permet pas d’identifier fiablement INT8 ou FP8.</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Choisissez une archive contenant le DLL FSR 4, puis sa variante. Le nom du DLL ne permet pas d’identifier fiablement INT8 ou FP8.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">Aucun fichier sélectionné</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Variante du modèle</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choisissez une archive .7z (ou .zip/.rar) ou un DLL directement. Noms de DLL autorisés : amd_fidelityfx_upscaler_dx12.dll ou amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choisissez une archive .7z, .zip ou .rar contenant l’un de : amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll ou amdxc64.dll. Les fichiers .dll seuls ne sont pas acceptés.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">Ajouter une version de DLSS Enabler</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Choisissez un DLL ou une archive DLSS Enabler, puis donnez un nom à cette version afin de pouvoir la sélectionner plus tard dans les paramètres de Frame Generation d'un jeu.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">Aucun fichier sélectionné</x:String>

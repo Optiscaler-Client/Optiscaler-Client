@@ -132,8 +132,6 @@
     <x:String x:Key="TxtRestoreOriginalDll">↺ 還原原始 DLL</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">沒有可安裝的項目</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasText">安裝前請選擇一個 OptiScaler 版本或 FSR4 INT8 版本。</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundTitle">找不到可替換的 DLL</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundText">在遊戲資料夾中找不到 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 或 amdxc64.dll。請改用「手動交換 DLL」。</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">所選檔案必須位於遊戲資料夾內。</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">此 FSR4 INT8 版本不包含 amdxc64.dll 的替代檔案。請選擇其他版本或目標檔案。</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">已將 FSR4 INT8 v{0} 交換至 {1}。</x:String>
@@ -347,7 +345,7 @@
     <x:String x:Key="TxtDonateDesc">OptiScaler Client 是免費的，由我利用業餘時間開發。如果它為你節省了時間，歡迎在 Ko-fi 上支持它的開發。這完全是自願的，絕不是使用本應用程式的必要條件。</x:String>
     <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 與 NukemFG</x:String>
-    <x:String x:Key="TxtNothingToInstallInfo">請選擇 OptiScaler 版本或 FSR4 INT8 版本（DLL 交換）其中之一。</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">請選擇 Optiscaler 版本或 FSR 4 DLL（交換）其中之一。</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">預設 FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">開啟遊戲時預先選取的預設 FSR4 INT8 模組版本。RDNA 4 GPU（RX 9000 系列）會自動使用「無」選項。</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">匯入包含 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 及/或 amdxc64.dll 的 .zip/.7z/.rar 套件（或單一 .dll），以測試尚未發布的版本。</x:String>
@@ -699,10 +697,10 @@
     <x:String x:Key="TxtWelcomeGuideContent">強烈建議查看說明選項卡中的內建指南，以便熟悉應用程式或解答特定問題。</x:String>
     <x:String x:Key="TxtAddDll">新增 DLL</x:String>
     <x:String x:Key="TxtAddFsr4DllTitle">新增 FSR 4 DLL</x:String>
-    <x:String x:Key="TxtAddFsr4DllDesc">選擇 FSR 4 DLL 或封存檔，然後選擇其中的模型變體。僅憑檔名無法可靠判斷 INT8 或 FP8。</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">選擇包含 FSR 4 DLL 的封存檔，然後選擇其中的模型變體。僅憑檔名無法可靠判斷 INT8 或 FP8。</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">未選擇檔案</x:String>
     <x:String x:Key="TxtFsr4DllVariant">模型變體</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">選擇 .7z 封存檔（也可使用 .zip/.rar）或直接選擇 DLL。允許的 DLL 名稱：amd_fidelityfx_upscaler_dx12.dll 或 amdxcffx64.dll。</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">選擇包含下列其中一項的 .7z、.zip 或 .rar 封存檔：amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 或 amdxc64.dll。不接受單獨的 .dll 檔案。</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">新增 DLSS Enabler 版本</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">選擇 DLSS Enabler DLL 或封存檔，然後為此版本命名，以便稍後在遊戲的幀生成設定中選擇它。</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">未選擇檔案</x:String>

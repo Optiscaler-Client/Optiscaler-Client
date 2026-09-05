@@ -130,8 +130,6 @@
     <x:String x:Key="TxtRestoreOriginalDll">↺ Ripristina DLL originale</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Niente da installare</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Seleziona una versione di OptiScaler o una versione di FSR4 INT8 prima di installare.</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundTitle">Nessuna DLL trovata da sostituire</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundText">Impossibile trovare amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll o amdxc64.dll nella cartella del gioco. Prova invece con "Scambio manuale DLL".</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Il file selezionato deve trovarsi nella cartella del gioco.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">Questa versione di FSR4 INT8 non include un sostituto per amdxc64.dll. Scegli una versione diversa o un altro file di destinazione.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} scambiato in {1}.</x:String>
@@ -339,7 +337,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDonateDesc">OptiScaler Client è gratuito e sviluppato nel mio tempo libero. Se ti ha fatto risparmiare tempo, valuta di sostenerne lo sviluppo su Ko-fi. È del tutto facoltativo e non è mai necessario per usare l'app.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Sostieni su Ko-fi</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Questa versione include già Fakenvapi e NukemFG</x:String>
-    <x:String x:Key="TxtNothingToInstallInfo">Seleziona una versione di OptiScaler oppure una versione di FSR4 INT8 (scambio DLL).</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Seleziona una versione di Optiscaler oppure una DLL FSR 4 (Scambio).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 predefinito</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Versione predefinita del mod FSR4 INT8 pre-selezionata all'apertura di un gioco. Le GPU RDNA 4 (serie RX 9000) usano automaticamente Nessuno.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Importa un pacchetto .zip/.7z/.rar (o un singolo .dll) contenente amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll e/o amdxc64.dll per testare una build non ancora pubblicata.</x:String>
@@ -689,10 +687,10 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtWelcomeGuideContent">Consiglio vivamente di consultare la guida integrata nella scheda Guida per orientarsi nell’app o per risolvere dubbi specifici.</x:String>
     <x:String x:Key="TxtAddDll">Aggiungi DLL</x:String>
     <x:String x:Key="TxtAddFsr4DllTitle">Aggiungi DLL FSR 4</x:String>
-    <x:String x:Key="TxtAddFsr4DllDesc">Scegli una DLL o un archivio FSR 4 e la variante del modello. Il nome del file non identifica in modo affidabile INT8 o FP8.</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Scegli un archivio contenente la DLL FSR 4 e la variante del modello. Il nome del file non identifica in modo affidabile INT8 o FP8.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">Nessun file selezionato</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Variante del modello</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Scegli un archivio .7z (anche .zip/.rar) o una DLL direttamente. Nomi DLL consentiti: amd_fidelityfx_upscaler_dx12.dll o amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Scegli un archivio .7z, .zip o .rar contenente uno tra: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll o amdxc64.dll. I file .dll singoli non sono accettati.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">Aggiungi versione DLSS Enabler</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Scegli una DLL o un archivio DLSS Enabler, quindi assegna un nome a questa versione per poterla selezionare in seguito dalle impostazioni di Frame Generation di un gioco.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">Nessun file selezionato</x:String>

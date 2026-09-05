@@ -134,8 +134,6 @@
     <x:String x:Key="TxtRestoreOriginalDll">↺ Restore original DLL</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Nothing to install</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Select an OptiScaler version or an FSR4 INT8 version before installing.</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundTitle">No DLL found to replace</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundText">Could not find amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll or amdxc64.dll in the game folder. Try Manual-Swap DLL instead.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">The selected file must be inside the game folder.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">This FSR4 INT8 version doesn't include a replacement for amdxc64.dll. Pick a different version or target file.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} swapped into {1}.</x:String>
@@ -267,7 +265,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtBetaVersions">Prefer latest beta as default</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">When enabled, automatically selects the latest beta version instead of the stable release.</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">This version already includes Fakenvapi and NukemFG</x:String>
-    <x:String x:Key="TxtNothingToInstallInfo">Select either an OptiScaler version or a FSR4 INT8 version (DLL swap).</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Select either an Optiscaler version or a FSR 4 DLL (Swap).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR4 INT8 Default</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Default FSR4 INT8 mod version pre-selected when opening a game. RDNA 4 GPUs (RX 9000 series) default to None automatically.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Import a .zip/.7z/.rar package (or a single .dll) containing amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, and/or amdxc64.dll to test a build that isn't published yet.</x:String>
@@ -694,10 +692,10 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtWelcomeGuideContent">I strongly recommend checking the built-in guide in the Help tab to get oriented with the app or to resolve any specific questions.</x:String>
     <x:String x:Key="TxtAddDll">Add DLL</x:String>
     <x:String x:Key="TxtAddFsr4DllTitle">Add FSR 4 DLL</x:String>
-    <x:String x:Key="TxtAddFsr4DllDesc">Choose an FSR 4 DLL or archive, then select the model variant it contains. DLL filenames alone do not reliably identify INT8 or FP8.</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Choose an archive containing the FSR 4 DLL, then select the model variant it contains. DLL filenames alone do not reliably identify INT8 or FP8.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">No file selected</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Model variant</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choose a .7z archive (or .zip/.rar) or a DLL directly. Direct DLL names allowed: amd_fidelityfx_upscaler_dx12.dll or amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Choose a .7z, .zip or .rar archive containing one of: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll or amdxc64.dll. Loose .dll files are not accepted.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">Add DLSS Enabler Version</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Choose a DLSS Enabler DLL or archive, then give this version a name so you can pick it later from a game's Frame Generation settings.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">No file selected</x:String>

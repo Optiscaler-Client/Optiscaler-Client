@@ -132,8 +132,6 @@
     <x:String x:Key="TxtRestoreOriginalDll">↺ Restaurar DLL original</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Nada para instalar</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Seleccioná una versión de OptiScaler o una versión de FSR4 INT8 antes de instalar.</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundTitle">No se encontró ningún DLL para reemplazar</x:String>
-    <x:String x:Key="TxtSwapDllNotFoundText">No se pudo encontrar amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll ni amdxc64.dll en la carpeta del juego. Probá con Swap manual de DLL en su lugar.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">El archivo seleccionado debe estar dentro de la carpeta del juego.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">Esta versión de FSR4 INT8 no incluye un reemplazo para amdxc64.dll. Elegí otra versión u otro archivo objetivo.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} swapeado en {1}.</x:String>
@@ -243,7 +241,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtBetaVersions">Preferir última beta como predeterminada</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Cuando está activado, selecciona automáticamente la última versión beta en lugar de la versión estable.</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Esta versión ya incluye Fakenvapi y NukemFG</x:String>
-    <x:String x:Key="TxtNothingToInstallInfo">Seleccioná una versión de OptiScaler o una de FSR4 INT8 (swap de DLL).</x:String>
+    <x:String x:Key="TxtNothingToInstallInfo">Seleccioná una versión de Optiscaler o una DLL de FSR 4 (Swap).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Predeterminado FSR4 INT8</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Versión del mod FSR4 INT8 preseleccionada al abrir un juego. Las GPUs RDNA 4 (serie RX 9000) usan Ninguno automáticamente.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Importá un paquete .zip/.7z/.rar (o un .dll suelto) que contenga amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll y/o amdxc64.dll para probar una build que todavía no está publicada.</x:String>
@@ -691,10 +689,10 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtWelcomeGuideContent">Te recomiendo encarecidamente revisar la guía integrada en la pestaña de Ayuda para orientarte con la app o resolver cualquier duda puntual.</x:String>
     <x:String x:Key="TxtAddDll">Agregar DLL</x:String>
     <x:String x:Key="TxtAddFsr4DllTitle">Agregar DLL de FSR 4</x:String>
-    <x:String x:Key="TxtAddFsr4DllDesc">Elegí un DLL o archivo de FSR 4 y seleccioná la variante de modelo que contiene. El nombre del DLL no permite identificar de forma fiable INT8 o FP8.</x:String>
+    <x:String x:Key="TxtAddFsr4DllDesc">Elegí un archivo comprimido que contenga el DLL de FSR 4 y seleccioná la variante de modelo que contiene. El nombre del DLL no permite identificar de forma fiable INT8 o FP8.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">No se seleccionó ningún archivo</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Variante de modelo</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Elegí un archivo .7z (también .zip/.rar) o un DLL directamente. Los únicos nombres admitidos para DLL directos son: amd_fidelityfx_upscaler_dx12.dll o amdxcffx64.dll.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Elegí un archivo .7z, .zip o .rar que contenga alguno de: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll o amdxc64.dll. No se aceptan archivos .dll sueltos.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">Agregar versión de DLSS Enabler</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Elegí un DLL o archivo de DLSS Enabler y ponele un nombre a esta versión para poder seleccionarla luego en la configuración de generación de fotogramas de un juego.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">No se seleccionó ningún archivo</x:String>
