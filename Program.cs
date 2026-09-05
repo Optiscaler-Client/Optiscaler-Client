@@ -16,6 +16,7 @@
 
 using Avalonia;
 using System;
+using System.Reflection;
 using OptiscalerClient.Services;
 
 namespace OptiscalerClient;
@@ -33,17 +34,22 @@ class Program
         bool forceSoftwareRendering = OperatingSystem.IsWindows() && RenderingSafetyNet.ShouldForceSoftwareRendering();
         AppDomain.CurrentDomain.ProcessExit += (_, _) => RenderingSafetyNet.MarkCleanShutdown();
 
-        BuildAvaloniaApp(forceSoftwareRendering)
+        // Reads the config already loaded (and cached) by RenderingSafetyNet above, so this is
+        // just a dictionary lookup, not another disk read.
+        int renderFpsLimit = new ComponentManagementService().Config.RenderFpsLimit;
+
+        BuildAvaloniaApp(forceSoftwareRendering, renderFpsLimit)
             .StartWithClassicDesktopLifetime(args);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp(bool forceSoftwareRendering = false)
+    public static AppBuilder BuildAvaloniaApp(bool forceSoftwareRendering = false, int renderFpsLimit = 60)
     {
         var appBuilder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace()
+            .AfterSetup(_ => TryCapRenderFps(renderFpsLimit));
 
         if (forceSoftwareRendering && OperatingSystem.IsWindows())
         {
@@ -54,5 +60,35 @@ class Program
         }
 
         return appBuilder;
+    }
+
+    /// <summary>
+    /// Caps Avalonia's compositor render loop (see AppConfiguration.RenderFpsLimit). There's no
+    /// officially supported public API for this in Avalonia 11 — AvaloniaLocator/DefaultRenderTimer
+    /// are marked [PrivateApi] (runtime-public, hidden from the compile-time ref assembly), so this
+    /// goes through reflection. Fails soft: if a future Avalonia version renames/removes these, the
+    /// render loop just stays uncapped instead of crashing the app.
+    /// </summary>
+    private static void TryCapRenderFps(int fps)
+    {
+        if (fps <= 0) return;
+        try
+        {
+            var avaloniaBase = Assembly.Load("Avalonia.Base");
+            var locatorType = avaloniaBase.GetType("Avalonia.AvaloniaLocator")!;
+            var timerType = avaloniaBase.GetType("Avalonia.Rendering.DefaultRenderTimer")!;
+            var iTimerType = avaloniaBase.GetType("Avalonia.Rendering.IRenderTimer")!;
+
+            var currentMutable = locatorType.GetProperty("CurrentMutable", BindingFlags.Public | BindingFlags.Static)!.GetValue(null)!;
+            var bind = locatorType.GetMethod("Bind")!.MakeGenericMethod(iTimerType);
+            var registrationHelper = bind.Invoke(currentMutable, null)!;
+            var toConstant = registrationHelper.GetType().GetMethod("ToConstant")!.MakeGenericMethod(timerType);
+            var timerInstance = Activator.CreateInstance(timerType, fps);
+            toConstant.Invoke(registrationHelper, new[] { timerInstance });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RenderFpsCap] Failed to apply (Avalonia internals may have changed): {ex.Message}");
+        }
     }
 }

@@ -249,6 +249,13 @@ namespace OptiscalerClient.Models
         /// thread), since both normal exits and handled managed exceptions still reach ProcessExit.
         /// </summary>
         public bool RunInProgress { get; set; } = false;
+
+        /// <summary>
+        /// Caps the Avalonia compositor's render loop (frames per second). The UI doesn't need
+        /// to redraw faster than this even when idle, and an uncapped loop on high-refresh
+        /// monitors can fight with VRR (visible flicker as the panel's refresh window jitters).
+        /// </summary>
+        public int RenderFpsLimit { get; set; } = 60;
     }
 
     /// <summary>
