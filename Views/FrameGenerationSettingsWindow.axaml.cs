@@ -38,6 +38,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private const string OutputDisabledTag = "__disabled__";
 
     private readonly FrameGenerationCapabilities _capabilities = new();
+    private readonly FrameGenerationRecommendation _recommendation = new();
     private readonly GameFrameGenerationSettings _initialSettings = new();
     private readonly GpuVendor _gpuVendor;
     private string _selectedDlssEnablerVersion = "";
@@ -76,6 +77,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         WindowScreenFitHelper.FitToScreen(this);
 
         _capabilities = capabilities;
+        _recommendation = new FrameGenerationConfigurationService().GetRecommendation(capabilities);
         _gpuVendor = gpu?.Vendor ?? GpuVendor.Unknown;
         _initialSettings = new GameFrameGenerationSettings
         {
@@ -363,12 +365,17 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     /// <summary>Shows an info banner reminding the user that "DLSS-G via Streamline" needs
     /// NVIDIA's native Frame Generation enabled in the game itself — OptiScaler taps into it,
-    /// it doesn't generate frames on its own for this route (unlike OptiFG, which does).</summary>
+    /// it doesn't generate frames on its own for this route (unlike OptiFG, which does). Fires
+    /// both when the route is picked explicitly (Advanced routes) and when it's left on Auto and
+    /// silently resolves to DLSS-G via Streamline (the common case — most users never open
+    /// Advanced routes at all).</summary>
     private void UpdateDlssStreamlineRouteInfo()
     {
         var panel = this.FindControl<Border>("PnlDlssStreamlineRouteInfo");
         if (panel == null) return;
-        panel.IsVisible = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") == FrameGenerationRoute.DlssGStreamline;
+        var selectedRoute = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+        var effectiveRoute = selectedRoute == FrameGenerationRoute.Auto ? _recommendation.Route : selectedRoute;
+        panel.IsVisible = effectiveRoute == FrameGenerationRoute.DlssGStreamline;
     }
 
     private void CmbFgOutput_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -590,7 +597,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         FrameGenerationRoute.Nukem => Resource("TxtFgRouteNukem", "Nukem DLSS-G → FSR3"),
         FrameGenerationRoute.Fsr31Native => Resource("TxtFgRouteFsr31", "Native FSR 3.1 FG"),
         FrameGenerationRoute.Fsr30Native => Resource("TxtFgRouteFsr30", "Native FSR 3.0 FG"),
-        FrameGenerationRoute.OptiFg => Resource("TxtFgRouteOptiFg", "OptiFG (experimental)"),
+        FrameGenerationRoute.OptiFg => Resource("TxtFgRouteOptiFg", "OptiFG"),
         _ => route.ToString()
     };
 

@@ -88,6 +88,31 @@
                         </StackPanel>
                     </Grid>
 
+                    <Border Name="PnlDlssStreamlineRouteInfo"
+                            Background="{StaticResource BrBgElevated}"
+                            BorderBrush="#4A90E2"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,6"
+                            IsVisible="False">
+                        <Grid ColumnDefinitions="Auto,8,*">
+                            <TextBlock Grid.Column="0"
+                                       Text="&#xF4A4;"
+                                       FontFamily="{StaticResource FontIcons}"
+                                       Foreground="#4A90E2"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Top"/>
+                            <TextBlock Grid.Column="2"
+                                       Text="{DynamicResource TxtFgRouteDlssStreamlineRequiresNativeInfo}"
+                                       Foreground="#4A90E2"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
                     <StackPanel Name="PnlAdvancedOptions" Spacing="10">
                         <Button Name="BtnToggleAdvanced"
                                 Background="Transparent"
@@ -137,31 +162,6 @@
                                           HorizontalContentAlignment="Left"
                                           SelectionChanged="CmbFgRoute_SelectionChanged"/>
                             </StackPanel>
-
-                            <Border Name="PnlDlssStreamlineRouteInfo"
-                                    Background="{StaticResource BrBgElevated}"
-                                    BorderBrush="#4A90E2"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="10,6"
-                                    IsVisible="False">
-                                <Grid ColumnDefinitions="Auto,8,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"/>
-                                    <TextBlock Grid.Column="2"
-                                               Text="{DynamicResource TxtFgRouteDlssStreamlineRequiresNativeInfo}"
-                                               Foreground="#4A90E2"
-                                               FontSize="12"
-                                               FontWeight="Medium"
-                                               TextWrapping="Wrap"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
 
                             <StackPanel Orientation="Horizontal" Spacing="4">
                                 <CheckBox Name="ChkAdvancedRoutes"
