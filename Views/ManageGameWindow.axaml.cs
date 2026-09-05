@@ -289,6 +289,11 @@ namespace OptiscalerClient.Views
                 }
             };
 
+            // The settings column this cap is measured against keeps changing after Opened —
+            // versions load asynchronously, panels show and hide per game — so re-evaluate it on
+            // every layout pass rather than only once.
+            this.LayoutUpdated += (_, _) => ApplyCompatSidebarCap();
+
             _ = LoadVersionsAsync();
         }
 
@@ -1827,7 +1832,13 @@ namespace OptiscalerClient.Views
             var txtGameNameEdit = this.FindControl<TextBox>("TxtGameNameEdit");
             var imgGameCover = this.FindControl<Image>("ImgGameCover");
 
-            if (txtGameName != null) txtGameName.Text = _game.Name;
+            // Tooltip carries the full name for the titles too long for the two lines the
+            // TextBlock wraps to before it ellipsizes.
+            if (txtGameName != null)
+            {
+                txtGameName.Text = _game.Name;
+                ToolTip.SetTip(txtGameName, _game.Name);
+            }
             if (txtInstallPath != null) txtInstallPath.Text = _game.InstallPath;
             if (txtGameNameEdit != null) txtGameNameEdit.Text = _game.Name;
             TrySetCoverImage(imgGameCover, _game.CoverImageUrl);
@@ -2012,6 +2023,56 @@ namespace OptiscalerClient.Views
 
             if (injectionLabel != null)
                 injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
+        }
+
+        /// <summary>The sidebar Border's own top+bottom margin (its XAML Margin="0,10,16,12"),
+        /// which sits outside its MaxHeight but still counts towards the row height it shares with
+        /// the other columns.</summary>
+        private const double CompatSidebarOuterMargin = 22;
+
+        /// <summary>Everything between the window's height and that shared row: RootPanel's
+        /// Margin="12" top and bottom, plus the card Border's 1px edges.</summary>
+        private const double RootPanelChrome = 26;
+
+        private double _appliedCompatSidebarCap = double.NaN;
+
+        /// <summary>
+        /// Caps the Recommended Config sidebar so the window's height is decided by the settings
+        /// column — which ends at the Folder Cleanup / Install action row — instead of by whichever
+        /// game happens to have the most compat notes. The root layout is a single-row Grid, so the
+        /// SizeToContent height is simply the tallest of the three columns; without this cap the
+        /// sidebar wins that contest and stretches the whole window. Capped, it scrolls internally
+        /// instead (its ScrollViewer already has VerticalScrollBarVisibility="Auto").
+        ///
+        /// Reads DesiredSize, not Bounds: DesiredSize is the measure-phase result, i.e. the column's
+        /// own natural height, and does not depend on the sidebar. Bounds is the arrange result,
+        /// stretched to the shared row height, which would make this circular.
+        /// </summary>
+        private void ApplyCompatSidebarCap()
+        {
+            var sidebar = this.FindControl<Border>("PnlCompatSidebar");
+            var mainContent = this.FindControl<Grid>("GridMainContent");
+            if (sidebar == null || mainContent == null) return;
+
+            var mainNatural = mainContent.DesiredSize.Height;
+            if (mainNatural <= 0) return; // no layout pass yet
+
+            // MinHeight decides the window's height on its own for a game with little to show, and
+            // the columns stretch to fill it — so the sidebar gets that height too, rather than
+            // scrolling with empty window beside it.
+            var available = Math.Max(mainNatural, MinHeight - RootPanelChrome);
+
+            // MaxHeight is what WindowScreenFitHelper set from the screen this window opened on.
+            if (!double.IsNaN(MaxHeight) && !double.IsInfinity(MaxHeight))
+                available = Math.Min(available, MaxHeight - RootPanelChrome);
+
+            var cap = available - CompatSidebarOuterMargin;
+
+            // Also the loop guard: assigning MaxHeight schedules another layout pass, which calls
+            // straight back in here.
+            if (Math.Abs(cap - _appliedCompatSidebarCap) < 1) return;
+            _appliedCompatSidebarCap = cap;
+            sidebar.MaxHeight = cap;
         }
 
         // ── Recommended Config sidebar collapse ──────────────────────────────────
@@ -3058,6 +3119,7 @@ namespace OptiscalerClient.Views
             {
                 _game.Name = newName;
                 txtGameName.Text = newName;
+                ToolTip.SetTip(txtGameName, newName);
             }
 
             txtGameNameEdit.IsVisible = false;

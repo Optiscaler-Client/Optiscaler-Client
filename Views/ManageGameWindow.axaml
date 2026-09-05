@@ -139,11 +139,19 @@
                                  edges line up, instead of this Grid filling the full (wider)
                                  column and sitting flush against the window edge. -->
                             <Grid ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                <!-- Long titles wrap to a second line and only then ellipsize: at
+                                     this width a single line cuts around 20 characters, which is
+                                     still inside the shared prefix of many franchise titles. The
+                                     full name stays available as a tooltip (set alongside the text
+                                     in code-behind). -->
                                 <TextBlock Name="TxtGameName"
                                            Text="Game Name"
                                            FontSize="{StaticResource FontSizeSubtitle}"
                                            FontWeight="Bold"
                                            Foreground="{StaticResource BrTextPrimary}"
+                                           TextWrapping="Wrap"
+                                           MaxLines="2"
+                                           TextTrimming="CharacterEllipsis"
                                            VerticalAlignment="Center"/>
 
                                 <TextBox Name="TxtGameNameEdit"
@@ -202,7 +210,9 @@
                 </Grid>
 
                 <!-- RIGHT COLUMN -->
-                <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Margin="10,10,16,12">
+                <!-- Named so ApplyCompatSidebarCap can read its natural height: this column ends
+                     at the Cleanup/Install action row, and that is what caps the window's height. -->
+                <Grid Grid.Column="1" Name="GridMainContent" RowDefinitions="Auto,Auto,*" Margin="10,10,16,12">
                     <!-- STATUS CARD -->
                     <Border Grid.Row="0"
                             Name="TitleBar"
@@ -492,10 +502,22 @@
                             </Border>
 
                             <!-- Options + Actions (3 columns × 5 rows) -->
-                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                                  ColumnDefinitions="*,*,*"
+                            <Grid ColumnDefinitions="*,*,*"
                                   RowSpacing="10"
                                   ColumnSpacing="12">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- Uninstall / Restore original DLL lives here, and is hidden
+                                         until OptiScaler is actually installed. MinHeight keeps the
+                                         row from collapsing while it's hidden, so the action row
+                                         below doesn't jump up against the selectors and back down
+                                         again the moment the game gets installed. Matches the
+                                         buttons' own height (Padding="14,7" around a ~20px line). -->
+                                    <RowDefinition Height="Auto" MinHeight="34"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
                                 <StackPanel Name="PanelOptiScalerVersion" Grid.Row="0" Grid.Column="0" Spacing="4">
