@@ -732,11 +732,11 @@
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">原生 FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">原生 FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG（實驗性）</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">讓 OptiScaler 根據遊戲偵測到的 FG 輸入自動選擇路徑。</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">關閉此遊戲的幀生成。</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">透過 NVIDIA Streamline 使用遊戲的 DLSS 幀生成輸入。</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">透過 Streamline 使用 DLSS-G 需要在遊戲自身的圖形設定中啟用 NVIDIA 的原生幀生成功能。如果遊戲沒有此選項，請改用 OptiFG 作為 FG 輸入。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">你需要在遊戲內啟用幀生成。沒有該選項？在進階路徑中嘗試將 OptiFG 用作輸入。</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">透過 NukemFG 將 DLSS 幀生成輸入轉換為 FSR 3。</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">使用遊戲原生的 FSR 3.1 幀生成輸入。</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">使用遊戲原生的 FSR 3.0 幀生成輸入。</x:String>

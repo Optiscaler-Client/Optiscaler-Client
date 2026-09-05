@@ -732,11 +732,11 @@
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">原生 FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">原生 FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG（实验性）</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">让 OptiScaler 根据游戏检测到的 FG 输入自动选择路径。</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">关闭此游戏的帧生成。</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">通过 NVIDIA Streamline 使用游戏的 DLSS 帧生成输入。</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">通过 Streamline 使用 DLSS-G 需要在游戏自身的图形设置中启用 NVIDIA 的原生帧生成功能。如果游戏没有该选项，请改用 OptiFG 作为 FG 输入。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">你需要在游戏内启用帧生成。没有该选项？在高级路径中尝试将 OptiFG 用作输入。</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">通过 NukemFG 将 DLSS 帧生成输入转换为 FSR 3。</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">使用游戏原生的 FSR 3.1 帧生成输入。</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">使用游戏原生的 FSR 3.0 帧生成输入。</x:String>

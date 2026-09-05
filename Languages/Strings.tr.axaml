@@ -721,11 +721,11 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">Yerel FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">Yerel FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (deneysel)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">OptiScaler'ın oyunda algılanan FG girişine göre yolu seçmesini sağlar.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Bu oyun için Kare oluşturmayı kapatır.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Oyunun DLSS Kare Oluşturma girişini NVIDIA Streamline üzerinden kullanır.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Streamline üzerinden DLSS-G, NVIDIA'nın yerel Kare Oluşturma özelliğinin oyunun kendi grafik ayarlarından etkinleştirilmesini gerektirir. Oyunda bu seçenek yoksa, bunun yerine FG girişi olarak OptiFG'yi deneyin.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Oyun içinde Kare Oluşturma'yı etkinleştirmen gerekiyor. Bu seçenek yoksa Gelişmiş yollar altında OptiFG'yi input olarak dene.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">NukemFG aracılığıyla bir DLSS Kare Oluşturma girişini FSR 3'e dönüştürür.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Oyunun yerel FSR 3.1 Kare Oluşturma girişini kullanır.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Oyunun yerel FSR 3.0 Kare Oluşturma girişini kullanır.</x:String>

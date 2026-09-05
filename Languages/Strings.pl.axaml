@@ -720,11 +720,11 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">Natywne FG FSR 3.1</x:String>
     <x:String x:Key="TxtFgRouteFsr30">Natywne FG FSR 3.0</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (eksperymentalne)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">Pozwala OptiScalerowi wybrać trasę na podstawie wykrytego wejścia FG gry.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Wyłącza generowanie klatek dla tej gry.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Używa wejścia DLSS Frame Generation gry za pośrednictwem NVIDIA Streamline.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G przez Streamline wymaga włączenia natywnego Frame Generation firmy NVIDIA we własnych ustawieniach graficznych gry. Jeśli gra nie ma tej opcji, spróbuj zamiast tego użyć OptiFG jako wejścia FG.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Musisz włączyć Frame Generation w grze. Brak takiej opcji? Wypróbuj OptiFG jako wejście w Zaawansowanych trasach.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Konwertuje wejście DLSS Frame Generation na FSR 3 za pomocą NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Używa natywnego wejścia FSR 3.1 Frame Generation gry.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Używa natywnego wejścia FSR 3.0 Frame Generation gry.</x:String>

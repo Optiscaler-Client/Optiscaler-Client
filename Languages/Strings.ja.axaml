@@ -728,7 +728,7 @@
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">ネイティブ FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">ネイティブ FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG（実験的）</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteTooltip">このゲームでOptiScalerがフレーム生成に使用する入力方式を選択します。</x:String>
     <x:String x:Key="TxtFgOutputTooltip">OptiScalerがフレームを生成する際に使用する技術を選択します。</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">選択した方式・出力・ハードウェアが対応している場合に、マルチフレーム生成（MFG）の倍率を選択します。</x:String>
@@ -737,7 +737,7 @@
     <x:String x:Key="TxtFgRouteAutoTooltip">ゲームで検出されたFG入力から、OptiScalerが方式を自動選択します。</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">このゲームのフレーム生成をオフにします。</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">NVIDIA Streamlineを介して、ゲームのDLSSフレーム生成入力を使用します。</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Streamline経由のDLSS-Gを使用するには、ゲーム自体のグラフィック設定でNVIDIAのネイティブフレーム生成を有効にする必要があります。ゲームにそのオプションがない場合は、代わりにFG入力としてOptiFGを試してください。</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">ゲーム内でフレーム生成を有効にする必要があります。そのオプションがない場合は、詳細な方式でOptiFGを入力として試してください。</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">NukemFGを介して、DLSSフレーム生成入力をFSR 3に変換します。</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">ゲームのネイティブFSR 3.1フレーム生成入力を使用します。</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">ゲームのネイティブFSR 3.0フレーム生成入力を使用します。</x:String>

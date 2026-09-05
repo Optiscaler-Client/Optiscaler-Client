@@ -720,11 +720,11 @@
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">네이티브 FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">네이티브 FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG(실험적)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">게임에서 감지된 FG 입력을 바탕으로 OptiScaler가 경로를 선택하도록 합니다.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">이 게임의 프레임 생성을 끕니다.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">NVIDIA Streamline을 통해 게임의 DLSS 프레임 생성 입력을 사용합니다.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Streamline을 통한 DLSS-G를 사용하려면 게임 자체 그래픽 설정에서 NVIDIA의 네이티브 프레임 생성을 활성화해야 합니다. 게임에 해당 옵션이 없으면 대신 FG 입력으로 OptiFG를 사용해 보세요.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">게임 안에서 프레임 생성을 켜야 해요. 해당 옵션이 없나요? 고급 경로에서 OptiFG를 입력으로 사용해 보세요.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">NukemFG를 통해 DLSS 프레임 생성 입력을 FSR 3로 변환합니다.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">게임의 네이티브 FSR 3.1 프레임 생성 입력을 사용합니다.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">게임의 네이티브 FSR 3.0 프레임 생성 입력을 사용합니다.</x:String>

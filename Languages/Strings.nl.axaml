@@ -720,11 +720,11 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">Native FSR 3.1 FG</x:String>
     <x:String x:Key="TxtFgRouteFsr30">Native FSR 3.0 FG</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (experimenteel)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">Laat OptiScaler de route kiezen op basis van de gedetecteerde FG-invoer van de game.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Schakelt Framegeneratie voor deze game uit.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Gebruikt de DLSS Framegeneratie-invoer van de game via NVIDIA Streamline.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G via Streamline vereist het inschakelen van NVIDIA's native Framegeneratie in de eigen grafische instellingen van de game. Als de game die optie niet heeft, probeer dan OptiFG als FG-invoer.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Je moet Framegeneratie in de game inschakelen. Geen optie? Probeer OptiFG als invoer onder Geavanceerde routes.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Converteert een DLSS Framegeneratie-invoer naar FSR 3 via NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Gebruikt de native FSR 3.1 Framegeneratie-invoer van de game.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Gebruikt de native FSR 3.0 Framegeneratie-invoer van de game.</x:String>

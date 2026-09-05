@@ -715,7 +715,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">FG FSR 3.1 natif</x:String>
     <x:String x:Key="TxtFgRouteFsr30">FG FSR 3.0 natif</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (expérimental)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteTooltip">Sélectionne le chemin d'entrée qu'OptiScaler utilise pour la génération d'images dans ce jeu.</x:String>
     <x:String x:Key="TxtFgOutputTooltip">Sélectionne la technologie qu'OptiScaler utilise pour générer les images.</x:String>
     <x:String x:Key="TxtMfgMultiplierTooltip">Sélectionne le multiplicateur de Multi-Frame Generation lorsque le chemin, la sortie et le matériel sélectionnés le prennent en charge.</x:String>
@@ -724,7 +724,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFgRouteAutoTooltip">Laisse OptiScaler choisir le chemin en fonction de l'entrée FG détectée du jeu.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Désactive la génération d'images pour ce jeu.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Utilise l'entrée DLSS Frame Generation du jeu via NVIDIA Streamline.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G via Streamline nécessite d'activer la Frame Generation native de NVIDIA dans les paramètres graphiques propres au jeu. Si le jeu ne propose pas cette option, essayez plutôt OptiFG comme entrée FG.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Tu dois activer la Frame Generation dans le jeu. Pas cette option ? Essaie OptiFG comme entrée dans Chemins avancés.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Convertit une entrée DLSS Frame Generation en FSR 3 via NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Utilise l'entrée FSR 3.1 Frame Generation native du jeu.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Utilise l'entrée FSR 3.0 Frame Generation native du jeu.</x:String>

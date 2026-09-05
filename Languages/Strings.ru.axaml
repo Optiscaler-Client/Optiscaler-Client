@@ -722,11 +722,11 @@
     <x:String x:Key="TxtFgRouteNukem">Nukem DLSS-G → FSR3</x:String>
     <x:String x:Key="TxtFgRouteFsr31">Встроенный FG FSR 3.1</x:String>
     <x:String x:Key="TxtFgRouteFsr30">Встроенный FG FSR 3.0</x:String>
-    <x:String x:Key="TxtFgRouteOptiFg">OptiFG (экспериментально)</x:String>
+    <x:String x:Key="TxtFgRouteOptiFg">OptiFG</x:String>
     <x:String x:Key="TxtFgRouteAutoTooltip">Позволяет OptiScaler выбрать маршрут на основе обнаруженного входа FG игры.</x:String>
     <x:String x:Key="TxtFgRouteDisabledTooltip">Отключает генерацию кадров для этой игры.</x:String>
     <x:String x:Key="TxtFgRouteDlssStreamlineTooltip">Использует вход генерации кадров DLSS этой игры через NVIDIA Streamline.</x:String>
-    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">DLSS-G через Streamline требует включения встроенной генерации кадров NVIDIA в собственных графических настройках игры. Если в игре нет такой опции, попробуйте вместо этого OptiFG в качестве входа FG.</x:String>
+    <x:String x:Key="TxtFgRouteDlssStreamlineRequiresNativeInfo">Тебе нужно включить генерацию кадров в самой игре. Нет такой опции? Попробуй OptiFG как вход в Расширенных маршрутах.</x:String>
     <x:String x:Key="TxtFgRouteNukemTooltip">Преобразует вход генерации кадров DLSS в FSR 3 с помощью NukemFG.</x:String>
     <x:String x:Key="TxtFgRouteFsr31Tooltip">Использует встроенный вход генерации кадров FSR 3.1 игры.</x:String>
     <x:String x:Key="TxtFgRouteFsr30Tooltip">Использует встроенный вход генерации кадров FSR 3.0 игры.</x:String>
