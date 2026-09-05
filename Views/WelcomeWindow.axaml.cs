@@ -32,6 +32,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
 
             // Flicker-free startup: start invisible, show after positioning
             this.Opacity = 0;

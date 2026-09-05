@@ -3,7 +3,8 @@
         x:Class="OptiscalerClient.Views.ManageScanSourcesWindow"
         Title="Manage Scan Sources"
         Width="640"
-        Height="820"
+        MinHeight="400"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         SystemDecorations="None"
         TransparencyLevelHint="Transparent"
@@ -60,7 +61,7 @@
                         ClipToBounds="True">
                     
                     <Grid RowDefinitions="Auto, *, Auto">
-                        
+
                         <!-- Title Bar -->
                         <Border Grid.Row="0"
                                 Name="TitleBar"
@@ -85,86 +86,88 @@
                             <StackPanel Margin="24,20">
 
                                 <!-- Default Sources -->
-                                <TextBlock Text="{DynamicResource TxtDefaultSources}"
-                                           FontWeight="SemiBold"
-                                           FontSize="14"
-                                           Foreground="{StaticResource BrTextPrimary}"
-                                           Margin="0,0,0,12"/>
+                                <StackPanel Name="DefaultSourcesSection">
+                                    <TextBlock Text="{DynamicResource TxtDefaultSources}"
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               Foreground="{StaticResource BrTextPrimary}"
+                                               Margin="0,0,0,12"/>
 
-                                <Border Background="{StaticResource BrBgCard}"
-                                        BorderBrush="{StaticResource BrBorderSubtle}"
-                                        BorderThickness="1"
-                                        CornerRadius="{StaticResource RadiusMedium}"
-                                        Padding="16,12"
-                                        Margin="0,0,0,24">
-                                    <StackPanel Spacing="12">
+                                    <Border Background="{StaticResource BrBgCard}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="16,12"
+                                            Margin="0,0,0,24">
+                                        <StackPanel Spacing="12">
 
-                                        <!-- Steam -->
-                                        <Border Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Steam" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglSteam" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Steam -->
+                                            <Border Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Steam" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglSteam" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- Heroic -->
-                                        <Border Name="GridHeroic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Heroic" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglHeroic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Heroic -->
+                                            <Border Name="GridHeroic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Heroic" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglHeroic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- Epic Games -->
-                                        <Border Name="GridEpic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Epic Games" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglEpic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Epic Games -->
+                                            <Border Name="GridEpic" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Epic Games" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglEpic" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- GOG Galaxy -->
-                                        <Border Name="GridGOG" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="GOG Galaxy" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglGOG" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- GOG Galaxy -->
+                                            <Border Name="GridGOG" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="GOG Galaxy" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglGOG" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- Xbox (Microsoft Store) -->
-                                        <Border Name="GridXbox" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Xbox (Microsoft Store)" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglXbox" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Xbox (Microsoft Store) -->
+                                            <Border Name="GridXbox" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Xbox (Microsoft Store)" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglXbox" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- EA App -->
-                                        <Border Name="GridEA" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="EA App" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglEA" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- EA App -->
+                                            <Border Name="GridEA" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="EA App" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglEA" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- Ubisoft Connect -->
-                                        <Border Name="GridUbisoft" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Ubisoft Connect" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglUbisoft" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Ubisoft Connect -->
+                                            <Border Name="GridUbisoft" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Ubisoft Connect" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglUbisoft" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                        <!-- Lutris (Linux-only) -->
-                                        <Border Name="GridLutris" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Lutris" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
-                                                <ToggleSwitch Grid.Column="1" Name="TglLutris" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
-                                            </Grid>
-                                        </Border>
+                                            <!-- Lutris (Linux-only) -->
+                                            <Border Name="GridLutris" Classes="InteractiveOption" CornerRadius="6" Padding="8,4" Margin="-8,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Lutris" VerticalAlignment="Center" Foreground="{StaticResource BrTextPrimary}"/>
+                                                    <ToggleSwitch Grid.Column="1" Name="TglLutris" OnContent="" OffContent="" IsChecked="True" Focusable="False"/>
+                                                </Grid>
+                                            </Border>
 
-                                    </StackPanel>
-                                </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
 
                                 <!-- Filter Options -->
                                 <TextBlock Text="{DynamicResource TxtFilterOptions}"
@@ -295,8 +298,7 @@
                                         BorderBrush="{StaticResource BrBorderSubtle}"
                                         BorderThickness="1"
                                         CornerRadius="{StaticResource RadiusMedium}"
-                                        Padding="16,12"
-                                        MinHeight="120">
+                                        Padding="16,12">
                                     <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
                                         <StackPanel Name="PnlCustomFolders" Spacing="8">
                                             <!-- Custom folders will be added here dynamically -->

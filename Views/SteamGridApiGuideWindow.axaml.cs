@@ -26,6 +26,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
 
             Opacity = 0;
 

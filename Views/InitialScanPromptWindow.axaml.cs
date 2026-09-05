@@ -51,6 +51,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _componentService = componentService;
 
             this.Opacity = 0;
@@ -73,6 +74,35 @@ namespace OptiscalerClient.Views
                 if (_gamepadHelper == null)
                 {
                     _gamepadHelper = new GamepadDialogNavigationHelper(this, this.FindControl<ScrollViewer>("MainScrollViewer"));
+                }
+
+                // Cap the window's height so it covers everything from the top of this dialog's
+                // content (Refresh covers only + Filter Options) through the bottom of "Drives to
+                // Scan" - Sources/Custom Folders below that scroll instead of growing the window.
+                var contentRoot = this.FindControl<StackPanel>("MainScrollContent");
+                var drivesSection = this.FindControl<StackPanel>("DrivesToScanSection");
+                var mainScrollViewer = this.FindControl<ScrollViewer>("MainScrollViewer");
+                var drivesBottom = (contentRoot != null && drivesSection != null && drivesSection.Bounds.Height > 0)
+                    ? drivesSection.TranslatePoint(new Point(0, drivesSection.Bounds.Height), contentRoot)
+                    : null;
+                if (mainScrollViewer != null && drivesBottom.HasValue)
+                {
+                    mainScrollViewer.MaxHeight = drivesBottom.Value.Y + 20; // +20 = content StackPanel's top margin
+
+                    // CenterOwner already positioned the window using its taller, uncapped size.
+                    // Force layout now (synchronously) so Bounds reflects the shrunk size, then
+                    // re-center on the current screen's working area - same reference frame
+                    // FitToScreen uses - so it doesn't end up pinned near the top.
+                    this.UpdateLayout();
+                    var screen = this.Screens?.ScreenFromWindow(this) ?? this.Screens?.Primary;
+                    if (screen != null)
+                    {
+                        var scaling = screen.Scaling > 0 ? screen.Scaling : 1.0;
+                        var working = screen.WorkingArea;
+                        var x = working.X + (working.Width - this.Bounds.Width * scaling) / 2;
+                        var y = working.Y + (working.Height - this.Bounds.Height * scaling) / 2;
+                        this.Position = new PixelPoint((int)x, (int)y);
+                    }
                 }
             };
 

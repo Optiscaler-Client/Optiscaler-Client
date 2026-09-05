@@ -3,7 +3,8 @@
         x:Class="OptiscalerClient.Views.InitialScanPromptWindow"
         Title="Initial Scan"
         Width="640"
-        Height="720"
+        MinHeight="400"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         SystemDecorations="None"
         TransparencyLevelHint="Transparent"
@@ -83,7 +84,7 @@
 
                         <!-- Content -->
                         <ScrollViewer Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="24,20">
+                            <StackPanel Name="MainScrollContent" Margin="24,20">
 
                                 <!-- Refresh missing covers only -->
                                 <Border Classes="InteractiveOption CardOption"
@@ -220,25 +221,27 @@
                                 <!-- Scan options panel (disabled when covers-only is active) -->
                                 <StackPanel Name="PnlScanOptions">
 
-                                <TextBlock Text="{DynamicResource TxtInitialScanDrives}"
-                                           FontWeight="SemiBold"
-                                           FontSize="14"
-                                           Foreground="{StaticResource BrTextPrimary}"
-                                           Margin="0,0,0,12"/>
+                                <StackPanel Name="DrivesToScanSection">
+                                    <TextBlock Text="{DynamicResource TxtInitialScanDrives}"
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               Foreground="{StaticResource BrTextPrimary}"
+                                               Margin="0,0,0,12"/>
 
-                                <Border Background="{StaticResource BrBgCard}"
-                                        BorderBrush="{StaticResource BrBorderSubtle}"
-                                        BorderThickness="1"
-                                        CornerRadius="{StaticResource RadiusMedium}"
-                                        Padding="16,12"
-                                        Margin="0,0,0,24">
-                                    <StackPanel Name="PnlDriveList" Spacing="12">
-                                        <TextBlock Name="TxtNoDrives"
-                                                   Text="{DynamicResource TxtInitialScanNoDrives}"
-                                                   Foreground="{StaticResource BrTextSecondary}"
-                                                   IsVisible="False"/>
-                                    </StackPanel>
-                                </Border>
+                                    <Border Background="{StaticResource BrBgCard}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="16,12"
+                                            Margin="0,0,0,24">
+                                        <StackPanel Name="PnlDriveList" Spacing="12">
+                                            <TextBlock Name="TxtNoDrives"
+                                                       Text="{DynamicResource TxtInitialScanNoDrives}"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       IsVisible="False"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
 
                                 <TextBlock Text="{DynamicResource TxtInitialScanSources}"
                                            FontWeight="SemiBold"
@@ -326,8 +329,7 @@
                                         BorderBrush="{StaticResource BrBorderSubtle}"
                                         BorderThickness="1"
                                         CornerRadius="{StaticResource RadiusMedium}"
-                                        Padding="16,12"
-                                        MinHeight="80">
+                                        Padding="16,12">
                                     <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto">
                                         <StackPanel Name="PnlCustomFolders" Spacing="8">
                                             <TextBlock Name="TxtNoCustomFolders"

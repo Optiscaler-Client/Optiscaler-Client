@@ -34,6 +34,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _componentService = componentService;
 
             this.Opacity = 0;
@@ -60,6 +61,30 @@ namespace OptiscalerClient.Views
 
                 if (owner is IGamepadInputHost host)
                     host.GamepadHelper?.SuspendInput();
+
+                // Cap the window's height at "Default Sources" so it never grows to show
+                // Filter Options/Custom Folders too - everything below scrolls instead.
+                var defaultSourcesSection = this.FindControl<StackPanel>("DefaultSourcesSection");
+                var mainScrollViewer = this.FindControl<ScrollViewer>("MainScrollViewer");
+                if (defaultSourcesSection != null && mainScrollViewer != null && defaultSourcesSection.Bounds.Height > 0)
+                {
+                    mainScrollViewer.MaxHeight = defaultSourcesSection.Bounds.Height + 20; // +20 = StackPanel's top margin
+
+                    // CenterOwner already positioned the window using its taller, uncapped size.
+                    // Force layout now (synchronously) so Bounds reflects the shrunk size, then
+                    // re-center on the current screen's working area - same reference frame
+                    // FitToScreen uses - so it doesn't end up pinned near the top.
+                    this.UpdateLayout();
+                    var screen = this.Screens?.ScreenFromWindow(this) ?? this.Screens?.Primary;
+                    if (screen != null)
+                    {
+                        var scaling = screen.Scaling > 0 ? screen.Scaling : 1.0;
+                        var working = screen.WorkingArea;
+                        var x = working.X + (working.Width - this.Bounds.Width * scaling) / 2;
+                        var y = working.Y + (working.Height - this.Bounds.Height * scaling) / 2;
+                        this.Position = new PixelPoint((int)x, (int)y);
+                    }
+                }
             };
 
             this.Closed += (s, e) =>

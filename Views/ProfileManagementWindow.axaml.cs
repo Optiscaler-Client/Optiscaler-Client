@@ -31,6 +31,7 @@ namespace OptiscalerClient.Views
         public ProfileManagementWindow()
         {
             InitializeComponent();
+            WindowScreenFitHelper.FitToScreen(this);
             _profileService = new ProfileManagementService();
             _componentService = new ComponentManagementService();
             _defaultProfileName = _componentService.Config.DefaultProfileName;

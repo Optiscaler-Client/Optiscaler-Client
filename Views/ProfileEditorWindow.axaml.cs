@@ -42,6 +42,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _profile = OptiScalerProfile.CreateEmpty();
             _isNewProfile = true;
             SetupWindow();
@@ -51,6 +52,7 @@ namespace OptiscalerClient.Views
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
+            WindowScreenFitHelper.FitToScreen(this);
             _profile = profile;
             _isNewProfile = isNewProfile;
             SetupWindow();
