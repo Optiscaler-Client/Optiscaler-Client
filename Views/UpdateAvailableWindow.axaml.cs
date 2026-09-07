@@ -11,6 +11,12 @@ namespace OptiscalerClient.Views
 {
     public partial class UpdateAvailableWindow : Window
     {
+        public UpdateAvailableWindow()
+        {
+            InitializeComponent();
+            DialogDimHelper.Register(this);
+        }
+
         public UpdateAvailableWindow(Window owner, string latestVersion)
         {
             InitializeComponent();
