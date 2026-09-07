@@ -1,0 +1,69 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.Fsr4SwapOptionsWindow"
+        Width="460" SizeToContent="Height" MinHeight="260"
+        WindowStartupLocation="CenterOwner" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent" CanResize="False" ShowInTaskbar="False">
+    <Panel Margin="20">
+        <Border CornerRadius="12" Background="{StaticResource BrBgBase}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1" BoxShadow="0 8 32 0 #80000000">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border Grid.Row="0" Background="{StaticResource BrBgDeep}" Padding="20,15" CornerRadius="12,12,0,0" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,0,1">
+                    <TextBlock Text="{DynamicResource TxtFsr4SwapOptionsTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}"/>
+                </Border>
+                <StackPanel Grid.Row="1" Margin="22,18" Spacing="14">
+                    <RadioButton Name="RbAskEveryTime" GroupName="Fsr4SwapMode"
+                                 Foreground="{StaticResource BrTextPrimary}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtFsr4SwapAskEveryTime}" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtFsr4SwapAskEveryTimeTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Name="RbChooseDefaults" GroupName="Fsr4SwapMode"
+                                 Foreground="{StaticResource BrTextPrimary}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{DynamicResource TxtFsr4SwapChooseDefaults}" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
+                            <Border Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Width="16" Height="16"
+                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                    ToolTip.Tip="{DynamicResource TxtFsr4SwapChooseDefaultsTooltip}">
+                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,-1,0,0"/>
+                            </Border>
+                        </StackPanel>
+                    </RadioButton>
+
+                    <Border Name="PnlDefaultFilesContainer"
+                            Background="{StaticResource BrBgSurface}"
+                            BorderBrush="{StaticResource BrBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12,10"
+                            Margin="24,0,0,0"
+                            IsVisible="False">
+                        <StackPanel Name="PnlDefaultFiles" Spacing="8"/>
+                    </Border>
+                </StackPanel>
+                <Border Grid.Row="2" Background="{StaticResource BrBgDeep}" Padding="20,14" CornerRadius="0,0,12,12" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button Content="{DynamicResource TxtCancel}" Classes="BtnBase" MinWidth="90" Click="BtnCancel_Click"/>
+                        <Button Name="BtnSave" Content="{DynamicResource TxtSave}" Classes="BtnPrimary" MinWidth="100" Click="BtnSave_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

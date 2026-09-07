@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -139,6 +140,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             if (versionPanel != null) versionPanel.IsVisible = needsVersion;
             if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
             PopulateFgMultiplier(_initialSettings.MultiFrameMode);
+            var targetFpsBox = this.FindControl<TextBox>("TxtDynamicTargetFps");
+            if (targetFpsBox != null)
+                targetFpsBox.Text = _initialSettings.DynamicTargetFps is > 0
+                    ? _initialSettings.DynamicTargetFps.Value.ToString(CultureInfo.InvariantCulture)
+                    : "";
             UpdateDependentControlState();
         }
         finally
@@ -205,9 +211,16 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         if (combo == null) return;
 
         var output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput");
-        IReadOnlyList<MultiFrameGenerationMode> modes = output == FrameGenerationOutput.DlssG
-            ? [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6]
-            : [MultiFrameGenerationMode.X2];
+        List<MultiFrameGenerationMode> modes;
+        if (output == FrameGenerationOutput.DlssG)
+        {
+            modes = [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
+            if (_capabilities.SupportsDynamicMfg) modes.Add(MultiFrameGenerationMode.Dynamic);
+        }
+        else
+        {
+            modes = [MultiFrameGenerationMode.X2];
+        }
 
         combo.Items.Clear();
         foreach (var mode in modes)
@@ -218,6 +231,14 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         }
         combo.IsEnabled = !IsOutputDisabledSelected() && modes.Count > 1;
         SelectTag(combo, selected);
+        UpdateDynamicTargetFpsVisibility();
+    }
+
+    private void UpdateDynamicTargetFpsVisibility()
+    {
+        var panel = this.FindControl<StackPanel>("PnlDynamicTargetFps");
+        if (panel == null) return;
+        panel.IsVisible = !IsOutputDisabledSelected() && GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier") == MultiFrameGenerationMode.Dynamic;
     }
 
     /// <summary>Picks the FG Nvngx Replacement (and, when needed, the DLSS Enabler version) that best
@@ -409,6 +430,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         try
         {
             ApplyAutoNvngxReplacement();
+            UpdateDynamicTargetFpsVisibility();
             UpdateDependentControlState();
         }
         finally { _isUpdating = false; }
@@ -541,14 +563,22 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var replacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement");
         var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
         var selectedVersion = GetSelectedStringTag("CmbDlssEnablerVersion");
+        var multiplier = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        double? dynamicTargetFps = null;
+        if (multiplier == MultiFrameGenerationMode.Dynamic &&
+            double.TryParse(this.FindControl<TextBox>("TxtDynamicTargetFps")?.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedFps) &&
+            parsedFps > 0)
+        {
+            dynamicTargetFps = parsedFps;
+        }
 
         Close(new GameFrameGenerationSettings
         {
             Route = route,
             Output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput"),
-            MultiFrameMode = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier"),
+            MultiFrameMode = multiplier,
             AdvancedMode = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true,
-            DynamicTargetFps = _initialSettings.DynamicTargetFps,
+            DynamicTargetFps = dynamicTargetFps,
             AppliedAtUtc = _initialSettings.AppliedAtUtc,
             NvngxReplacement = replacement,
             DlssEnablerVersion = needsVersion && !string.IsNullOrEmpty(selectedVersion) && selectedVersion != NewDlssEnablerTag

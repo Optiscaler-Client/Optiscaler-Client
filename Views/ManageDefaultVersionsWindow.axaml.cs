@@ -26,6 +26,8 @@ namespace OptiscalerClient.Views
         private bool _isUpdatingDefaultUpscalingQuality;
         private bool _defaultQualityCustomHandledForOpen;
         private GameFrameGenerationSettings? _defaultFrameGenerationSettings;
+        private bool _fsr4SwapAskEveryTime = true;
+        private List<string> _fsr4SwapDefaultFileKeys = new();
         private GamepadDialogNavigationHelper? _gamepadHelper;
 
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -132,6 +134,10 @@ namespace OptiscalerClient.Views
 
             _defaultFrameGenerationSettings = _componentService.Config.DefaultFrameGenerationSettings;
             UpdateDefaultFrameGenerationSummary();
+
+            _fsr4SwapAskEveryTime = _componentService.Config.Fsr4SwapAskEveryTime;
+            _fsr4SwapDefaultFileKeys = new List<string>(_componentService.Config.Fsr4SwapDefaultFileKeys);
+            UpdateFsr4SwapOptionsSummary();
         }
 
         // ── OptiScaler Version ──────────────────────────────────────────────
@@ -782,6 +788,7 @@ namespace OptiscalerClient.Views
             HasXeFgDependencies = true,
             HasFsrFgDependencies = true,
             HasNukem = true,
+            SupportsDynamicMfg = true,
             // Reserved6 is an unused placeholder kept only to hold Auto's ordinal stable in
             // already-persisted data — never meant to be user-selectable.
             AvailableRoutes = Enum.GetValues<FrameGenerationRoute>()
@@ -832,6 +839,35 @@ namespace OptiscalerClient.Views
                 ? "Auto"
                 : settings.MultiFrameMode.ToString().Replace("X", "x");
             selection.Text = $"{output} {multiplier}";
+        }
+
+        // ── FSR 4 Swap Options ──────────────────────────────────────────────
+
+        private async void BtnFsr4SwapOptions_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new Fsr4SwapOptionsWindow(this, _fsr4SwapAskEveryTime, _fsr4SwapDefaultFileKeys);
+                var saved = await dialog.ShowDialog<bool>(this);
+                if (!saved) return;
+
+                _fsr4SwapAskEveryTime = dialog.AskEveryTime;
+                _fsr4SwapDefaultFileKeys = dialog.SelectedFileKeys;
+                UpdateFsr4SwapOptionsSummary();
+            }
+            catch (Exception ex) { DebugWindow.Log($"[ManageDefaultVersions] FSR 4 Swap Options dialog failed: {ex.Message}"); }
+        }
+
+        private void UpdateFsr4SwapOptionsSummary()
+        {
+            var selection = this.FindControl<TextBlock>("TxtFsr4SwapOptionsSelection");
+            if (selection == null) return;
+
+            selection.Text = _fsr4SwapAskEveryTime
+                ? GetResourceString("TxtFsr4SwapAskEveryTime", "Ask me every time")
+                : string.Format(GetResourceString("TxtFsr4SwapDefaultsCountFormat", "{0} of {1} files selected"),
+                    _fsr4SwapDefaultFileKeys.Count > 0 ? _fsr4SwapDefaultFileKeys.Count : Fsr4Int8DllHelper.LogicalFileKeys.Length,
+                    Fsr4Int8DllHelper.LogicalFileKeys.Length);
         }
 
         // ── Save / Cancel ───────────────────────────────────────────────────
@@ -924,6 +960,10 @@ namespace OptiscalerClient.Views
             // Save Frame Generation
             _componentService.Config.DefaultFrameGenerationSettings =
                 _defaultFrameGenerationSettings?.Route == FrameGenerationRoute.Disabled ? null : _defaultFrameGenerationSettings;
+
+            // Save FSR 4 Swap Options
+            _componentService.Config.Fsr4SwapAskEveryTime = _fsr4SwapAskEveryTime;
+            _componentService.Config.Fsr4SwapDefaultFileKeys = _fsr4SwapDefaultFileKeys;
 
             _componentService.SaveConfiguration();
             Close(true);

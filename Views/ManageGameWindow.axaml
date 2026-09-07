@@ -836,11 +836,32 @@
                                     <StackPanel Name="InstallBtnGroup"
                                                 Orientation="Horizontal" Spacing="10"
                                                 HorizontalAlignment="Right">
+                                        <!-- Shown instead of BtnInstallManual only when Profile/Upscaling
+                                             Quality/Output Upscaler/Frame Generation changed and nothing
+                                             else did (see RefreshInstallActionAvailability) — a plain
+                                             dropdown like CmbOptiVersion/CmbOptiPatcherVersion above, not
+                                             a split button. Item 0 is a non-persisting placeholder that
+                                             just displays the button's usual label; picking one of the
+                                             two real options fires the action and snaps back to it. -->
+                                        <ComboBox Name="CmbInstallActionManual"
+                                                  Classes="BtnSuccess"
+                                                  Padding="16,8"
+                                                  MinWidth="170"
+                                                  IsVisible="False"
+                                                  PlaceholderText="{DynamicResource TxtUpdateOptiManual}"
+                                                  SelectionChanged="CmbInstallActionManual_SelectionChanged"/>
                                         <Button Name="BtnInstallManual"
                                                 Content="{DynamicResource TxtBtnManualInstall}"
                                                 Classes="BtnSuccess"
                                                 Padding="16,8"
                                                 Click="BtnInstallManual_Click"/>
+                                        <ComboBox Name="CmbInstallAction"
+                                                  Classes="BtnSuccess"
+                                                  Padding="16,8"
+                                                  MinWidth="170"
+                                                  IsVisible="False"
+                                                  PlaceholderText="{DynamicResource TxtUpdateOpti}"
+                                                  SelectionChanged="CmbInstallAction_SelectionChanged"/>
                                         <Button Name="BtnInstall"
                                                 Content="{DynamicResource TxtInstallOpti}"
                                                 Classes="BtnSuccess"
@@ -1273,6 +1294,59 @@
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                                 <Button Name="BtnConfirmFolderCleanupNo" Content="{DynamicResource TxtCancel}" Classes="BtnBase" Padding="16,8" Margin="0,0,10,0" Click="BtnConfirmFolderCleanupNo_Click"/>
                                 <Button Name="BtnConfirmFolderCleanupYes" Content="{DynamicResource TxtFolderCleanup}" Classes="BtnDanger" Padding="16,8" Click="BtnConfirmFolderCleanupYes_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- FSR4 SWAP: CHOOSE WHICH PACKAGED FILES TO SWAP/COPY -->
+                <Grid Name="BdFsr4SwapSelection" Grid.ColumnSpan="3" Background="#80000000" IsVisible="False" ZIndex="22">
+                    <Border Background="{StaticResource BrBgElevated}"
+                            BorderBrush="{StaticResource BrBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusLarge}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Padding="24,24,24,20"
+                            MaxWidth="480">
+                        <StackPanel Spacing="0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource FontIcons}" Foreground="{StaticResource BrAccent}" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource TxtFsr4SwapSelectTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <TextBlock Text="{DynamicResource TxtFsr4SwapSelectDesc}"
+                                       Foreground="{StaticResource BrTextSecondary}" FontSize="{StaticResource FontSizeBody}"
+                                       TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                            <Border Background="{StaticResource BrBgSurface}"
+                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusMedium}"
+                                    Padding="12,10"
+                                    MaxHeight="320">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Name="PnlFsr4SwapFileOptions" Spacing="8"/>
+                                </ScrollViewer>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,10,0,0">
+                                <TextBlock Text="{DynamicResource TxtFsr4SwapSetDefaultsHint}"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{DynamicResource TxtFsr4SwapSetDefaultsLink}"
+                                           Foreground="{StaticResource BrAccent}"
+                                           FontSize="{StaticResource FontSizeCaption}"
+                                           VerticalAlignment="Center"
+                                           Cursor="Hand"
+                                           TextDecorations="Underline"
+                                           PointerPressed="BtnFsr4SwapOpenSettings_Click"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Name="BtnFsr4SwapSelectionCancel" Content="{DynamicResource TxtCancel}" Classes="BtnBase" Padding="16,8" Margin="0,0,10,0" Click="BtnFsr4SwapSelectionCancel_Click"/>
+                                <Button Name="BtnFsr4SwapSelectionConfirm" Content="{DynamicResource TxtFsr4SwapSelectConfirm}" Classes="BtnPrimary" Padding="16,8" Click="BtnFsr4SwapSelectionConfirm_Click"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>

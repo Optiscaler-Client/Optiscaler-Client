@@ -93,6 +93,7 @@ namespace OptiscalerClient.Models
         public RepositoryConfig OptiScalerNightly { get; set; } = new();
         public RepositoryConfig Streamline { get; set; } = new();
         public RepositoryConfig OptiScalerExtras { get; set; } = new();
+        public RepositoryConfig OptiScalerExtrasFp8 { get; set; } = new();
         public RepositoryConfig Fakenvapi { get; set; } = new();
         public RepositoryConfig NukemFG { get; set; } = new();
         public RepositoryConfig OptiPatcher { get; set; } = new();
@@ -171,6 +172,14 @@ namespace OptiscalerClient.Models
         /// with no saved FG settings of its own. Null means the built-in defaults (Disabled/Auto/Auto).
         /// </summary>
         public GameFrameGenerationSettings? DefaultFrameGenerationSettings { get; set; } = null;
+
+        /// <summary>True (default) = the FSR4 DLL swap always prompts which packaged files to
+        /// copy/replace. False = use Fsr4SwapDefaultFileKeys silently instead — see Fsr4SwapOptionsWindow.</summary>
+        public bool Fsr4SwapAskEveryTime { get; set; } = true;
+
+        /// <summary>Fsr4Int8DllHelper.LogicalFileKeys the user pre-selected when Fsr4SwapAskEveryTime
+        /// is false. Empty means "never configured" and is treated as "all" by FilterCandidatesByDefaultKeys.</summary>
+        public List<string> Fsr4SwapDefaultFileKeys { get; set; } = new();
         public ScanSourcesConfig ScanSources { get; set; } = new();
         public string SteamGridDBApiKey { get; set; } = string.Empty;
         public List<ScanExclusion> ScanExclusions { get; set; } = new();

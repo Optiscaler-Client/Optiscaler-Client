@@ -1,4 +1,4 @@
-// OptiScaler Client - A frontend for managing OptiScaler installations
+﻿// OptiScaler Client - A frontend for managing OptiScaler installations
 // Copyright (C) 2026 Agustín Montaña (Agustinm28)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -61,6 +61,9 @@ namespace OptiscalerClient.Views
         private bool _optiShowingBeta;
         private bool _optiShowingNightly;
         private bool _optiShowingCustom;
+        private string? _optiVersionBeforeAutoNightlySwitch;
+        private bool _optiBetaBeforeAutoNightlySwitch;
+        private bool _optiCustomBeforeAutoNightlySwitch;
         private bool _optiTabInitialized;
         private Fsr4DllVariant _extrasVariant = Fsr4DllVariant.Int8;
         private bool _extrasTabInitialized;
@@ -97,6 +100,10 @@ namespace OptiscalerClient.Views
         // running the cleanup inline, allowing ExecuteInstallAsync to drive the sequence.
         private bool _cleanupIsPreInstall;
         private List<string>? _preInstallCleanupSelectedFiles;
+
+        // TaskCompletionSource for the "which FSR4 files to swap/copy" modal — resolved with the
+        // checked filenames on confirm, or null on cancel.
+        private TaskCompletionSource<List<string>?>? _fsr4SwapSelectionTcs;
 
         private static Dictionary<string, string>? _fsrVersionMap;
         private static Dictionary<string, string>? _dlssVersionMap;
@@ -200,6 +207,7 @@ namespace OptiscalerClient.Views
             if (item.Tag is OptiScalerProfile profile)
             {
                 _lastSelectedProfileName = profile.Name;
+                RefreshInstallActionAvailability();
                 return;
             }
 
@@ -1155,6 +1163,14 @@ namespace OptiscalerClient.Views
 
             // ── Populate Fakenvapi selector ───────────────────────────────────
             PopulateFakenvapiComboBox(componentService);
+
+            // This is the point where all five "hard" combos (OptiVersion/Extras/OptiPatcher/
+            // NukemFG/Fakenvapi) have real selections for the first time — LoadVersionsAsync runs
+            // fire-and-forget from the constructor, so UpdateStatus's own baseline capture (which
+            // runs synchronously before this) sees empty combos and captures a null baseline. This
+            // capture is what actually makes "Update config only" show up after window load.
+            CaptureConfigOnlyBaseline();
+            RefreshInstallActionAvailability();
         }
 
         // ── OptiScaler tab selector ──────────────────────────────────────────
@@ -1190,6 +1206,7 @@ namespace OptiscalerClient.Views
                 cmbOptiVersion.IsEnabled = true;
                 cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
                 UpdateInstallButtonsForSwapState();
+                RefreshInstallActionAvailability();
                 return;
             }
 
@@ -1208,6 +1225,7 @@ namespace OptiscalerClient.Views
                 cmbOptiVersion.IsEnabled = true;
                 cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
                 UpdateInstallButtonsForSwapState();
+                RefreshInstallActionAvailability();
                 return;
             }
 
@@ -1268,6 +1286,21 @@ namespace OptiscalerClient.Views
             // The handler is detached while rebuilding the list, so a programmatic switch
             // from None to the first version must update the install-state explicitly.
             UpdateInstallButtonsForSwapState();
+            RefreshInstallActionAvailability();
+        }
+
+        private void SelectOptiVersion(string version)
+        {
+            var cmb = this.FindControl<ComboBox>("CmbOptiVersion");
+            if (cmb == null) return;
+            for (int i = 0; i < cmb.Items.Count; i++)
+            {
+                if (cmb.Items[i] is ComboBoxItem item && string.Equals(item.Tag?.ToString(), version, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmb.SelectedIndex = i;
+                    break;
+                }
+            }
         }
 
         private void UpdateOptiChannelButtons()
@@ -1343,7 +1376,8 @@ namespace OptiscalerClient.Views
         private async Task WarnIfMfgEnablerNeedsNightlyAsync()
         {
             var settings = _game.FrameGenerationSettings;
-            var mfgWithEnabler = settings?.Output == FrameGenerationOutput.DlssG &&
+            var mfgWithEnabler = settings?.Route != FrameGenerationRoute.Disabled &&
+                settings?.Output == FrameGenerationOutput.DlssG &&
                 settings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
             if (mfgWithEnabler && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
             {
@@ -1600,6 +1634,7 @@ namespace OptiscalerClient.Views
         private void CmbExtrasVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             UpdateInstallButtonsForSwapState();
+            RefreshInstallActionAvailability();
         }
 
         /// <summary>
@@ -1898,6 +1933,10 @@ namespace OptiscalerClient.Views
             if (txtGameNameEdit != null) txtGameNameEdit.Text = _game.Name;
             TrySetCoverImage(imgGameCover, _game.CoverImageUrl);
 
+            PopulateInstallActionCombos();
+            SetupFrameGenerationButton();
+            SetupUpscalingQualitySelector();
+            SetupOutputUpscalerSelector();
             UpdateStatus();
             LoadComponents();
             ConfigureAdditionalComponents();
@@ -2511,6 +2550,7 @@ namespace OptiscalerClient.Views
                 customRatio = result.Value;
             }
 
+            // Staged only — applied to disk when the user explicitly hits Install/Update.
             _game.UpscalingQualitySettings = new GameUpscalingQualitySettings
             {
                 Preset = selected,
@@ -2518,20 +2558,7 @@ namespace OptiscalerClient.Views
                 AppliedAtUtc = previous.AppliedAtUtc
             };
 
-            if (!_game.IsOptiscalerInstalled) return;
-
-            try
-            {
-                await Task.Run(() => new GameInstallationService().ApplyUpscalingQualitySettings(_game));
-                NeedsScan = true;
-            }
-            catch (Exception ex)
-            {
-                await new ConfirmDialog(this,
-                    GetResourceString("TxtUpscalingQuality", "Upscaling Quality"),
-                    $"{GetResourceString("TxtUpscalingQualityApplyError", "Could not apply the upscaling quality configuration:")}\n{ex.Message}")
-                    .ShowDialog<object>(this);
-            }
+            RefreshInstallActionAvailability();
         }
 
         private void SetupOutputUpscalerSelector()
@@ -2585,33 +2612,21 @@ namespace OptiscalerClient.Views
             combo.Items.Add(item);
         }
 
-        private async void CmbOutputUpscaler_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        private void CmbOutputUpscaler_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (_isUpdatingOutputUpscaler || sender is not ComboBox combo
                 || combo.SelectedItem is not ComboBoxItem item
                 || item.Tag is not OutputUpscalerBackend selected)
                 return;
 
+            // Staged only — applied to disk when the user explicitly hits Install/Update.
             _game.OutputUpscalerSettings = new GameOutputUpscalerSettings
             {
                 Backend = selected,
                 AppliedAtUtc = _game.OutputUpscalerSettings?.AppliedAtUtc
             };
 
-            if (!_game.IsOptiscalerInstalled) return;
-
-            try
-            {
-                await Task.Run(() => new GameInstallationService().ApplyOutputUpscalerSettings(_game));
-                NeedsScan = true;
-            }
-            catch (Exception ex)
-            {
-                await new ConfirmDialog(this,
-                    GetResourceString("TxtOutputUpscaler", "Output Upscaler"),
-                    $"{GetResourceString("TxtOutputUpscalerApplyError", "Could not apply the output upscaler configuration:")}\n{ex.Message}")
-                    .ShowDialog<object>(this);
-            }
+            RefreshInstallActionAvailability();
         }
 
         private async void BtnFrameGeneration_Click(object? sender, RoutedEventArgs e)
@@ -2627,10 +2642,17 @@ namespace OptiscalerClient.Views
                 _game.FrameGenerationSettings = settings;
                 UpdateFrameGenerationSummary();
 
-                var needsNightly = settings.Output == FrameGenerationOutput.DlssG &&
+                var needsNightly = settings.Route != FrameGenerationRoute.Disabled &&
+                    settings.Output == FrameGenerationOutput.DlssG &&
                     settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                 if (needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
                 {
+                    if (string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
+                    {
+                        _optiVersionBeforeAutoNightlySwitch = (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                        _optiBetaBeforeAutoNightlySwitch = _optiShowingBeta;
+                        _optiCustomBeforeAutoNightlySwitch = _optiShowingCustom;
+                    }
                     _optiShowingNightly = true;
                     _optiShowingBeta = false;
                     _optiShowingCustom = false;
@@ -2640,12 +2662,20 @@ namespace OptiscalerClient.Views
                     await ShowToastAsync(GetResourceString("TxtMfgRequiresNightlyToast",
                         "MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically."));
                 }
-
-                if (_game.IsOptiscalerInstalled)
+                else if (!needsNightly && !string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
                 {
-                    await Task.Run(() => new GameInstallationService().ApplyFrameGenerationSettings(_game, gpu: gpu));
-                    NeedsScan = true;
+                    _optiShowingBeta = _optiBetaBeforeAutoNightlySwitch;
+                    _optiShowingCustom = _optiCustomBeforeAutoNightlySwitch;
+                    _optiShowingNightly = !_optiShowingBeta && !_optiShowingCustom;
+                    UpdateOptiChannelButtons();
+                    if (_cachedComponentService != null)
+                        PopulateOptiVersionCombo(_cachedComponentService);
+                    SelectOptiVersion(_optiVersionBeforeAutoNightlySwitch);
+                    _optiVersionBeforeAutoNightlySwitch = null;
                 }
+
+                // Staged only — applied to disk when the user explicitly hits Install/Update.
+                RefreshInstallActionAvailability();
             }
             catch (Exception ex)
             {
@@ -3517,7 +3547,8 @@ namespace OptiscalerClient.Views
                 var isNightlyChannel = componentService.IsNightlyOptiScalerVersion(optiscalerVersion);
                 var installStreamline = _game.FrameGenerationSettings != null &&
                     fgConfigService.RequiresStreamline(_game.FrameGenerationSettings, fgConfigService.DetectCapabilities(_game, installGpu), optiscalerVersion);
-                var mfgWithEnabler = _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
+                var mfgWithEnabler = _game.FrameGenerationSettings?.Route != FrameGenerationRoute.Disabled &&
+                    _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
                     _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
                 var streamlineCacheDir = string.Empty;
                 if (installStreamline)
@@ -3766,7 +3797,8 @@ namespace OptiscalerClient.Views
                                                         streamlineCachePath: streamlineCacheDir,
                                                         ensureFakenvapiIfMissing: isNightlyChannel,
                                                         installDlssEnabler: mfgWithEnabler,
-                                                        dlssEnablerCachePath: dlssEnablerCacheDir);
+                                                        dlssEnablerCachePath: dlssEnablerCacheDir,
+                                                        gpu: preferredGpuForFsr4);
                     });
                 }
                 catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone)
@@ -4162,11 +4194,94 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
-        /// The whole point of "Opti = None + Extras = version" mode: replace a single DLL already
-        /// sitting in the game folder with the selected FSR4 INT8 build, without touching OptiScaler,
-        /// the profile, injection method, or any other selected component. Backs the original up
-        /// through the same external store InstallOptiScaler/UninstallOptiScaler use, so a later
-        /// Uninstall/"Restore original DLL" reverts it — see context/plans/fsr4_dll_swap_plan.md.
+        /// Shows the "which files to swap/copy" overlay when a package has more than one recognized
+        /// file, and awaits the user's checked selection (Tag = target file name). Returns null if
+        /// the user cancels, or the list of chosen target file names on confirm (never empty on
+        /// confirm — the button only enables once at least one box is checked... actually it's left
+        /// enabled and an empty confirm is treated as an implicit cancel by the caller).
+        /// </summary>
+        private Task<List<string>?> ShowFsr4SwapSelectionAsync(List<(string FileName, string EffectLabel, bool ExistsAtDestination)> options)
+        {
+            var panel = this.FindControl<StackPanel>("PnlFsr4SwapFileOptions");
+            var overlay = this.FindControl<Grid>("BdFsr4SwapSelection");
+            if (panel == null || overlay == null)
+                return Task.FromResult<List<string>?>(options.Select(o => o.FileName).ToList());
+
+            var textPrimary = Application.Current?.FindResource("BrTextPrimary") as IBrush ?? Brushes.White;
+            var textSecondary = Application.Current?.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray;
+
+            panel.Children.Clear();
+            foreach (var opt in options)
+            {
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+                row.Children.Add(new TextBlock { Text = opt.EffectLabel, FontWeight = Avalonia.Media.FontWeight.SemiBold, Foreground = textPrimary, VerticalAlignment = VerticalAlignment.Center });
+                row.Children.Add(new TextBlock { Text = opt.FileName, FontSize = 11, Foreground = textSecondary, VerticalAlignment = VerticalAlignment.Center });
+                row.Children.Add(new Border
+                {
+                    CornerRadius = new CornerRadius(4),
+                    Background = new SolidColorBrush(Color.Parse(opt.ExistsAtDestination ? "#D97706" : "#16A34A")),
+                    Padding = new Thickness(5, 1),
+                    Child = new TextBlock
+                    {
+                        Text = opt.ExistsAtDestination ? "REPLACE" : "COPY",
+                        FontSize = 10,
+                        Foreground = Brushes.White,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
+                });
+
+                panel.Children.Add(new CheckBox { IsChecked = true, Content = row, Tag = opt.FileName });
+            }
+
+            overlay.IsVisible = true;
+            _fsr4SwapSelectionTcs = new TaskCompletionSource<List<string>?>();
+            return _fsr4SwapSelectionTcs.Task;
+        }
+
+        private async void BtnFsr4SwapOpenSettings_Click(object? sender, PointerPressedEventArgs e)
+        {
+            try
+            {
+                var dialog = new ManageDefaultVersionsWindow(this, new ComponentManagementService());
+                await dialog.ShowDialog<bool?>(this);
+            }
+            catch (Exception ex) { DebugWindow.Log($"[ManageGame] FSR 4 Swap Options dialog failed: {ex.Message}"); }
+        }
+
+        private void BtnFsr4SwapSelectionCancel_Click(object sender, RoutedEventArgs e)
+        {
+            var overlay = this.FindControl<Grid>("BdFsr4SwapSelection");
+            if (overlay != null) overlay.IsVisible = false;
+            _fsr4SwapSelectionTcs?.TrySetResult(null);
+            _fsr4SwapSelectionTcs = null;
+        }
+
+        private void BtnFsr4SwapSelectionConfirm_Click(object sender, RoutedEventArgs e)
+        {
+            var overlay = this.FindControl<Grid>("BdFsr4SwapSelection");
+            var panel = this.FindControl<StackPanel>("PnlFsr4SwapFileOptions");
+            if (overlay != null) overlay.IsVisible = false;
+
+            var selected = panel?.Children.OfType<CheckBox>()
+                .Where(c => c.IsChecked == true)
+                .Select(c => c.Tag as string)
+                .Where(s => s != null)
+                .Select(s => s!)
+                .ToList() ?? new List<string>();
+
+            _fsr4SwapSelectionTcs?.TrySetResult(selected);
+            _fsr4SwapSelectionTcs = null;
+        }
+
+        /// <summary>
+        /// The whole point of "Opti = None + Extras = version" mode: replace/copy the FSR4 file(s)
+        /// already sitting in (or missing from) the game folder with the selected build, without
+        /// touching OptiScaler, the profile, injection method, or any other selected component. Backs
+        /// originals up through the same external store InstallOptiScaler/UninstallOptiScaler use, so a
+        /// later Uninstall/"Restore original DLL" reverts it — see context/plans/fsr4_dll_swap_plan.md.
+        /// A package containing more than one recognized file (FidelityFX SDK 2.0+ split-effect DLLs)
+        /// prompts the user to choose which of them to swap/copy.
         /// </summary>
         private async Task ExecuteDllSwapAsync(bool isManualMode, string extrasVersion)
         {
@@ -4235,17 +4350,18 @@ namespace OptiscalerClient.Views
                 Dispatcher.UIThread.Post(() =>
                 {
                     if (bdProgress != null) bdProgress.IsVisible = true;
-                    if (txtProgressState != null) txtProgressState.Text = $"Downloading FSR4 INT8 v{extrasVersion}...";
+                    if (txtProgressState != null) txtProgressState.Text = $"Downloading FSR4 v{extrasVersion}...";
                     if (prgDownload != null) prgDownload.IsIndeterminate = false;
                 });
 
                 // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
-                // for a given version — everything else (both names of the main DLL) comes from the
-                // regular Extras package, regardless of how the target was found (auto or manual).
-                // targetPath is only null here for "nothing found" auto mode, which is never the
-                // RDNA2 companion case (that requires an existing amdxc64.dll to have been found).
+                // for a given version — everything else comes from the regular Extras package,
+                // regardless of how the target was found (auto or manual). targetPath is only null
+                // here for "nothing found" auto mode, which is never the RDNA2 companion case (that
+                // requires an existing amdxc64.dll to have been found).
                 var targetFileName = targetPath != null ? System.IO.Path.GetFileName(targetPath) : null;
-                string sourcePath;
+                List<(string TargetPath, string SourceContentPath)> filesToSwap;
+
                 if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
@@ -4260,21 +4376,68 @@ namespace OptiscalerClient.Views
                         ).ShowDialog<object>(this);
                         return;
                     }
-                    sourcePath = rdna2Path;
+                    filesToSwap = new() { (targetPath!, rdna2Path) };
+                }
+                else if (isManualMode)
+                {
+                    // Manual mode is about forcing ANY arbitrary existing file (any name) to be
+                    // replaced with the package's content — not about picking among several packaged
+                    // files by name — so it keeps its original single-file behavior unchanged.
+                    var extrasProgress = new Progress<double>(p =>
+                        Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
+                    var sourcePath = await componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+                    filesToSwap = new() { (targetPath!, sourcePath) };
                 }
                 else
                 {
                     var extrasProgress = new Progress<double>(p =>
                         Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
-                    sourcePath = await componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+                    var packagedFiles = await componentService.GetExtrasPackagedFileNamesAsync(extrasVersion, extrasProgress);
+                    if (packagedFiles.Count == 0)
+                        throw new InvalidOperationException("This FSR4 version doesn't contain any recognized file.");
 
-                    // Nothing existed to replace — place the file under its own name from the
-                    // package, exactly as extracted, instead of forcing it to a canonical name.
-                    if (targetPath == null)
+                    var cacheDir = componentService.GetExtrasDllCachePath(extrasVersion);
+                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDir, cacheDir, packagedFiles);
+
+                    if (candidates.Count > 1 && componentService.Config.Fsr4SwapAskEveryTime)
                     {
-                        targetPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(sourcePath));
-                        targetFileName = System.IO.Path.GetFileName(targetPath);
+                        Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                        var options = candidates.Select(c => (
+                            FileName: System.IO.Path.GetFileName(c.TargetPath),
+                            EffectLabel: Fsr4Int8DllHelper.GetEffectDisplayName(System.IO.Path.GetFileName(c.SourceContentPath)),
+                            ExistsAtDestination: File.Exists(c.TargetPath)
+                        )).ToList();
+
+                        var chosen = await ShowFsr4SwapSelectionAsync(options);
+                        if (chosen == null || chosen.Count == 0) return; // Cancelled, or nothing checked
+
+                        candidates = candidates
+                            .Where(c => chosen.Contains(System.IO.Path.GetFileName(c.TargetPath), StringComparer.OrdinalIgnoreCase))
+                            .ToList();
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (bdProgress != null) bdProgress.IsVisible = true;
+                            if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                        });
                     }
+                    else if (candidates.Count > 1)
+                    {
+                        // "Choose default values" configured in FSR 4 Swap Options — apply the
+                        // pre-selected files silently instead of asking every time.
+                        candidates = Fsr4Int8DllHelper.FilterCandidatesByDefaultKeys(candidates, componentService.Config.Fsr4SwapDefaultFileKeys);
+                        if (candidates.Count == 0)
+                        {
+                            Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                            await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                                GetResourceString("TxtFsr4SwapNoDefaultsConfigured",
+                                    "No files are selected in FSR 4 Swap Options (Settings). Check at least one file there, or switch it back to \"Ask me every time\".")
+                            ).ShowDialog<object>(this);
+                            return;
+                        }
+                    }
+
+                    filesToSwap = candidates;
+                    targetFileName = string.Join(", ", candidates.Select(c => System.IO.Path.GetFileName(c.TargetPath)));
                 }
 
                 Dispatcher.UIThread.Post(() =>
@@ -4283,7 +4446,7 @@ namespace OptiscalerClient.Views
                     if (prgDownload != null) prgDownload.IsIndeterminate = true;
                 });
 
-                await Task.Run(() => installService.SwapFsr4Dll(_game, targetPath!, sourcePath, extrasVersion));
+                var swapResult = await Task.Run(() => installService.SwapFsr4Dll(_game, gameDir, filesToSwap, extrasVersion));
 
                 NeedsScan = true;
                 UpdateStatus();
@@ -4291,8 +4454,8 @@ namespace OptiscalerClient.Views
 
                 Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
 
-                var successFormat = GetResourceString("TxtSwapDllSuccessFormat", "FSR4 INT8 v{0} swapped into {1}.");
-                await ShowToastAsync(string.Format(successFormat, extrasVersion, targetFileName));
+                var successFormat = GetResourceString("TxtSwapDllSuccessFormat", "FSR4 v{0} swapped into {1}.");
+                await ShowToastAsync(string.Format(successFormat, extrasVersion, string.Join(", ", swapResult.TargetFileNames)));
             }
             catch (Exception ex)
             {
@@ -4565,6 +4728,8 @@ namespace OptiscalerClient.Views
             }
 
             UpdateInstallButtonsForSwapState();
+            CaptureConfigOnlyBaseline();
+            RefreshInstallActionAvailability();
         }
 
         private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);
@@ -4835,6 +5000,7 @@ namespace OptiscalerClient.Views
             }
 
             UpdateInstallButtonsForSwapState();
+            RefreshInstallActionAvailability();
         }
 
         /// <summary>
@@ -4905,6 +5071,288 @@ namespace OptiscalerClient.Views
                 btnInstallManual.IsEnabled = true;
                 btnInstall.Content = GetResourceString("TxtBtnAutoSwapDll", "✦ Auto-Swap DLL");
                 btnInstallManual.Content = GetResourceString("TxtBtnManualSwapDll", "✦ Manual-Swap DLL");
+            }
+        }
+
+        /// <summary>
+        /// The six "hard" combo selections whose default pre-selection does NOT necessarily reflect
+        /// what's actually installed for this game (e.g. CmbOptiVersion may default to "latest in
+        /// channel" even when an older version is what's really on disk) — so eligibility for
+        /// "Update config only" compares these against a session baseline (captured in
+        /// CaptureConfigOnlyBaseline, right after the window last reflected a real install) instead of
+        /// against the manifest. ExtrasVersion is normalized to null for "none"/empty.
+        /// </summary>
+        private sealed record HardInstallSelection(string OptiscalerVersion, string InjectionMethod,
+            bool InstallFakenvapi, bool InstallNukemFG, bool InstallOptiPatcher, string? ExtrasVersion);
+
+        /// <summary>Session baseline for HardInstallSelection — see CaptureConfigOnlyBaseline.</summary>
+        private HardInstallSelection? _installedHardSelectionBaseline;
+
+        private const string InstallActionSentinelTag = "sentinel";
+        private const string InstallActionReinstallTag = "reinstall";
+        private const string InstallActionUpdateConfigTag = "update_config";
+
+        /// <summary>Null when in DLL-swap-only mode (CmbOptiVersion = "none") — not a real install.</summary>
+        private HardInstallSelection? ReadCurrentHardInstallSelection()
+        {
+            var optiscalerVersion = (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            if (string.IsNullOrEmpty(optiscalerVersion) || optiscalerVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var injectionMethod = (this.FindControl<ComboBox>("CmbInjectionMethod")?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "dxgi.dll";
+
+            var fakenvapiTag = (this.FindControl<ComboBox>("CmbFakenvapiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            bool installFakenvapi = !string.IsNullOrEmpty(fakenvapiTag) &&
+                !fakenvapiTag.Equals("none", StringComparison.OrdinalIgnoreCase) && fakenvapiTag != "__manage__";
+
+            var nukemTag = (this.FindControl<ComboBox>("CmbNukemFGVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            bool installNukemFG = !string.IsNullOrEmpty(nukemTag) &&
+                !nukemTag.Equals("none", StringComparison.OrdinalIgnoreCase) && nukemTag != "__manage__";
+
+            var optiPatcherTag = (this.FindControl<ComboBox>("CmbOptiPatcherVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            bool installOptiPatcher = !string.IsNullOrEmpty(optiPatcherTag) &&
+                !optiPatcherTag.Equals("none", StringComparison.OrdinalIgnoreCase);
+
+            var extrasTag = (this.FindControl<ComboBox>("CmbExtrasVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var normalizedExtras = string.IsNullOrEmpty(extrasTag) || extrasTag.Equals("none", StringComparison.OrdinalIgnoreCase)
+                ? null : extrasTag;
+
+            return new HardInstallSelection(optiscalerVersion, injectionMethod, installFakenvapi, installNukemFG,
+                installOptiPatcher, normalizedExtras);
+        }
+
+        /// <summary>
+        /// Snapshots the six HardInstallSelection combos as "what's actually installed right now" —
+        /// call this only from UpdateStatus (window load, and right after a real install/uninstall/swap
+        /// completes), never from a combo's own SelectionChanged, or the baseline would always equal
+        /// the current selection and defeat the whole point.
+        /// </summary>
+        private void CaptureConfigOnlyBaseline()
+        {
+            _installedHardSelectionBaseline = _game.IsOptiscalerInstalled ? ReadCurrentHardInstallSelection() : null;
+            _installedSoftSelectionBaseline = _installedHardSelectionBaseline != null
+                ? ReadCurrentSoftInstallSelection(_installedHardSelectionBaseline.OptiscalerVersion)
+                : null;
+        }
+
+        /// <summary>
+        /// The four config-only-patchable fields, plus the two real components a Frame Generation
+        /// change can newly require (Streamline, DLSS Enabler — both need actual files on disk, not
+        /// just an INI patch). Compared against a session baseline (_installedSoftSelectionBaseline),
+        /// NOT the manifest — see CanApplyConfigOnly's remarks for why: AppliedAtUtc on these settings
+        /// isn't persisted across app restarts, so on a fresh window open they can get silently reset to
+        /// config defaults by Setup*Selector, which would almost never match the manifest's real values.
+        /// </summary>
+        private sealed record SoftInstallSelection(string? ProfileName, string? UpscalingQualityPreset,
+            double? UpscalingQualityRatio, string? OutputUpscalerBackend, string? FrameGenRoute,
+            string? FrameGenOutput, string? FrameGenMfgMode, bool InstallStreamline, bool InstallDlssEnabler);
+
+        private SoftInstallSelection ReadCurrentSoftInstallSelection(string optiscalerVersion)
+        {
+            var profileName = (this.FindControl<ComboBox>("CmbProfile")?.SelectedItem as ComboBoxItem)?.Tag is OptiScalerProfile profile
+                ? profile.Name : null;
+
+            var qualitySettings = _game.UpscalingQualitySettings;
+            var qualityEnabled = qualitySettings != null && qualitySettings.Preset != UpscalingQualityPreset.GameControlled;
+            var upscalingQualityPreset = qualitySettings?.Preset.ToString();
+            double? upscalingQualityRatio = qualityEnabled ? qualitySettings!.Ratio : null;
+            var outputUpscalerBackend = _game.OutputUpscalerSettings?.Backend.ToString();
+            var frameGenRoute = _game.FrameGenerationSettings?.Route.ToString();
+            var frameGenOutput = _game.FrameGenerationSettings?.Output.ToString();
+            var frameGenMfgMode = _game.FrameGenerationSettings?.MultiFrameMode.ToString();
+
+            var componentService = new ComponentManagementService();
+            var fgConfigService = new FrameGenerationConfigurationService();
+            var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+            bool installStreamline = _game.FrameGenerationSettings != null &&
+                _game.FrameGenerationSettings.Route != FrameGenerationRoute.Disabled &&
+                fgConfigService.RequiresStreamline(_game.FrameGenerationSettings, fgConfigService.DetectCapabilities(_game, gpu), optiscalerVersion);
+            bool installDlssEnabler = _game.FrameGenerationSettings?.Route != FrameGenerationRoute.Disabled &&
+                _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
+                _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+
+            return new SoftInstallSelection(profileName, upscalingQualityPreset, upscalingQualityRatio,
+                outputUpscalerBackend, frameGenRoute, frameGenOutput, frameGenMfgMode, installStreamline, installDlssEnabler);
+        }
+
+        /// <summary>Session baseline for SoftInstallSelection — see CaptureConfigOnlyBaseline.</summary>
+        private SoftInstallSelection? _installedSoftSelectionBaseline;
+
+        /// <summary>
+        /// True when Profile/Upscaling Quality/Output Upscaler/Frame Generation actually changed since
+        /// the session baseline, and nothing else did — so a full reinstall would just redo work
+        /// already on disk. Three things must hold: the six HardInstallSelection combos still match
+        /// _installedHardSelectionBaseline; the Streamline/DLSS Enabler requirements (real components,
+        /// not narrow INI patches) still match what the baseline had, so a Frame Generation change that
+        /// newly needs one of them forces a full reinstall instead; and at least one of the four
+        /// config-only fields actually differs from _installedSoftSelectionBaseline — if nothing changed
+        /// at all, there's nothing to offer, and the button must behave like a normal Install/Reinstall.
+        /// </summary>
+        private bool ComputeConfigOnlyEligible()
+        {
+            if (_installedHardSelectionBaseline == null || _installedSoftSelectionBaseline == null) return false;
+
+            var currentHard = ReadCurrentHardInstallSelection();
+            if (currentHard == null || currentHard != _installedHardSelectionBaseline) return false;
+
+            var currentSoft = ReadCurrentSoftInstallSelection(currentHard.OptiscalerVersion);
+            var baseline = _installedSoftSelectionBaseline;
+
+            if (currentSoft.InstallStreamline != baseline.InstallStreamline
+                || currentSoft.InstallDlssEnabler != baseline.InstallDlssEnabler)
+                return false;
+
+            bool anythingChanged =
+                !string.Equals(currentSoft.ProfileName, baseline.ProfileName, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(currentSoft.UpscalingQualityPreset, baseline.UpscalingQualityPreset, StringComparison.OrdinalIgnoreCase)
+                || currentSoft.UpscalingQualityRatio != baseline.UpscalingQualityRatio
+                || !string.Equals(currentSoft.OutputUpscalerBackend, baseline.OutputUpscalerBackend, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(currentSoft.FrameGenRoute, baseline.FrameGenRoute, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(currentSoft.FrameGenOutput, baseline.FrameGenOutput, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(currentSoft.FrameGenMfgMode, baseline.FrameGenMfgMode, StringComparison.OrdinalIgnoreCase);
+
+            if (!anythingChanged) return false;
+
+            return new GameInstallationService().CanApplyConfigOnly(_game);
+        }
+
+        private void PopulateInstallActionCombos()
+        {
+            PopulateInstallActionCombo(this.FindControl<ComboBox>("CmbInstallAction"),
+                GetResourceString("TxtUpdateOpti", "↑ Auto Update / Reinstall"));
+            PopulateInstallActionCombo(this.FindControl<ComboBox>("CmbInstallActionManual"),
+                GetResourceString("TxtUpdateOptiManual", "↑ Manual Update / Reinstall"));
+        }
+
+        private void PopulateInstallActionCombo(ComboBox? combo, string sentinelLabel)
+        {
+            if (combo == null || combo.Items.Count > 0) return;
+
+            // No sentinel item — the label is shown via PlaceholderText (XAML) when nothing
+            // is selected (SelectedIndex = -1). The two real action items follow directly.
+            // Plain ComboBoxItems (no ActionOption class / badge) so they read as normal
+            // options rather than styled "action buttons".
+            combo.Items.Add(new ComboBoxItem
+            {
+                Content = GetResourceString("TxtReinstallMenuOption", "↻ Reinstall"),
+                Tag = InstallActionReinstallTag
+            });
+            combo.Items.Add(new ComboBoxItem
+            {
+                Content = GetResourceString("TxtUpdateConfigOnly", "⚙ Update config only"),
+                Tag = InstallActionUpdateConfigTag
+            });
+            combo.SelectedIndex = -1;
+        }
+
+        /// <summary>
+        /// Swaps BtnInstall/BtnInstallManual for CmbInstallAction/CmbInstallActionManual (and back)
+        /// depending on eligibility. Called after every Profile/Upscaling Quality/Output
+        /// Upscaler/Frame Generation staging change, plus the OptiScaler-version and Extras combos (the
+        /// two "hard" selectors that already had a SelectionChanged hook). The combo handlers recheck
+        /// eligibility themselves before applying anything, so this being stale (e.g. from touching
+        /// Fakenvapi/NukemFG/OptiPatcher/Injection Method, which aren't hooked here) can never cause a
+        /// wrong partial update — worst case it shows an error and points at Reinstall instead.
+        /// </summary>
+        private void RefreshInstallActionAvailability()
+        {
+            var btnInstall = this.FindControl<Button>("BtnInstall");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+            var cmbInstallAction = this.FindControl<ComboBox>("CmbInstallAction");
+            var cmbInstallActionManual = this.FindControl<ComboBox>("CmbInstallActionManual");
+
+            var eligible = ComputeConfigOnlyEligible();
+
+            if (btnInstall != null) btnInstall.IsVisible = !eligible;
+            if (btnInstallManual != null) btnInstallManual.IsVisible = !eligible;
+
+            if (cmbInstallAction != null)
+            {
+                cmbInstallAction.IsVisible = eligible;
+                if (eligible) cmbInstallAction.SelectedIndex = -1;
+            }
+            if (cmbInstallActionManual != null)
+            {
+                cmbInstallActionManual.IsVisible = eligible;
+                if (eligible) cmbInstallActionManual.SelectedIndex = -1;
+            }
+        }
+
+        private async void CmbInstallAction_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox combo || combo.SelectedItem is not ComboBoxItem item) return;
+            await HandleInstallActionSelectionAsync(combo, item.Tag as string, isManualMode: false);
+        }
+
+        private async void CmbInstallActionManual_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox combo || combo.SelectedItem is not ComboBoxItem item) return;
+            await HandleInstallActionSelectionAsync(combo, item.Tag as string, isManualMode: true);
+        }
+
+        private async Task HandleInstallActionSelectionAsync(ComboBox combo, string? tag, bool isManualMode)
+        {
+            if (tag != InstallActionReinstallTag && tag != InstallActionUpdateConfigTag)
+                return; // the sentinel placeholder itself — not a real choice
+
+            // Snap back to the placeholder immediately so the combo doesn't sit showing "Reinstall" or
+            // "Update config only" as if that were now the persisted selection while the action runs.
+            combo.SelectedIndex = -1;
+            combo.IsEnabled = false;
+            try
+            {
+                if (tag == InstallActionReinstallTag)
+                {
+                    try { await ExecuteInstallAsync(isManualMode); }
+                    catch (Exception ex) { DebugWindow.Log($"[ManageGame] Install failed: {ex.Message}"); }
+                }
+                else
+                {
+                    await ExecuteConfigOnlyUpdateAsync();
+                }
+            }
+            finally
+            {
+                combo.IsEnabled = true;
+            }
+        }
+
+        private async Task ExecuteConfigOnlyUpdateAsync()
+        {
+            if (!ComputeConfigOnlyEligible())
+            {
+                RefreshInstallActionAvailability();
+                await ShowToastAsync(GetResourceString("TxtConfigOnlyNoLongerAvailable",
+                    "Something else changed — use Install/Reinstall instead."));
+                return;
+            }
+
+            try
+            {
+                var installService = new GameInstallationService();
+                var componentService = new ComponentManagementService();
+                var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+
+                var cmbProfile = this.FindControl<ComboBox>("CmbProfile");
+                if (cmbProfile?.SelectedItem is ComboBoxItem profileItem && profileItem.Tag is OptiScalerProfile profile)
+                    await Task.Run(() => installService.ApplyProfileSettings(_game, profile));
+
+                if (_game.FrameGenerationSettings != null)
+                    await Task.Run(() => installService.ApplyFrameGenerationSettings(_game, gpu: gpu));
+                if (_game.UpscalingQualitySettings != null)
+                    await Task.Run(() => installService.ApplyUpscalingQualitySettings(_game));
+                if (_game.OutputUpscalerSettings != null)
+                    await Task.Run(() => installService.ApplyOutputUpscalerSettings(_game));
+
+                NeedsScan = true;
+                UpdateStatus();
+                await ShowToastAsync(GetResourceString("TxtConfigOnlyUpdateApplied", "Configuration updated."));
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    $"{GetResourceString("TxtConfigOnlyUpdateError", "Could not update the configuration:")}\n{ex.Message}")
+                    .ShowDialog<object>(this);
             }
         }
 

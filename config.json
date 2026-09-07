@@ -27,6 +27,10 @@
         "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Extras"
     },
+    "OptiScalerExtrasFp8": {
+        "RepoOwner": "Optiscaler-Client",
+        "RepoName": "Optiscaler-Extras-FP8"
+    },
     "Fakenvapi": {
         "RepoOwner": "optiscaler",
         "RepoName": "fakenvapi"

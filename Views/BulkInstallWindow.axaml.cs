@@ -819,7 +819,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         streamlineCachePath: streamlineCacheDir,
                         ensureFakenvapiIfMissing: isNightlyChannel,
                         installDlssEnabler: mfgWithEnabler,
-                        dlssEnablerCachePath: dlssEnablerCacheDir
+                        dlssEnablerCachePath: dlssEnablerCacheDir,
+                        gpu: preferredGpuForFsr4
                     );
                 });
 
@@ -1020,7 +1021,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // targetPath is only null here for "nothing found", which is never the RDNA2
                 // companion case (that requires an existing amdxc64.dll to have been found).
                 var targetFileName = targetPath != null ? System.IO.Path.GetFileName(targetPath) : null;
-                string sourcePath;
+                List<(string TargetPath, string SourceContentPath)> filesToSwap;
                 if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (_componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
@@ -1035,24 +1036,43 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         skippedCount++;
                         continue;
                     }
-                    sourcePath = rdna2Path;
+                    filesToSwap = new() { (targetPath!, rdna2Path) };
                 }
                 else
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
-                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading FSR4 INT8 v{extrasVersion} for {gameItem.Name}...";
+                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading FSR4 v{extrasVersion} for {gameItem.Name}...";
                         if (progressBar != null) progressBar.IsIndeterminate = false;
                     });
 
                     var extrasProgress = new Progress<double>(p =>
                         Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.Value = p; }));
-                    sourcePath = await _componentService.DownloadExtrasDllAsync(extrasVersion, extrasProgress);
+                    var packagedFiles = await _componentService.GetExtrasPackagedFileNamesAsync(extrasVersion, extrasProgress);
+                    if (packagedFiles.Count == 0)
+                    {
+                        DebugWindow.Log($"[BulkInstall][DllSwap] FSR4 v{extrasVersion} package has no recognized file for {gameItem.Name}, skipping.");
+                        skippedCount++;
+                        continue;
+                    }
 
-                    // Nothing existed to replace — place the file under its own name from the
-                    // package, exactly as extracted, instead of forcing it to a canonical name.
-                    if (targetPath == null)
-                        targetPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(sourcePath));
+                    // Batch context: no per-game picker, so either every recognized file in the
+                    // package is swapped/copied (default), or the fixed set configured in FSR 4 Swap
+                    // Options (Settings) when the user chose "Choose default values" — see
+                    // ExecuteDllSwapAsync in ManageGameWindow for the interactive per-file choice used
+                    // outside bulk mode.
+                    var cacheDir = _componentService.GetExtrasDllCachePath(extrasVersion);
+                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDir, cacheDir, packagedFiles);
+                    if (!_componentService.Config.Fsr4SwapAskEveryTime)
+                        candidates = Fsr4Int8DllHelper.FilterCandidatesByDefaultKeys(candidates, _componentService.Config.Fsr4SwapDefaultFileKeys);
+
+                    if (candidates.Count == 0)
+                    {
+                        DebugWindow.Log($"[BulkInstall][DllSwap] No files selected to swap for {gameItem.Name} (check FSR 4 Swap Options), skipping.");
+                        skippedCount++;
+                        continue;
+                    }
+                    filesToSwap = candidates;
                 }
 
                 Dispatcher.UIThread.Post(() =>
@@ -1061,7 +1081,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     if (progressBar != null) progressBar.IsIndeterminate = true;
                 });
 
-                await Task.Run(() => _installService.SwapFsr4Dll(gameItem.Game, targetPath!, sourcePath, extrasVersion));
+                await Task.Run(() => _installService.SwapFsr4Dll(gameItem.Game, gameDir, filesToSwap, extrasVersion));
 
                 Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
 
@@ -1376,6 +1396,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             HasFsrFgDependencies = capabilities.All(item => item.HasFsrFgDependencies),
             HasNukem = capabilities.All(item => item.HasNukem),
             IsIntelArc = capabilities.All(item => item.IsIntelArc),
+            SupportsDynamicMfg = capabilities.All(item => item.SupportsDynamicMfg),
             IsAntiCheatDetected = capabilities.Any(item => item.IsAntiCheatDetected),
             AvailableRoutes = routes.ToList(),
             AvailableOutputs = outputs.ToList(),

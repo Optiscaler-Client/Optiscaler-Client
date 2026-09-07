@@ -5536,7 +5536,8 @@ namespace OptiscalerClient.Views
                                 streamlineCachePath: streamlineCacheDir,
                                 ensureFakenvapiIfMissing: isNightlyChannel,
                                 installDlssEnabler: mfgWithEnabler,
-                                dlssEnablerCachePath: quickInstallDlssEnablerCacheDir
+                                dlssEnablerCachePath: quickInstallDlssEnablerCacheDir,
+                                gpu: preferredGpuForFsr4
                             );
                         });
 

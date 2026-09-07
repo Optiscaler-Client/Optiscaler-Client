@@ -47,9 +47,13 @@ namespace OptiscalerClient.Services
             "nvapi64.dll", "fakenvapi.ini", "fakenvapi.log", "fakenvapi.dll",
             // NukemFG
             "dlssg_to_fsr3_amd_is_better.dll",
-            // FSR 4 INT8 mod (name changed between releases: legacy + current)
+            // FSR 4 mod DLLs (name changed between releases, plus FidelityFX SDK 2.0+ split-effect DLLs)
             Fsr4Int8DllHelper.LegacyFileName,
             Fsr4Int8DllHelper.CurrentFileName,
+            Fsr4Int8DllHelper.RadianceCacheFileName,
+            Fsr4Int8DllHelper.LoaderFileName,
+            Fsr4Int8DllHelper.FrameGenerationFileName,
+            Fsr4Int8DllHelper.DenoiserFileName,
             // OptiPatcher
             @"plugins\OptiPatcher.asi"
         };
@@ -102,7 +106,8 @@ namespace OptiscalerClient.Services
                                      bool isRdna4 = false, bool isRdna2 = false,
                                      bool installStreamline = false, string streamlineCachePath = "",
                                      bool ensureFakenvapiIfMissing = false,
-                                     bool installDlssEnabler = false, string dlssEnablerCachePath = "")
+                                     bool installDlssEnabler = false, string dlssEnablerCachePath = "",
+                                     GpuInfo? gpu = null)
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
             DebugWindow.Log($"[Install] Version: {optiscalerVersion}, Injection: {injectionDllName}");
@@ -691,7 +696,7 @@ namespace OptiscalerClient.Services
             if (game.FrameGenerationSettings != null)
             {
                 rollbackJournal.CaptureFile("OptiScaler.ini");
-                ApplyFrameGenerationSettings(game, gameDir, optiscalerVersion: optiscalerVersion);
+                ApplyFrameGenerationSettings(game, gameDir, gpu, optiscalerVersion);
             }
 
             // Apply the per-game quality ratio after the shared profile as another narrow INI
@@ -893,6 +898,54 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
+        /// Applies just the OptiScaler profile's INI as a narrow patch over the existing installation —
+        /// same "no DLLs touched, no re-download" shape as ApplyUpscalingQualitySettings/
+        /// ApplyOutputUpscalerSettings/ApplyFrameGenerationSettings above, for the one remaining
+        /// per-game setting (Profile) that previously required a full reinstall to take effect.
+        /// </summary>
+        public void ApplyProfileSettings(Game game, OptiScalerProfile profile, string? resolvedGameDir = null)
+        {
+            var gameDir = resolvedGameDir ?? DetermineInstallDirectory(game);
+            if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+                throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
+
+            new ProfileManagementService().WriteOptiScalerIniToFile(gameDir, profile);
+
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            if (manifest != null)
+            {
+                manifest.AppliedProfileName = profile.Name;
+                _backupStore.SaveManifest(game.InstallPath, manifest);
+            }
+
+            DebugWindow.Log($"[Profile] Applied profile '{profile.Name}' without reinstalling for {game.Name}; restart required.");
+        }
+
+        /// <summary>
+        /// True when there's a valid committed install to patch in place at all. This is deliberately
+        /// just an existence guard — it does NOT compare current selections against the manifest.
+        /// </summary>
+        /// <remarks>
+        /// Earlier revisions compared Profile/Upscaling Quality/Output Upscaler/Frame Generation (and
+        /// their Streamline/DLSS Enabler requirements) against the manifest here, but that broke on the
+        /// very first window open for an already-installed game: GameUpscalingQualitySettings/
+        /// GameOutputUpscalerSettings/GameFrameGenerationSettings.AppliedAtUtc is a runtime-only marker
+        /// that isn't persisted across app restarts, so ManageGameWindow's own Setup*Selector methods
+        /// (seeing AppliedAtUtc == null) reset those settings to the app's configured defaults before
+        /// the user has touched anything — which then never matched the manifest's real applied values,
+        /// making "Update config only" appear immediately with nothing actually changed. The caller
+        /// (ManageGameWindow) now compares current selections against a session baseline captured right
+        /// after the window last reflected a real install instead, which is immune to that mismatch.
+        /// </remarks>
+        public bool CanApplyConfigOnly(Game game)
+        {
+            if (!game.IsOptiscalerInstalled) return false;
+
+            var manifest = _backupStore.LoadManifest(game.InstallPath);
+            return manifest != null && string.Equals(manifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// Default re-resolves the Upscalers keys (and UpscalerIndex, in case a prior Fsr3 selection
         /// forced it) from the profile currently applied to this game (recorded on the manifest), by
         /// generating that profile's INI in memory and reading the values back — reusing
@@ -944,26 +997,29 @@ namespace OptiscalerClient.Services
             return null;
         }
 
-        public sealed record DllSwapResult(string TargetFileName, string ExtrasVersion);
+        public sealed record DllSwapResult(List<string> TargetFileNames, string ExtrasVersion);
 
         /// <summary>
-        /// Replaces targetPath (one of Fsr4Int8DllHelper.SwapTargetFileNames, in the game's root)
-        /// with sourceContentPath's bytes, without touching OptiScaler or any other file. targetPath
-        /// need not exist yet — e.g. Opti=None DLL-swap-only mode still copies the file in even when
-        /// there's nothing to replace. A genuine pre-existing original gets backed up into the same
-        /// external backup store (same storeKey = game.InstallPath) InstallOptiScaler/UninstallOptiScaler
-        /// use, so a later UninstallOptiScaler restores it automatically; a file that didn't exist
-        /// before is tracked as created instead, so uninstall deletes it rather than "restoring"
-        /// something that never existed. Works whether or not OptiScaler ever got installed on top
-        /// of this in the meantime (both flags can coexist on one manifest).
+        /// Replaces/copies one or more files directly in the game's root (gameDir) with the given
+        /// source content, without touching OptiScaler or any other file. A target need not exist yet
+        /// — e.g. Opti=None DLL-swap-only mode still copies files in even when there's nothing to
+        /// replace. A genuine pre-existing original gets backed up into the same external backup
+        /// store (same storeKey = game.InstallPath) InstallOptiScaler/UninstallOptiScaler use, so a
+        /// later UninstallOptiScaler restores it automatically; a file that didn't exist before is
+        /// tracked as created instead, so uninstall deletes it rather than "restoring" something that
+        /// never existed. Works whether or not OptiScaler ever got installed on top of this in the
+        /// meantime (both flags can coexist on one manifest). Multiple files (e.g. a FidelityFX SDK
+        /// 2.0+ package shipping the upscaler, loader, frame generation and denoiser DLLs together)
+        /// are all tracked in the same manifest/commit.
         /// </summary>
-        public DllSwapResult SwapFsr4Dll(Game game, string targetPath, string sourceContentPath, string extrasVersion)
+        public DllSwapResult SwapFsr4Dll(Game game, string gameDir, IReadOnlyList<(string TargetPath, string SourceContentPath)> files, string extrasVersion)
         {
-            if (!File.Exists(sourceContentPath))
-                throw new FileNotFoundException("FSR4 INT8 replacement content not found (download/cache missing).");
+            if (files.Count == 0)
+                throw new ArgumentException("No files selected to swap.", nameof(files));
+            foreach (var f in files)
+                if (!File.Exists(f.SourceContentPath))
+                    throw new FileNotFoundException($"FSR4 replacement content not found for '{Path.GetFileName(f.TargetPath)}' (download/cache missing).");
 
-            var gameDir = Path.GetDirectoryName(targetPath)!;
-            var targetFileName = Path.GetFileName(targetPath);
             var storeKey = game.InstallPath;
 
             // Reuse (don't clobber) an existing committed manifest — e.g. OptiScaler already
@@ -985,17 +1041,20 @@ namespace OptiscalerClient.Services
                 };
             }
 
-            CopyWithBackupTracking(manifest!, storeKey, gameDir, targetPath, sourceContentPath);
+            foreach (var (targetPath, sourceContentPath) in files)
+                CopyWithBackupTracking(manifest!, storeKey, gameDir, targetPath, sourceContentPath);
+
+            var targetFileNames = files.Select(f => Path.GetFileName(f.TargetPath)).ToList();
 
             manifest!.IncludesDllSwap = true;
-            manifest.DllSwapTargetFileName = targetFileName;
+            manifest.DllSwapTargetFileName = string.Join(", ", targetFileNames);
             manifest.DllSwapExtrasVersion = extrasVersion;
             manifest.OperationStatus = "committed";
             manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
             _backupStore.SaveManifest(storeKey, manifest);
 
             game.IsFsr4DllSwapped = true;
-            game.Fsr4DllSwapTargetFileName = targetFileName;
+            game.Fsr4DllSwapTargetFileName = manifest.DllSwapTargetFileName;
             game.Fsr4ExtraVersion = extrasVersion;
 
             // Re-analyze so the UI reflects the swap immediately, same as InstallOptiScaler does.
@@ -1004,8 +1063,8 @@ namespace OptiscalerClient.Services
             analyzer.AnalyzeGame(game, forceRefresh: true);
             GameAnalyzerService.FlushCacheToDisk();
 
-            DebugWindow.Log($"[DllSwap] Swapped '{targetFileName}' for '{game.Name}' with FSR4 INT8 v{extrasVersion}");
-            return new DllSwapResult(targetFileName, extrasVersion);
+            DebugWindow.Log($"[DllSwap] Swapped [{manifest.DllSwapTargetFileName}] for '{game.Name}' with FSR4 v{extrasVersion}");
+            return new DllSwapResult(targetFileNames, extrasVersion);
         }
 
         /// <summary>
@@ -1611,7 +1670,11 @@ namespace OptiscalerClient.Services
                 "fakenvapi.dll",
                 "dlssg_to_fsr3_amd_is_better.dll",
                 Fsr4Int8DllHelper.LegacyFileName,
-                Fsr4Int8DllHelper.CurrentFileName
+                Fsr4Int8DllHelper.CurrentFileName,
+                Fsr4Int8DllHelper.RadianceCacheFileName,
+                Fsr4Int8DllHelper.LoaderFileName,
+                Fsr4Int8DllHelper.FrameGenerationFileName,
+                Fsr4Int8DllHelper.DenoiserFileName
             };
 
             var snapshots = new List<KeyFileSnapshot>();

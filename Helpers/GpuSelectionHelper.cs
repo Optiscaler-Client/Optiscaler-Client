@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Helpers
@@ -60,6 +61,16 @@ namespace OptiscalerClient.Helpers
                    gpu.Name.Contains("Van Gogh", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("660M", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("680M", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>Nvidia Blackwell (GeForce RTX 50 series) is the only Nvidia generation with native
+        /// Dynamic Multi Frame Generation support (OptiScaler's ForceDMFG/OverrideForceDMFG). Matches
+        /// RTX 5050/5060/5070/5080/5090 (with optional Ti/Laptop suffixes) but not the RTX 5000 Ada
+        /// workstation card, which is Ada Lovelace, not Blackwell.</summary>
+        public static bool IsBlackwell(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
+                   Regex.IsMatch(gpu.Name, @"RTX\s?50(50|60|70|80|90)", RegexOptions.IgnoreCase);
         }
     }
 }

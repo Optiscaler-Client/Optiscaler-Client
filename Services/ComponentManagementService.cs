@@ -160,7 +160,12 @@ namespace OptiscalerClient.Services
                 : InferFsr4DllVariant(version);
         }
 
-        public string GetExtrasDllDisplayName(string version) => Fsr4Int8DllHelper.FormatVersionLabel(version);
+        public string GetExtrasDllDisplayName(string version)
+        {
+            var variant = GetExtrasDllVariant(version);
+            var siblings = ExtrasAvailableVersions.Where(v => GetExtrasDllVariant(v) == variant);
+            return Fsr4Int8DllHelper.FormatDisplayLabel(version, siblings);
+        }
 
         public System.Collections.Generic.List<string> ExtrasDownloadedVersions
             => GetDownloadedExtrasVersions();
@@ -302,6 +307,7 @@ namespace OptiscalerClient.Services
                 if (!string.IsNullOrEmpty(template.OptiScalerNightly.RepoOwner)) target.OptiScalerNightly = template.OptiScalerNightly;
                 if (!string.IsNullOrEmpty(template.Streamline.RepoOwner))       target.Streamline     = template.Streamline;
                 if (!string.IsNullOrEmpty(template.OptiScalerExtras.RepoOwner))target.OptiScalerExtras = template.OptiScalerExtras;
+                if (!string.IsNullOrEmpty(template.OptiScalerExtrasFp8.RepoOwner)) target.OptiScalerExtrasFp8 = template.OptiScalerExtrasFp8;
                 if (!string.IsNullOrEmpty(template.Fakenvapi.RepoOwner))      target.Fakenvapi      = template.Fakenvapi;
                 if (!string.IsNullOrEmpty(template.NukemFG.RepoOwner))        target.NukemFG        = template.NukemFG;
                 if (!string.IsNullOrEmpty(template.OptiPatcher.RepoOwner))    target.OptiPatcher    = template.OptiPatcher;
@@ -712,11 +718,13 @@ namespace OptiscalerClient.Services
                         await Task.Delay(150);
                         var extrasTask = FetchExtrasReleasesAsync();
                         await Task.Delay(150);
+                        var extrasFp8Task = FetchExtrasFp8ReleasesAsync();
+                        await Task.Delay(150);
                         var optiPatcherTask = FetchOptiPatcherReleasesAsync();
                         await Task.Delay(150);
                         var dlssEnablerMirrorTask = FetchDlssEnablerMirrorReleasesAsync();
 
-                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, optiPatcherTask, dlssEnablerMirrorTask);
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask);
 
                         var stableEntries = await optiVersionsTask;
                         var betaEntries = await optiBetasTask;
@@ -730,7 +738,7 @@ namespace OptiscalerClient.Services
                             RebuildInMemoryCacheFromReleases();
                         }
 
-                        var newExtras = await extrasTask;
+                        var newExtras = (await extrasTask).Concat(await extrasFp8Task).ToList();
                         if (newExtras.Count > 0)
                         {
                             // Merge extras: add new, never remove old
@@ -1086,28 +1094,39 @@ namespace OptiscalerClient.Services
             return (versions, latestVersion);
         }
 
-        // ── OptiScaler Extras (FSR4 INT8) ────────────────────────────────────────
+        // ── OptiScaler Extras (FSR4 INT8 / FP8) ──────────────────────────────────
 
         /// <summary>
-        /// Fetches all releases from the OptiScaler Extras repo.
+        /// Fetches all releases from the OptiScaler Extras (INT8) repo.
         /// </summary>
-        private async Task<System.Collections.Generic.List<ExtrasReleaseEntry>> FetchExtrasReleasesAsync()
+        private Task<System.Collections.Generic.List<ExtrasReleaseEntry>> FetchExtrasReleasesAsync()
+            => FetchExtrasReleasesFromRepoAsync(_config.OptiScalerExtras, "ExtrasVersions", forcedVariant: null);
+
+        /// <summary>
+        /// Fetches all releases from the official FSR4 FP8 mirror repo (Optiscaler-Extras-FP8),
+        /// synced automatically from AMD's FidelityFX-SDK. Every release there is FP8 by
+        /// construction, so the variant is forced rather than inferred from release/asset text.
+        /// </summary>
+        private Task<System.Collections.Generic.List<ExtrasReleaseEntry>> FetchExtrasFp8ReleasesAsync()
+            => FetchExtrasReleasesFromRepoAsync(_config.OptiScalerExtrasFp8, "ExtrasFp8Versions", forcedVariant: Fsr4DllVariant.Fp8);
+
+        private async Task<System.Collections.Generic.List<ExtrasReleaseEntry>> FetchExtrasReleasesFromRepoAsync(
+            RepositoryConfig config, string logTag, Fsr4DllVariant? forcedVariant)
         {
             var entries = new System.Collections.Generic.List<ExtrasReleaseEntry>();
-            var config = _config.OptiScalerExtras;
             var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
 
             try
             {
                 if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
                 {
-                    DebugWindow.Log($"[ExtrasVersions] Skipping {repoLabel}: empty config");
+                    DebugWindow.Log($"[{logTag}] Skipping {repoLabel}: empty config");
                     return entries;
                 }
 
                 var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=30";
                 var response = await GetWithRetryAsync(() => _httpClient, url);
-                DebugWindow.Log($"[ExtrasVersions] GET {url} → HTTP {(int)response.StatusCode}");
+                DebugWindow.Log($"[{logTag}] GET {url} → HTTP {(int)response.StatusCode}");
                 response.EnsureSuccessStatusCode();
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -1116,7 +1135,7 @@ namespace OptiscalerClient.Services
 
                 if (doc.RootElement.ValueKind != JsonValueKind.Array)
                 {
-                    DebugWindow.Log($"[ExtrasVersions] ERROR: Expected JSON array, got {doc.RootElement.ValueKind}");
+                    DebugWindow.Log($"[{logTag}] ERROR: Expected JSON array, got {doc.RootElement.ValueKind}");
                     return entries;
                 }
 
@@ -1124,14 +1143,14 @@ namespace OptiscalerClient.Services
                 {
                     if (!element.TryGetProperty("tag_name", out var tagName))
                     {
-                        DebugWindow.Log("[ExtrasVersions] Skipping release: no tag_name");
+                        DebugWindow.Log($"[{logTag}] Skipping release: no tag_name");
                         continue;
                     }
 
                     var version = tagName.GetString();
                     if (string.IsNullOrEmpty(version))
                     {
-                        DebugWindow.Log("[ExtrasVersions] Skipping release: empty tag_name");
+                        DebugWindow.Log($"[{logTag}] Skipping release: empty tag_name");
                         continue;
                     }
 
@@ -1168,16 +1187,16 @@ namespace OptiscalerClient.Services
                         Version = version,
                         DownloadUrl = downloadUrl,
                         IsLatest = !latestMarked,
-                        Variant = InferFsr4DllVariant(variantSource),
+                        Variant = forcedVariant ?? InferFsr4DllVariant(variantSource),
                     });
                     latestMarked = true;
                 }
 
-                DebugWindow.Log($"[ExtrasVersions] {repoLabel} → {entries.Count} release(s)");
+                DebugWindow.Log($"[{logTag}] {repoLabel} → {entries.Count} release(s)");
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[ExtrasVersions] {repoLabel} → ERROR: {ex.Message}");
+                DebugWindow.Log($"[{logTag}] {repoLabel} → ERROR: {ex.Message}");
                 // Do NOT rethrow — return empty list so the rest of CheckForUpdatesAsync continues normally
             }
 
@@ -1253,7 +1272,7 @@ namespace OptiscalerClient.Services
 
                     if (!extractedMainDll)
                         throw new InvalidOperationException(
-                            $"No recognized FSR 4 DLL found in the selected archive. Expected one of: {Fsr4Int8DllHelper.LegacyFileName}, {Fsr4Int8DllHelper.CurrentFileName}.");
+                            $"No recognized FSR 4 DLL found in the selected archive. Expected one of: {string.Join(", ", Fsr4Int8DllHelper.KnownFileNames)}.");
                 });
             }
             catch
@@ -1308,37 +1327,41 @@ namespace OptiscalerClient.Services
 
             if (string.IsNullOrEmpty(downloadUrl))
             {
-                // Try to fetch from API
+                // Try to fetch from API — check both the INT8 and FP8 repos since the cache
+                // (the normal source of truth) is empty here.
                 DebugWindow.Log($"[ExtrasDownload] No cached URL for v{version}, trying API...");
-                var config = _config.OptiScalerExtras;
-                foreach (var prefix in new[] { "v", "" })
+                foreach (var config in new[] { _config.OptiScalerExtras, _config.OptiScalerExtrasFp8 })
                 {
-                    try
+                    if (!string.IsNullOrEmpty(downloadUrl)) break;
+                    foreach (var prefix in new[] { "v", "" })
                     {
-                        var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
-                        var response = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
-                        if (!response.IsSuccessStatusCode) continue;
-
-                        var json = await response.Content.ReadAsStringAsync();
-                        using var doc = JsonDocument.Parse(json);
-                        if (doc.RootElement.TryGetProperty("assets", out var assets))
+                        try
                         {
-                            foreach (var asset in assets.EnumerateArray())
+                            var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
+                            var response = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                            if (!response.IsSuccessStatusCode) continue;
+
+                            var json = await response.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.TryGetProperty("assets", out var assets))
                             {
-                                if (asset.TryGetProperty("browser_download_url", out var urlProp))
+                                foreach (var asset in assets.EnumerateArray())
                                 {
-                                    var u = urlProp.GetString();
-                                    if (u != null && (u.EndsWith(".zip") || u.EndsWith(".7z")))
+                                    if (asset.TryGetProperty("browser_download_url", out var urlProp))
                                     {
-                                        downloadUrl = u;
-                                        break;
+                                        var u = urlProp.GetString();
+                                        if (u != null && (u.EndsWith(".zip") || u.EndsWith(".7z")))
+                                        {
+                                            downloadUrl = u;
+                                            break;
+                                        }
                                     }
                                 }
                             }
+                            if (!string.IsNullOrEmpty(downloadUrl)) break;
                         }
-                        if (!string.IsNullOrEmpty(downloadUrl)) break;
+                        catch (Exception ex) { DebugWindow.Log($"[ExtrasDownload] API lookup attempt failed: {ex.Message}"); }
                     }
-                    catch (Exception ex) { DebugWindow.Log($"[ExtrasDownload] API lookup attempt failed: {ex.Message}"); }
                 }
             }
 
@@ -1386,6 +1409,19 @@ namespace OptiscalerClient.Services
                 throw new Exception("FSR4 INT8 DLL not found inside the downloaded archive.");
 
             return dllPath;
+        }
+
+        /// <summary>
+        /// All recognized FSR 4 files (Fsr4Int8DllHelper.KnownFileNames) present in the given
+        /// version's package — a package can ship just the upscaler, or several FidelityFX SDK 2.0+
+        /// split-effect DLLs together. Ensures the version is downloaded/extracted first. Excludes
+        /// the RDNA2 companion (amdxc64.dll), which has its own separate source/flow.
+        /// </summary>
+        public async Task<System.Collections.Generic.List<string>> GetExtrasPackagedFileNamesAsync(string version, IProgress<double>? progress = null)
+        {
+            await DownloadExtrasDllAsync(version, progress);
+            var dir = GetExtrasDllCachePath(version);
+            return Fsr4Int8DllHelper.KnownFileNames.Where(n => File.Exists(Path.Combine(dir, n))).ToList();
         }
 
         // ── OptiPatcher cache ─────────────────────────────────────────────────────
@@ -2941,6 +2977,8 @@ namespace OptiscalerClient.Services
             {
                 Directory.Delete(cachePath, true);
             }
+            if (_config.CustomExtrasVersions.Remove(version) | _config.CustomExtrasVariants.Remove(version))
+                SaveConfiguration();
         }
 
         /// <summary>

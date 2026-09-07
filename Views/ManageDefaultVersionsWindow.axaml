@@ -197,8 +197,68 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 0, Col 2 : Fakenvapi -->
+                                <!-- Row 0, Col 2 : FSR 4 Swap Options -->
                                 <StackPanel Grid.Row="0" Grid.Column="2" Spacing="6">
+                                    <!-- Invisible spacer matching the height of the Stable/Beta/Nightly
+                                         and INT8/FP8 tab rows in the neighboring columns, so this
+                                         column's button lines up with their ComboBoxes below. Placed
+                                         above the title (not between title and button) so the title
+                                         sits right on top of its own control, same as the other columns. -->
+                                    <Grid ColumnDefinitions="*,*" Opacity="0" IsHitTestVisible="False">
+                                        <Button Grid.Column="0" Content="_" Classes="BtnPrimary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="8,5" Margin="0,0,2,0"/>
+                                        <Button Grid.Column="1" Content="_" Classes="BtnSecondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="11" Padding="8,5" Margin="2,0,0,0"/>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtFsr4SwapOptionsLbl}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="14"
+                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtFsr4SwapOptionsTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <Button Name="BtnFsr4SwapOptions"
+                                            Classes="BtnBase"
+                                            MinHeight="40"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="10,7"
+                                            Click="BtnFsr4SwapOptions_Click">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Name="TxtFsr4SwapOptionsSelection"
+                                                       Grid.Column="0"
+                                                       Foreground="{StaticResource BrTextPrimary}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       HorizontalAlignment="Left"
+                                                       VerticalAlignment="Center"/>
+                                            <Canvas Grid.Column="1"
+                                                    Width="16" Height="16"
+                                                    VerticalAlignment="Center"
+                                                    Margin="12,0,0,0">
+                                                <Path Data="M2,6 L10,6 L10,14 L2,14 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="Transparent"/>
+                                                <Path Data="M6,3 L14,3 L14,11 L6,11 Z"
+                                                      Stroke="{StaticResource BrTextSecondary}"
+                                                      StrokeThickness="1.25"
+                                                      Fill="{StaticResource BrBgElevated}"/>
+                                            </Canvas>
+                                        </Grid>
+                                    </Button>
+                                </StackPanel>
+
+                                <!-- Row 1, Col 0 : Fakenvapi -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="Fakenvapi"
                                                    FontWeight="SemiBold"
@@ -225,8 +285,8 @@
                                               Margin="0,4,0,0"/>
                                 </StackPanel>
 
-                                <!-- Row 1, Col 0 : Injection method -->
-                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
+                                <!-- Row 1, Col 1 : Injection method -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtInjectionLbl}"
                                                    FontWeight="SemiBold"
@@ -261,8 +321,8 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Row 1, Col 1 : OptiPatcher -->
-                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
+                                <!-- Row 1, Col 2 : OptiPatcher -->
+                                <StackPanel Grid.Row="1" Grid.Column="2" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtOptiPatcherLbl}"
                                                    FontWeight="SemiBold"
@@ -288,8 +348,8 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 1, Col 2 : NukemFG -->
-                                <StackPanel Grid.Row="1" Grid.Column="2" Spacing="6">
+                                <!-- Row 2, Col 0 : NukemFG -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="NukemFG"
                                                    FontWeight="SemiBold"
@@ -316,8 +376,8 @@
                                               Margin="0,4,0,0"/>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 0 : Profile -->
-                                <StackPanel Grid.Row="2" Grid.Column="0" Spacing="6">
+                                <!-- Row 2, Col 1 : Profile -->
+                                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtProfileLbl}"
                                                    FontWeight="SemiBold"
@@ -343,8 +403,8 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 1 : Frame Generation -->
-                                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="6">
+                                <!-- Row 2, Col 2 : Frame Generation -->
+                                <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtFrameGeneration}"
                                                    FontWeight="SemiBold"
@@ -394,8 +454,8 @@
                                     </Button>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 2 : Upscaling Quality -->
-                                <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
+                                <!-- Row 3, Col 0 : Upscaling Quality -->
+                                <StackPanel Grid.Row="3" Grid.Column="0" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtUpscalingQuality}"
                                                    FontWeight="SemiBold"
@@ -425,8 +485,8 @@
                                               SelectionChanged="CmbDefaultUpscalingQuality_SelectionChanged"/>
                                 </StackPanel>
 
-                                <!-- Row 3, Col 0 : Output Upscaler -->
-                                <StackPanel Grid.Row="3" Grid.Column="0" Spacing="6">
+                                <!-- Row 3, Col 1 : Output Upscaler -->
+                                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
                                                    FontWeight="SemiBold"

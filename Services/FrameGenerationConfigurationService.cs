@@ -1,3 +1,4 @@
+using System.Globalization;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 
@@ -48,6 +49,13 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         bool antiCheat = files.Overlaps(AntiCheatFiles);
         bool arc = gpu?.Vendor == GpuVendor.Intel &&
                    (gpu.Name.Contains("Arc", StringComparison.OrdinalIgnoreCase) || gpu.Name.Contains("Battlemage", StringComparison.OrdinalIgnoreCase));
+        bool supportsDynamicMfg = gpu != null && gpu.Vendor switch
+        {
+            GpuVendor.NVIDIA => GpuSelectionHelper.IsBlackwell(gpu),
+            GpuVendor.AMD => true,
+            GpuVendor.Intel => true,
+            _ => false
+        };
 
         var routes = new List<FrameGenerationRoute> { FrameGenerationRoute.Auto, FrameGenerationRoute.Disabled };
         var outputs = new List<FrameGenerationOutput> { FrameGenerationOutput.Auto };
@@ -85,7 +93,7 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         {
             IsDirectX12 = dx12, IsVulkan = vulkan, HasNativeDlssG = hasDlssG, HasNativeFsr3 = hasFsr3,
             HasStreamline = hasStreamline, HasXeFgDependencies = hasXeFg, HasFsrFgDependencies = hasFsrFg,
-            HasNukem = hasNukem, IsIntelArc = arc, IsAntiCheatDetected = antiCheat,
+            HasNukem = hasNukem, IsIntelArc = arc, IsAntiCheatDetected = antiCheat, SupportsDynamicMfg = supportsDynamicMfg,
             AvailableRoutes = routes, AvailableOutputs = outputs, AvailableMfgModes = mfg, Warnings = warnings
         };
     }
@@ -131,8 +139,13 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         if (output == FrameGenerationOutput.DlssG &&
             nvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
         {
-            return [MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3,
-                    MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
+            var modes = new List<MultiFrameGenerationMode>
+            {
+                MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3,
+                MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6
+            };
+            if (capabilities.SupportsDynamicMfg) modes.Add(MultiFrameGenerationMode.Dynamic);
+            return modes;
         }
 
         return [MultiFrameGenerationMode.X2];
@@ -140,8 +153,14 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
     public bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null)
     {
+        if (settings.Route == FrameGenerationRoute.Disabled)
+            return false;
+
         var recommendation = GetRecommendation(capabilities);
         var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
+        if (effectiveRoute == FrameGenerationRoute.Disabled)
+            return false;
+
         var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
         // FGInput=nvngxfg ("Uses Streamline swapchain for pacing" per OptiScaler.ini) is only
         // reached on the nightly vocabulary — pre-nightly builds map this route to the legacy
@@ -219,19 +238,37 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             // MFG multiplier beyond x2 is only meaningful for the DLSS Enabler providers.
             if (settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
             {
-                var dlssgCount = settings.MultiFrameMode switch
+                var dlssg = new Dictionary<string, string>();
+                // ForceDMFG/FramerateTargetDMFG only exist in the nightly ini schema. Falling back to
+                // "auto" on stable keeps this a safe no-op there instead of writing unknown keys.
+                if (settings.MultiFrameMode == MultiFrameGenerationMode.Dynamic && usesNightlySchema)
                 {
-                    MultiFrameGenerationMode.X2 => "1",
-                    MultiFrameGenerationMode.X3 => "2",
-                    MultiFrameGenerationMode.X4 => "3",
-                    MultiFrameGenerationMode.X5 => "4",
-                    MultiFrameGenerationMode.X6 => "5",
-                    _ => "auto"
-                };
-                result["DLSSG"] = new Dictionary<string, string> { ["InterpolationCount"] = dlssgCount };
+                    // Dynamic MFG picks the multiplier itself to hit a target framerate instead of a
+                    // fixed count - ForceDMFG turns it on for OptiScaler's own DLSSG output, and a
+                    // non-zero FramerateTargetDMFG disables manual multiplier control entirely (per
+                    // the ini docs), so InterpolationCount is deliberately not written alongside it.
+                    dlssg["ForceDMFG"] = "true";
+                    dlssg["FramerateTargetDMFG"] = settings.DynamicTargetFps is > 0
+                        ? settings.DynamicTargetFps.Value.ToString(CultureInfo.InvariantCulture)
+                        : "auto";
+                }
+                else
+                {
+                    dlssg["InterpolationCount"] = settings.MultiFrameMode switch
+                    {
+                        MultiFrameGenerationMode.X2 => "1",
+                        MultiFrameGenerationMode.X3 => "2",
+                        MultiFrameGenerationMode.X4 => "3",
+                        MultiFrameGenerationMode.X5 => "4",
+                        MultiFrameGenerationMode.X6 => "5",
+                        _ => "auto"
+                    };
+                }
+                result["DLSSG"] = dlssg;
             }
         }
-        if (effectiveRoute == FrameGenerationRoute.OptiFg && effectiveOutput == FrameGenerationOutput.FsrFg)
+        if (effectiveRoute == FrameGenerationRoute.OptiFg &&
+            (effectiveOutput == FrameGenerationOutput.FsrFg || effectiveOutput == FrameGenerationOutput.DlssG))
             result["HUDFix"] = new Dictionary<string, string> { ["HUDFix"] = "true" };
         return result;
     }

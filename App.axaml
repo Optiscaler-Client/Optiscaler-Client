@@ -167,6 +167,42 @@
             <Setter Property="Foreground" Value="{StaticResource BrAccentWarm}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrAccentWarm}"/>
         </Style>
+
+        <!-- Success ComboBox — mirrors Button.BtnSuccess: dark-green tinted background, green
+             border and foreground. Applied to the install-action dropdowns (CmbInstallAction /
+             CmbInstallActionManual) that visually replace the BtnSuccess install buttons when
+             multiple actions are available.
+             Template part names come from the Avalonia 11 FluentTheme ComboBox ControlTheme:
+               · Border#Background       — outer border/background (hover re-paints here)
+               · PathIcon#DropDownGlyph  — the chevron arrow
+               · Border#PopupBorder      — the open dropdown panel -->
+        <Style Selector="ComboBox.BtnSuccess">
+            <Setter Property="Background"    Value="#1A3D2A"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrSuccess}"/>
+            <Setter Property="Foreground"    Value="{StaticResource BrSuccess}"/>
+            <Setter Property="CornerRadius"  Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="FontWeight"    Value="SemiBold"/>
+        </Style>
+        <!-- Arrow / chevron -->
+        <Style Selector="ComboBox.BtnSuccess /template/ PathIcon#DropDownGlyph">
+            <Setter Property="Foreground" Value="{StaticResource BrSuccess}"/>
+        </Style>
+        <!-- Hover: correct template part is Border#Background (no PART_ prefix in Fluent 11) -->
+        <Style Selector="ComboBox.BtnSuccess:pointerover /template/ Border#Background">
+            <Setter Property="Background"  Value="#224D34"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrSuccess}"/>
+        </Style>
+        <!-- Open dropdown panel — green-tinted background + green border -->
+        <Style Selector="ComboBox.BtnSuccess /template/ Border#PopupBorder">
+            <Setter Property="Background"  Value="#152E20"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrSuccess}"/>
+        </Style>
+        <!-- Placeholder text — same green as the foreground so it reads like the button label -->
+        <Style Selector="ComboBox.BtnSuccess /template/ TextBlock#PlaceholderTextBlock">
+            <Setter Property="Foreground"   Value="{StaticResource BrSuccess}"/>
+            <Setter Property="FontWeight"   Value="SemiBold"/>
+            <Setter Property="Opacity"      Value="1"/>
+        </Style>
         
         <!-- Textbox overriding Fluent theme -->
         <Style Selector="TextBox">

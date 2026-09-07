@@ -93,6 +93,9 @@ public sealed class FrameGenerationCapabilities
     public bool HasNukem { get; init; }
     public bool IsIntelArc { get; init; }
     public bool IsAntiCheatDetected { get; init; }
+    /// <summary>Dynamic MFG (OptiScaler's ForceDMFG, targets a framerate instead of a fixed multiplier)
+    /// needs Nvidia Blackwell (RTX 50) natively, or any AMD/Intel GPU via the Nvngx FG bridge.</summary>
+    public bool SupportsDynamicMfg { get; init; }
     public IReadOnlyList<FrameGenerationRoute> AvailableRoutes { get; init; } = Array.Empty<FrameGenerationRoute>();
     public IReadOnlyList<FrameGenerationOutput> AvailableOutputs { get; init; } = Array.Empty<FrameGenerationOutput>();
     public IReadOnlyList<MultiFrameGenerationMode> AvailableMfgModes { get; init; } = Array.Empty<MultiFrameGenerationMode>();
