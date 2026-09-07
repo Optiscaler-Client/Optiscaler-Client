@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -86,6 +86,13 @@
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler sürümleri bir .dll dosyasından veya version.dll ya da dlss-enabler-headless.dll içeren bir .zip/.7z/.rar arşivinden içe aktarılır.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">Önbellekte DLSS Enabler sürümü yok.</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">Mirror'dan İndirildi</x:String>
+    <x:String x:Key="TxtDlssEnablerNoMirrorVersions">DLSS Enabler ayna sürümleri önbellekte yok.</x:String>
+    <x:String x:Key="TxtTabMirror">Ayna</x:String>
+    <x:String x:Key="TxtTabCustom">Özel</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorInt8">Önbellekte INT8 ayna sürümü yok.</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorFp8">Önbellekte FP8 ayna sürümü yok.</x:String>
+    <x:String x:Key="TxtFsr4NoCustomInt8">Özel INT8 sürümü içe aktarılmadı.</x:String>
+    <x:String x:Key="TxtFsr4NoCustomFp8">Özel FP8 sürümü içe aktarılmadı.</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">Önbellekte Streamline SDK sürümü yok.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler Sürümünü Sil</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">DLSS Enabler '{0}' öğesini önbellekten silmek istediğinizden emin misiniz?</x:String>
@@ -124,6 +131,11 @@
     <x:String x:Key="TxtBtnManualInstall">✦ Manuel Yükle</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ Otomatik Güncelleme / Yeniden Yükle</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ Manuel Güncelleme / Yeniden Yükle</x:String>
+    <x:String x:Key="TxtReinstallMenuOption">↻ Yeniden yükle</x:String>
+    <x:String x:Key="TxtUpdateConfigOnly">⚙ Yalnızca yapılandırmayı güncelle</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateApplied">Yapılandırma güncellendi.</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateError">Yapılandırma güncellenemedi:</x:String>
+    <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Başka bir şey değişti — bunun yerine Yükle/Yeniden Yükle kullanın.</x:String>
     <x:String x:Key="TxtOptiVersionNone">Yok</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Otomatik DLL Değişimi</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Manuel DLL Değişimi</x:String>
@@ -132,7 +144,21 @@
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Yüklemeden önce bir OptiScaler sürümü veya FSR4 INT8 sürümü seçin.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Seçilen dosya oyun klasörünün içinde olmalıdır.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">Bu FSR4 INT8 sürümü amdxc64.dll için bir değişiklik içermiyor. Farklı bir sürüm veya hedef dosya seçin.</x:String>
-    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0}, {1} içine değiştirildi.</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 v{0}, {1} içine değiştirildi.</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectTitle">Değiştirilecek dosyaları seçin</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectDesc">Bu FSR4 paketi birden fazla dosya içeriyor. Oyun klasörüne kopyalanacak veya değiştirilecek dosyaları seçin.</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectConfirm">Seçilenleri değiştir</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsLbl">FSR 4 Değiştirme Seçenekleri</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTooltip">Değiştirilen FSR4 paketi birden fazla dosya içerdiğinde ne olacağını belirler.</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTitle">FSR 4 Değiştirme Seçenekleri</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTime">Her seferinde bana sor</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaults">Varsayılan değerleri seç</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTimeTooltip">Birden fazla dosya içeren bir paketi her değiştirdiğinizde hangi dosyaların kopyalanacağı veya değiştirileceği sorulacaktır.</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaultsTooltip">Aşağıda işaretlenen dosyalar her zaman otomatik olarak kullanılacaktır — bir daha sorulmayacaksınız.</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsHint">Bir daha sorulmak istemiyor musunuz?</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsLink">Varsayılanları yapılandır</x:String>
+    <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">{1} dosyadan {0} tanesi seçildi</x:String>
+    <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">FSR 4 Değiştirme Seçenekleri'nde (Ayarlar) hiçbir dosya seçilmedi. Orada en az birini işaretleyin veya "Her seferinde bana sor" seçeneğine geri dönün.</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">Geri Yüklemeyi Onayla</x:String>
     <x:String x:Key="TxtConfirmRestoreDllMsg">Orijinal DLL'yi geri yüklemek istediğinizden emin misiniz?&#x0a;Değiştirilen FSR4 INT8 DLL'si, yedeklenen orijinaliyle değiştirilecek.</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">Orijinal DLL başarıyla geri yüklendi.</x:String>
@@ -696,7 +722,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtAddFsr4DllDesc">FSR 4 DLL'i içeren bir arşiv seçin ve model varyantını belirleyin. Dosya adı INT8 ya da FP8'i güvenilir şekilde belirlemez.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">Dosya seçilmedi</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Model varyantı</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Şunlardan birini içeren bir .7z, .zip veya .rar arşivi seçin: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll veya amdxc64.dll. Tek başına .dll dosyaları kabul edilmez.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Şunlardan bir veya daha fazlasını içeren bir .7z, .zip veya .rar arşivi seçin: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, amd_fidelityfx_loader_dx12.dll, amd_fidelityfx_framegeneration_dx12.dll, amd_fidelityfx_denoiser_dx12.dll, amd_fidelityfx_radiancecache_dx12.dll veya amdxc64.dll. Tek başına .dll dosyaları kabul edilmez.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">DLSS Enabler Sürümü Ekle</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Bir DLSS Enabler DLL'i veya arşivi seçin, ardından bu sürüme bir isim verin; böylece daha sonra bir oyunun Kare oluşturma ayarlarından seçebilirsiniz.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">Dosya seçilmedi</x:String>
@@ -745,6 +771,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgOutputDlssNvngxTooltip">NVIDIA'nın NVNGX çalışma zamanı üzerinden DLSS Frame Generation çıkışı verir.</x:String>
     <x:String x:Key="TxtMfgAutoTooltip">OptiScaler'ın uygun çarpanı seçmesini sağlar.</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">Destekleniyorsa çarpanı dinamik olarak ayarlar.</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFps">Hedef FPS</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsTooltip">Ulaşılmak istenen kare hızı — çarpan buna ulaşmak için her karede otomatik olarak seçilir. Monitörünüzün yenileme hızını hedeflemek için boş bırakın. Nvidia RTX 50 (Blackwell) GPU veya herhangi bir AMD/Intel GPU gerektirir.</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsPlaceholder">Otomatik (monitör yenileme hızı)</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">Destekleniyorsa, işlenen her kare için en fazla {0} kare oluşturur.</x:String>
     <x:String x:Key="TxtFgNvngxReplacement">FG NVNGX Değiştirme</x:String>
     <x:String x:Key="TxtFgNvngxReplacementTooltip">NVNGX/DLSS-G değiştirme sağlayıcısını seçer. Yalnızca FG çıkışı DLSS-G olduğunda geçerlidir.</x:String>

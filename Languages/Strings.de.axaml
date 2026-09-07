@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -86,6 +86,13 @@
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler-Versionen werden aus einer .dll-Datei oder einem .zip/.7z/.rar-Archiv importiert, das version.dll oder dlss-enabler-headless.dll enthält.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">Keine DLSS Enabler-Versionen im Cache.</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">Vom Mirror heruntergeladen</x:String>
+    <x:String x:Key="TxtDlssEnablerNoMirrorVersions">Keine DLSS Enabler-Mirror-Versionen im Cache.</x:String>
+    <x:String x:Key="TxtTabMirror">Mirror</x:String>
+    <x:String x:Key="TxtTabCustom">Benutzerdefiniert</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorInt8">Keine INT8-Mirror-Versionen im Cache.</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorFp8">Keine FP8-Mirror-Versionen im Cache.</x:String>
+    <x:String x:Key="TxtFsr4NoCustomInt8">Keine benutzerdefinierten INT8-Versionen importiert.</x:String>
+    <x:String x:Key="TxtFsr4NoCustomFp8">Keine benutzerdefinierten FP8-Versionen importiert.</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">Keine Streamline-SDK-Versionen im Cache.</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler-Version löschen</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">Sind Sie sicher, dass Sie DLSS Enabler '{0}' aus dem Cache löschen möchten?</x:String>
@@ -124,6 +131,11 @@
     <x:String x:Key="TxtBtnManualInstall">✦ Manuelle Installation</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ Automatisches Update / Neuinstallation</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ Manuelles Update / Neuinstallation</x:String>
+    <x:String x:Key="TxtReinstallMenuOption">↻ Neu installieren</x:String>
+    <x:String x:Key="TxtUpdateConfigOnly">⚙ Nur Konfiguration aktualisieren</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateApplied">Konfiguration aktualisiert.</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateError">Die Konfiguration konnte nicht aktualisiert werden:</x:String>
+    <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Etwas anderes hat sich geändert — verwende stattdessen Installieren/Neu installieren.</x:String>
     <x:String x:Key="TxtOptiVersionNone">Keine</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ DLL automatisch tauschen</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ DLL manuell tauschen</x:String>
@@ -132,7 +144,21 @@
     <x:String x:Key="TxtErrNoOptiOrExtrasText">Wähle eine OptiScaler-Version oder eine FSR4-INT8-Version, bevor du installierst.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Die ausgewählte Datei muss sich im Spielordner befinden.</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">Diese FSR4-INT8-Version enthält keinen Ersatz für amdxc64.dll. Wähle eine andere Version oder Zieldatei.</x:String>
-    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} wurde in {1} getauscht.</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 v{0} wurde in {1} getauscht.</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectTitle">Dateien zum Tauschen auswählen</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectDesc">Dieses FSR4-Paket enthält mehrere Dateien. Wähle aus, welche im Spielordner kopiert oder ersetzt werden sollen.</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectConfirm">Auswahl tauschen</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsLbl">FSR 4-Swap-Optionen</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTooltip">Legt fest, was passiert, wenn das getauschte FSR4-Paket mehr als eine Datei enthält.</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTitle">FSR 4-Swap-Optionen</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTime">Jedes Mal fragen</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaults">Standardwerte wählen</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTimeTooltip">Du wirst jedes Mal gefragt, welche Dateien kopiert oder ersetzt werden sollen, wenn ein Paket mit mehr als einer Datei getauscht wird.</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaultsTooltip">Die unten markierten Dateien werden immer automatisch verwendet — du wirst nicht mehr gefragt.</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsHint">Nicht mehr gefragt werden?</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsLink">Standardwerte konfigurieren</x:String>
+    <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">{0} von {1} Dateien ausgewählt</x:String>
+    <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">In den FSR 4-Swap-Optionen (Einstellungen) sind keine Dateien ausgewählt. Wähle dort mindestens eine aus oder stelle wieder auf "Jedes Mal fragen" um.</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">Wiederherstellung bestätigen</x:String>
     <x:String x:Key="TxtConfirmRestoreDllMsg">Möchtest du die Original-DLL wirklich wiederherstellen?&#x0a;Die getauschte FSR4-INT8-DLL wird durch das gesicherte Original ersetzt.</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">Original-DLL erfolgreich wiederhergestellt.</x:String>
@@ -697,7 +723,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtAddFsr4DllDesc">Wähle ein Archiv mit der FSR-4-DLL und dann die enthaltene Modellvariante. Dateinamen erkennen INT8 oder FP8 nicht zuverlässig.</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">Keine Datei ausgewählt</x:String>
     <x:String x:Key="TxtFsr4DllVariant">Modellvariante</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Wähle ein .7z-, .zip- oder .rar-Archiv mit einer dieser Dateien: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll oder amdxc64.dll. Einzelne .dll-Dateien werden nicht akzeptiert.</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">Wähle ein .7z-, .zip- oder .rar-Archiv mit einer oder mehreren dieser Dateien: amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll, amd_fidelityfx_loader_dx12.dll, amd_fidelityfx_framegeneration_dx12.dll, amd_fidelityfx_denoiser_dx12.dll, amd_fidelityfx_radiancecache_dx12.dll oder amdxc64.dll. Einzelne .dll-Dateien werden nicht akzeptiert.</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">DLSS Enabler-Version hinzufügen</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">Wähle eine DLSS Enabler-DLL oder ein Archiv und vergib dann einen Namen für diese Version, damit du sie später in den Frame-Generierung-Einstellungen eines Spiels auswählen kannst.</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">Keine Datei ausgewählt</x:String>
@@ -745,6 +771,9 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtFgOutputDlssNvngxTooltip">Gibt DLSS Frame Generation über die NVNGX-Laufzeitumgebung von NVIDIA aus.</x:String>
     <x:String x:Key="TxtMfgAutoTooltip">Lässt OptiScaler den passenden Multiplikator wählen.</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">Passt den Multiplikator dynamisch an, sofern unterstützt.</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFps">Ziel-FPS</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsTooltip">Anzustrebende Bildrate — der Multiplikator wird bei jedem Frame automatisch gewählt, um sie zu erreichen. Leer lassen, um die Bildwiederholrate des Monitors anzustreben. Erfordert eine Nvidia RTX 50 (Blackwell) GPU oder eine beliebige AMD/Intel-GPU.</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsPlaceholder">Auto (Bildwiederholrate des Monitors)</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">Generiert bis zu {0} Frames pro gerendertem Frame, sofern unterstützt.</x:String>
     <x:String x:Key="TxtFgNvngxReplacement">FG-NVNGX-Ersatz</x:String>
     <x:String x:Key="TxtFgNvngxReplacementTooltip">Wählt den NVNGX/DLSS-G-Ersatzanbieter. Gilt nur, wenn die FG-Ausgabe DLSS-G ist.</x:String>

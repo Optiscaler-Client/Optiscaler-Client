@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -88,6 +88,13 @@
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler 版本透過 .dll 檔案或包含 version.dll 或 dlss-enabler-headless.dll 的 .zip/.7z/.rar 封存檔匯入。</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">尚未快取任何 DLSS Enabler 版本。</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">從鏡像下載</x:String>
+    <x:String x:Key="TxtDlssEnablerNoMirrorVersions">快取中沒有 DLSS Enabler 鏡像版本。</x:String>
+    <x:String x:Key="TxtTabMirror">鏡像</x:String>
+    <x:String x:Key="TxtTabCustom">自訂</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorInt8">快取中沒有 INT8 鏡像版本。</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorFp8">快取中沒有 FP8 鏡像版本。</x:String>
+    <x:String x:Key="TxtFsr4NoCustomInt8">未匯入自訂 INT8 版本。</x:String>
+    <x:String x:Key="TxtFsr4NoCustomFp8">未匯入自訂 FP8 版本。</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">尚未快取任何 Streamline SDK 版本。</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">刪除 DLSS Enabler 版本</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">您確定要從快取中刪除 DLSS Enabler '{0}' 嗎？</x:String>
@@ -126,6 +133,11 @@
     <x:String x:Key="TxtBtnManualInstall">✦ 手動安裝</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ 自動更新 / 重新安裝</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ 手動更新 / 重新安裝</x:String>
+    <x:String x:Key="TxtReinstallMenuOption">↻ 重新安裝</x:String>
+    <x:String x:Key="TxtUpdateConfigOnly">⚙ 僅更新設定</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateApplied">設定已更新。</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateError">無法更新設定:</x:String>
+    <x:String x:Key="TxtConfigOnlyNoLongerAvailable">其他選項已變更——請改用安裝/重新安裝。</x:String>
     <x:String x:Key="TxtOptiVersionNone">無</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 自動交換 DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手動交換 DLL</x:String>
@@ -134,7 +146,21 @@
     <x:String x:Key="TxtErrNoOptiOrExtrasText">安裝前請選擇一個 OptiScaler 版本或 FSR4 INT8 版本。</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">所選檔案必須位於遊戲資料夾內。</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">此 FSR4 INT8 版本不包含 amdxc64.dll 的替代檔案。請選擇其他版本或目標檔案。</x:String>
-    <x:String x:Key="TxtSwapDllSuccessFormat">已將 FSR4 INT8 v{0} 交換至 {1}。</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">已將 FSR4 v{0} 交換至 {1}。</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectTitle">選擇要交換的檔案</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectDesc">此 FSR4 套件包含多個檔案。請選擇要在遊戲資料夾中複製或取代的檔案。</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectConfirm">交換所選項目</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsLbl">FSR 4 交換選項</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTooltip">決定被交換的 FSR4 套件包含多個檔案時的處理方式。</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTitle">FSR 4 交換選項</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTime">每次都詢問我</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaults">選擇預設值</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTimeTooltip">每次交換包含多個檔案的套件時,都會詢問您要複製或取代哪些檔案。</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaultsTooltip">下方勾選的檔案將一律自動使用 — 不會再詢問您。</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsHint">不想再被詢問?</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsLink">設定預設值</x:String>
+    <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">已選擇 {0}/{1} 個檔案</x:String>
+    <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">FSR 4 交換選項(設定)中未選擇任何檔案。請至少勾選一個,或改回「每次都詢問我」。</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">確認還原</x:String>
     <x:String x:Key="TxtConfirmRestoreDllMsg">確定要還原原始 DLL 嗎？&#x0a;已交換的 FSR4 INT8 DLL 將替換回備份的原始檔案。</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">已成功還原原始 DLL。</x:String>
@@ -707,7 +733,7 @@
     <x:String x:Key="TxtAddFsr4DllDesc">選擇包含 FSR 4 DLL 的封存檔，然後選擇其中的模型變體。僅憑檔名無法可靠判斷 INT8 或 FP8。</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">未選擇檔案</x:String>
     <x:String x:Key="TxtFsr4DllVariant">模型變體</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">選擇包含下列其中一項的 .7z、.zip 或 .rar 封存檔：amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 或 amdxc64.dll。不接受單獨的 .dll 檔案。</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">選擇包含下列一項或多項的 .7z、.zip 或 .rar 封存檔：amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll、amd_fidelityfx_loader_dx12.dll、amd_fidelityfx_framegeneration_dx12.dll、amd_fidelityfx_denoiser_dx12.dll、amd_fidelityfx_radiancecache_dx12.dll 或 amdxc64.dll。不接受單獨的 .dll 檔案。</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">新增 DLSS Enabler 版本</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">選擇 DLSS Enabler DLL 或封存檔，然後為此版本命名，以便稍後在遊戲的幀生成設定中選擇它。</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">未選擇檔案</x:String>
@@ -756,6 +782,9 @@
     <x:String x:Key="TxtFgOutputDlssNvngxTooltip">透過 NVIDIA 的 NVNGX 執行環境輸出 DLSS 幀生成。</x:String>
     <x:String x:Key="TxtMfgAutoTooltip">讓 OptiScaler 選擇合適的倍率。</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">在支援的情況下動態調整倍率。</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFps">目標影格率</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsTooltip">要達到的目標影格率——每一影格都會自動選擇倍率以達成該目標。留空則以顯示器的更新率為目標。需要 Nvidia RTX 50（Blackwell）GPU，或任意 AMD/Intel GPU。</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsPlaceholder">自動（顯示器更新率）</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">在支援的情況下，每個渲染幀最多生成 {0} 幀。</x:String>
     <x:String x:Key="TxtFgNvngxReplacement">FG Nvngx 替代方案</x:String>
     <x:String x:Key="TxtFgNvngxReplacementTooltip">選擇 NVNGX/DLSS-G 替代提供者。僅在 FG 輸出為 DLSS-G 時生效。</x:String>

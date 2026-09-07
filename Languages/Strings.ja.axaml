@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -88,6 +88,13 @@
     <x:String x:Key="TxtDlssEnablerImportBanner">DLSS Enabler のバージョンは、.dll ファイル、または version.dll もしくは dlss-enabler-headless.dll を含む .zip/.7z/.rar アーカイブからインポートされます。</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersions">キャッシュされた DLSS Enabler バージョンがありません。</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorSectionLbl">ミラーからダウンロード済み</x:String>
+    <x:String x:Key="TxtDlssEnablerNoMirrorVersions">DLSS Enablerのミラーバージョンがキャッシュにありません。</x:String>
+    <x:String x:Key="TxtTabMirror">ミラー</x:String>
+    <x:String x:Key="TxtTabCustom">カスタム</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorInt8">INT8ミラーバージョンがキャッシュにありません。</x:String>
+    <x:String x:Key="TxtFsr4NoMirrorFp8">FP8ミラーバージョンがキャッシュにありません。</x:String>
+    <x:String x:Key="TxtFsr4NoCustomInt8">カスタムINT8バージョンがインポートされていません。</x:String>
+    <x:String x:Key="TxtFsr4NoCustomFp8">カスタムFP8バージョンがインポートされていません。</x:String>
     <x:String x:Key="TxtNoStreamlineVersions">キャッシュされた Streamline SDK バージョンがありません。</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerTitle">DLSS Enabler バージョンの削除</x:String>
     <x:String x:Key="TxtDeleteDlssEnablerMsgFormat">DLSS Enabler '{0}' をキャッシュから削除してもよろしいですか？</x:String>
@@ -126,6 +133,11 @@
     <x:String x:Key="TxtBtnManualInstall">✦ 手動インストール</x:String>
     <x:String x:Key="TxtUpdateOpti">↑ 自動更新 / 再インストール</x:String>
     <x:String x:Key="TxtUpdateOptiManual">↑ 手動更新 / 再インストール</x:String>
+    <x:String x:Key="TxtReinstallMenuOption">↻ 再インストール</x:String>
+    <x:String x:Key="TxtUpdateConfigOnly">⚙ 設定のみ更新</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateApplied">設定を更新しました。</x:String>
+    <x:String x:Key="TxtConfigOnlyUpdateError">設定を更新できませんでした:</x:String>
+    <x:String x:Key="TxtConfigOnlyNoLongerAvailable">他の項目が変更されました — インストール/再インストールを使用してください。</x:String>
     <x:String x:Key="TxtOptiVersionNone">なし</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 自動DLLスワップ</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手動DLLスワップ</x:String>
@@ -134,7 +146,21 @@
     <x:String x:Key="TxtErrNoOptiOrExtrasText">インストールする前に、OptiScalerのバージョンまたはFSR4 INT8のバージョンを選択してください。</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">選択したファイルはゲームフォルダー内にある必要があります。</x:String>
     <x:String x:Key="TxtSwapDllNoRdna2Companion">このFSR4 INT8バージョンにはamdxc64.dllの置き換えが含まれていません。別のバージョンまたは対象ファイルを選択してください。</x:String>
-    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 INT8 v{0} を {1} にスワップしました。</x:String>
+    <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 v{0} を {1} にスワップしました。</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectTitle">スワップするファイルを選択</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectDesc">このFSR4パッケージには複数のファイルが含まれています。ゲームフォルダにコピーまたは置き換えるファイルを選択してください。</x:String>
+    <x:String x:Key="TxtFsr4SwapSelectConfirm">選択項目をスワップ</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsLbl">FSR 4 スワップ オプション</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTooltip">スワップするFSR4パッケージに複数のファイルが含まれる場合の動作を設定します。</x:String>
+    <x:String x:Key="TxtFsr4SwapOptionsTitle">FSR 4 スワップ オプション</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTime">毎回確認する</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaults">デフォルト値を選択する</x:String>
+    <x:String x:Key="TxtFsr4SwapAskEveryTimeTooltip">複数のファイルを含むパッケージをスワップするたびに、どのファイルをコピーまたは置き換えるか確認されます。</x:String>
+    <x:String x:Key="TxtFsr4SwapChooseDefaultsTooltip">以下でチェックしたファイルが常に自動的に使用され、再度確認されることはありません。</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsHint">次回から聞かれたくない場合は</x:String>
+    <x:String x:Key="TxtFsr4SwapSetDefaultsLink">デフォルトを設定</x:String>
+    <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">{1}個中{0}個のファイルを選択中</x:String>
+    <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">FSR 4 スワップ オプション(設定)でファイルが選択されていません。少なくとも1つ選択するか、「毎回確認する」に戻してください。</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">復元の確認</x:String>
     <x:String x:Key="TxtConfirmRestoreDllMsg">元のDLLを復元してもよろしいですか？&#x0a;スワップされたFSR4 INT8のDLLは、バックアップされた元のファイルに置き換えられます。</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">元のDLLを正常に復元しました。</x:String>
@@ -708,7 +734,7 @@
     <x:String x:Key="TxtAddFsr4DllDesc">FSR 4 DLL を含むアーカイブを選び、含まれるモデルの種類を選択してください。ファイル名だけでは INT8 と FP8 を確実に判別できません。</x:String>
     <x:String x:Key="TxtAddFsr4DllNoFile">ファイルが選択されていません</x:String>
     <x:String x:Key="TxtFsr4DllVariant">モデルの種類</x:String>
-    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">次のいずれかを含む .7z、.zip、.rar アーカイブを選択してください: amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll、amdxc64.dll。単独の .dll ファイルは受け付けません。</x:String>
+    <x:String x:Key="TxtAddFsr4DllAcceptedFiles">次のいずれか1つ以上を含む .7z、.zip、.rar アーカイブを選択してください: amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll、amd_fidelityfx_loader_dx12.dll、amd_fidelityfx_framegeneration_dx12.dll、amd_fidelityfx_denoiser_dx12.dll、amd_fidelityfx_radiancecache_dx12.dll、amdxc64.dll。単独の .dll ファイルは受け付けません。</x:String>
     <x:String x:Key="TxtAddDlssEnablerTitle">DLSS Enabler バージョンの追加</x:String>
     <x:String x:Key="TxtAddDlssEnablerDesc">DLSS Enabler の DLL またはアーカイブを選択し、このバージョンに名前を付けてください。後でゲームのフレーム生成設定から選択できます。</x:String>
     <x:String x:Key="TxtAddDlssEnablerNoFile">ファイルが選択されていません</x:String>
@@ -757,6 +783,9 @@
     <x:String x:Key="TxtFgOutputDlssNvngxTooltip">NVIDIAのNVNGXランタイムを介してDLSSフレーム生成を出力します。</x:String>
     <x:String x:Key="TxtMfgAutoTooltip">OptiScalerが適切な倍率を自動選択します。</x:String>
     <x:String x:Key="TxtMfgDynamicTooltip">対応している場合、倍率を動的に調整します。</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFps">目標FPS</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsTooltip">目標とするフレームレートです。達成できるよう、倍率はフレームごとに自動選択されます。空欄の場合はモニターのリフレッシュレートを目標にします。Nvidia RTX 50（Blackwell）GPU、または任意のAMD/Intel GPUが必要です。</x:String>
+    <x:String x:Key="TxtMfgDynamicTargetFpsPlaceholder">自動（モニターのリフレッシュレート）</x:String>
     <x:String x:Key="TxtMfgFixedTooltipFmt">対応している場合、レンダリングされた1フレームごとに最大{0}フレームを生成します。</x:String>
     <x:String x:Key="TxtFgNvngxReplacement">FG NVNGX 置き換え</x:String>
     <x:String x:Key="TxtFgNvngxReplacementTooltip">NVNGX/DLSS-Gの置き換えプロバイダーを選択します。FG出力がDLSS-Gの場合のみ適用されます。</x:String>
