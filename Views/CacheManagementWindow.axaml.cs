@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -22,7 +23,11 @@ namespace OptiscalerClient.Views
         private static readonly FontFamily IconFont = new("avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular");
         private readonly ComponentManagementService _componentService;
         private bool _isAnimatingClose;
-        private string _currentSection = "opti-stable";
+        private string _currentSection = "opti";
+        private string _currentOptiTab = "opti-stable";
+        private string _currentFsr4Tab     = "fsr4-mirror"; // "fsr4-mirror" | "fsr4-custom"
+        private string _currentFsr4Variant = "fsr4-int8";   // "fsr4-int8"   | "fsr4-fp8"
+        private string _currentDlssTab     = "dlss-mirror"; // "dlss-mirror" | "dlss-custom"
         private GamepadDialogNavigationHelper? _gamepadHelper;
 
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -35,7 +40,7 @@ namespace OptiscalerClient.Views
         }
 
         public CacheManagementWindow(Window owner)
-            : this(owner, "opti-stable")
+            : this(owner, "opti")
         {
         }
 
@@ -150,7 +155,7 @@ namespace OptiscalerClient.Views
             return false;
         }
 
-        public CacheManagementWindow(Window owner, string initialSection = "opti-stable")
+        public CacheManagementWindow(Window owner, string initialSection = "opti")
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
@@ -212,28 +217,8 @@ namespace OptiscalerClient.Views
 
             sidebar.Children.Clear();
 
-            // ── OptiScaler (expandable) ──────────────────────────────────────
-            var optiContainer = new StackPanel();
-
-            var optiButton = CreateCategoryButton("\uF2A3", "\uEB8C", "OptiScaler");
-            var expandIconTb = (optiButton.Content as StackPanel)?.Children.OfType<TextBlock>().FirstOrDefault();
-
-            var optiChildren = new StackPanel { Margin = new Thickness(20, 0, 0, 0), IsVisible = true };
-            optiChildren.Children.Add(CreateSubButton("opti-stable", "Stable", "\uE78F"));
-            optiChildren.Children.Add(CreateSubButton("opti-beta",   "Beta",   "\uE206"));
-            optiChildren.Children.Add(CreateSubButton("opti-nightly", "Nightly", "\uE945"));
-            optiChildren.Children.Add(CreateSubButton("opti-custom", "Custom", "\uF41D"));
-
-            optiButton.Click += (s, e) =>
-            {
-                optiChildren.IsVisible = !optiChildren.IsVisible;
-                if (expandIconTb != null)
-                    expandIconTb.Text = optiChildren.IsVisible ? "\uF2A3" : "\uF2B6";
-            };
-
-            optiContainer.Children.Add(optiButton);
-            optiContainer.Children.Add(optiChildren);
-            sidebar.Children.Add(optiContainer);
+            // ── OptiScaler (single entry — Stable/Beta/Nightly/Custom shown as tabs in content) ──
+            sidebar.Children.Add(CreateTopButton("opti", "OptiScaler", "\uEB8C"));
 
             // ── OptiPatcher ──────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("optipatcher", "OptiPatcher", "\uE8D7"));
@@ -247,72 +232,21 @@ namespace OptiscalerClient.Views
             // ── nukemfg ──────────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("nukemfg",   "nukemfg",   "\uE619"));
 
-            // \u2500\u2500 DLSS Enabler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            // ── DLSS Enabler ─────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("dlss-enabler",
                 Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uE9CE"));
 
-            // \u2500\u2500 Streamline (auto-downloaded, list + delete only) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            // ── Streamline (auto-downloaded, list + delete only) ─────────────
             sidebar.Children.Add(CreateTopButton("streamline",
                 Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
 
             // Section rendering/selection is the caller's responsibility (each constructor calls
             // ShowSection(_currentSection)/UpdateSidebarSelection(_currentSection) right after
             // BuildSidebar()). Doing it here too used to clobber a requested initialSection other
-            // than "opti-stable", since ShowSection mutates _currentSection as a side effect.
+            // than "opti", since ShowSection mutates _currentSection as a side effect.
         }
 
-        private Button CreateCategoryButton(string expandIcon, string icon, string label)
-        {
-            var btn = new Button
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Padding = new Thickness(12, 10),
-                Margin = new Thickness(0, 0, 0, 4),
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Cursor = new Cursor(StandardCursorType.Hand)
-            };
 
-            btn.Styles.Add(new Style(x => x.OfType<Button>().Class(":pointerover"))
-            {
-                Setters = { new Setter(Button.BackgroundProperty, Brushes.Transparent) }
-            });
-            btn.Styles.Add(new Style(x => x.OfType<Button>().Class(":pressed"))
-            {
-                Setters = { new Setter(Button.BackgroundProperty, Brushes.Transparent) }
-            });
-
-            var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = expandIcon,
-                FontFamily = IconFont,
-                FontSize = 11,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            });
-            stack.Children.Add(new TextBlock
-            {
-                Text = icon,
-                FontFamily = IconFont,
-                FontSize = 15,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            });
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 13,
-                FontWeight = FontWeight.SemiBold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            });
-
-            btn.Content = stack;
-            return btn;
-        }
 
         private Button CreateTopButton(string sectionId, string label, string icon)
         {
@@ -334,42 +268,6 @@ namespace OptiscalerClient.Views
                 Text = icon,
                 FontFamily = IconFont,
                 FontSize = 15,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            });
-            stack.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 13,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = this.FindResource("BrTextSecondary") as IBrush
-            });
-
-            btn.Content = stack;
-            btn.Click += (s, e) => { ShowSection(sectionId); UpdateSidebarSelection(sectionId); };
-            return btn;
-        }
-
-        private Button CreateSubButton(string sectionId, string label, string icon)
-        {
-            var btn = new Button
-            {
-                Tag = sectionId,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Padding = new Thickness(12, 8),
-                Margin = new Thickness(0, 0, 0, 2),
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(6)
-            };
-
-            var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-            stack.Children.Add(new TextBlock
-            {
-                Text = icon,
-                FontFamily = IconFont,
-                FontSize = 13,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = this.FindResource("BrTextSecondary") as IBrush
             });
@@ -410,20 +308,10 @@ namespace OptiscalerClient.Views
             foreach (var child in sidebar.Children)
             {
                 if (child is Button topBtn)
-                {
                     StyleBtn(topBtn);
-                }
-                else if (child is StackPanel cat)
-                {
-                    foreach (var catChild in cat.Children)
-                    {
-                        if (catChild is StackPanel subContainer)
-                            foreach (var sub in subContainer.Children.OfType<Button>())
-                                StyleBtn(sub);
-                    }
-                }
             }
         }
+
 
         // ── Content rendering ─────────────────────────────────────────────────
 
@@ -438,16 +326,74 @@ namespace OptiscalerClient.Views
 
             switch (sectionId)
             {
-                case "opti-stable": RenderOptiScalerVersions(content, showBeta: false); break;
-                case "opti-beta":   RenderOptiScalerVersions(content, showBeta: true);  break;
-                case "opti-nightly":RenderOptiScalerVersions(content, showBeta: false, showNightly: true); break;
-                case "opti-custom": RenderOptiScalerCustom(content); break;
+                case "opti":        RenderOptiScalerWithTabs(content); break;
                 case "optipatcher": RenderOptiPatcher(content); break;
-                case "fsr4":        RenderFsr4(content); break;
+                case "fsr4":        RenderFsr4WithTabs(content); break;
                 case "fakenvapi":   RenderFakenvapi(content); break;
                 case "nukemfg":     RenderNukemfg(content); break;
-                case "dlss-enabler": RenderDlssEnabler(content); break;
+                case "dlss-enabler": RenderDlssEnablerWithTabs(content); break;
                 case "streamline":  RenderStreamline(content); break;
+            }
+        }
+
+        // ── OptiScaler unified view with tabs ────────────────────────────────
+
+        private void RenderOptiScalerWithTabs(StackPanel content)
+        {
+            // ── Tab bar ──────────────────────────────────────────────────────
+            var tabGrid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
+                Margin = new Thickness(0, 0, 0, 16)
+            };
+
+            var tabs = new[] { "opti-stable", "opti-beta", "opti-nightly", "opti-custom" };
+            var tabLabels = new[] { "Stable", "Beta", "Nightly", "Custom" };
+            var tabButtons = new Button[tabs.Length];
+
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                int idx = i; // capture for lambda
+                var btn = new Button
+                {
+                    Content = tabLabels[idx],
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    FontSize = 11,
+                    Padding = new Thickness(8, 5),
+                    Margin = new Thickness(idx == 0 ? 0 : 2, 0, idx == tabs.Length - 1 ? 0 : 2, 0)
+                };
+                btn.Classes.Add(_currentOptiTab == tabs[idx] ? "BtnPrimary" : "BtnSecondary");
+                tabButtons[idx] = btn;
+
+                btn.Click += (s, e) =>
+                {
+                    _currentOptiTab = tabs[idx];
+                    // Re-render the whole opti section so tabs update
+                    ShowSection("opti");
+                };
+
+                Grid.SetColumn(btn, i);
+                tabGrid.Children.Add(btn);
+            }
+
+            content.Children.Add(tabGrid);
+
+            // ── Tab content ──────────────────────────────────────────────────
+            switch (_currentOptiTab)
+            {
+                case "opti-stable":
+                    RenderOptiScalerVersions(content, showBeta: false);
+                    break;
+                case "opti-beta":
+                    RenderOptiScalerVersions(content, showBeta: true);
+                    break;
+                case "opti-nightly":
+                    RenderOptiScalerVersions(content, showBeta: false, showNightly: true);
+                    break;
+                case "opti-custom":
+                    RenderOptiScalerCustom(content);
+                    break;
             }
         }
 
@@ -473,6 +419,7 @@ namespace OptiscalerClient.Views
             foreach (var ver in filtered)
                 content.Children.Add(CreateVersionCard(ver, isExtras: false));
         }
+
 
         private void RenderOptiScalerCustom(StackPanel content)
         {
@@ -550,54 +497,158 @@ namespace OptiscalerClient.Views
                 content.Children.Add(CreateVersionCard(ver, isExtras: false, isOptiPatcher: true));
         }
 
-        private void RenderFsr4(StackPanel content)
+
+        private void RenderFsr4WithTabs(StackPanel content)
         {
-            // Add DLL button row
-            var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
-            var btnImport = new Button
+            // ── Tab bar row 1: Mirror | Custom ───────────────────────────────
+            var sourceTabGrid = new Grid
             {
-                Name = "BtnImportCustomExtras",
-                Content = Application.Current?.FindResource("TxtAddDll") as string ?? "Add DLL",
-                Padding = new Thickness(12, 5),
-                FontSize = 11
+                ColumnDefinitions = new ColumnDefinitions("*,*"),
+                Margin = new Thickness(0, 0, 0, 8)
             };
-            btnImport.Classes.Add("BtnBase");
-            btnImport.Click += BtnImportCustomExtras_Click;
 
-            importRow.Children.Add(btnImport);
-            Grid.SetColumn(btnImport, 1);
-            content.Children.Add(importRow);
-
-            // Info banner
-            content.Children.Add(new Border
+            var sourceTabs   = new[] { "fsr4-mirror", "fsr4-custom" };
+            var sourceLabels = new[]
             {
-                Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 8),
-                Margin = new Thickness(0, 0, 0, 12),
-                Child = new TextBlock
+                Application.Current?.FindResource("TxtTabMirror") as string ?? "Mirror",
+                Application.Current?.FindResource("TxtTabCustom") as string ?? "Custom"
+            };
+
+            for (int i = 0; i < sourceTabs.Length; i++)
+            {
+                int idx = i;
+                var btn = new Button
                 {
-                    Text = Application.Current?.FindResource("TxtAddFsr4DllDesc") as string
-                        ?? "Add a .zip/.7z/.rar package (or a single .dll) and select whether it contains an INT8 or FP8 FSR 4 model.",
-                    Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    Content = sourceLabels[idx],
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
                     FontSize = 11,
-                    TextWrapping = TextWrapping.Wrap
-                }
-            });
+                    Padding = new Thickness(8, 5),
+                    Margin = new Thickness(idx == 0 ? 0 : 2, 0, idx == sourceTabs.Length - 1 ? 0 : 2, 0)
+                };
+                btn.Classes.Add(_currentFsr4Tab == sourceTabs[idx] ? "BtnPrimary" : "BtnSecondary");
+                btn.Click += (s, e) =>
+                {
+                    _currentFsr4Tab = sourceTabs[idx];
+                    ShowSection("fsr4");
+                };
+                Grid.SetColumn(btn, i);
+                sourceTabGrid.Children.Add(btn);
+            }
+            content.Children.Add(sourceTabGrid);
 
-            var versions = _componentService.GetDownloadedExtrasVersions();
-
-            if (versions.Count == 0)
+            // ── Tab bar row 2: INT8 | FP8 ────────────────────────────────────
+            var variantTabGrid = new Grid
             {
-                content.Children.Add(MakeEmptyLabel("No versions cached."));
+                ColumnDefinitions = new ColumnDefinitions("*,*"),
+                Margin = new Thickness(0, 0, 0, 16)
+            };
+
+            var variantTabs   = new[] { "fsr4-int8", "fsr4-fp8" };
+            var variantLabels = new[] { "INT8", "FP8" };
+
+            for (int i = 0; i < variantTabs.Length; i++)
+            {
+                int idx = i;
+                var btn = new Button
+                {
+                    Content = variantLabels[idx],
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    FontSize = 11,
+                    Padding = new Thickness(8, 5),
+                    Margin = new Thickness(idx == 0 ? 0 : 2, 0, idx == variantTabs.Length - 1 ? 0 : 2, 0)
+                };
+                btn.Classes.Add(_currentFsr4Variant == variantTabs[idx] ? "BtnPrimary" : "BtnSecondary");
+                btn.Click += (s, e) =>
+                {
+                    _currentFsr4Variant = variantTabs[idx];
+                    ShowSection("fsr4");
+                };
+                Grid.SetColumn(btn, i);
+                variantTabGrid.Children.Add(btn);
+            }
+            content.Children.Add(variantTabGrid);
+
+            // ── Custom-only controls ──────────────────────────────────────────
+            if (_currentFsr4Tab == "fsr4-custom")
+            {
+                // Add DLL button row
+                var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 12) };
+                var btnImport = new Button
+                {
+                    Name = "BtnImportCustomExtras",
+                    Content = Application.Current?.FindResource("TxtAddDll") as string ?? "Add DLL",
+                    Padding = new Thickness(12, 5),
+                    FontSize = 11
+                };
+                btnImport.Classes.Add("BtnBase");
+                btnImport.Click += BtnImportCustomExtras_Click;
+
+                importRow.Children.Add(btnImport);
+                Grid.SetColumn(btnImport, 1);
+                content.Children.Add(importRow);
+
+                // Info banner
+                content.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
+                    BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 8),
+                    Margin = new Thickness(0, 0, 0, 12),
+                    Child = new TextBlock
+                    {
+                        Text = Application.Current?.FindResource("TxtAddFsr4DllDesc") as string
+                            ?? "Add a .zip/.7z/.rar package (or a single .dll) and select whether it contains an INT8 or FP8 FSR 4 model.",
+                        Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                        FontSize = 11,
+                        TextWrapping = TextWrapping.Wrap
+                    }
+                });
+            }
+
+            // ── Version list ──────────────────────────────────────────────────
+            var targetVariant = _currentFsr4Variant == "fsr4-fp8" ? Fsr4DllVariant.Fp8 : Fsr4DllVariant.Int8;
+            var customSet     = _componentService.CustomExtrasVersions;
+            var allVersions   = _componentService.GetDownloadedExtrasVersions();
+
+            List<string> filtered;
+            string emptyKey;
+            if (_currentFsr4Tab == "fsr4-mirror")
+            {
+                filtered = allVersions
+                    .Where(v => !customSet.Contains(v) && _componentService.GetExtrasDllVariant(v) == targetVariant)
+                    .ToList();
+                emptyKey = targetVariant == Fsr4DllVariant.Int8 ? "TxtFsr4NoMirrorInt8" : "TxtFsr4NoMirrorFp8";
+            }
+            else
+            {
+                filtered = allVersions
+                    .Where(v => customSet.Contains(v) && _componentService.GetExtrasDllVariant(v) == targetVariant)
+                    .ToList();
+                emptyKey = targetVariant == Fsr4DllVariant.Int8 ? "TxtFsr4NoCustomInt8" : "TxtFsr4NoCustomFp8";
+            }
+
+            if (filtered.Count == 0)
+            {
+                var fallbackMap = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    ["TxtFsr4NoMirrorInt8"] = "No INT8 mirror versions cached.",
+                    ["TxtFsr4NoMirrorFp8"]  = "No FP8 mirror versions cached.",
+                    ["TxtFsr4NoCustomInt8"] = "No custom INT8 versions imported.",
+                    ["TxtFsr4NoCustomFp8"]  = "No custom FP8 versions imported."
+                };
+                content.Children.Add(MakeEmptyLabel(
+                    Application.Current?.FindResource(emptyKey) as string ?? fallbackMap[emptyKey]));
                 return;
             }
 
-            foreach (var ver in versions)
+            foreach (var ver in filtered)
                 content.Children.Add(CreateVersionCard(ver, isExtras: true));
         }
+
 
         private void RenderFakenvapi(StackPanel content)
         {
@@ -662,70 +713,112 @@ namespace OptiscalerClient.Views
             }
         }
 
-        private void RenderDlssEnabler(StackPanel content)
+        private void RenderDlssEnablerWithTabs(StackPanel content)
         {
-            // Import row
-            var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
-            var btnImport = new Button
+            // ── Tab bar: Mirror | Custom ──────────────────────────────────────
+            var tabGrid = new Grid
             {
-                Name = "BtnImportDlssEnabler",
-                Content = Application.Current?.FindResource("TxtImportArchive") as string ?? "Import Archive",
-                Padding = new Thickness(12, 5),
-                FontSize = 11
+                ColumnDefinitions = new ColumnDefinitions("*,*"),
+                Margin = new Thickness(0, 0, 0, 16)
             };
-            btnImport.Classes.Add("BtnBase");
-            btnImport.Click += BtnImportDlssEnabler_Click;
 
-            importRow.Children.Add(btnImport);
-            Grid.SetColumn(btnImport, 1);
-            content.Children.Add(importRow);
-
-            // Info banner
-            content.Children.Add(new Border
+            var tabs   = new[] { "dlss-mirror", "dlss-custom" };
+            var labels = new[]
             {
-                Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 8),
-                Margin = new Thickness(0, 0, 0, 12),
-                Child = new TextBlock
+                Application.Current?.FindResource("TxtTabMirror") as string ?? "Mirror",
+                Application.Current?.FindResource("TxtTabCustom") as string ?? "Custom"
+            };
+
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                int idx = i;
+                var btn = new Button
                 {
-                    Text = Application.Current?.FindResource("TxtDlssEnablerImportBanner") as string ??
-                        "DLSS Enabler versions are imported from a .dll file or a .zip/.7z/.rar archive containing version.dll or dlss-enabler-headless.dll.",
-                    Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    Content = labels[idx],
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
                     FontSize = 11,
-                    TextWrapping = TextWrapping.Wrap
-                }
-            });
+                    Padding = new Thickness(8, 5),
+                    Margin = new Thickness(idx == 0 ? 0 : 2, 0, idx == tabs.Length - 1 ? 0 : 2, 0)
+                };
+                btn.Classes.Add(_currentDlssTab == tabs[idx] ? "BtnPrimary" : "BtnSecondary");
+                btn.Click += (s, e) =>
+                {
+                    _currentDlssTab = tabs[idx];
+                    ShowSection("dlss-enabler");
+                };
+                Grid.SetColumn(btn, i);
+                tabGrid.Children.Add(btn);
+            }
+            content.Children.Add(tabGrid);
 
-            var versions = _componentService.GetDownloadedDlssEnablerVersions();
-            if (versions.Count == 0)
+            // ── Tab content ───────────────────────────────────────────────────
+            if (_currentDlssTab == "dlss-mirror")
             {
-                content.Children.Add(MakeEmptyLabel(Application.Current?.FindResource("TxtNoDlssEnablerVersions") as string ?? "No DLSS Enabler versions cached."));
+                var mirrorVersions = _componentService.GetDownloadedDlssEnablerMirrorVersions();
+                if (mirrorVersions.Count == 0)
+                {
+                    content.Children.Add(MakeEmptyLabel(
+                        Application.Current?.FindResource("TxtDlssEnablerNoMirrorVersions") as string
+                        ?? "No DLSS Enabler mirror versions cached."));
+                }
+                else
+                {
+                    foreach (var ver in mirrorVersions)
+                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnablerMirror: true));
+                }
             }
             else
             {
-                foreach (var ver in versions)
-                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true));
-            }
-
-            // Versions downloaded via the Mirror tab (Frame Generation modal) — separate cache
-            // folder from the manually-imported ones above, listed here so they're deletable too.
-            var mirrorVersions = _componentService.GetDownloadedDlssEnablerMirrorVersions();
-            if (mirrorVersions.Count > 0)
-            {
-                content.Children.Add(new TextBlock
+                // ── Custom: Import button + info banner + list ────────────────
+                var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 12) };
+                var btnImport = new Button
                 {
-                    Text = Application.Current?.FindResource("TxtDlssEnablerMirrorSectionLbl") as string ?? "Downloaded from Mirror",
-                    Foreground = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray,
-                    FontSize = 11,
-                    Margin = new Thickness(0, 16, 0, 8)
+                    Name = "BtnImportDlssEnabler",
+                    Content = Application.Current?.FindResource("TxtImportArchive") as string ?? "Import Archive",
+                    Padding = new Thickness(12, 5),
+                    FontSize = 11
+                };
+                btnImport.Classes.Add("BtnBase");
+                btnImport.Click += BtnImportDlssEnabler_Click;
+
+                importRow.Children.Add(btnImport);
+                Grid.SetColumn(btnImport, 1);
+                content.Children.Add(importRow);
+
+                content.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#1A42A5F5")),
+                    BorderBrush = new SolidColorBrush(Color.Parse("#42A5F5")),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 8),
+                    Margin = new Thickness(0, 0, 0, 12),
+                    Child = new TextBlock
+                    {
+                        Text = Application.Current?.FindResource("TxtDlssEnablerImportBanner") as string ??
+                            "DLSS Enabler versions are imported from a .dll file or a .zip/.7z/.rar archive containing version.dll or dlss-enabler-headless.dll.",
+                        Foreground = new SolidColorBrush(Color.Parse("#42A5F5")),
+                        FontSize = 11,
+                        TextWrapping = TextWrapping.Wrap
+                    }
                 });
-                foreach (var ver in mirrorVersions)
-                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnablerMirror: true));
+
+                var versions = _componentService.GetDownloadedDlssEnablerVersions();
+                if (versions.Count == 0)
+                {
+                    content.Children.Add(MakeEmptyLabel(
+                        Application.Current?.FindResource("TxtNoDlssEnablerVersions") as string
+                        ?? "No DLSS Enabler versions cached."));
+                }
+                else
+                {
+                    foreach (var ver in versions)
+                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true));
+                }
             }
         }
+
 
         private void RenderStreamline(StackPanel content)
         {
@@ -974,8 +1067,9 @@ namespace OptiscalerClient.Views
                 if (overlay != null) overlay.IsVisible = false;
                 if (sender is Button btnSender2) btnSender2.IsEnabled = true;
 
-                ShowSection("opti-custom");
-                UpdateSidebarSelection("opti-custom");
+                _currentOptiTab = "opti-custom";
+                ShowSection("opti");
+                UpdateSidebarSelection("opti");
                 UpdateCacheInfo();
             }
             catch (Exception ex)
@@ -1009,6 +1103,8 @@ namespace OptiscalerClient.Views
                 if (overlay != null) overlay.IsVisible = false;
                 if (sender is Button btnSender2) btnSender2.IsEnabled = true;
 
+                _currentFsr4Tab     = "fsr4-custom";
+                _currentFsr4Variant = addDialog.SelectedVariant == Fsr4DllVariant.Fp8 ? "fsr4-fp8" : "fsr4-int8";
                 ShowSection("fsr4");
                 UpdateSidebarSelection("fsr4");
                 UpdateCacheInfo();
@@ -1097,6 +1193,7 @@ namespace OptiscalerClient.Views
                 if (overlay != null) overlay.IsVisible = false;
                 if (sender is Button btnSender2) btnSender2.IsEnabled = true;
 
+                _currentDlssTab = "dlss-custom";
                 ShowSection("dlss-enabler");
                 UpdateSidebarSelection("dlss-enabler");
                 UpdateCacheInfo();
