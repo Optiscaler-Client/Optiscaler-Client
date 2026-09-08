@@ -235,12 +235,10 @@ namespace OptiscalerClient.Views
             // ── DLSS Enabler ─────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("dlss-enabler",
                 Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uE9CE"));
-                Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uF4B6"));
 
             // ── Streamline (auto-downloaded, list + delete only) ─────────────
             sidebar.Children.Add(CreateTopButton("streamline",
                 Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
-                Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE7F7"));
 
             // \u2500\u2500 RenoDX (experimental, opt-in \u2014 hidden entirely unless the switch is on) \u2500\u2500\u2500\u2500\u2500\u2500\u2500
             if (_componentService.Config.ShowExperimentalFeatures)
@@ -1072,7 +1070,6 @@ namespace OptiscalerClient.Views
             var fakenvapi   = _componentService.GetDownloadedFakenvapiVersions();
             var dlssEnabler = _componentService.GetDownloadedDlssEnablerVersions();
             var streamline  = _componentService.GetDownloadedStreamlineVersions();
-            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count;
             var renodx      = _componentService.GetAllCachedRenodxEntries();
             int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
