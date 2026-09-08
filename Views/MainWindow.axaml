@@ -1944,6 +1944,37 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Experimental / Addon Features -->
+                            <Border Classes="InteractiveOption CardOption"
+                                    CornerRadius="{StaticResource RadiusLarge}"
+                                    Padding="20,16"
+                                    Margin="0,0,16,16"
+                                    HorizontalAlignment="Left">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource TxtSettingsShowExperimental}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource BrTextPrimary}"/>
+                                        <TextBlock Text="{DynamicResource TxtSettingsShowExperimentalDesc}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,4,16,0"
+                                                   FontSize="{StaticResource FontSizeCaption}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Name="TglExperimentalFeatures"
+                                                  Grid.Column="1"
+                                                  VerticalAlignment="Center"
+                                                  OnContent="" OffContent=""
+                                                  IsChecked="False"
+                                                  Focusable="False"
+                                                  IsCheckedChanged="TglExperimentalFeatures_IsCheckedChanged"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Rendering Mode -->
                             <Border Background="{StaticResource BrBgCard}"
                                     BorderBrush="{StaticResource BrBorderSubtle}"

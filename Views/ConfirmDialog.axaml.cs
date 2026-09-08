@@ -8,6 +8,7 @@ using OptiscalerClient.Helpers;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace OptiscalerClient.Views
@@ -15,6 +16,7 @@ namespace OptiscalerClient.Views
     public partial class ConfirmDialog : Window
     {
         private GamepadDialogNavigationHelper? _gamepadHelper;
+        private string? _linkUrl;
 
         public ConfirmDialog()
         {
@@ -22,7 +24,11 @@ namespace OptiscalerClient.Views
             DialogDimHelper.Register(this);
         }
 
-        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null)
+        /// <param name="linkUrl">Optional URL rendered as a clickable hyperlink below the message
+        /// (e.g. pointing a user to a wiki page to finish something manually) — opened in the
+        /// default browser via Process.Start on click. Shown with <paramref name="linkText"/> as
+        /// its label, or the raw URL itself if that's left null.</param>
+        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null)
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
@@ -55,6 +61,14 @@ namespace OptiscalerClient.Views
             if (txtTitle != null) txtTitle.Text = title;
             if (txtMessage != null) txtMessage.Text = message;
 
+            _linkUrl = linkUrl;
+            var txtLink = this.FindControl<TextBlock>("TxtLink");
+            if (txtLink != null && !string.IsNullOrEmpty(linkUrl))
+            {
+                txtLink.Text = linkText ?? linkUrl;
+                txtLink.IsVisible = true;
+            }
+
             // Manual Dragging implementation for BorderOnly windows
             if (titleBar != null)
             {
@@ -73,10 +87,14 @@ namespace OptiscalerClient.Views
             {
                 if (btnCancel != null) btnCancel.IsVisible = false;
 
-                if (btnConfirm != null) 
+                if (btnConfirm != null)
                 {
                     btnConfirm.Content = Application.Current?.TryFindResource("TxtGotIt", out var res) == true ? res?.ToString() ?? "Got it" : "Got it";
                 }
+            }
+            else if (confirmText != null && btnConfirm != null)
+            {
+                btnConfirm.Content = confirmText;
             }
 
             if (txtIcon != null)
@@ -159,6 +177,13 @@ namespace OptiscalerClient.Views
         }
 
         private bool _isAnimatingClose = false;
+
+        private void TxtLink_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_linkUrl)) return;
+            try { Process.Start(new ProcessStartInfo { FileName = _linkUrl, UseShellExecute = true }); }
+            catch (Exception ex) { DebugWindow.Log($"[ConfirmDialog] Failed to open link '{_linkUrl}': {ex.Message}"); }
+        }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated(false);
         private void BtnConfirm_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated(true);

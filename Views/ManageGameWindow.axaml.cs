@@ -65,6 +65,7 @@ namespace OptiscalerClient.Views
         private bool _optiBetaBeforeAutoNightlySwitch;
         private bool _optiCustomBeforeAutoNightlySwitch;
         private bool _optiTabInitialized;
+        private bool _renodxHandlerAttached;
         private Fsr4DllVariant _extrasVariant = Fsr4DllVariant.Int8;
         private bool _extrasTabInitialized;
         private ComponentManagementService? _cachedComponentService;
@@ -1164,6 +1165,15 @@ namespace OptiscalerClient.Views
             // ── Populate Fakenvapi selector ───────────────────────────────────
             PopulateFakenvapiComboBox(componentService);
 
+            // ── Populate RenoDX selector (experimental, opt-in) ───────────────
+            var showExperimental = componentService.Config.ShowExperimentalFeatures;
+            var experimentalZone = this.FindControl<Control>("BorderExperimentalZone");
+            if (experimentalZone != null) experimentalZone.IsVisible = showExperimental;
+            var experimentalChip = this.FindControl<Control>("BorderExperimentalChip");
+            if (experimentalChip != null) experimentalChip.IsVisible = showExperimental;
+            if (showExperimental)
+                PopulateRenodxComboBox(componentService);
+
             // This is the point where all five "hard" combos (OptiVersion/Extras/OptiPatcher/
             // NukemFG/Fakenvapi) have real selections for the first time — LoadVersionsAsync runs
             // fire-and-forget from the constructor, so UpdateStatus's own baseline capture (which
@@ -1792,6 +1802,106 @@ namespace OptiscalerClient.Views
             };
         }
 
+        /// <summary>
+        /// Resolves the cache key RenoDX uses for this game: the compatibility-list wiki's own game
+        /// name if there's a fuzzy match, otherwise the local Game.Name as-is — so a manually-added
+        /// addon (for a game the wiki doesn't list) still has something stable to key off of. See
+        /// RenodxModsService.TryGetForGame / ComponentManagementService.GetRenodxCachePath.
+        /// </summary>
+        private string ResolveRenodxGameKey()
+        {
+            return new RenodxModsService().TryGetForGame(_game.Name, out var entry) && entry != null
+                ? entry.GameName
+                : _game.Name;
+        }
+
+        /// <summary>
+        /// Populates CmbRenodxVersion with: "None" (default — never tries to fetch/install
+        /// anything), "Auto" (resolves the addon automatically at install time, see
+        /// ExecuteInstallAsync), the specific addon already cached for this game (only if one
+        /// exists), and "Add addon…" (opens CacheManagementWindow's "renodx" section). Defaulting to
+        /// "None" rather than "Auto" is deliberate — this is opt-in, so clicking Install should
+        /// never attempt a network fetch the user didn't ask for. Experimental — only called when
+        /// Config.ShowExperimentalFeatures is on (see PopulateVersionSelectors).
+        /// </summary>
+        private void PopulateRenodxComboBox(ComponentManagementService componentService)
+        {
+            var cmb = this.FindControl<ComboBox>("CmbRenodxVersion");
+            if (cmb == null) return;
+
+            RebuildRenodxItems(cmb, componentService);
+
+            // PopulateVersionSelectors (and so this method) runs twice per window open — once
+            // synchronously from cache, once again after the update check — so guard against
+            // attaching a second handler on the second call. Without this, the handler fires
+            // twice per real selection (harmless on its own), but worse: RebuildRenodxItems'
+            // intermediate SelectedIndex assignments during that second call would already fire
+            // the first handler and persist a transient value before the real one is restored
+            // (fixed below too, but this guard is the other half — belt and suspenders).
+            if (_renodxHandlerAttached) return;
+            _renodxHandlerAttached = true;
+
+            cmb.SelectionChanged += async (s, e) =>
+            {
+                if (cmb.SelectedItem is ComboBoxItem item && item.Tag?.ToString() == "__manage__")
+                {
+                    cmb.SelectedIndex = 0;
+                    var cacheWindow = new CacheManagementWindow("renodx");
+                    await cacheWindow.ShowDialog(this);
+                    // Addons added/removed while the dialog was open (including a fresh auto-download,
+                    // which also goes through the same cache) wouldn't otherwise show up until the
+                    // whole Manage Game window was reopened. Rebuild items only here (not via
+                    // PopulateRenodxComboBox) so this handler isn't re-registered on every reopen.
+                    RebuildRenodxItems(cmb, componentService);
+                }
+                else if (cmb.SelectedItem is ComboBoxItem realItem)
+                {
+                    // Remembers the last real choice (None/Auto/a specific cached addon) so it's
+                    // pre-selected again next time any Manage Game window opens — matches how
+                    // Fakenvapi/NukemFG/OptiPatcher persist via Config.DefaultXVersion instead of
+                    // always resetting to "None".
+                    componentService.Config.DefaultRenodxVersion = realItem.Tag?.ToString();
+                    componentService.SaveConfiguration();
+                }
+            };
+        }
+
+        private void RebuildRenodxItems(ComboBox cmb, ComponentManagementService componentService)
+        {
+            // Read BEFORE touching Items/SelectedIndex below — those assignments fire
+            // SelectionChanged synchronously on whatever handler is already attached, which would
+            // otherwise persist a transient "None" as the new "last selection" and clobber the
+            // real saved value out from under this read (see the comment in PopulateRenodxComboBox).
+            var savedRenodx = componentService.Config.DefaultRenodxVersion;
+
+            cmb.Items.Clear();
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
+            cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
+
+            var gameKey = ResolveRenodxGameKey();
+            var cachedPath = componentService.GetCachedRenodxAddonPath(gameKey);
+            if (!string.IsNullOrEmpty(cachedPath))
+                cmb.Items.Add(new ComboBoxItem { Content = System.IO.Path.GetFileName(cachedPath), Tag = cachedPath });
+
+            cmb.Items.Add(ComboActionItemHelper.Build(this, "Add addon…", "__manage__"));
+
+            // Single assignment at the end (instead of "0, then maybe overwrite") so any already-
+            // attached handler observes the final, correct value if it fires at all.
+            var targetIndex = 0; // None, default
+            if (!string.IsNullOrEmpty(savedRenodx) && !savedRenodx.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                for (int i = 1; i < cmb.Items.Count; i++)
+                {
+                    if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == savedRenodx)
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+            }
+            cmb.SelectedIndex = targetIndex;
+        }
+
         private void CheckIfAntiCheat()
         {
             const string anticheatName = "start_protected_game.exe";
@@ -2106,7 +2216,7 @@ namespace OptiscalerClient.Views
             Grid.SetColumn(injection, useCompactLayout ? 2 : 0);
             Grid.SetRow(patcher, useCompactLayout ? 1 : 1);
             Grid.SetColumn(patcher, useCompactLayout ? 0 : 1);
-            Grid.SetRow(outputUpscaler, useCompactLayout ? 1 : 3);
+            Grid.SetRow(outputUpscaler, useCompactLayout ? 1 : 4);
             Grid.SetColumn(outputUpscaler, useCompactLayout ? 1 : 0);
             Grid.SetRow(upscalingQuality, useCompactLayout ? 1 : 2);
             Grid.SetColumn(upscalingQuality, useCompactLayout ? 2 : 2);
@@ -3356,6 +3466,20 @@ namespace OptiscalerClient.Views
             bool installOptiPatcher = !string.IsNullOrEmpty(selectedOptiPatcherVersion) &&
                                       !selectedOptiPatcherVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
 
+            // Read selected RenoDX option before any async work (experimental, opt-in). The actual
+            // resolution (Auto lookup/download, ReShade-presence check, failure modals) needs
+            // network + dialogs, so it happens later in this method, right before the Task.Run —
+            // same shape as the Fakenvapi-nightly/DLSS-Enabler-Mirror pre-install resolution below.
+            // Tag is "none" (default — never tries to fetch anything), "auto", a full cached file
+            // path, or "__manage__" (never actually installed, the combo snaps back to "none" on
+            // selection).
+            var cmbRenodxVersion = this.FindControl<ComboBox>("CmbRenodxVersion");
+            var selectedRenodxTag = (cmbRenodxVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            bool renodxRequested = extrasComponentService.Config.ShowExperimentalFeatures &&
+                                    !string.IsNullOrEmpty(selectedRenodxTag) &&
+                                    selectedRenodxTag != "none" &&
+                                    selectedRenodxTag != "__manage__";
+
             // ── DLL-swap mode: OptiScaler version is "None" ─────────────────────────────
             // Ignores the normal install flow entirely (profile, injection method, Fakenvapi,
             // NukemFG, OptiPatcher — none of that applies to a bare DLL swap). See plan §3/§5.D.
@@ -3679,6 +3803,102 @@ namespace OptiscalerClient.Views
                     return;
                 }
 
+                // RenoDX (experimental, opt-in): resolve the actual addon file now — Auto tries the
+                // per-game cache first, then a wiki lookup + direct download; a specific cached path
+                // (the combo's non-"auto" tag IS the full file path, see PopulateRenodxComboBox)
+                // just uses that directly, no network. Two failure paths need a modal right here —
+                // InstallOptiScaler has no UI to show one: nothing could be resolved at all, or
+                // ReShade wasn't detected in the game folder (RenoDX requires it).
+                string? renodxAddonPath = null;
+                bool installRenodx = false;
+                if (renodxRequested)
+                {
+                    var renodxGameKey = ResolveRenodxGameKey();
+                    if (selectedRenodxTag == "auto")
+                    {
+                        renodxAddonPath = componentService.GetCachedRenodxAddonPath(renodxGameKey);
+                        if (string.IsNullOrEmpty(renodxAddonPath))
+                        {
+                            var renodxModsService = new RenodxModsService();
+                            if (renodxModsService.TryGetForGame(_game.Name, out var renodxEntry) &&
+                                !string.IsNullOrEmpty(renodxEntry?.SnapshotUrl))
+                            {
+                                try
+                                {
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        if (bdProgress != null) bdProgress.IsVisible = true;
+                                        if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                                        if (txtProgressState != null) txtProgressState.Text = "Downloading RenoDX addon...";
+                                    });
+                                    renodxAddonPath = await componentService.DownloadRenodxAddonAsync(
+                                        renodxEntry!.SnapshotUrl!, renodxGameKey, renodxEntry.GameName);
+                                }
+                                catch (Exception ex)
+                                {
+                                    DebugWindow.Log($"[Install] RenoDX auto-download failed: {ex.Message}");
+                                    renodxAddonPath = null;
+                                }
+                                finally
+                                {
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        if (prgDownload != null) prgDownload.IsIndeterminate = false;
+                                        if (bdProgress != null) bdProgress.IsVisible = false;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        renodxAddonPath = selectedRenodxTag;
+                    }
+
+                    if (string.IsNullOrEmpty(renodxAddonPath))
+                    {
+                        // Doesn't proceed with the install at all — same precedent as the NukemFG
+                        // cache-miss check just above (return instead of silently dropping the
+                        // component and continuing), since the user explicitly asked for RenoDX
+                        // (selected something other than "None") and it couldn't be honored.
+                        await new ConfirmDialog(this,
+                            GetResourceString("TxtRenodxNotFoundTitle", "Couldn't get the RenoDX addon automatically"),
+                            GetResourceString("TxtRenodxNotFoundMsg", "Download it manually from the RenoDX Mods wiki and add it from Manage Local Versions if you'd like to use it."),
+                            isAlert: true,
+                            linkUrl: RenodxModsService.WikiUrl,
+                            linkText: GetResourceString("TxtRenodxWikiLinkText", "Open the RenoDX Mods wiki")
+                        ).ShowDialog<object>(this);
+                        return;
+                    }
+                    else
+                    {
+                        var renodxGameDir = overrideGameDir ?? installService.DetermineInstallDirectory(_game);
+                        var reshadeDetected = !string.IsNullOrWhiteSpace(renodxGameDir) &&
+                            (File.Exists(System.IO.Path.Combine(renodxGameDir, "ReShade.ini")) ||
+                             Directory.Exists(System.IO.Path.Combine(renodxGameDir, "reshade-shaders")));
+
+                        if (reshadeDetected)
+                        {
+                            installRenodx = true;
+                        }
+                        else
+                        {
+                            var proceedAnyway = await new ConfirmDialog(this,
+                                GetResourceString("TxtRenodxReshadeMissingTitle", "ReShade not detected"),
+                                GetResourceString("TxtRenodxReshadeMissingMsg", "RenoDX requires ReShade to already be installed in this game's folder, and it wasn't detected. Install it first from reshade.me, or continue anyway if you already have it under a different setup."),
+                                confirmText: GetResourceString("TxtBtnProceedAnyway", "Proceed anyway"),
+                                linkUrl: "https://reshade.me",
+                                linkText: GetResourceString("TxtRenodxOpenReshadeLinkText", "Open reshade.me")
+                            ).ShowDialog<bool>(this);
+
+                            // Cancel aborts the whole install, same as the "not found" case above —
+                            // it doesn't silently fall back to installing everything except RenoDX.
+                            if (!proceedAnyway) return;
+                            installRenodx = true;
+                        }
+                    }
+                }
+
                 // Show extraction status
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -3798,6 +4018,8 @@ namespace OptiscalerClient.Views
                                                         ensureFakenvapiIfMissing: isNightlyChannel,
                                                         installDlssEnabler: mfgWithEnabler,
                                                         dlssEnablerCachePath: dlssEnablerCacheDir,
+                                                        installRenodx: installRenodx,
+                                                        renodxAddonCachePath: renodxAddonPath ?? "",
                                                         gpu: preferredGpuForFsr4);
                     });
                 }
@@ -3826,6 +4048,7 @@ namespace OptiscalerClient.Views
                 var installedComponents = "OptiScaler";
                 if (installFakenvapi) installedComponents += " + Fakenvapi";
                 if (installNukemFG) installedComponents += " + NukemFG";
+                if (installRenodx) installedComponents += " + RenoDX";
 
                 // ── FSR4 INT8 DLL injection ────────────────────────────────────────
                 if (injectExtras && !string.IsNullOrEmpty(selectedExtrasVersion))
@@ -5116,6 +5339,11 @@ namespace OptiscalerClient.Views
             var extrasTag = (this.FindControl<ComboBox>("CmbExtrasVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var normalizedExtras = string.IsNullOrEmpty(extrasTag) || extrasTag.Equals("none", StringComparison.OrdinalIgnoreCase)
                 ? null : extrasTag;
+
+            // RenoDX (CmbRenodxVersion) deliberately isn't part of this record: the combo only ever
+            // rests on "Auto" (or the one specific cached file, which resolves to the same addon
+            // Auto would anyway) — there's no real "changed selection" for it to miss the way there
+            // is for a multi-version combo, so comparing it here would never contribute anything.
 
             return new HardInstallSelection(optiscalerVersion, injectionMethod, installFakenvapi, installNukemFG,
                 installOptiPatcher, normalizedExtras);

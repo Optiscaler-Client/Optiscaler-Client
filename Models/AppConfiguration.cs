@@ -151,6 +151,20 @@ namespace OptiscalerClient.Models
         /// </summary>
         public string? DefaultNukemFGVersion { get; set; } = null;
         /// <summary>
+        /// Shows the RenoDX selector in ManageGameWindow and the "renodx" section in
+        /// CacheManagementWindow. Purely a visibility switch — does not install, enable, or
+        /// configure anything by itself.
+        /// </summary>
+        public bool ShowExperimentalFeatures { get; set; } = false;
+        /// <summary>
+        /// The last RenoDX selection made in ManageGameWindow ("none", "auto", or a cached addon's
+        /// full file path), pre-selected the next time any game's Manage window opens. Global like
+        /// DefaultFakenvapiVersion/DefaultNukemFGVersion above rather than per-game — a saved file
+        /// path only ever matches a combo item when the addon happens to be cached for that same
+        /// game, so per-game correctness falls out naturally without a per-game dictionary.
+        /// </summary>
+        public string? DefaultRenodxVersion { get; set; } = null;
+        /// <summary>
         /// The default injection DLL name to pre-select in ManageGameWindow. Null means "auto"
         /// (resolved per-game from the compatibility list, falling back to dxgi.dll).
         /// </summary>
@@ -228,6 +242,10 @@ namespace OptiscalerClient.Models
         /// request is made, so a failed attempt doesn't retry on every app launch.
         /// </summary>
         public DateTime? LastCompatListCheckTime { get; set; } = null;
+
+        /// <summary>UTC timestamp of the last RenoDX Mods wiki refresh attempt (see
+        /// RenodxModsService) — same 24h cooldown convention as LastCompatListCheckTime.</summary>
+        public DateTime? LastRenodxModsCheckTime { get; set; } = null;
 
         /// <summary>
         /// Latest GitHub release version the "Update Available" popup has already notified

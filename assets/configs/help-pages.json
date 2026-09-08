@@ -405,6 +405,12 @@
               "labelKey": "TxtHelpGMComponentsLabel",
               "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. An amber badge (FSR only) means the FSR4 INT8 DLL was swapped directly, without installing OptiScaler. Hover over any entry for details.",
               "textKey": "TxtHelpGMComponentsText"
+            },
+            {
+              "label": "RenoDX (Experimental) 🧪",
+              "labelKey": "TxtHelpGMRenodxLabel",
+              "text": "Optional per-game HDR/tone-mapping addon that runs on top of ReShade, only shown when Experimental Features is enabled in Settings. 'Auto' resolves and downloads the right addon for this game from the RenoDX wiki automatically; you can also pick an addon already cached for this game or add one manually from Manage Local Versions. Requires ReShade to already be installed in the game folder - if it conflicts with OptiScaler's own injection DLL (both commonly use dxgi.dll), the app automatically preserves the existing ReShade install instead of overwriting it.",
+              "textKey": "TxtHelpGMRenodxText"
             }
           ]
         }
@@ -515,8 +521,14 @@
             {
               "label": "Local Cache Management",
               "labelKey": "TxtHelpSetCacheLabel",
-              "text": "Allows you to view and delete cached versions of OptiScaler, FSR INT8, Fakenvapi, NukemFG, and OptiPatcher, and manage the default version used for each. Enabling 'Always use latest available version as default' for OptiScaler locks manual version selection in the Manage Default Versions window - turn it off there to pick a specific version instead.",
+              "text": "Allows you to view and delete cached versions of OptiScaler, FSR INT8, Fakenvapi, NukemFG, OptiPatcher, and RenoDX addons (only visible with Experimental Features enabled), and manage the default version used for each. Enabling 'Always use latest available version as default' for OptiScaler locks manual version selection in the Manage Default Versions window - turn it off there to pick a specific version instead.",
               "textKey": "TxtHelpSetCacheText"
+            },
+            {
+              "label": "Experimental Features 🧪",
+              "labelKey": "TxtHelpSetExperimentalLabel",
+              "text": "Toggle 'Show experimental / addon features' to reveal the RenoDX selector in Manage Game and its dedicated section in Manage Local Versions. Purely a visibility switch - enabling it doesn't install or configure anything by itself.",
+              "textKey": "TxtHelpSetExperimentalText"
             },
             {
               "label": "Profile Management",
@@ -839,6 +851,12 @@
               "labelKey": "TxtHelpFaqNoCompatMatchLabel",
               "text": "This happens when the local game name doesn't match the wiki's entry closely enough for the automatic lookup to find it. Edit the game's name in the Manage window so it matches the name shown on the Compatibility List, then close Manage and open it again — the lookup only runs when the window opens.",
               "textKey": "TxtHelpFaqNoCompatMatchText"
+            },
+            {
+              "label": "ReShade conflicts with OptiScaler",
+              "labelKey": "TxtHelpFaqReshadeConflictLabel",
+              "text": "OptiScaler and ReShade both default to the same injection filename (usually dxgi.dll), so installing one over the other can silently break whichever was there first. When installing OptiScaler, the app detects an existing ReShade install at that filename and automatically preserves it under a different name instead of overwriting it, so both keep working together without any manual steps.",
+              "textKey": "TxtHelpFaqReshadeConflictText"
             }
           ]
         }

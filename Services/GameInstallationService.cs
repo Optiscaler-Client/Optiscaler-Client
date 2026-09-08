@@ -107,6 +107,7 @@ namespace OptiscalerClient.Services
                                      bool installStreamline = false, string streamlineCachePath = "",
                                      bool ensureFakenvapiIfMissing = false,
                                      bool installDlssEnabler = false, string dlssEnablerCachePath = "",
+                                     bool installRenodx = false, string renodxAddonCachePath = "",
                                      GpuInfo? gpu = null)
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
@@ -320,6 +321,42 @@ namespace OptiscalerClient.Services
             bool injIsOriginal = priorBackedUpOriginals.Contains(injectionDllName);
             bool injIsOptiCreated = priorCreatedByOptiScaler.Contains(injectionDllName);
             string? injectionPreHash = null;
+
+            // Always check — not just when RenoDX is selected — because OptiScaler and ReShade
+            // both default to the same proxy DLL name (usually dxgi.dll). Without this, installing
+            // OptiScaler over an already-working manual ReShade install silently destroys it: the
+            // pre-existing file just goes into our own internal backup store under its original
+            // name, so nothing usable is left in the game folder, and LoadReshade=true (see Step
+            // 2.6 below) has nothing to load. Renaming it to ReShade64.dll first is the exact fix
+            // documented on OptiScaler's own wiki for this proxy-name collision, and it's what
+            // LoadReshade actually looks for.
+            var preservedReshadeAsReshade64 = false;
+            if (injectionExisted && !injIsOriginal && !injIsOptiCreated && LooksLikeReshadeDll(injectionDllPath))
+            {
+                var reshade64Path = Path.Combine(gameDir, "ReShade64.dll");
+                if (!File.Exists(reshade64Path))
+                {
+                    try
+                    {
+                        rollbackJournal.CaptureFile("ReShade64.dll");
+                        File.Copy(injectionDllPath, reshade64Path);
+                        manifest.InstalledFiles.Add("ReShade64.dll");
+                        TrackManifestFileMutation(
+                            manifest,
+                            relativePath: "ReShade64.dll",
+                            existedBefore: false,
+                            preInstallHash: null,
+                            postInstallHash: ComputeSha256(reshade64Path));
+                        preservedReshadeAsReshade64 = true;
+                        DebugWindow.Log($"[Install] Detected an existing ReShade at '{injectionDllName}' — preserved it as ReShade64.dll before overwriting");
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[Install] Failed to preserve existing ReShade as ReShade64.dll: {ex.Message}");
+                    }
+                }
+            }
+
             if (injectionExisted && !injIsOriginal && !injIsOptiCreated)
             {
                 injectionPreHash = ComputeSha256(injectionDllPath); // only hash when we actually need it
@@ -545,6 +582,53 @@ namespace OptiscalerClient.Services
                 ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                 DebugWindow.Log($"[Install] Re-applied FSR4 INT8 forcing keys after profile write (Current extras DLL already present)");
             }
+
+            // Step 2.6: RenoDX (experimental, opt-in) and/or re-enabling a ReShade install that Step 1
+            // preserved as ReShade64.dll. Runs AFTER Step 2.5 deliberately: LoadReshade is force-set
+            // as a narrow patch over the INI the profile just wrote, via ModifyOptiScalerIni, instead
+            // of folding it into the profile beforehand — so it can never be clobbered by (or itself
+            // clobber) whatever the profile configured. preservedReshadeAsReshade64 alone (RenoDX not
+            // selected at all) still needs this: otherwise the ReShade64.dll Step 1 just created sits
+            // unused and the user's previously-working ReShade goes silently dark after this install.
+            if (installRenodx)
+            {
+                // renodxAddonCachePath is the path to the cached FILE itself, not a directory —
+                // unlike every other *CachePath parameter here, since RenoDX has exactly one file
+                // per game, not several.
+                if (string.IsNullOrWhiteSpace(renodxAddonCachePath) || !File.Exists(renodxAddonCachePath))
+                    throw new FileNotFoundException("The RenoDX addon is required for this installation but is not available in the local cache.");
+
+                var relativePath = Path.GetFileName(renodxAddonCachePath);
+                var destinationPath = Path.Combine(gameDir, relativePath);
+                var existedBefore = File.Exists(destinationPath);
+                var fileIsOriginal = priorBackedUpOriginals.Contains(relativePath);
+                var fileIsOptiCreated = priorCreatedByOptiScaler.Contains(relativePath);
+                string? preHash = null;
+                if (existedBefore && !fileIsOriginal && !fileIsOptiCreated)
+                {
+                    preHash = ComputeSha256(destinationPath);
+                    _backupStore.BackupFile(storeKey, gameDir, relativePath);
+                    manifest.BackedUpFiles.Add(relativePath);
+                    DebugWindow.Log($"[Install] Backed up existing RenoDX file: {relativePath}");
+                }
+
+                rollbackJournal.CaptureFile(relativePath);
+                File.Copy(renodxAddonCachePath, destinationPath, overwrite: true);
+                manifest.InstalledFiles.Add(relativePath);
+                TrackManifestFileMutation(
+                    manifest,
+                    relativePath: relativePath,
+                    existedBefore: existedBefore && !fileIsOptiCreated,
+                    preInstallHash: (!fileIsOriginal && !fileIsOptiCreated) ? preHash : null,
+                    postInstallHash: ComputeSha256(destinationPath));
+
+                manifest.IncludesRenodx = true;
+                manifest.RenodxAddonFileName = relativePath;
+                DebugWindow.Log($"[Install] Installed RenoDX addon '{relativePath}'");
+            }
+
+            if (installRenodx || preservedReshadeAsReshade64)
+                ModifyOptiScalerIni(gameDir, "LoadReshade", "true", "Plugins");
 
             // Step 3: Install Fakenvapi if requested (AMD/Intel only)
             if (shouldInstallFakenvapi)
@@ -1755,6 +1839,31 @@ namespace OptiscalerClient.Services
             catch
             {
                 return null;
+            }
+        }
+
+        /// <summary>Whether the file at <paramref name="path"/> is (very likely) a ReShade build —
+        /// used to tell an existing "some other mod already renamed itself dxgi.dll" install apart
+        /// from the game's own legitimate system dxgi.dll before deciding to preserve it as
+        /// ReShade64.dll (see Step 1 in InstallOptiScaler). ReShade binaries always embed the
+        /// literal ASCII string "ReShade" (version info, credits, log messages) regardless of build
+        /// variant, so a raw byte scan is a reliable, dependency-free marker — reading the whole
+        /// file into a Latin1 string is a cheap way to substring-search arbitrary binary content
+        /// without hitting invalid-UTF8 exceptions.</summary>
+        private static bool LooksLikeReshadeDll(string path)
+        {
+            try
+            {
+                var bytes = File.ReadAllBytes(path);
+                if (bytes.Length < 2 || bytes[0] != 'M' || bytes[1] != 'Z')
+                    return false;
+
+                var text = System.Text.Encoding.Latin1.GetString(bytes);
+                return text.Contains("ReShade", StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
             }
         }
 

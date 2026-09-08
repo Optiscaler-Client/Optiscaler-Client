@@ -257,6 +257,8 @@
     <x:String x:Key="TxtAutoScanDesc">启动时如果列表为空则自动扫描游戏</x:String>
     <x:String x:Key="TxtAnimations">启用动画</x:String>
     <x:String x:Key="TxtAnimationsDesc">在整个界面中启用平滑过渡和动画</x:String>
+    <x:String x:Key="TxtSettingsShowExperimental">显示实验性/附加组件功能</x:String>
+    <x:String x:Key="TxtSettingsShowExperimentalDesc">在游戏管理和本地版本中显示 RenoDX(逐游戏的 HDR/色调映射附加组件)。</x:String>
     <x:String x:Key="TxtRenderingMode">渲染模式</x:String>
     <x:String x:Key="TxtRenderingModeDesc">应用绘制界面的方式。默认使用硬件；如果 GPU 驱动在启动时持续崩溃，应用会自行切换到软件渲染。重启应用后生效。</x:String>
     <x:String x:Key="TxtRenderingModeAutoNotice">⚠ 由于启动时反复崩溃，已自动切换到软件渲染。</x:String>
@@ -511,6 +513,8 @@
     <x:String x:Key="TxtHelpGMDllSwapText">将 OptiScaler 版本设为“None”，同时保持选择 FSR4 INT8 版本，即可仅替换游戏文件夹中的 FSR4 INT8 DLL，而不安装 OptiScaler。自动替换 DLL 会自动查找并替换现有的 DLL；手动替换 DLL 则允许你在找不到时自行选择。原始文件会被备份，因此“卸载”按钮会变成“还原原始 DLL”以便还原。DLL 替换与安装 OptiScaler 完全兼容，无论先后顺序如何。也可在批量安装中同时对多个游戏使用此功能。</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">已安装的组件 🧩</x:String>
     <x:String x:Key="TxtHelpGMComponentsText">列出在游戏文件夹中检测到的放大器。实心徽章表示该放大器是游戏原生的；较暗且带描边的徽章表示它是由 OptiScaler 添加的。琥珀色徽章（仅限 FSR）表示 FSR4 INT8 DLL 已直接被替换，而未安装 OptiScaler。将鼠标悬停在任意条目上查看详情。</x:String>
+    <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX（实验性） 🧪</x:String>
+    <x:String x:Key="TxtHelpGMRenodxText">运行在 ReShade 之上的可选的逐游戏 HDR/色调映射插件，仅在设置中启用"实验性功能"时显示。"自动"会自动从 RenoDX wiki 中查找并下载适合该游戏的插件；你也可以选择已为该游戏缓存的插件，或通过"管理本地版本"手动添加。需要游戏文件夹中已安装 ReShade——如果与 OptiScaler 自身的注入 DLL 冲突（两者通常都使用 dxgi.dll），应用会自动保留现有的 ReShade 安装，而不是覆盖它。</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -523,7 +527,9 @@
     <x:String x:Key="TxtHelpSetTitle">应用设置</x:String>
     <x:String x:Key="TxtHelpSetContent">配置 OptiScaler 客户端行为、扫描来源、元数据服务和高级选项。</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">本地缓存管理</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">允许查看和删除 OptiScaler、FSR INT8、Fakenvapi、NukemFG 和 OptiPatcher 的缓存版本，并管理每个组件的默认版本。为 OptiScaler 启用"始终使用最新可用版本作为默认版本"会锁定"管理默认版本"窗口中的手动版本选择——在那里关闭它即可选择特定版本。</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">允许查看和删除 OptiScaler、FSR INT8、Fakenvapi、NukemFG、OptiPatcher 和 RenoDX 插件（仅在启用实验性功能时可见）的缓存版本，并管理每个组件的默认版本。为 OptiScaler 启用"始终使用最新可用版本作为默认版本"会锁定"管理默认版本"窗口中的手动版本选择——在那里关闭它即可选择特定版本。</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalLabel">实验性功能 🧪</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalText">启用"显示实验性/插件功能"以在"管理游戏"中显示 RenoDX 选择器，并在"管理本地版本"中显示其专属区域。这只是一个可见性开关——启用它本身不会安装或配置任何内容。</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">配置文件管理</x:String>
     <x:String x:Key="TxtHelpSetProfileText">允许管理不同的配置文件，更多信息请参阅「配置文件」页面。</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">扫描来源</x:String>
@@ -583,6 +589,8 @@
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">此问题只能由 AMD 发布更新的驱动来修复；目前客户端没有可用的解决方法。</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">游戏明明在兼容性列表中，却找不到推荐配置</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">这是因为本地游戏名称与 wiki 条目不够接近，自动查找无法匹配到它。请在管理窗口中编辑游戏名称，使其与兼容性列表中显示的名称一致，然后关闭管理窗口并重新打开——查找只会在窗口打开时执行。</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictLabel">ReShade 与 OptiScaler 冲突</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictText">OptiScaler 和 ReShade 默认都使用相同的注入文件名（通常是 dxgi.dll），因此将一个安装到另一个之上可能会在不知不觉中破坏先安装的那个。安装 OptiScaler 时，应用会检测该文件名下已有的 ReShade 安装，并自动以另一个名称保留它而不是覆盖它，这样两者无需任何手动操作即可继续协同工作。</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -740,6 +748,21 @@
     <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">选择 .zip/.7z/.rar 压缩包或直接选择 DLL。允许的直接 DLL 名称：version.dll 或 dlss-enabler-headless.dll。</x:String>
     <x:String x:Key="TxtDlssEnablerNameLbl">版本名称</x:String>
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">例如 DLSS Enabler 3.1</x:String>
+    <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
+    <x:String x:Key="TxtRenodxTooltip">RenoDX 是运行在 ReShade 之上的逐游戏 HDR/色调映射插件。选择“自动”会尝试自动查找并下载适合该游戏的插件。</x:String>
+    <x:String x:Key="TxtExperimentalZoneLbl">实验性</x:String>
+    <x:String x:Key="TxtAddRenodxTitle">添加 RenoDX 附加组件</x:String>
+    <x:String x:Key="TxtRenodxGameNameLbl">游戏名称</x:String>
+    <x:String x:Key="TxtNoRenodxCached">尚未添加任何 RenoDX 附加组件。</x:String>
+    <x:String x:Key="TxtRenodxSearchPlaceholder">按游戏搜索…</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingTitle">未检测到 ReShade</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingMsg">RenoDX 需要此游戏文件夹中已安装 ReShade,但未检测到。请先从 reshade.me 安装,或者如果您已使用其他配置安装,可以选择继续。</x:String>
+    <x:String x:Key="TxtBtnProceedAnyway">仍然继续</x:String>
+    <x:String x:Key="TxtRenodxNotFoundTitle">无法自动获取 RenoDX 附加组件</x:String>
+    <x:String x:Key="TxtRenodxNotFoundMsg">请从 RenoDX Mods wiki 手动下载,如果想使用它,请通过管理本地版本添加。</x:String>
+    <x:String x:Key="TxtRenodxWikiLinkText">打开 RenoDX Mods wiki</x:String>
+    <x:String x:Key="TxtRenodxOpenReshadeLinkText">打开 reshade.me</x:String>
+    <x:String x:Key="TxtRenodxSelectGamePlaceholder">选择游戏…</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL（INT8 和 FP8）⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">选择与 OptiScaler 一起使用的 FSR 4 DLL 包。每个版本显示 INT8 或 FP8。INT8 使用旧 GPU 所需的兼容性回退；FP8 不会启用该回退。</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL 交换（FSR 4）🔁</x:String>

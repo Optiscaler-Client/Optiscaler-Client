@@ -251,6 +251,8 @@
     <x:String x:Key="TxtAutoScanDesc">Başlangıçta liste boşsa otomatik olarak oyunları tara.</x:String>
     <x:String x:Key="TxtAnimations">Animasyonları etkinleştir</x:String>
     <x:String x:Key="TxtAnimationsDesc">Arayüz genelinde yumuşak geçişler ve animasyonları etkinleştir</x:String>
+    <x:String x:Key="TxtSettingsShowExperimental">Deneysel / eklenti özelliklerini göster</x:String>
+    <x:String x:Key="TxtSettingsShowExperimentalDesc">Oyunu Yönet ve Yerel Sürümler bölümlerinde RenoDX'i (oyuna özel HDR/ton eşleme eklentisi) gösterir.</x:String>
     <x:String x:Key="TxtRenderingMode">Oluşturma Modu</x:String>
     <x:String x:Key="TxtRenderingModeDesc">Uygulamanın arayüzünü nasıl çizdiği. Varsayılan olarak Donanım kullanılır; GPU sürücüsü başlangıçta çökmeye devam ederse uygulama kendiliğinden yazılımsal oluşturmaya geçer. Uygulama yeniden başlatıldığında etkili olur.</x:String>
     <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Tekrarlanan başlangıç çökmelerinden sonra otomatik olarak yazılımsal oluşturmaya geçildi.</x:String>
@@ -504,6 +506,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpGMDllSwapText">OptiScaler kurulmadan yalnızca oyun klasöründeki FSR4 INT8 DLL'sini değiştirmek için, bir FSR4 INT8 sürümünü seçili tutarken OptiScaler Sürümünü 'None' olarak ayarlayın. Otomatik DLL Değiştirme, mevcut DLL'yi otomatik olarak bulup değiştirir; Manuel DLL Değiştirme ise bulunamazsa onu kendiniz seçmenizi sağlar. Orijinal dosya yedeklenir, bu nedenle Kaldır düğmesi geri almak için 'Orijinal DLL'yi geri yükle' haline gelir. DLL değiştirme ve OptiScaler kurulumu, herhangi bir sırada birbiriyle tamamen uyumludur. Toplu Kurulum'dan aynı anda birden fazla oyun için de kullanılabilir.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Yüklü Bileşenler 🧩</x:String>
     <x:String x:Key="TxtHelpGMComponentsText">Oyun klasöründe algılanan yükselticileri listeler. Dolu bir rozet, yükselticinin oyuna özgü olduğu anlamına gelir; daha soluk, dış hatlı bir rozet ise OptiScaler tarafından eklendiği anlamına gelir. Amber renkli bir rozet (yalnızca FSR), FSR4 INT8 DLL'sinin OptiScaler kurulmadan doğrudan değiştirildiği anlamına gelir. Ayrıntılar için herhangi bir öğenin üzerine gelin.</x:String>
+    <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX (Deneysel) 🧪</x:String>
+    <x:String x:Key="TxtHelpGMRenodxText">ReShade üzerinde çalışan, oyuna özel isteğe bağlı bir HDR/tone-mapping eklentisidir; yalnızca Ayarlar'da 'Deneysel Özellikler' etkinleştirildiğinde gösterilir. 'Otomatik', bu oyun için doğru eklentiyi RenoDX wiki'sinden otomatik olarak bulup indirir; bu oyun için önbelleğe alınmış bir eklentiyi de seçebilir veya Yerel Sürümleri Yönet üzerinden manuel olarak ekleyebilirsiniz. Oyun klasöründe ReShade'in zaten kurulu olmasını gerektirir - OptiScaler'ın kendi enjeksiyon DLL'i ile çakışırsa (ikisi de genellikle dxgi.dll kullanır), uygulama mevcut ReShade kurulumunun üzerine yazmak yerine onu otomatik olarak korur.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -516,7 +520,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpSetTitle">Uygulama Ayarları</x:String>
     <x:String x:Key="TxtHelpSetContent">OptiScaler İstemcisi davranışını, tarama kaynaklarını, meta veri hizmetlerini ve gelişmiş seçenekleri yapılandırın.</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">Yerel Önbellek Yönetimi</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">OptiScaler, FSR INT8, Fakenvapi, NukemFG ve OptiPatcher'ın önbelleğe alınmış sürümlerini görüntülemenize ve silmenize, ayrıca her biri için varsayılan sürümü yönetmenize olanak tanır. OptiScaler için 'Her zaman mevcut en son sürümü varsayılan olarak kullan' seçeneğini etkinleştirmek, Varsayılan Sürümleri Yönet penceresindeki manuel sürüm seçimini kilitler - belirli bir sürüm seçmek için orada devre dışı bırakın.</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">OptiScaler, FSR INT8, Fakenvapi, NukemFG, OptiPatcher ve RenoDX eklentilerinin (yalnızca Deneysel Özellikler etkinken görünür) önbelleğe alınmış sürümlerini görüntülemenize ve silmenize, ayrıca her biri için varsayılan sürümü yönetmenize olanak tanır. OptiScaler için 'Her zaman mevcut en son sürümü varsayılan olarak kullan' seçeneğini etkinleştirmek, Varsayılan Sürümleri Yönet penceresindeki manuel sürüm seçimini kilitler - belirli bir sürüm seçmek için orada devre dışı bırakın.</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalLabel">Deneysel Özellikler 🧪</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalText">Oyunu Yönet içinde RenoDX seçicisini ve Yerel Sürümleri Yönet içindeki özel bölümünü ortaya çıkarmak için 'Deneysel/eklenti özelliklerini göster' seçeneğini etkinleştirin. Bu yalnızca bir görünürlük anahtarıdır - etkinleştirilmesi tek başına hiçbir şeyi kurmaz veya yapılandırmaz.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">Profil Yönetimi</x:String>
     <x:String x:Key="TxtHelpSetProfileText">Farklı profilleri yönetmenizi sağlar. Daha fazla bilgi için 'Profil Sistemi' sayfasına bakın.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Tarama Kaynakları</x:String>
@@ -575,6 +581,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Bu sorun yalnızca AMD'nin güncellenmiş bir sürücü yayınlamasıyla düzelebilir; şu anda istemci tarafında bir çözüm bulunmamaktadır.</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Uyumluluk Listesinde OLAN bir oyun için önerilen yapılandırma bulunamadı</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">Bu, yerel oyun adının otomatik aramanın bulabilmesi için wiki'deki girişle yeterince eşleşmemesi durumunda olur. Manage penceresinde oyunun adını Uyumluluk Listesinde görünen adla eşleşecek şekilde düzenleyin, ardından Manage'i kapatıp yeniden açın — arama yalnızca pencere açıldığında çalışır.</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictLabel">ReShade, OptiScaler ile çakışıyor</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictText">OptiScaler ve ReShade varsayılan olarak aynı enjeksiyon dosya adını kullanır (genellikle dxgi.dll), bu yüzden birini diğerinin üzerine kurmak, önce orada olanı sessizce bozabilir. OptiScaler kurulurken uygulama, o dosya adında mevcut bir ReShade kurulumu tespit eder ve üzerine yazmak yerine otomatik olarak farklı bir adla korur, böylece ikisi de manuel bir adım gerekmeden birlikte çalışmaya devam eder.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -729,6 +737,21 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">Bir .zip/.7z/.rar arşivi veya doğrudan DLL seçin. İzin verilen DLL adları: version.dll veya dlss-enabler-headless.dll.</x:String>
     <x:String x:Key="TxtDlssEnablerNameLbl">Sürüm adı</x:String>
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">örn. DLSS Enabler 3.1</x:String>
+    <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
+    <x:String x:Key="TxtRenodxTooltip">RenoDX, ReShade üzerinde çalışan, oyuna özel bir HDR/tone-mapping eklentisidir. "Otomatik" bu oyun için doğru eklentiyi otomatik olarak bulup indirmeyi dener.</x:String>
+    <x:String x:Key="TxtExperimentalZoneLbl">DENEYSEL</x:String>
+    <x:String x:Key="TxtAddRenodxTitle">RenoDX Eklentisi Ekle</x:String>
+    <x:String x:Key="TxtRenodxGameNameLbl">Oyun adı</x:String>
+    <x:String x:Key="TxtNoRenodxCached">Henüz RenoDX eklentisi eklenmedi.</x:String>
+    <x:String x:Key="TxtRenodxSearchPlaceholder">Oyuna göre ara…</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingTitle">ReShade algılanmadı</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingMsg">RenoDX, bu oyunun klasöründe ReShade'in zaten kurulu olmasını gerektirir ve algılanamadı. Önce reshade.me üzerinden kurun veya farklı bir kurulumla zaten sahipseniz yine de devam edin.</x:String>
+    <x:String x:Key="TxtBtnProceedAnyway">Yine de devam et</x:String>
+    <x:String x:Key="TxtRenodxNotFoundTitle">RenoDX eklentisi otomatik olarak alınamadı</x:String>
+    <x:String x:Key="TxtRenodxNotFoundMsg">RenoDX Mods wiki'sinden elle indirin ve kullanmak isterseniz Yerel Sürümleri Yönet'ten ekleyin.</x:String>
+    <x:String x:Key="TxtRenodxWikiLinkText">RenoDX Mods wiki'sini aç</x:String>
+    <x:String x:Key="TxtRenodxOpenReshadeLinkText">reshade.me'yi aç</x:String>
+    <x:String x:Key="TxtRenodxSelectGamePlaceholder">Bir oyun seçin…</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR 4 DLL (INT8 &amp; FP8) ⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">OptiScaler için bir FSR 4 DLL paketi seçin. Her sürüm INT8 veya FP8 olduğunu gösterir. INT8 eski GPU'lar için uyumluluk geri dönüşünü kullanır; FP8 bunu etkinleştirmez.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL Değiştirme (FSR 4) 🔁</x:String>

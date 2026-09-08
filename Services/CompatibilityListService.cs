@@ -73,29 +73,8 @@ namespace OptiscalerClient.Services
         /// <summary>Raised after an in-progress Compatibility List refresh has finished.</summary>
         public static event EventHandler? RefreshCompleted;
 
-        // Words too common to be meaningful for similarity scoring.
-        private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "the", "a", "an", "of", "and"
-        };
-
-        // Edition/re-release suffixes stripped before tokenizing, so e.g. "Silent Hill 2 Remake"
-        // and "Silent Hill 2" tokenize the same way. "Demo" is deliberately NOT in this list —
-        // a demo is often its own separate wiki entry with different compatibility notes, so
-        // treating it as noise could match a game to the wrong (full-release) entry.
-        private static readonly string[] EditionSuffixes =
-        {
-            "Deluxe", "Ultimate", "Gold", "GOTY", "Complete", "Enhanced",
-            "Remastered", "Remake", "Definitive", "Standard", "Digital"
-        };
-
-        // Minimum Jaccard token-overlap score to accept a fuzzy match, and the minimum lead the
-        // best candidate must have over the second-best one. Both tuned against real near-miss
-        // pairs: "Resident Evil 9 Requiem" vs the wiki's "Resident Evil Requiem" scores ~0.75 and
-        // is accepted; "Grand Theft Auto V" vs "Grand Theft Auto IV" scores exactly 0.6 and must
-        // be rejected — hence 0.7, not a rounder-looking 0.6 or 0.65.
-        private const double FuzzyMinScore = 0.7;
-        private const double FuzzyMinMargin = 0.15;
+        // Name normalization/tokenization/fuzzy-matching lives in Helpers/GameNameMatcher.cs
+        // (extracted from here — this service is where all that tuning was originally developed).
 
         // Individual game wiki pages are only ever fetched lazily (when the user opens Manage
         // Game for that specific title) rather than eagerly for the whole list - see
@@ -162,67 +141,17 @@ namespace OptiscalerClient.Services
             entry = null;
             if (string.IsNullOrWhiteSpace(gameName)) return false;
 
-            if (_byNormalizedName.TryGetValue(NormalizeName(gameName), out entry))
+            if (_byNormalizedName.TryGetValue(GameNameMatcher.Normalize(gameName), out entry))
                 return true;
 
-            return TryFuzzyMatch(gameName, out entry);
-        }
-
-        private bool TryFuzzyMatch(string gameName, out CompatibilityListEntry? entry)
-        {
-            entry = null;
-            var queryTokens = Tokenize(gameName);
-            if (queryTokens.Count == 0) return false;
-
-            CompatibilityListEntry? best = null;
-            double bestScore = 0;
-            double secondBestScore = 0;
-
-            foreach (var (candidateEntry, candidateTokens) in _tokenizedEntries)
+            if (GameNameMatcher.TryFuzzyMatch(gameName, _tokenizedEntries, out var fuzzyMatch) && fuzzyMatch != null)
             {
-                var score = JaccardSimilarity(queryTokens, candidateTokens);
-                if (score > bestScore)
-                {
-                    secondBestScore = bestScore;
-                    bestScore = score;
-                    best = candidateEntry;
-                }
-                else if (score > secondBestScore)
-                {
-                    secondBestScore = score;
-                }
+                entry = fuzzyMatch;
+                DebugWindow.Log($"[CompatList] Fuzzy-matched '{gameName}' -> '{fuzzyMatch.GameName}'.");
+                return true;
             }
 
-            if (best == null || bestScore < FuzzyMinScore || (bestScore - secondBestScore) < FuzzyMinMargin)
-                return false;
-
-            entry = best;
-            DebugWindow.Log($"[CompatList] Fuzzy-matched '{gameName}' -> '{best.GameName}' (score={bestScore:F2}, margin={(bestScore - secondBestScore):F2}).");
-            return true;
-        }
-
-        private static HashSet<string> Tokenize(string name)
-        {
-            var cleaned = name;
-            foreach (var suffix in EditionSuffixes)
-                cleaned = Regex.Replace(cleaned, $@"\b{suffix}\b\s*(Edition)?", "", RegexOptions.IgnoreCase);
-
-            cleaned = StripApostrophes(cleaned);
-            cleaned = SplitCamelCase(cleaned);
-            cleaned = RemoveDiacritics(cleaned);
-
-            return Regex.Matches(cleaned, @"[\p{L}\p{Nd}]+")
-                .Select(m => m.Value.ToLowerInvariant())
-                .Where(w => !StopWords.Contains(w))
-                .ToHashSet();
-        }
-
-        private static double JaccardSimilarity(HashSet<string> a, HashSet<string> b)
-        {
-            if (a.Count == 0 || b.Count == 0) return 0;
-            int intersection = a.Count(b.Contains);
-            int union = a.Count + b.Count - intersection;
-            return union == 0 ? 0 : (double)intersection / union;
+            return false;
         }
 
         /// <summary>
@@ -584,13 +513,13 @@ namespace OptiscalerClient.Services
 
             foreach (var entry in merged)
             {
-                var key = NormalizeName(entry.GameName);
+                var key = GameNameMatcher.Normalize(entry.GameName);
                 if (key.Length > 0 && !byName.ContainsKey(key)) byName[key] = entry;
             }
 
             foreach (var lumaEntry in lumaEntries)
             {
-                var key = NormalizeName(lumaEntry.GameName);
+                var key = GameNameMatcher.Normalize(lumaEntry.GameName);
                 if (key.Length == 0 || !byName.TryGetValue(key, out var existing))
                 {
                     merged.Add(lumaEntry);
@@ -682,68 +611,6 @@ namespace OptiscalerClient.Services
             return text;
         }
 
-        private static string NormalizeName(string name)
-        {
-            var normalized = name.Trim().Replace("™", "").Replace("®", "").Replace("©", "");
-            normalized = StripApostrophes(normalized);
-            normalized = SplitCamelCase(normalized);
-            normalized = RemoveDiacritics(normalized);
-            // ASCII hyphen-minus plus the Unicode hyphen/dash variants a wiki title might use
-            // instead (e.g. "Spider‐Man") — turned into a space so a hyphenated wiki name
-            // and an unpunctuated/spaced local one normalize to the same word sequence.
-            normalized = Regex.Replace(normalized, "[-‐‑‒–—―−]", " ");
-            normalized = Regex.Replace(normalized, @"\s+", " ").Trim();
-            return normalized.ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// Strips accents/diacritics (e.g. "Ragnarök" -> "Ragnarok") via Unicode NFD decomposition
-        /// + removing combining marks, so names that only differ by accented characters between
-        /// the local game title and the wiki's still match (e.g. reported 2026-08-18: "God of War
-        /// Ragnarök" wasn't found because the wiki lists it as "God of War Ragnarok"). True
-        /// distinct letters that merely look similar (e.g. "ø", "æ") don't decompose this way and
-        /// are intentionally left alone rather than guessed at.
-        /// </summary>
-        private static string RemoveDiacritics(string text)
-        {
-            var decomposed = text.Normalize(NormalizationForm.FormD);
-            var sb = new StringBuilder(decomposed.Length);
-            foreach (var c in decomposed)
-            {
-                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    sb.Append(c);
-            }
-            return sb.ToString().Normalize(NormalizationForm.FormC);
-        }
-
-        // Straight, curly, and grave apostrophe/quote variants a title's possessive might use
-        // (e.g. wiki "Marvel's Spider-Man 2" vs a locally typed "Marvels Spider-Man 2", reported
-        // 2026-08-22). Removed entirely rather than treated as a word boundary, so "Marvel's" and
-        // "Marvels" reduce to the same "marvels" instead of the apostrophe'd side leaving a
-        // spurious extra "s" token that never matches anything on the other side.
-        private static readonly char[] ApostropheChars = { '\'', '’', '‘', '`', '´' };
-
-        private static string StripApostrophes(string text)
-        {
-            foreach (var ch in ApostropheChars)
-                text = text.Replace(ch.ToString(), "");
-            return text;
-        }
-
-        /// <summary>
-        /// Inserts a space at each lowercase/digit -> uppercase transition (e.g. "SpiderMan" ->
-        /// "Spider Man"), so a locally concatenated camelCase title normalizes/tokenizes the same
-        /// as the wiki's hyphenated or spaced form of the same words (same 2026-08-22 report: local
-        /// "Marvels SpiderMan 2" vs wiki "Marvel's Spider-Man 2" — the hyphen already acts as a
-        /// token boundary on the wiki's side, "SpiderMan" needs this to split the same way on the
-        /// local side). All-caps runs (acronyms like "NBA2K") have no such transition and are left
-        /// alone rather than guessed at.
-        /// </summary>
-        private static string SplitCamelCase(string text)
-        {
-            return Regex.Replace(text, @"(?<=[\p{Ll}\p{Nd}])(?=\p{Lu})", " ");
-        }
-
         private static void RebuildLookup()
         {
             var map = new Dictionary<string, CompatibilityListEntry>();
@@ -751,7 +618,7 @@ namespace OptiscalerClient.Services
 
             foreach (var entry in _cache.Entries)
             {
-                var key = NormalizeName(entry.GameName);
+                var key = GameNameMatcher.Normalize(entry.GameName);
                 if (key.Length == 0) continue;
 
                 if (!map.ContainsKey(key))
@@ -763,7 +630,7 @@ namespace OptiscalerClient.Services
                     DebugWindow.Log($"[CompatList] Duplicate normalized name '{key}' — keeping first occurrence.");
                 }
 
-                tokenized.Add((entry, Tokenize(entry.GameName)));
+                tokenized.Add((entry, GameNameMatcher.Tokenize(entry.GameName)));
             }
 
             _byNormalizedName = map;

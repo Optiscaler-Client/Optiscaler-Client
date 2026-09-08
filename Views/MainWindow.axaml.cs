@@ -1858,6 +1858,11 @@ namespace OptiscalerClient.Views
             {
                 tglAnimations.IsChecked = _componentService.Config.AnimationsEnabled;
             }
+            var tglExperimentalFeatures = this.FindControl<ToggleSwitch>("TglExperimentalFeatures");
+            if (tglExperimentalFeatures != null)
+            {
+                tglExperimentalFeatures.IsChecked = _componentService.Config.ShowExperimentalFeatures;
+            }
             var txtSteamGridApiKey = this.FindControl<TextBox>("TxtSteamGridApiKey");
             if (txtSteamGridApiKey != null)
             {
@@ -3005,6 +3010,22 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// Purely a visibility switch (see AppConfiguration.ShowExperimentalFeatures) — reveals the
+        /// ReShade version selectors in ManageGameWindow, ManageDefaultVersionsWindow, BulkInstallWindow
+        /// and the "reshade" section of CacheManagementWindow. Those windows read the config fresh
+        /// each time they're opened/populated, so no live refresh is needed here.
+        /// </summary>
+        private void TglExperimentalFeatures_IsCheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingLanguage) return;
+            if (sender is ToggleSwitch tgl)
+            {
+                _componentService.Config.ShowExperimentalFeatures = tgl.IsChecked ?? false;
+                _componentService.SaveConfiguration();
+            }
+        }
+
         private void CmbRenderingMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (_isInitializingLanguage) return;
@@ -3187,6 +3208,11 @@ namespace OptiscalerClient.Views
             // refresh immediately so Manage Game can show a short loading state instead of a
             // misleading "not found" result while a new cache is being built.
             var compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
+            // RenoDX (experimental, opt-in) shares the same startup-refresh shape — independent of
+            // component-version checks, never blocks startup. Only meaningfully used once the
+            // switch is on, but refreshing it unconditionally keeps the cache warm for whenever the
+            // user does turn it on, same low cost as the compatibility list's own refresh.
+            var renodxModsRefreshTask = RefreshRenodxModsOnStartupAsync();
             bool versionsEmpty = _componentService.OptiScalerAvailableVersions.Count == 0;
 
             if (versionsEmpty)
@@ -3205,6 +3231,7 @@ namespace OptiscalerClient.Views
 
                 await CheckUpdatesOnStartupAsync(cancellationToken);
                 await compatibilityRefreshTask;
+                await renodxModsRefreshTask;
             }
             catch (OperationCanceledException)
             {
@@ -3249,6 +3276,12 @@ namespace OptiscalerClient.Views
         {
             try { await new CompatibilityListService().CheckForUpdatesAsync(); }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
+        }
+
+        private static async Task RefreshRenodxModsOnStartupAsync()
+        {
+            try { await new RenodxModsService().CheckForUpdatesAsync(); }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] RenodxModsService refresh failed: {ex.Message}"); }
         }
 
         /// <summary>

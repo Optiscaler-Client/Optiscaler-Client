@@ -251,6 +251,8 @@
     <x:String x:Key="TxtAutoScanDesc">Automatisch nach Spielen scannen, wenn die Liste beim Start leer ist.</x:String>
     <x:String x:Key="TxtAnimations">Animationen aktivieren</x:String>
     <x:String x:Key="TxtAnimationsDesc">Fließende Übergänge und Animationen in der gesamten Benutzeroberfläche aktivieren</x:String>
+    <x:String x:Key="TxtSettingsShowExperimental">Experimentelle Funktionen / Addons anzeigen</x:String>
+    <x:String x:Key="TxtSettingsShowExperimentalDesc">Zeigt RenoDX (Addon für HDR/Tonemapping pro Spiel) in Spiel verwalten und Lokale Versionen an.</x:String>
     <x:String x:Key="TxtRenderingMode">Rendermodus</x:String>
     <x:String x:Key="TxtRenderingModeDesc">Wie die App ihre Oberfläche zeichnet. Standardmäßig wird Hardware verwendet; stürzt der GPU-Treiber beim Start weiterhin ab, wechselt die App von selbst zu Software-Rendering. Wird nach einem Neustart der App wirksam.</x:String>
     <x:String x:Key="TxtRenderingModeAutoNotice">⚠ Nach wiederholten Abstürzen beim Start automatisch auf Software-Rendering umgeschaltet.</x:String>
@@ -504,6 +506,8 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpGMDllSwapText">Stelle die OptiScaler-Version auf „None“, während eine FSR4-INT8-Version ausgewählt bleibt, um nur die FSR4-INT8-DLL im Spielordner auszutauschen, ohne OptiScaler zu installieren. Auto-Swap DLL findet und ersetzt die vorhandene DLL automatisch; Manuell-Swap DLL lässt dich sie selbst auswählen, falls sie nicht gefunden wird. Die Originaldatei wird gesichert, sodass die Schaltfläche „Deinstallieren“ zu „Original-DLL wiederherstellen“ wird, um sie zurückzusetzen. Das Austauschen und die Installation von OptiScaler sind in beiden Reihenfolgen vollständig kompatibel. Auch für mehrere Spiele gleichzeitig über Bulk-Installation verfügbar.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Installierte Komponenten 🧩</x:String>
     <x:String x:Key="TxtHelpGMComponentsText">Listet die im Spielordner erkannten Upscaler auf. Ein durchgehendes Abzeichen bedeutet, dass der Upscaler nativ zum Spiel gehört; ein blasseres, umrandetes Abzeichen bedeutet, dass er von OptiScaler hinzugefügt wurde. Ein bernsteinfarbenes Abzeichen (nur FSR) bedeutet, dass die FSR4-INT8-DLL direkt ausgetauscht wurde, ohne OptiScaler zu installieren. Fahren Sie mit der Maus über einen Eintrag für Details.</x:String>
+    <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX (Experimentell) 🧪</x:String>
+    <x:String x:Key="TxtHelpGMRenodxText">Optionales, pro Spiel aktivierbares HDR/Tonemapping-Addon, das auf ReShade aufbaut und nur angezeigt wird, wenn 'Experimentelle Funktionen' in den Einstellungen aktiviert ist. 'Auto' ermittelt und lädt automatisch das passende Addon für dieses Spiel aus dem RenoDX-Wiki herunter; du kannst auch ein bereits für dieses Spiel zwischengespeichertes Addon auswählen oder eines manuell über Lokale Versionen verwalten hinzufügen. Erfordert, dass ReShade bereits im Spielordner installiert ist - falls es mit der eigenen Injektions-DLL von OptiScaler kollidiert (beide verwenden meist dxgi.dll), sichert die App die bestehende ReShade-Installation automatisch, statt sie zu überschreiben.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -516,7 +520,9 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpSetTitle">Anwendungseinstellungen</x:String>
     <x:String x:Key="TxtHelpSetContent">Verhalten des OptiScaler-Clients, Scanquellen, Metadatendienste und erweiterte Optionen konfigurieren.</x:String>
     <x:String x:Key="TxtHelpSetCacheLabel">Lokale Cache-Verwaltung</x:String>
-    <x:String x:Key="TxtHelpSetCacheText">Ermöglicht das Anzeigen und Löschen gecachter Versionen von OptiScaler, FSR INT8, Fakenvapi, NukemFG und OptiPatcher sowie die Verwaltung der jeweiligen Standardversion. Wenn 'Immer die neueste verfügbare Version als Standard verwenden' für OptiScaler aktiviert ist, wird die manuelle Versionsauswahl im Fenster Standardversionen verwalten gesperrt - deaktivieren Sie es dort, um eine bestimmte Version auszuwählen.</x:String>
+    <x:String x:Key="TxtHelpSetCacheText">Ermöglicht das Anzeigen und Löschen gecachter Versionen von OptiScaler, FSR INT8, Fakenvapi, NukemFG, OptiPatcher und RenoDX-Addons (nur sichtbar, wenn Experimentelle Funktionen aktiviert sind) sowie die Verwaltung der jeweiligen Standardversion. Wenn 'Immer die neueste verfügbare Version als Standard verwenden' für OptiScaler aktiviert ist, wird die manuelle Versionsauswahl im Fenster Standardversionen verwalten gesperrt - deaktivieren Sie es dort, um eine bestimmte Version auszuwählen.</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalLabel">Experimentelle Funktionen 🧪</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalText">Aktiviere 'Experimentelle/Addon-Funktionen anzeigen', um den RenoDX-Selector in Spiel verwalten sowie den zugehörigen Bereich in Lokale Versionen verwalten sichtbar zu machen. Reiner Sichtbarkeitsschalter - das Aktivieren installiert oder konfiguriert von sich aus nichts.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">Profilverwaltung</x:String>
     <x:String x:Key="TxtHelpSetProfileText">Ermöglicht die Verwaltung verschiedener Profile. Weitere Informationen auf der Seite 'Profilsystem'.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Scanquellen</x:String>
@@ -576,6 +582,8 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Dies kann nur von AMD durch einen aktualisierten Treiber behoben werden; ein clientseitiger Workaround existiert noch nicht.</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Empfohlene Konfiguration für ein Spiel nicht gefunden, obwohl es in der Kompatibilitätsliste steht</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">Dies passiert, wenn der lokale Spielname nicht nah genug am Wiki-Eintrag ist, damit die automatische Suche ihn findet. Bearbeite den Spielnamen im Verwalten-Fenster, sodass er dem Namen in der Kompatibilitätsliste entspricht, schließe dann Verwalten und öffne es erneut — die Suche läuft nur beim Öffnen des Fensters.</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictLabel">ReShade steht in Konflikt mit OptiScaler</x:String>
+    <x:String x:Key="TxtHelpFaqReshadeConflictText">OptiScaler und ReShade verwenden standardmäßig denselben Injektions-Dateinamen (meist dxgi.dll), sodass die Installation des einen über dem anderen die zuerst vorhandene Version stillschweigend zerstören kann. Beim Installieren von OptiScaler erkennt die App eine bestehende ReShade-Installation unter diesem Dateinamen und sichert sie automatisch unter einem anderen Namen, statt sie zu überschreiben, sodass beide ohne manuelle Schritte weiterhin zusammenarbeiten.</x:String>
 
 
     <!-- Help - Gamepad -->
@@ -730,6 +738,21 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtAddDlssEnablerAcceptedFiles">Wähle ein .zip/.7z/.rar-Archiv oder direkt eine DLL. Erlaubte DLL-Namen: version.dll oder dlss-enabler-headless.dll.</x:String>
     <x:String x:Key="TxtDlssEnablerNameLbl">Versionsname</x:String>
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">z. B. DLSS Enabler 3.1</x:String>
+    <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
+    <x:String x:Key="TxtRenodxTooltip">RenoDX ist ein spielspezifisches HDR/Tonemapping-Addon, das auf ReShade aufbaut. "Auto" versucht, das passende Addon für dieses Spiel automatisch zu finden und herunterzuladen.</x:String>
+    <x:String x:Key="TxtExperimentalZoneLbl">EXPERIMENTELL</x:String>
+    <x:String x:Key="TxtAddRenodxTitle">RenoDX-Addon hinzufügen</x:String>
+    <x:String x:Key="TxtRenodxGameNameLbl">Spielname</x:String>
+    <x:String x:Key="TxtNoRenodxCached">Noch keine RenoDX-Addons hinzugefügt.</x:String>
+    <x:String x:Key="TxtRenodxSearchPlaceholder">Nach Spiel suchen…</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingTitle">ReShade nicht erkannt</x:String>
+    <x:String x:Key="TxtRenodxReshadeMissingMsg">RenoDX benötigt eine bereits installierte ReShade in diesem Spielordner, die nicht erkannt wurde. Installiere sie zuerst von reshade.me oder fahre trotzdem fort, wenn du sie bereits unter einer anderen Konfiguration hast.</x:String>
+    <x:String x:Key="TxtBtnProceedAnyway">Trotzdem fortfahren</x:String>
+    <x:String x:Key="TxtRenodxNotFoundTitle">RenoDX-Addon konnte nicht automatisch abgerufen werden</x:String>
+    <x:String x:Key="TxtRenodxNotFoundMsg">Lade es manuell aus dem RenoDX-Mods-Wiki herunter und füge es über Lokale Versionen verwalten hinzu, falls du es verwenden möchtest.</x:String>
+    <x:String x:Key="TxtRenodxWikiLinkText">RenoDX-Mods-Wiki öffnen</x:String>
+    <x:String x:Key="TxtRenodxOpenReshadeLinkText">reshade.me öffnen</x:String>
+    <x:String x:Key="TxtRenodxSelectGamePlaceholder">Spiel auswählen…</x:String>
     <x:String x:Key="TxtHelpFsr4DllLabel">FSR-4-DLL (INT8 &amp; FP8) ⚡</x:String>
     <x:String x:Key="TxtHelpFsr4DllText">Wähle ein FSR-4-DLL-Paket für OptiScaler. Jede Version zeigt INT8 oder FP8. INT8 nutzt den Kompatibilitäts-Fallback für ältere GPUs; FP8 aktiviert ihn nicht.</x:String>
     <x:String x:Key="TxtHelpFsr4DllSwapLabel">DLL-Tausch (FSR 4) 🔁</x:String>

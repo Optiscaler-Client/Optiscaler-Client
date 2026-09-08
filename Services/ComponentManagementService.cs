@@ -46,6 +46,7 @@ namespace OptiscalerClient.Services
         private readonly string _versionFile;
         private readonly string _configFile;
         private readonly string _releasesCacheFile;
+        private readonly string _renodxCacheFile;
         private HttpClient _httpClient => NetworkService.GetHttpClient();
 
         public AppConfiguration Config => _config;
@@ -84,6 +85,9 @@ namespace OptiscalerClient.Services
         private static DlssEnablerMirrorReleasesCache _dlssEnablerMirrorCache = new();
         private static System.Collections.Generic.List<string>? _cachedDlssEnablerMirrorVersions = null;
         private static string? _cachedLatestDlssEnablerMirrorVersion = null;
+        // Metadata ledger for RenoDX's per-game addon cache (see GetRenodxCachePath) — unlike the
+        // caches above, this isn't a list of versions, it's one entry per game.
+        private static RenodxCache _renodxCache = new();
 
         public System.Collections.Generic.List<string> OptiScalerAvailableVersions
         {
@@ -212,6 +216,7 @@ namespace OptiscalerClient.Services
             _versionFile = Path.Combine(_baseDir, "versions.json");
             _configFile = Path.Combine(_baseDir, "config.json");
             _releasesCacheFile = Path.Combine(_baseDir, "releases_cache.json");
+            _renodxCacheFile = Path.Combine(_baseDir, "renodx_cache.json");
 
             Directory.CreateDirectory(_cacheDir);
 
@@ -223,6 +228,7 @@ namespace OptiscalerClient.Services
             LoadOptiPatcherCache();
             LoadFakenvapiCache();
             LoadDlssEnablerMirrorCache();
+            LoadRenodxCache();
         }
 
         private void LoadConfiguration()
@@ -3345,6 +3351,160 @@ namespace OptiscalerClient.Services
             {
                 try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
                 try { if (Directory.Exists(tempExtractDir)) Directory.Delete(tempExtractDir, true); } catch { }
+            }
+        }
+
+        // ── RenoDX (experimental, opt-in — one addon cached per game, not a version library) ──
+        // Unlike every other component above, RenoDX addons aren't interchangeable across games —
+        // each game needs its own specific .addon64/.addon32 (see RenodxModsService, which resolves
+        // the direct "Snapshot" download link per game from the RenoDX wiki's Mods page). The cache
+        // folder is keyed by a sanitized game name/key rather than a version string, and a small
+        // JSON ledger (renodx_cache.json) tracks the display name + real filename for each entry so
+        // Local Versions can list "which game is this for" without having to reverse the sanitized
+        // folder name.
+
+        public string GetRenodxCachePath(string gameKey) => Path.Combine(_cacheDir, "Renodx", SanitizeVersionName(gameKey));
+
+        /// <summary>Full path to the cached addon file for this game, or null if nothing is cached
+        /// for it yet.</summary>
+        public string? GetCachedRenodxAddonPath(string gameKey)
+        {
+            var entry = _renodxCache.Entries.FirstOrDefault(e => string.Equals(e.GameKey, gameKey, StringComparison.OrdinalIgnoreCase));
+            if (entry == null) return null;
+            var path = Path.Combine(GetRenodxCachePath(gameKey), entry.FileName);
+            return File.Exists(path) ? path : null;
+        }
+
+        public List<RenodxCacheEntry> GetAllCachedRenodxEntries() => new(_renodxCache.Entries);
+
+        public void DeleteRenodxCache(string gameKey)
+        {
+            var cachePath = GetRenodxCachePath(gameKey);
+            if (Directory.Exists(cachePath))
+                Directory.Delete(cachePath, true);
+
+            _renodxCache.Entries.RemoveAll(e => string.Equals(e.GameKey, gameKey, StringComparison.OrdinalIgnoreCase));
+            SaveRenodxCache();
+        }
+
+        private static bool LooksLikeValidAddon(string path)
+        {
+            try
+            {
+                var bytes = File.ReadAllBytes(path);
+                // Basic corruption check only — unlike ReShade there's no reliable content marker
+                // to check for, but the source is the curated RenoDX wiki itself, not an arbitrary
+                // user-provided file, so a PE-header sanity check is enough.
+                return bytes.Length > 0 && bytes.Length > 2 && bytes[0] == 'M' && bytes[1] == 'Z';
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void RegisterRenodxCacheEntry(string gameKey, string displayName, string fileName)
+        {
+            _renodxCache.Entries.RemoveAll(e => string.Equals(e.GameKey, gameKey, StringComparison.OrdinalIgnoreCase));
+            _renodxCache.Entries.Add(new RenodxCacheEntry
+            {
+                GameKey = gameKey,
+                DisplayName = displayName,
+                FileName = fileName,
+                CachedUtc = DateTime.UtcNow
+            });
+            SaveRenodxCache();
+        }
+
+        /// <summary>
+        /// Downloads a RenoDX addon directly from its wiki "Snapshot" URL — a plain file GET, no
+        /// GitHub API involved (see RenodxModsService). No-op/return-cached if already present.
+        /// </summary>
+        public async Task<string> DownloadRenodxAddonAsync(string snapshotUrl, string gameKey, string displayName, IProgress<double>? progress = null)
+        {
+            var existing = GetCachedRenodxAddonPath(gameKey);
+            if (existing != null) return existing;
+
+            var fileName = Path.GetFileName(new Uri(snapshotUrl).LocalPath);
+            if (string.IsNullOrWhiteSpace(fileName)) fileName = "renodx.addon64";
+
+            var cacheDir = GetRenodxCachePath(gameKey);
+            var tempFile = Path.Combine(Path.GetTempPath(), $"Renodx_{Guid.NewGuid()}");
+            try
+            {
+                DebugWindow.Log($"[RenodxDownload] Downloading {snapshotUrl}");
+                await StreamToFileAsync(() => _httpClient, snapshotUrl, tempFile, progress);
+
+                if (!LooksLikeValidAddon(tempFile))
+                    throw new InvalidOperationException("The downloaded RenoDX addon looks corrupted or incomplete.");
+
+                Directory.CreateDirectory(cacheDir);
+                var destPath = Path.Combine(cacheDir, fileName);
+                File.Copy(tempFile, destPath, true);
+
+                RegisterRenodxCacheEntry(gameKey, displayName, fileName);
+                DebugWindow.Log($"[RenodxDownload] Cached '{fileName}' for '{displayName}'.");
+                return destPath;
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+            }
+        }
+
+        /// <summary>Manual "Add" flow from CacheManagementWindow's "renodx" section — copies a
+        /// user-provided addon file as-is (no extraction, the wiki always links a bare
+        /// .addon64/.addon32, never an archive).</summary>
+        public Task<string> ImportRenodxAddonAsync(string sourcePath, string gameKey, string displayName)
+        {
+            if (!LooksLikeValidAddon(sourcePath))
+                throw new InvalidOperationException("The selected file doesn't look like a valid addon.");
+
+            var fileName = Path.GetFileName(sourcePath);
+            var cacheDir = GetRenodxCachePath(gameKey);
+            Directory.CreateDirectory(cacheDir);
+            var destPath = Path.Combine(cacheDir, fileName);
+            File.Copy(sourcePath, destPath, true);
+
+            RegisterRenodxCacheEntry(gameKey, displayName, fileName);
+            DebugWindow.Log($"[Renodx] Imported '{fileName}' for '{displayName}'.");
+            return Task.FromResult(destPath);
+        }
+
+        private void LoadRenodxCache()
+        {
+            // Same "already loaded, skip" guard every other cache in this file uses (see
+            // LoadFakenvapiCache) — without it, every `new ComponentManagementService()` (there are
+            // many, all over the app) would unconditionally re-read the file into this *static*
+            // field, and one constructed concurrently with an install could clobber an addon that
+            // RegisterRenodxCacheEntry had just added in memory but not yet flushed to disk,
+            // silently losing it (reported: RenoDX addon downloaded successfully but didn't show up
+            // in Local Versions until the window was closed and reopened).
+            if (_renodxCache.Entries.Count > 0) return;
+            try
+            {
+                if (File.Exists(_renodxCacheFile))
+                {
+                    var json = File.ReadAllText(_renodxCacheFile);
+                    _renodxCache = JsonSerializer.Deserialize(json, OptimizerContext.Default.RenodxCache) ?? new();
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Renodx] Failed to load local cache: {ex.Message}");
+            }
+        }
+
+        private void SaveRenodxCache()
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(_renodxCache, OptimizerContext.Default.RenodxCache);
+                File.WriteAllText(_renodxCacheFile, json);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Renodx] Failed to save local cache: {ex.Message}");
             }
         }
     }

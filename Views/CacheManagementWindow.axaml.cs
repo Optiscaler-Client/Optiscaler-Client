@@ -235,10 +235,19 @@ namespace OptiscalerClient.Views
             // ── DLSS Enabler ─────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("dlss-enabler",
                 Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uE9CE"));
+                Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uF4B6"));
 
             // ── Streamline (auto-downloaded, list + delete only) ─────────────
             sidebar.Children.Add(CreateTopButton("streamline",
                 Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
+                Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE7F7"));
+
+            // \u2500\u2500 RenoDX (experimental, opt-in \u2014 hidden entirely unless the switch is on) \u2500\u2500\u2500\u2500\u2500\u2500\u2500
+            if (_componentService.Config.ShowExperimentalFeatures)
+            {
+                sidebar.Children.Add(CreateTopButton("renodx",
+                    Application.Current?.FindResource("TxtRenodxLbl") as string ?? "RenoDX", "\uE712"));
+            }
 
             // Section rendering/selection is the caller's responsibility (each constructor calls
             // ShowSection(_currentSection)/UpdateSidebarSelection(_currentSection) right after
@@ -333,6 +342,7 @@ namespace OptiscalerClient.Views
                 case "nukemfg":     RenderNukemfg(content); break;
                 case "dlss-enabler": RenderDlssEnablerWithTabs(content); break;
                 case "streamline":  RenderStreamline(content); break;
+                case "renodx":      RenderRenodx(content); break;
             }
         }
 
@@ -713,6 +723,132 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// Unlike every other section here, this isn't a list of versions of one component — it's a
+        /// list of RenoDX addons, one per game (see ComponentManagementService.GetRenodxCachePath).
+        /// Search box + Add button up top, filtered list below. The search box is built once and
+        /// only the list panel gets rebuilt on each keystroke (via RefreshRenodxList), so typing
+        /// doesn't lose focus the way re-running ShowSection() for the whole tab would.
+        /// </summary>
+        private void RenderRenodx(StackPanel content)
+        {
+            var topRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 12) };
+            var txtSearch = new TextBox
+            {
+                Watermark = Application.Current?.FindResource("TxtRenodxSearchPlaceholder") as string ?? "Search by game…",
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            Grid.SetColumn(txtSearch, 0);
+            var btnAdd = new Button
+            {
+                Content = Application.Current?.FindResource("TxtAdd") as string ?? "Add",
+                Padding = new Thickness(12, 5),
+                FontSize = 11
+            };
+            btnAdd.Classes.Add("BtnBase");
+            Grid.SetColumn(btnAdd, 1);
+            topRow.Children.Add(txtSearch);
+            topRow.Children.Add(btnAdd);
+            content.Children.Add(topRow);
+
+            var listPanel = new StackPanel { Spacing = 8 };
+            content.Children.Add(listPanel);
+
+            void RefreshRenodxList()
+            {
+                listPanel.Children.Clear();
+                var filter = txtSearch.Text ?? "";
+                var entries = _componentService.GetAllCachedRenodxEntries()
+                    .Where(e => filter.Length == 0 || e.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(e => e.DisplayName, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (entries.Count == 0)
+                {
+                    listPanel.Children.Add(MakeEmptyLabel(
+                        Application.Current?.FindResource("TxtNoRenodxCached") as string ?? "No RenoDX addons added yet."));
+                    return;
+                }
+
+                foreach (var entry in entries)
+                    listPanel.Children.Add(CreateRenodxCard(entry));
+            }
+
+            txtSearch.TextChanged += (s, e) => RefreshRenodxList();
+            btnAdd.Click += async (s, e) =>
+            {
+                try
+                {
+                    var addDialog = new AddRenodxAddonWindow(this);
+                    if (await addDialog.ShowDialog<bool>(this) != true ||
+                        string.IsNullOrEmpty(addDialog.SelectedFilePath) || string.IsNullOrEmpty(addDialog.GameName))
+                        return;
+
+                    var overlay = this.FindControl<Grid>("OverlayImporting");
+                    if (overlay != null) overlay.IsVisible = true;
+
+                    await _componentService.ImportRenodxAddonAsync(addDialog.SelectedFilePath, addDialog.GameName, addDialog.GameName);
+
+                    if (overlay != null) overlay.IsVisible = false;
+                    RefreshRenodxList();
+                    UpdateCacheInfo();
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[Cache] Add RenoDX addon failed: {ex}");
+                    var overlay = this.FindControl<Grid>("OverlayImporting");
+                    if (overlay != null) overlay.IsVisible = false;
+                    await new ConfirmDialog(this, "Import Error", $"Failed to add RenoDX addon:\n{ex.Message}").ShowDialog<object>(this);
+                }
+            };
+
+            RefreshRenodxList();
+        }
+
+        private Border CreateRenodxCard(RenodxCacheEntry entry)
+        {
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto"), VerticalAlignment = VerticalAlignment.Center };
+
+            var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            stack.Children.Add(new TextBlock
+            {
+                Text = entry.DisplayName,
+                FontWeight = FontWeight.Bold,
+                Foreground = this.FindResource("BrTextPrimary") as IBrush ?? Brushes.White
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = entry.FileName,
+                FontSize = 11,
+                Foreground = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray
+            });
+            grid.Children.Add(stack);
+            Grid.SetColumn(stack, 0);
+
+            var btnDelete = new Button
+            {
+                Content = Application.Current?.FindResource("TxtDeletePlain") as string ?? "Delete",
+                Padding = new Thickness(12, 4),
+                FontSize = 11,
+                Margin = new Thickness(8, 0, 0, 0),
+                Tag = new VersionDeleteInfo { Version = entry.GameKey, IsRenodx = true }
+            };
+            btnDelete.Classes.Add("BtnSecondary");
+            btnDelete.Click += BtnDelete_Click;
+            grid.Children.Add(btnDelete);
+            Grid.SetColumn(btnDelete, 1);
+
+            return new Border
+            {
+                Background = this.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(16, 10),
+                Child = grid
+            };
+        }
+
         private void RenderDlssEnablerWithTabs(StackPanel content)
         {
             // ── Tab bar: Mirror | Custom ──────────────────────────────────────
@@ -937,6 +1073,8 @@ namespace OptiscalerClient.Views
             var dlssEnabler = _componentService.GetDownloadedDlssEnablerVersions();
             var streamline  = _componentService.GetDownloadedStreamlineVersions();
             int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count;
+            var renodx      = _componentService.GetAllCachedRenodxEntries();
+            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
         }
 
@@ -944,6 +1082,8 @@ namespace OptiscalerClient.Views
 
         private class VersionDeleteInfo
         {
+            /// <summary>The version string for every component except RenoDX, where this instead
+            /// carries the per-game GameKey (see ComponentManagementService.GetRenodxCachePath).</summary>
             public string Version { get; set; } = "";
             public bool IsExtras { get; set; }
             public bool IsOptiPatcher { get; set; }
@@ -952,6 +1092,7 @@ namespace OptiscalerClient.Views
             public bool IsDlssEnabler { get; set; }
             public bool IsStreamline { get; set; }
             public bool IsDlssEnablerMirror { get; set; }
+            public bool IsRenodx { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -989,6 +1130,11 @@ namespace OptiscalerClient.Views
                     title = "Delete FSR4 Extra";
                     msg = $"Are you sure you want to delete FSR4 INT8 Extra {info.Version}?";
                 }
+                else if (info.IsRenodx)
+                {
+                    title = "Delete RenoDX Addon";
+                    msg = $"Are you sure you want to delete the RenoDX addon for '{info.Version}'?";
+                }
                 else
                 {
                     title = "Delete OptiScaler Version";
@@ -1016,6 +1162,8 @@ namespace OptiscalerClient.Views
                             _componentService.DeleteExtrasCache(info.Version);
                         else if (info.IsOptiPatcher)
                             _componentService.DeleteOptiPatcherCache(info.Version);
+                        else if (info.IsRenodx)
+                            _componentService.DeleteRenodxCache(info.Version);
                         else
                             _componentService.DeleteOptiScalerCache(info.Version);
 

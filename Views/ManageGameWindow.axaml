@@ -509,6 +509,11 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <!-- Experimental zone (RenoDX today, future experimental options
+                                         go here too) — its own row, always after the regular options
+                                         and before Uninstall, hidden entirely unless
+                                         Config.ShowExperimentalFeatures is on. -->
+                                    <RowDefinition Height="Auto"/>
                                     <!-- Uninstall / Restore original DLL lives here, and is hidden
                                          until OptiScaler is actually installed. MinHeight keeps the
                                          row from collapsing while it's hidden, so the action row
@@ -691,8 +696,8 @@
                                               SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
                                 </StackPanel>
 
-                                <!-- Row 3, Col 0 : Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
-                                <StackPanel Name="PanelOutputUpscaler" Grid.Row="3" Grid.Column="0">
+                                <!-- Row 4, Col 0 : Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
+                                <StackPanel Name="PanelOutputUpscaler" Grid.Row="4" Grid.Column="0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -783,6 +788,67 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
+                                <!-- Row 3, all columns : Experimental zone — bordered strip so
+                                     experimental controls read as visually distinct from the regular
+                                     options above. Hidden entirely unless Config.ShowExperimentalFeatures
+                                     is on (see PopulateVersionSelectors, toggles both children below).
+                                     RenoDX lives here today; future experimental options join it in the
+                                     inner Grid instead of getting their own top-level row.
+                                     The "EXPERIMENTAL" label is a second Border drawn on top of (straddling)
+                                     the outline's top edge, fieldset-legend style — its Background matches
+                                     the parent card's own background (BrBgDeep) so it masks the line
+                                     underneath it instead of just sitting inside the box. Declared after
+                                     BorderExperimentalZone in this same Grid cell so it paints on top
+                                     (Grid children z-order by declaration order). -->
+                                <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                    <Border Name="BorderExperimentalZone"
+                                            BorderBrush="{StaticResource BrExperimental}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="12,16,12,12"
+                                            IsVisible="False">
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                            <StackPanel Name="PanelRenodxVersion" Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtRenodxLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtRenodxTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbRenodxVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <Border Name="BorderExperimentalChip"
+                                            Background="{StaticResource BrBgDeep}"
+                                            Padding="6,0"
+                                            Margin="14,-7,0,0"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            IsVisible="False">
+                                        <TextBlock Text="{DynamicResource TxtExperimentalZoneLbl}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   Foreground="{StaticResource BrExperimental}"/>
+                                    </Border>
+                                </Grid>
+
                                 <!-- Row 0, Col 2 : Fakenvapi version selector -->
                                 <StackPanel Name="PanelFakenvapiVersion" Grid.Row="0" Grid.Column="2">
                                     <TextBlock Text="Fakenvapi"
@@ -812,9 +878,9 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 3, Col 2 : Uninstall button -->
+                                <!-- Row 4, Col 2 : Uninstall button -->
                                 <Button Name="BtnUninstall"
-                                        Grid.Row="3" Grid.Column="2"
+                                        Grid.Row="4" Grid.Column="2"
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
@@ -822,8 +888,8 @@
                                         IsVisible="False"
                                         Click="BtnUninstall_Click"/>
 
-                                <!-- Row 4, all columns : Install buttons right-aligned, Cleanup left-aligned -->
-                                <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                                <!-- Row 5, all columns : Install buttons right-aligned, Cleanup left-aligned -->
+                                <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3">
                                     <!-- Cleanup button — left side -->
                                     <Button Name="BtnFolderCleanup"
                                             Content="{DynamicResource TxtFolderCleanup}"

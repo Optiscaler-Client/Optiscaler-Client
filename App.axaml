@@ -28,6 +28,10 @@
             <Color x:Key="StatusSuccessColor">#5CB87E</Color>
             <Color x:Key="StatusErrorColor">#E06060</Color>
             <Color x:Key="StatusWarningColor">#D4A04A</Color>
+            <!-- Deliberately desaturated/pastel, unlike the vivid AccentPrimaryColor — used to mark
+                 experimental UI (see the RenoDX "Experimental" zone in ManageGameWindow) without it
+                 competing visually with real actions/warnings. -->
+            <Color x:Key="ExperimentalColor">#8983A6</Color>
 
             <SolidColorBrush x:Key="BrBgDeep"     Color="{StaticResource BgDeepColor}"/>
             <SolidColorBrush x:Key="BrBgBase"     Color="{StaticResource BgBaseColor}"/>
@@ -47,6 +51,7 @@
             <SolidColorBrush x:Key="BrSuccess" Color="{StaticResource StatusSuccessColor}"/>
             <SolidColorBrush x:Key="BrError"   Color="{StaticResource StatusErrorColor}"/>
             <SolidColorBrush x:Key="BrWarning" Color="{StaticResource StatusWarningColor}"/>
+            <SolidColorBrush x:Key="BrExperimental" Color="{StaticResource ExperimentalColor}"/>
 
             <FontFamily x:Key="FontPrimary">Segoe UI Variable, Segoe UI, sans-serif</FontFamily>
             <FontFamily x:Key="FontIcons">avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular, Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>

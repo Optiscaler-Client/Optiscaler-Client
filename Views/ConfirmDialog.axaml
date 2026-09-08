@@ -84,16 +84,29 @@
                 </Border>
 
                 <!-- Content -->
-                <TextBlock Name="TxtMessage"
-                           Grid.Row="1"
-                           Text="Are you sure?"
-                           TextWrapping="Wrap"
-                           FontSize="14"
-                           Margin="24,20"
-                           Foreground="{StaticResource BrTextSecondary}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextAlignment="Center"/>
+                <StackPanel Grid.Row="1"
+                            Margin="24,20"
+                            Spacing="8"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Name="TxtMessage"
+                               Text="Are you sure?"
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               Foreground="{StaticResource BrTextSecondary}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"/>
+                    <TextBlock Name="TxtLink"
+                               IsVisible="False"
+                               TextWrapping="Wrap"
+                               FontSize="13"
+                               TextDecorations="Underline"
+                               Foreground="{StaticResource BrAccentPrimary}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               Cursor="Hand"
+                               PointerPressed="TxtLink_PointerPressed"/>
+                </StackPanel>
 
                 <!-- Action Buttons -->
                 <Border Grid.Row="2"

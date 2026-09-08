@@ -63,6 +63,9 @@ namespace OptiscalerClient.Models
         public bool IncludesDlssEnabler { get; set; }
         public bool IncludesExtras { get; set; }
         public bool IncludesOptiPatcher { get; set; }
+        public bool IncludesRenodx { get; set; }
+        /// <summary>Real filename of the installed RenoDX addon (e.g. renodx-cp2077.addon64).</summary>
+        public string? RenodxAddonFileName { get; set; }
         public string? FrameGenerationRouteApplied { get; set; }
         public string? FrameGenerationOutputApplied { get; set; }
         public string? MfgModeApplied { get; set; }

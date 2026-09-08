@@ -505,6 +505,7 @@
                                               Background="{StaticResource BrBgBase}"
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
+
                             </StackPanel>
                             </ScrollViewer>
 
