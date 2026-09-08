@@ -199,6 +199,110 @@ namespace OptiscalerClient.Views
             _isUpdatingProfiles = false;
         }
 
+        /// <summary>
+        /// Populates CmbSpoofing (DXGI Spoofing, sitting next to Profile) with Auto/Enabled/Disabled,
+        /// preselecting whatever this game's OptiScaler.ini already has set — unlike RenoDX/other
+        /// combos, there's no "last choice" to remember here: the ini itself is the source of truth,
+        /// so reopening Manage Game always reflects the game's actual current state instead of a
+        /// separately-tracked preference. No SelectionChanged handler is needed either, since nothing
+        /// needs to persist on change — ExecuteInstallAsync reads the combo directly at install time.
+        /// </summary>
+        private void PopulateSpoofingComboBox()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbSpoofing");
+            if (cmb == null) return;
+
+            cmb.Items.Clear();
+            cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
+            cmb.Items.Add(new ComboBoxItem { Content = "Enabled", Tag = "true" });
+            cmb.Items.Add(new ComboBoxItem { Content = "Disabled", Tag = "false" });
+
+            var currentValue = ReadCurrentDxgiSpoofingValue();
+            var targetIndex = 0; // Auto, default
+            if (!string.IsNullOrEmpty(currentValue))
+            {
+                for (int i = 0; i < cmb.Items.Count; i++)
+                {
+                    if (string.Equals((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString(), currentValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+            }
+            cmb.SelectedIndex = targetIndex;
+        }
+
+        /// <summary>Reads the "Dxgi" key from OptiScaler.ini's [Spoofing] section for this game, if
+        /// the game is already installed and the file exists. Null if not found/not installed —
+        /// PopulateSpoofingComboBox then falls back to "Auto".</summary>
+        private string? ReadCurrentDxgiSpoofingValue()
+        {
+            try
+            {
+                var installService = new GameInstallationService();
+                var gameDir = installService.DetermineInstallDirectory(_game);
+                if (string.IsNullOrWhiteSpace(gameDir)) return null;
+
+                var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
+                if (!System.IO.File.Exists(iniPath)) return null;
+
+                var inSpoofingSection = false;
+                foreach (var raw in System.IO.File.ReadAllLines(iniPath))
+                {
+                    var line = raw.Trim();
+                    if (line.StartsWith("[") && line.EndsWith("]"))
+                    {
+                        inSpoofingSection = line.Equals("[Spoofing]", StringComparison.OrdinalIgnoreCase);
+                        continue;
+                    }
+                    if (!inSpoofingSection) continue;
+
+                    var idx = line.IndexOf('=');
+                    if (idx < 0) continue;
+                    var key = line[..idx].Trim();
+                    if (!key.Equals("Dxgi", StringComparison.OrdinalIgnoreCase)) continue;
+                    return line[(idx + 1)..].Trim();
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Spoofing] Failed to read current Dxgi value: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>Whether ReShade looks installed for this game — used to skip the "ReShade not
+        /// detected" warning before installing RenoDX. Checks gameDir first (ReShade.ini /
+        /// reshade-shaders next to the executable, same as the official Windows installer), then
+        /// falls back to the community reshade-linux.sh convention on non-Windows: that script keeps
+        /// ReShade's config/shaders in a separate location entirely (~/.reshade by default,
+        /// overridable via the MAIN_PATH env var it also reads), not inside the game folder — so the
+        /// Windows-style check alone always misses a correctly-installed Linux/Proton setup.</summary>
+        private static bool IsReshadeInstalledForGame(string? gameDir)
+        {
+            if (!string.IsNullOrWhiteSpace(gameDir) &&
+                (File.Exists(System.IO.Path.Combine(gameDir, "ReShade.ini")) ||
+                 Directory.Exists(System.IO.Path.Combine(gameDir, "reshade-shaders"))))
+                return true;
+
+            if (!OperatingSystem.IsWindows())
+            {
+                var altPath = Environment.GetEnvironmentVariable("MAIN_PATH");
+                if (string.IsNullOrWhiteSpace(altPath))
+                {
+                    var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    if (!string.IsNullOrWhiteSpace(home))
+                        altPath = System.IO.Path.Combine(home, ".reshade");
+                }
+                if (!string.IsNullOrWhiteSpace(altPath) && Directory.Exists(altPath))
+                    return true;
+            }
+
+            return false;
+        }
+
         private void CmbProfile_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (_isUpdatingProfiles) return;
@@ -1097,6 +1201,7 @@ namespace OptiscalerClient.Views
             // Immediately populate ALL selectors from disk cache (no API wait).
             // This eliminates the ~1s "popup" delay when versions are already cached.
             PopulateProfileSelector(profileService, profiles, _lastSelectedProfileName ?? _defaultProfileName);
+            PopulateSpoofingComboBox();
             PopulateVersionSelectors(componentService);
 
             // Wait for the GitHub API check (may block if startup check is in-flight,
@@ -2227,6 +2332,26 @@ namespace OptiscalerClient.Views
 
             if (injectionLabel != null)
                 injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
+
+            // DXGI Spoofing rides in whichever slot is actually free next to Profile: compact layout
+            // moves Upscaling Quality up to row 1, leaving row 2/col 2 open for Spoofing's own panel;
+            // non-compact packs Profile/FrameGen/Quality across all 3 columns of row 2, so there's no
+            // free column left and Spoofing instead moves inline next to CmbProfile. Same control
+            // (CmbSpoofing) either way — only its container is reparented, so PopulateSpoofingComboBox
+            // and ExecuteInstallAsync never need to know which layout is active.
+            var spoofingContent = this.FindControl<StackPanel>("PanelSpoofingContent");
+            var spoofingHost = this.FindControl<StackPanel>("PanelSpoofingHost");
+            var spoofingInlineHost = this.FindControl<StackPanel>("PanelSpoofingInlineHost");
+            if (spoofingContent != null && spoofingHost != null && spoofingInlineHost != null)
+            {
+                Panel targetParent = useCompactLayout ? spoofingHost : spoofingInlineHost;
+                if (!ReferenceEquals(spoofingContent.Parent, targetParent))
+                {
+                    (spoofingContent.Parent as Panel)?.Children.Remove(spoofingContent);
+                    targetParent.Children.Add(spoofingContent);
+                }
+                spoofingInlineHost.IsVisible = !useCompactLayout;
+            }
         }
 
         /// <summary>The sidebar Border's own top+bottom margin (its XAML Margin="0,10,16,12"),
@@ -3466,6 +3591,10 @@ namespace OptiscalerClient.Views
             bool installOptiPatcher = !string.IsNullOrEmpty(selectedOptiPatcherVersion) &&
                                       !selectedOptiPatcherVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
 
+            // Read selected DXGI Spoofing option before any async work
+            var cmbSpoofing = this.FindControl<ComboBox>("CmbSpoofing");
+            var selectedSpoofing = (cmbSpoofing?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
+
             // Read selected RenoDX option before any async work (experimental, opt-in). The actual
             // resolution (Auto lookup/download, ReShade-presence check, failure modals) needs
             // network + dialogs, so it happens later in this method, right before the Task.Run —
@@ -3873,9 +4002,7 @@ namespace OptiscalerClient.Views
                     else
                     {
                         var renodxGameDir = overrideGameDir ?? installService.DetermineInstallDirectory(_game);
-                        var reshadeDetected = !string.IsNullOrWhiteSpace(renodxGameDir) &&
-                            (File.Exists(System.IO.Path.Combine(renodxGameDir, "ReShade.ini")) ||
-                             Directory.Exists(System.IO.Path.Combine(renodxGameDir, "reshade-shaders")));
+                        var reshadeDetected = IsReshadeInstalledForGame(renodxGameDir);
 
                         if (reshadeDetected)
                         {
@@ -4020,7 +4147,8 @@ namespace OptiscalerClient.Views
                                                         dlssEnablerCachePath: dlssEnablerCacheDir,
                                                         installRenodx: installRenodx,
                                                         renodxAddonCachePath: renodxAddonPath ?? "",
-                                                        gpu: preferredGpuForFsr4);
+                                                        gpu: preferredGpuForFsr4,
+                                                        dxgiSpoofing: selectedSpoofing);
                     });
                 }
                 catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone)

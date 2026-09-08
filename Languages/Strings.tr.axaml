@@ -684,6 +684,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">Desteklenen oyunlarda spoofing olmadan DLSS/DLSS-FG girişlerini açığa çıkaran OptiScaler için bir ASI Eklentisi. Intel Arc kullanıcılarının D3D12 hatalarından kaçınmasına yardımcı olur ve Dxgi spoofing'in neden olduğu performans düşüşlerini veya çökmeleri önler. Otomatik, uyumluluk listesi bir oyunun buna ihtiyacı olduğunu belirttiğinde en son sürümü otomatik olarak yükler; bunun yerine her zaman kullanmak için belirli bir sürüm veya Yok seçin.</x:String>
     <x:String x:Key="TxtProfileLbl">Profil (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Profil, kaydedilmiş bir OptiScaler .ini yapılandırmasıdır. Bu oyun için OptiScaler kurulurken belirli bir ayar grubunu yeniden kullanmak için birini seçin.</x:String>
+    <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">OptiScaler'ın DXGI GPU spoofing'ini (yalnızca DLSS destekleyen oyunların AMD/Intel'de çalışması için Nvidia GPU'ymuş gibi davranma) geçersiz kılar. 'Otomatik', OptiScaler'ın kendi varsayılan davranışıyla eşleşir: AMD/Intel'de etkin, Nvidia'da devre dışı.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>

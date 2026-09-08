@@ -693,6 +693,8 @@
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">サポートするゲームでスプーフィングなしにDLSS/DLSS-FG入力を公開するOptiScaler用ASIプラグインです。Intel ArcユーザーのD3D12エラーやDxgiスプーフィングによるパフォーマンス低下・クラッシュを防ぎます。自動を選ぶと、互換性リストがそのゲームに必要だと示した場合に最新バージョンを自動的にインストールします。特定のバージョンまたはNoneを選ぶと、常にそちらを使用します。</x:String>
     <x:String x:Key="TxtProfileLbl">プロファイル (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">プロファイルは保存されたOptiScalerの.ini設定です。このゲームにOptiScalerをインストールする際に、特定の設定セットを再利用するために選択してください。</x:String>
+    <x:String x:Key="TxtSpoofingLbl">スプーフィング</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">OptiScalerのDXGI GPUスプーフィング（AMD/IntelでDLSS専用ゲームを動かすためにNvidia GPUを装う機能）を上書きします。「自動」はOptiScaler本来のデフォルト（AMD/Intelで有効、Nvidiaで無効）と同じです。</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcherをダウンロード中...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcherをインストール中...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">バージョン管理</x:String>

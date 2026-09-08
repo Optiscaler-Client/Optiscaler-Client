@@ -685,6 +685,8 @@
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">ASI-плагин для OptiScaler, открывающий входы DLSS/DLSS-FG без спуфинга в поддерживаемых играх. Помогает пользователям Intel Arc избежать ошибок D3D12 и предотвращает потерю производительности или краши из-за спуфинга Dxgi. Авто автоматически устанавливает последнюю версию, когда список совместимости показывает, что игре она нужна; выберите конкретную версию или «Нет», чтобы всегда использовать её вместо этого.</x:String>
     <x:String x:Key="TxtProfileLbl">Профиль (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Профиль — это сохранённая .ini-конфигурация OptiScaler. Выберите его, чтобы повторно использовать определённый набор настроек при установке OptiScaler для этой игры.</x:String>
+    <x:String x:Key="TxtSpoofingLbl">Спуфинг</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Переопределяет спуфинг GPU DXGI в OptiScaler (выдаёт себя за GPU Nvidia, чтобы игры только с DLSS работали на AMD/Intel). «Авто» соответствует поведению OptiScaler по умолчанию: включено на AMD/Intel, отключено на Nvidia.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Загрузка OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Установка OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Управление версиями</x:String>

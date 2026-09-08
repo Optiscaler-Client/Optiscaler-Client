@@ -692,6 +692,8 @@
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支持的游戏中无需欺骗即可暴露 DLSS/DLSS-FG 输入。帮助 Intel Arc 用户避免 D3D12 错误，并防止 Dxgi 欺骗导致的性能开销或崩溃。自动会在兼容性列表标记某游戏需要时自动安装最新版本；选择特定版本或"无"则始终改用该选项。</x:String>
     <x:String x:Key="TxtProfileLbl">配置文件 (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">配置文件是已保存的 OptiScaler .ini 配置。选择一个配置文件，可在为此游戏安装 OptiScaler 时重复使用一组特定的设置。</x:String>
+    <x:String x:Key="TxtSpoofingLbl">伪装</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">覆盖 OptiScaler 的 DXGI GPU 伪装（伪装成 Nvidia GPU，使仅支持 DLSS 的游戏可在 AMD/Intel 上运行）。"自动"与 OptiScaler 自身的默认行为一致：AMD/Intel 上启用，Nvidia 上禁用。</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下载 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安装 OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>

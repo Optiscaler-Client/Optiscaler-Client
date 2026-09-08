@@ -709,6 +709,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">Plugin ASI para OptiScaler que expone las entradas DLSS/DLSS-FG sin spoofing en juegos compatibles. Ayuda a los usuarios de Intel Arc a evitar errores D3D12 y previene el consumo de rendimiento o crashes causados por el Dxgi spoofing. Automático instala la última versión automáticamente cuando la lista de compatibilidad indica que un juego la necesita; elegí una versión específica, o Ninguno, para usar siempre esa en su lugar.</x:String>
     <x:String x:Key="TxtProfileLbl">Perfil (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Un perfil es una configuración .ini de OptiScaler guardada. Elegí uno para reutilizar un conjunto de ajustes específico al instalar OptiScaler en este juego.</x:String>
+    <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Sobrescribe el spoofing de GPU DXGI de OptiScaler (simula ser una GPU Nvidia para que los juegos solo-DLSS funcionen en AMD/Intel). Auto coincide con el comportamiento por defecto de OptiScaler: activado en AMD/Intel, desactivado en Nvidia.</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Descargando OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Instalando OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestión de versiones</x:String>

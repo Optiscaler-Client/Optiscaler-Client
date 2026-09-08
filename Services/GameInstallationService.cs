@@ -108,7 +108,7 @@ namespace OptiscalerClient.Services
                                      bool ensureFakenvapiIfMissing = false,
                                      bool installDlssEnabler = false, string dlssEnablerCachePath = "",
                                      bool installRenodx = false, string renodxAddonCachePath = "",
-                                     GpuInfo? gpu = null)
+                                     GpuInfo? gpu = null, string dxgiSpoofing = "auto")
         {
             DebugWindow.Log($"[Install] Starting OptiScaler installation for game: {game.Name}");
             DebugWindow.Log($"[Install] Version: {optiscalerVersion}, Injection: {injectionDllName}");
@@ -582,6 +582,13 @@ namespace OptiscalerClient.Services
                 ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                 DebugWindow.Log($"[Install] Re-applied FSR4 INT8 forcing keys after profile write (Current extras DLL already present)");
             }
+
+            // DXGI Spoofing override (Manage Game's per-game selector, next to Profile). Same narrow
+            // single-key patch as LoadReshade below, applied unconditionally (not gated behind any
+            // feature toggle) — "auto" is a real, valid value for this key already, matching what a
+            // freshly generated ini would otherwise leave in place, so this is a harmless no-op when
+            // the user hasn't touched the selector.
+            ModifyOptiScalerIni(gameDir, "Dxgi", dxgiSpoofing, "Spoofing");
 
             // Step 2.6: RenoDX (experimental, opt-in) and/or re-enabling a ReShade install that Step 1
             // preserved as ReShade64.dll. Runs AFTER Step 2.5 deliberately: LoadReshade is force-set

@@ -601,7 +601,11 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 0 : Profile selector (position overridden at runtime by UpdateOptionsLayout) -->
+                                <!-- Row 2, Col 0 : Profile selector (position overridden at runtime by
+                                     UpdateOptionsLayout). PanelSpoofingInlineHost is an inline fallback
+                                     slot beside CmbProfile, used ONLY in non-compact layout — see the
+                                     comment on PanelSpoofingHost below for why Spoofing can't always get
+                                     its own column. -->
                                 <StackPanel Name="PanelProfile" Grid.Row="2" Grid.Column="0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtProfileLbl}"
@@ -620,12 +624,15 @@
                                                        Margin="0,-1,0,0"/>
                                         </Border>
                                     </StackPanel>
-                                    <ComboBox Name="CmbProfile"
-                                              Margin="0,4,0,0"
-                                              HorizontalAlignment="Stretch"
-                                              Classes="BtnSelector"
-                                              HorizontalContentAlignment="Left"
-                                              VerticalContentAlignment="Center"/>
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,4,0,0">
+                                        <ComboBox Name="CmbProfile"
+                                                  Grid.Column="0"
+                                                  HorizontalAlignment="Stretch"
+                                                  Classes="BtnSelector"
+                                                  HorizontalContentAlignment="Left"
+                                                  VerticalContentAlignment="Center"/>
+                                        <StackPanel Name="PanelSpoofingInlineHost" Grid.Column="1" MinWidth="110" IsVisible="False"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Row 2, Col 1 : Compact per-game FG configuration (position overridden at runtime by UpdateOptionsLayout) -->
@@ -694,6 +701,41 @@
                                               DropDownOpened="CmbUpscalingQuality_DropDownOpened"
                                               DropDownClosed="CmbUpscalingQuality_DropDownClosed"
                                               SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
+                                </StackPanel>
+
+                                <!-- Row 2, Col 2 : DXGI Spoofing selector — own column, but only free in
+                                     compact layout (no Fakenvapi/NukemFG game), where Upscaling Quality
+                                     moves up to row 1 (see UpdateOptionsLayout). In non-compact layout
+                                     Upscaling Quality keeps this exact cell, so UpdateOptionsLayout
+                                     instead moves PanelSpoofingContent into PanelSpoofingInlineHost next
+                                     to Profile — there's no genuinely free column left in that row when
+                                     Fakenvapi/NukemFG are both present. -->
+                                <StackPanel Name="PanelSpoofingHost" Grid.Row="2" Grid.Column="2">
+                                    <StackPanel Name="PanelSpoofingContent">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{DynamicResource TxtSpoofingLbl}"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       VerticalAlignment="Center"/>
+                                            <Border Background="{StaticResource BrBgElevated}"
+                                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                                    BorderThickness="1" CornerRadius="8"
+                                                    Width="16" Height="16"
+                                                    ToolTip.ShowDelay="100" Cursor="Help"
+                                                    ToolTip.Tip="{DynamicResource TxtSpoofingTooltip}">
+                                                <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                           FontSize="10" FontWeight="Bold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Margin="0,-1,0,0"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <ComboBox Name="CmbSpoofing"
+                                                  Margin="0,4,0,0"
+                                                  HorizontalAlignment="Stretch"
+                                                  Classes="BtnSelector"
+                                                  HorizontalContentAlignment="Left"
+                                                  VerticalContentAlignment="Center"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Row 4, Col 0 : Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
