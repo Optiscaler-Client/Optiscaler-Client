@@ -74,6 +74,17 @@ public static class PlatformServiceFactory
 
         public void OpenUrl(string url) =>
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+
+        // /select, highlights the file itself in the resulting Explorer window instead of just
+        // opening its containing folder.
+        public void OpenFolderAndSelect(string filePath)
+        {
+            if (!File.Exists(filePath)) { OpenFolder(Path.GetDirectoryName(filePath) ?? filePath); return; }
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{filePath}\"")
+            {
+                UseShellExecute = true
+            });
+        }
     }
 
     private sealed class XdgShellService : IShellService
@@ -86,6 +97,10 @@ public static class PlatformServiceFactory
                 Directory.CreateDirectory(path);
             LaunchXdg(path);
         }
+
+        // No universal "select this file" convention across Linux file managers — just open the
+        // containing folder instead.
+        public void OpenFolderAndSelect(string filePath) => OpenFolder(Path.GetDirectoryName(filePath) ?? filePath);
 
         public void OpenUrl(string url) => LaunchXdg(url);
 

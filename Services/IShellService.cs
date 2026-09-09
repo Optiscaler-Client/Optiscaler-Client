@@ -25,6 +25,11 @@ public interface IShellService
     /// <summary>Opens <paramref name="path"/> in the platform file manager.</summary>
     void OpenFolder(string path);
 
+    /// <summary>Opens the containing folder of <paramref name="filePath"/> with that file selected/
+    /// highlighted, where the platform supports it. Falls back to just opening the containing folder
+    /// otherwise.</summary>
+    void OpenFolderAndSelect(string filePath);
+
     /// <summary>Opens <paramref name="url"/> in the default browser.</summary>
     void OpenUrl(string url);
 }

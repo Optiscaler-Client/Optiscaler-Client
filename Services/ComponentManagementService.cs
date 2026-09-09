@@ -2830,8 +2830,20 @@ namespace OptiscalerClient.Services
         public async Task<string> ImportCustomOptiScalerVersionAsync(string archivePath)
         {
             var fileName = Path.GetFileNameWithoutExtension(archivePath);
-            // Sanitize to produce a safe directory name
             var versionName = "custom-" + SanitizeVersionName(fileName);
+            await ExtractArchiveToCustomOptiScalerVersionAsync(archivePath, versionName);
+            return versionName;
+        }
+
+        /// <summary>
+        /// Shared extraction+registration core for both a locally-picked archive
+        /// (<see cref="ImportCustomOptiScalerVersionAsync"/>) and a downloaded one (e.g. a community
+        /// AMD Neural Rendering wrapper release) — same target layout (Cache/OptiScaler/{versionName}/)
+        /// and CustomOptiScalerVersions registration, just with the version name supplied directly
+        /// instead of derived from the source file's own name.
+        /// </summary>
+        private async Task ExtractArchiveToCustomOptiScalerVersionAsync(string archivePath, string versionName)
+        {
             var targetDir = Path.Combine(_cacheDir, "OptiScaler", versionName);
 
             if (Directory.Exists(targetDir))
@@ -2847,14 +2859,14 @@ namespace OptiscalerClient.Services
                     var fileEntries = archive.Entries.Where(e => !e.IsDirectory).ToList();
                     var commonPrefix = FindCommonArchivePrefix(fileEntries.Select(e => e.Key).ToList());
 
-                    // Use ExtractAllEntries (sequential reader) which works for all formats
-                    // including solid RAR/7z where random OpenEntryStream() can fail.
-                    using var reader = archive.ExtractAllEntries();
-                    while (reader.MoveToNextEntry())
+                    // Random-access entry iteration — ExtractAllEntries() (sequential reader) throws
+                    // on a plain, non-solid zip ("can only be used on solid archives or 7Zip archives").
+                    // Same pattern as ImportCustomExtrasArchiveAsync above.
+                    foreach (var entry in fileEntries)
                     {
-                        if (reader.Entry.IsDirectory) continue;
-                        ExtractEntry(reader.Entry.Key, targetDir, commonPrefix,
-                            dest => reader.WriteEntryTo(dest));
+                        using var entryStream = entry.OpenEntryStream();
+                        ExtractEntry(entry.Key, targetDir, commonPrefix,
+                            dest => entryStream.CopyTo(dest, 81920));
                     }
                 });
             }
@@ -2875,7 +2887,144 @@ namespace OptiscalerClient.Services
             // Update static cache so other windows see the new version immediately
             if (_cachedOptiScalerVersions != null && !_cachedOptiScalerVersions.Contains(versionName, StringComparer.OrdinalIgnoreCase))
                 _cachedOptiScalerVersions.Add(versionName);
-            return versionName;
+        }
+
+        // ── AMD Neural Rendering community wrapper (MatheusGViana/dlss-5-amd-project) ───
+        // Part of the "Setup NR" experimental feature: an unofficial OptiScaler build with an
+        // integrated (AMD-redirected) DLSS Neural Rendering pass. Listed/downloaded the same way as
+        // DLSS Enabler's Mirror source, but the extracted result is registered as a normal Custom
+        // OptiScaler version — GameInstallationService.RedistributionRestrictedFileNames already
+        // guarantees its bundled weights are never actually copied into a game folder.
+
+        private const string AmdWrapperRepoOwner = "MatheusGViana";
+        private const string AmdWrapperRepoName = "dlss-5-amd-project";
+
+        // In-memory only (no disk persistence, unlike the other channels' caches) — just enough to
+        // avoid re-hitting GitHub (plus a per-release checksum.txt fetch) every time ManageGameWindow
+        // repopulates the "Modded" combo, which was making every reopen of the window visibly stall
+        // for a second or two while on that channel.
+        private static System.Collections.Generic.List<DlssNrOnAmdRelease>? _cachedAmdWrapperReleases = null;
+
+        /// <summary>Lists releases of the community AMD Neural Rendering OptiScaler wrapper,
+        /// newest-first (GitHub's own release order). Looks for a .zip asset per release.</summary>
+        public async Task<System.Collections.Generic.List<DlssNrOnAmdRelease>> GetAmdWrapperReleasesAsync()
+        {
+            if (_cachedAmdWrapperReleases != null) return _cachedAmdWrapperReleases;
+
+            var releases = new System.Collections.Generic.List<DlssNrOnAmdRelease>();
+            try
+            {
+                var url = $"https://api.github.com/repos/{AmdWrapperRepoOwner}/{AmdWrapperRepoName}/releases?per_page=30";
+                var response = await GetWithRetryAsync(() => _httpClient, url);
+                DebugWindow.Log($"[AmdWrapperVersions] GET {url} -> HTTP {(int)response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Array) return releases;
+
+                foreach (var element in doc.RootElement.EnumerateArray())
+                {
+                    if (!element.TryGetProperty("tag_name", out var tagProp)) continue;
+                    var version = tagProp.GetString();
+                    if (string.IsNullOrEmpty(version)) continue;
+                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        version = version.Substring(1);
+
+                    if (!element.TryGetProperty("assets", out var assets)) continue;
+
+                    string? zipUrl = null, zipName = null, checksumsText = null;
+                    foreach (var asset in assets.EnumerateArray())
+                    {
+                        if (!asset.TryGetProperty("name", out var nameProp) ||
+                            !asset.TryGetProperty("browser_download_url", out var urlProp))
+                            continue;
+                        var name = nameProp.GetString() ?? "";
+                        var assetUrl = urlProp.GetString();
+                        if (assetUrl == null) continue;
+
+                        if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        {
+                            zipUrl = assetUrl;
+                            zipName = name;
+                        }
+                        else if (name.Contains("sha256", StringComparison.OrdinalIgnoreCase) &&
+                                 name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var resp = await GetWithRetryAsync(() => _httpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
+                                if (resp.IsSuccessStatusCode)
+                                    checksumsText = await resp.Content.ReadAsStringAsync();
+                            }
+                            catch (Exception ex) { DebugWindow.Log($"[AmdWrapperVersions] Checksums fetch failed for {version}: {ex.Message}"); }
+                        }
+                    }
+
+                    if (zipUrl == null || zipName == null) continue;
+
+                    string? sha256 = null;
+                    if (checksumsText != null)
+                    {
+                        foreach (var line in checksumsText.Split('\n'))
+                        {
+                            var parts = line.Trim().Split(new[] { ' ', '*' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2 && parts[^1].EndsWith(zipName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                sha256 = parts[0];
+                                break;
+                            }
+                        }
+                    }
+
+                    releases.Add(new DlssNrOnAmdRelease(version, zipUrl, zipName, sha256));
+                }
+
+                DebugWindow.Log($"[AmdWrapperVersions] {AmdWrapperRepoOwner}/{AmdWrapperRepoName} -> {releases.Count} usable release(s)");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[AmdWrapperVersions] Release listing failed: {ex.Message}");
+            }
+            if (releases.Count > 0) _cachedAmdWrapperReleases = releases;
+            return releases;
+        }
+
+        /// <summary>Downloads the given AMD wrapper release (verifying SHA256 when the release
+        /// publishes one — same "mini security check" as DlssNrOnAmdService.DownloadAsync) and
+        /// registers it as a Custom OptiScaler version. Returns the registered version name.</summary>
+        public async Task<string> DownloadAndImportAmdWrapperVersionAsync(string version, IProgress<double>? progress = null)
+        {
+            var releases = await GetAmdWrapperReleasesAsync();
+            var release = releases.FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
+                ?? throw new VersionUnavailableException(version, "Release not found or has no .zip asset.");
+
+            var versionName = "custom-amd-presr-" + SanitizeVersionName(version);
+            var tempZip = Path.Combine(Path.GetTempPath(), $"AmdWrapper_{Guid.NewGuid()}.zip");
+            try
+            {
+                await StreamToFileAsync(() => _httpClient, release.DownloadUrl, tempZip, progress);
+
+                if (!string.IsNullOrEmpty(release.Sha256))
+                {
+                    var actual = ComputeSha256(tempZip);
+                    if (!string.Equals(actual, release.Sha256, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException(
+                            $"Downloaded file hash mismatch for {release.AssetName} — expected {release.Sha256}, got {actual}. Discarded.");
+                    DebugWindow.Log($"[AmdWrapperDownload] SHA256 verified for {release.AssetName}");
+                }
+                else
+                {
+                    DebugWindow.Log($"[AmdWrapperDownload] No published checksum for {release.AssetName} — skipped verification.");
+                }
+
+                await ExtractArchiveToCustomOptiScalerVersionAsync(tempZip, versionName);
+                return versionName;
+            }
+            finally
+            {
+                try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { /* best effort */ }
+            }
         }
 
         private static void ExtractEntry(string? key, string targetDir, string commonPrefix, Action<Stream> writeAction)
@@ -2898,13 +3047,20 @@ namespace OptiscalerClient.Services
             writeAction(fileStream);
         }
 
-        private static string SanitizeVersionName(string name)
+        internal static string SanitizeVersionName(string name)
         {
             var invalid = Path.GetInvalidFileNameChars();
             var sb = new System.Text.StringBuilder(name.Length);
             foreach (var c in name)
                 sb.Append(invalid.Contains(c) ? '_' : c);
             return sb.ToString();
+        }
+
+        private static string ComputeSha256(string filePath)
+        {
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            using var stream = File.OpenRead(filePath);
+            return Convert.ToHexString(sha256.ComputeHash(stream)).ToLowerInvariant();
         }
 
         private static string FindCommonArchivePrefix(System.Collections.Generic.List<string?> keys)

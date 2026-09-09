@@ -84,6 +84,45 @@ public class Game
     public string? OptiscalerVersion { get; set; }
     public string? Fsr4ExtraVersion { get; set; }
 
+    // "Setup NR" experimental feature — danielblnc's standalone AMD DLSS Neural Rendering mod.
+    // Detected independently of IsOptiscalerInstalled: Option A (mod-only) never touches OptiScaler
+    // at all, so this can be true while OptiScaler is absent, and vice versa for Option B where the
+    // mod's own proxy is a transient install-time artifact, not the steady-state marker.
+    public bool IsDlssNrOnAmdInstalled { get; set; }
+    public string? DlssNrOnAmdVersion { get; set; }
+
+    // Which mode ("daniel-only" or "daniel-and-opti") IsDlssNrOnAmdInstalled actually reflects. Needed
+    // because the two modes are otherwise indistinguishable after the fact from detection alone — mode
+    // A never installs OptiScaler and mode B does, but a game can also have a completely unrelated
+    // normal OptiScaler install, so IsOptiscalerInstalled alone can't be used to infer which mode ran.
+    // Set alongside IsDlssNrOnAmdInstalled on a successful install, cleared on uninstall.
+    public string? InstalledDlssNrOnAmdMode { get; set; }
+
+    // Set when "Setup NR" was saved but the actual wizard (staging + running danielblnc's
+    // interactive installer) hasn't run yet — that step is deferred to the main Install button.
+    // "daniel-only" or "daniel-and-opti"; null when no Setup NR run is pending.
+    public string? PendingDlssNrOnAmdMode { get; set; }
+    public string? PendingDlssNrOnAmdVersion { get; set; }
+
+    // Drives the game-card badge (MainWindow.axaml) — "mod only" is the case worth calling out there,
+    // since it means OptiScaler itself isn't installed even though DLSS upscaling is active via the
+    // mod. "daniel-and-opti" already shows as a normal OptiScaler install everywhere else.
+    public bool IsDlssNrOnAmdModOnly => IsDlssNrOnAmdInstalled && InstalledDlssNrOnAmdMode == "daniel-only";
+
+    // True once Setup NR believes this game's folder is excluded from Defender — either because
+    // WindowsDefenderExclusionHelper.TryAddExclusions actually succeeded (see
+    // DlssNrDefenderExclusionVerified below), or because the user clicked "Continue" on the offer
+    // dialog, taking their own word for it (there's no reliable unprivileged way to confirm an
+    // exclusion actually exists — Get-MpPreference refuses to report it to a non-admin process).
+    public bool DlssNrDefenderExclusionAdded { get; set; }
+
+    // True only when DlssNrDefenderExclusionAdded came from TryAddExclusions actually succeeding —
+    // i.e. we know for a fact the exclusion exists, as opposed to just trusting the user's "Continue".
+    // A failed Setup NR install resets DlssNrDefenderExclusionAdded to re-ask next time UNLESS this is
+    // true, since a verified exclusion can't be the reason a later run failed the same way an unverified
+    // "take my word for it" one plausibly could.
+    public bool DlssNrDefenderExclusionVerified { get; set; }
+
     // True when a FSR4 INT8 DLL was swapped directly into the game folder without installing
     // OptiScaler (independent of IsOptiscalerInstalled — both can be true at once). Fsr4ExtraVersion
     // above doubles as "which version" for this too, whether injected via OptiScaler or swapped raw.

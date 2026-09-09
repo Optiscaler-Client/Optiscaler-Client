@@ -121,6 +121,15 @@
                                 Classes="BtnBase"
                                 MinWidth="90"
                                 Click="BtnCancel_Click"/>
+                        <!-- Optional third action (e.g. "Continue" for "I handled this myself") — hidden
+                             unless a caller passes thirdButtonText, so every existing two-button caller
+                             is unaffected. -->
+                        <Button Name="BtnThird"
+                                Content="Continue"
+                                Classes="BtnBase"
+                                MinWidth="90"
+                                IsVisible="False"
+                                Click="BtnThird_Click"/>
                         <Button Name="BtnConfirm"
                                 Content="Confirm"
                                 Classes="BtnPrimary"

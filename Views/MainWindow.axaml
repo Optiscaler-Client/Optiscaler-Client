@@ -742,6 +742,21 @@
                                                                 FontWeight="SemiBold"/>
                                                  </Border>
 
+                                                 <!-- DLSS Neural Rendering (AMD) badge - danielblnc's mod installed on its own,
+                                                      without OptiScaler (see Setup NR) -->
+                                                 <Border Background="#2A2438"
+                                                         BorderBrush="{StaticResource BrExperimental}"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="10,3" Margin="0,0,6,0"
+                                                         IsVisible="{Binding IsDlssNrOnAmdModOnly}"
+                                                         ToolTip.Tip="{DynamicResource TxtDlssNrBadgeTooltip}">
+                                                     <TextBlock Text="NR"
+                                                                Foreground="{StaticResource BrExperimental}"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+
                                                  <!-- XeSS badge -->
                                                  <Border Background="#1A1E2E"
                                                          BorderBrush="#2D3A5A"
@@ -1136,6 +1151,21 @@
                                                          IsVisible="{Binding FsrIsSwapped}">
                                                      <TextBlock Text="FSR"
                                                                 Foreground="{StaticResource BrWarning}"
+                                                                FontSize="{StaticResource FontSizeCaption}"
+                                                                FontWeight="SemiBold"/>
+                                                 </Border>
+                                                 <!-- DLSS Neural Rendering (AMD) badge - danielblnc's mod installed on its own,
+                                                      without OptiScaler (see Setup NR) -->
+                                                 <Border Background="#2A2438"
+                                                         BorderBrush="{StaticResource BrExperimental}"
+                                                         BorderThickness="1"
+                                                         CornerRadius="6"
+                                                         Padding="8,3"
+                                                         Margin="0,0,6,0"
+                                                         IsVisible="{Binding IsDlssNrOnAmdModOnly}"
+                                                         ToolTip.Tip="{DynamicResource TxtDlssNrBadgeTooltip}">
+                                                     <TextBlock Text="NR"
+                                                                Foreground="{StaticResource BrExperimental}"
                                                                 FontSize="{StaticResource FontSizeCaption}"
                                                                 FontWeight="SemiBold"/>
                                                  </Border>

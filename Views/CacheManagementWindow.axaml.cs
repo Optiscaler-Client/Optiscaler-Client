@@ -22,6 +22,7 @@ namespace OptiscalerClient.Views
     {
         private static readonly FontFamily IconFont = new("avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular");
         private readonly ComponentManagementService _componentService;
+        private readonly DlssNrOnAmdService _dlssNrService = new();
         private bool _isAnimatingClose;
         private string _currentSection = "opti";
         private string _currentOptiTab = "opti-stable";
@@ -247,6 +248,19 @@ namespace OptiscalerClient.Views
                     Application.Current?.FindResource("TxtRenodxLbl") as string ?? "RenoDX", "\uE712"));
             }
 
+            // \u2500\u2500 "Setup NR" / danielblnc's AMD mod downloads (experimental, opt-in, Windows-only) \u2500\u2500
+            if (_componentService.Config.ShowExperimentalFeatures && OperatingSystem.IsWindows())
+            {
+                sidebar.Children.Add(CreateTopButton("dlssnronamd",
+                    Application.Current?.FindResource("TxtSetupNr") as string ?? "Setup NR", "\uF4B6"));
+
+                // The one-time nvngx_dlssnr.dll cache Setup NR needs (see DlssNrOnAmdService) is its
+                // own machine-wide file, not a per-version download like the list above \u2014 a dedicated
+                // page so it can be added/updated/removed without going through Setup NR again.
+                sidebar.Children.Add(CreateTopButton("nvngxdlssnr",
+                    Application.Current?.FindResource("TxtSetupNrNvngxPageLbl") as string ?? "nvngx_dlssnr.dll", "\uE8B0"));
+            }
+
             // Section rendering/selection is the caller's responsibility (each constructor calls
             // ShowSection(_currentSection)/UpdateSidebarSelection(_currentSection) right after
             // BuildSidebar()). Doing it here too used to clobber a requested initialSection other
@@ -341,6 +355,8 @@ namespace OptiscalerClient.Views
                 case "dlss-enabler": RenderDlssEnablerWithTabs(content); break;
                 case "streamline":  RenderStreamline(content); break;
                 case "renodx":      RenderRenodx(content); break;
+                case "dlssnronamd": RenderDlssNrOnAmd(content); break;
+                case "nvngxdlssnr": RenderNvngxDlssNr(content); break;
             }
         }
 
@@ -722,6 +738,190 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
+        /// danielblnc/DLSS-NR-on-AMD downloads, part of "Setup NR". Versions land here automatically
+        /// (Setup NR's Save button backgrounds the download — see DlssNrOnAmdService), but this tab
+        /// also lets the user fetch an extra version ahead of time or free up space.
+        /// </summary>
+        private void RenderDlssNrOnAmd(StackPanel content)
+        {
+            var downloadRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16), ColumnSpacing = 8 };
+            var cmbVersion = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+            Grid.SetColumn(cmbVersion, 0);
+            var btnDownload = new Button
+            {
+                Content = Application.Current?.FindResource("TxtSetupNrDownloadBtn") as string ?? "Download",
+                Padding = new Thickness(12, 5),
+                FontSize = 11,
+                IsEnabled = false
+            };
+            btnDownload.Classes.Add("BtnBase");
+            Grid.SetColumn(btnDownload, 1);
+            downloadRow.Children.Add(cmbVersion);
+            downloadRow.Children.Add(btnDownload);
+            content.Children.Add(downloadRow);
+
+            var listPanel = new StackPanel { Spacing = 8 };
+            content.Children.Add(listPanel);
+
+            void RefreshList()
+            {
+                listPanel.Children.Clear();
+                var versions = _dlssNrService.GetDownloadedVersions();
+                if (versions.Count == 0)
+                    listPanel.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
+                else
+                    foreach (var ver in versions)
+                        listPanel.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrOnAmd: true));
+            }
+
+            RefreshList();
+
+            _ = _dlssNrService.GetReleasesAsync().ContinueWith(t =>
+            {
+                if (t.IsFaulted || t.Result.Count == 0) return;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    var cached = _dlssNrService.GetDownloadedVersions();
+                    cmbVersion.ItemsSource = t.Result.Select(r => r.Version).Where(v => !cached.Contains(v, StringComparer.OrdinalIgnoreCase)).ToList();
+                    if (cmbVersion.ItemsSource is System.Collections.Generic.List<string> { Count: > 0 })
+                    {
+                        cmbVersion.SelectedIndex = 0;
+                        btnDownload.IsEnabled = true;
+                    }
+                });
+            }, TaskScheduler.Default);
+
+            btnDownload.Click += async (s, e) =>
+            {
+                if (cmbVersion.SelectedItem is not string version) return;
+                btnDownload.IsEnabled = false;
+                try
+                {
+                    await _dlssNrService.DownloadAsync(version);
+                    RefreshList();
+                }
+                catch (Exception ex)
+                {
+                    await new ConfirmDialog(this, "Error", $"Failed to download version: {ex.Message}").ShowDialog<object>(this);
+                }
+                finally
+                {
+                    btnDownload.IsEnabled = true;
+                }
+            };
+        }
+
+        /// <summary>
+        /// Dedicated page (experimental, opt-in) for the one-time nvngx_dlssnr.dll cache Setup NR
+        /// needs (see DlssNrOnAmdService) — unlike every other section here, this manages exactly one
+        /// file rather than a list of versions: add it if missing, replace it with a newer copy, or
+        /// remove it outright. The version shown comes straight from the cached file's own metadata
+        /// (FileVersionInfo), matching what danielblnc's installer itself reports when it recognises
+        /// the file (e.g. "recognised: nvngx_dlssnr.dll 310.8.0.0 (...)").
+        /// </summary>
+        private void RenderNvngxDlssNr(StackPanel content)
+        {
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), VerticalAlignment = VerticalAlignment.Center };
+
+            var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            stack.Children.Add(new TextBlock
+            {
+                Text = "nvngx_dlssnr.dll",
+                FontWeight = FontWeight.Bold,
+                Foreground = this.FindResource("BrTextPrimary") as IBrush ?? Brushes.White
+            });
+            var txtSubtitle = new TextBlock
+            {
+                FontSize = 12,
+                Foreground = this.FindResource("BrTextSecondary") as IBrush,
+                Margin = new Thickness(0, 2, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            };
+            stack.Children.Add(txtSubtitle);
+            grid.Children.Add(stack);
+            Grid.SetColumn(stack, 0);
+
+            var btnAddUpdate = new Button { Padding = new Thickness(12, 4), FontSize = 11, Margin = new Thickness(8, 0, 0, 0) };
+            btnAddUpdate.Classes.Add("BtnBase");
+            grid.Children.Add(btnAddUpdate);
+            Grid.SetColumn(btnAddUpdate, 1);
+
+            var btnDelete = new Button
+            {
+                Content = Application.Current?.FindResource("TxtDeletePlain") as string ?? "Delete",
+                Padding = new Thickness(12, 4),
+                FontSize = 11,
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            btnDelete.Classes.Add("BtnSecondary");
+            grid.Children.Add(btnDelete);
+            Grid.SetColumn(btnDelete, 2);
+
+            var card = new Border
+            {
+                Background = this.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(16, 12),
+                Child = grid
+            };
+            content.Children.Add(card);
+
+            void Refresh()
+            {
+                var cached = _dlssNrService.IsNvngxDlssNrCached();
+                txtSubtitle.Text = cached
+                    ? string.Format(Application.Current?.FindResource("TxtSetupNrNvngxVersionFormat") as string ?? "Version {0}",
+                        _dlssNrService.GetCachedNvngxVersion() ?? "?")
+                    : Application.Current?.FindResource("TxtSetupNrNvngxMissingStatus") as string ?? "nvngx_dlssnr.dll hasn't been added yet.";
+                btnAddUpdate.Content = cached
+                    ? Application.Current?.FindResource("TxtSetupNrUpdateNvngxBtn") as string ?? "Update nvngx_dlssnr.dll..."
+                    : Application.Current?.FindResource("TxtSetupNrPickNvngxBtn") as string ?? "Select nvngx_dlssnr.dll...";
+                btnDelete.IsVisible = cached;
+            }
+            Refresh();
+
+            btnAddUpdate.Click += async (s, e) =>
+            {
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = Application.Current?.FindResource("TxtSetupNrPickNvngxTitle") as string ?? "Select nvngx_dlssnr.dll",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { new FilePickerFileType("nvngx_dlssnr.dll") { Patterns = new[] { "nvngx_dlssnr.dll", "*.dll" } } }
+                });
+                if (files.Count == 0) return;
+
+                var path = files[0].Path.IsAbsoluteUri ? files[0].Path.LocalPath : files[0].TryGetLocalPath();
+                if (string.IsNullOrEmpty(path)) return;
+
+                try
+                {
+                    _dlssNrService.ImportNvngxDlssNr(path);
+                    Refresh();
+                }
+                catch (Exception ex)
+                {
+                    var errorFmt = Application.Current?.FindResource("TxtSetupNrCacheNvngxError") as string ?? "Could not cache the file: {0}";
+                    await new ConfirmDialog(this, "Error", string.Format(errorFmt, ex.Message)).ShowDialog<object>(this);
+                }
+            };
+
+            btnDelete.Click += async (s, e) =>
+            {
+                var confirmed = await new ConfirmDialog(this,
+                    Application.Current?.FindResource("TxtSetupNrDeleteNvngxTitle") as string ?? "Delete nvngx_dlssnr.dll",
+                    Application.Current?.FindResource("TxtSetupNrDeleteNvngxMsg") as string ?? "Are you sure you want to delete the cached nvngx_dlssnr.dll? Games that already installed the mod keep their own copy.",
+                    false
+                ).ShowDialog<bool>(this);
+                if (!confirmed) return;
+
+                _dlssNrService.DeleteCachedNvngx();
+                Refresh();
+            };
+        }
+
+        /// <summary>
         /// Unlike every other section here, this isn't a list of versions of one component — it's a
         /// list of RenoDX addons, one per game (see ComponentManagementService.GetRenodxCachePath).
         /// Search box + Add button up top, filtered list below. The search box is built once and
@@ -969,7 +1169,7 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false)
         {
             var grid = new Grid
             {
@@ -1011,7 +1211,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -1071,7 +1271,8 @@ namespace OptiscalerClient.Views
             var dlssEnabler = _componentService.GetDownloadedDlssEnablerVersions();
             var streamline  = _componentService.GetDownloadedStreamlineVersions();
             var renodx      = _componentService.GetAllCachedRenodxEntries();
-            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count;
+            var dlssNrOnAmd = _dlssNrService.GetDownloadedVersions();
+            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count + dlssNrOnAmd.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
         }
 
@@ -1090,6 +1291,7 @@ namespace OptiscalerClient.Views
             public bool IsStreamline { get; set; }
             public bool IsDlssEnablerMirror { get; set; }
             public bool IsRenodx { get; set; }
+            public bool IsDlssNrOnAmd { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -1132,6 +1334,11 @@ namespace OptiscalerClient.Views
                     title = "Delete RenoDX Addon";
                     msg = $"Are you sure you want to delete the RenoDX addon for '{info.Version}'?";
                 }
+                else if (info.IsDlssNrOnAmd)
+                {
+                    title = "Delete danielblnc/DLSS-NR-on-AMD Version";
+                    msg = $"Are you sure you want to delete danielblnc's mod '{info.Version}' from cache?";
+                }
                 else
                 {
                     title = "Delete OptiScaler Version";
@@ -1161,6 +1368,8 @@ namespace OptiscalerClient.Views
                             _componentService.DeleteOptiPatcherCache(info.Version);
                         else if (info.IsRenodx)
                             _componentService.DeleteRenodxCache(info.Version);
+                        else if (info.IsDlssNrOnAmd)
+                            _dlssNrService.DeleteCache(info.Version);
                         else
                             _componentService.DeleteOptiScalerCache(info.Version);
 

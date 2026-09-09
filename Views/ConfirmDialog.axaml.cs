@@ -24,11 +24,20 @@ namespace OptiscalerClient.Views
             DialogDimHelper.Register(this);
         }
 
+        /// <summary>True once the optional third button (see <paramref name="thirdButtonText"/> on the
+        /// constructor) was the one clicked — check this first after ShowDialog returns, since the
+        /// bool result alone can't distinguish "third button" from "cancel" (both close as false).</summary>
+        public bool ThirdButtonClicked { get; private set; }
+
         /// <param name="linkUrl">Optional URL rendered as a clickable hyperlink below the message
         /// (e.g. pointing a user to a wiki page to finish something manually) — opened in the
         /// default browser via Process.Start on click. Shown with <paramref name="linkText"/> as
         /// its label, or the raw URL itself if that's left null.</param>
-        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null)
+        /// <param name="thirdButtonText">Optional label for a third action button between Cancel and
+        /// Confirm (e.g. "Continue" for "I already handled this myself") — hidden when left null.
+        /// Closes with a false result like Cancel; check <see cref="ThirdButtonClicked"/> to tell them
+        /// apart.</param>
+        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null, string? thirdButtonText = null)
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
@@ -95,6 +104,13 @@ namespace OptiscalerClient.Views
             else if (confirmText != null && btnConfirm != null)
             {
                 btnConfirm.Content = confirmText;
+            }
+
+            var btnThird = this.FindControl<Button>("BtnThird");
+            if (!isAlert && thirdButtonText != null && btnThird != null)
+            {
+                btnThird.Content = thirdButtonText;
+                btnThird.IsVisible = true;
             }
 
             if (txtIcon != null)
@@ -187,6 +203,11 @@ namespace OptiscalerClient.Views
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated(false);
         private void BtnConfirm_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated(true);
+        private void BtnThird_Click(object sender, RoutedEventArgs e)
+        {
+            ThirdButtonClicked = true;
+            _ = CloseAnimated(false);
+        }
 
         private async Task CloseAnimated(bool result)
         {

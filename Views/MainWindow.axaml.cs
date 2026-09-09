@@ -3213,6 +3213,12 @@ namespace OptiscalerClient.Views
             // switch is on, but refreshing it unconditionally keeps the cache warm for whenever the
             // user does turn it on, same low cost as the compatibility list's own refresh.
             var renodxModsRefreshTask = RefreshRenodxModsOnStartupAsync();
+            // Same reasoning for "Setup NR" — danielblnc's mod list (GetReleasesAsync) is cached
+            // statically in DlssNrOnAmdService, so warming it here means CmbDlssNrDanielVersion in
+            // Manage Game (only shown once experimental features + a Setup NR mode are picked) has
+            // its versions ready immediately instead of the user watching a multi-second GitHub
+            // fetch the very first time they select the mod.
+            var dlssNrOnAmdRefreshTask = RefreshDlssNrOnAmdOnStartupAsync();
             bool versionsEmpty = _componentService.OptiScalerAvailableVersions.Count == 0;
 
             if (versionsEmpty)
@@ -3232,6 +3238,7 @@ namespace OptiscalerClient.Views
                 await CheckUpdatesOnStartupAsync(cancellationToken);
                 await compatibilityRefreshTask;
                 await renodxModsRefreshTask;
+                await dlssNrOnAmdRefreshTask;
             }
             catch (OperationCanceledException)
             {
@@ -3282,6 +3289,12 @@ namespace OptiscalerClient.Views
         {
             try { await new RenodxModsService().CheckForUpdatesAsync(); }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] RenodxModsService refresh failed: {ex.Message}"); }
+        }
+
+        private static async Task RefreshDlssNrOnAmdOnStartupAsync()
+        {
+            try { await new DlssNrOnAmdService().GetReleasesAsync(); }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] DlssNrOnAmdService refresh failed: {ex.Message}"); }
         }
 
         /// <summary>

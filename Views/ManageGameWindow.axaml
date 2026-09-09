@@ -473,6 +473,42 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Shown instead of BetaInfoPanel while the "Modded" OptiScaler channel
+                                 (Setup NR's Mod + OptiScaler mode) is selected — that build is a
+                                 community wrapper, not an OptiScaler release, so the "already includes
+                                 X/Y" info doesn't apply and a risk warning belongs there instead. -->
+                            <Border Name="PanelModdedWarning"
+                                    Background="#2E2410"
+                                    BorderBrush="{StaticResource BrWarning}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <!-- Grid instead of a horizontal StackPanel: a StackPanel measures its
+                                     children with infinite available width, so TextWrapping="Wrap" on
+                                     the text below would never actually wrap and instead overflow the
+                                     window's edge. The Grid's "*" column gives it a real bound to wrap
+                                     against. -->
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="{StaticResource BrWarning}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtSetupNrWrapperWarning}"
+                                               Foreground="{StaticResource BrWarning}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Info panel - shown when neither an OptiScaler version nor a FSR4 INT8
                                  version is selected, so there's nothing for Install/Swap to do
                                  (see UpdateInstallButtonsForSwapState, which also greys out the
@@ -526,9 +562,22 @@
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
                                 <StackPanel Name="PanelOptiScalerVersion" Grid.Row="0" Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="{DynamicResource TxtOptiScalerLbl}"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtOptiScalerLbl}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtOptiScalerVersionTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <Grid Name="GridOptiTabs" ColumnDefinitions="*,*,*">
                                         <Button Name="BtnOptiStable"
                                                 Grid.Column="0"
@@ -571,6 +620,19 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiCustom_Click"/>
+                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while the NR
+                                             mode selector = "Mod + OptiScaler" — the only "channel" available in
+                                             that state, so it's a plain indicator rather than a real tab. -->
+                                        <Button Name="BtnOptiModded"
+                                                Grid.Column="0" Grid.ColumnSpan="4"
+                                                Content="Modded"
+                                                Classes="BtnPrimary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                IsVisible="False"
+                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbOptiVersion"
                                               HorizontalAlignment="Stretch"
@@ -875,6 +937,73 @@
                                                           Padding="8,0,24,0"
                                                           HorizontalContentAlignment="Left"
                                                           VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- "Setup NR" — danielblnc's standalone AMD DLSS Neural
+                                                 Rendering mod, optionally combined with an unofficial
+                                                 OptiScaler wrapper build. Windows-only (see code-behind)
+                                                 since the mod itself only targets DXGI/D3D12. -->
+                                            <StackPanel Name="PanelDlssNrOnAmd" Grid.Column="1">
+                                                <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                                                    <TextBlock Text="{DynamicResource TxtDlssNrOnAmdTitle}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtDlssNrOnAmdTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbSetupNr"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          SelectionChanged="CmbSetupNr_SelectionChanged">
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeNone}" Tag="none"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielOnlyShort}" Tag="daniel-only"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielAndOptiShort}" Tag="daniel-and-opti"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <!-- Version of danielblnc's mod itself — needed by both NR modes (both
+                                                 run its installer to generate weights, see DlssNrOnAmdWizardWindow),
+                                                 so it lives next to the mode selector rather than inside either
+                                                 mode's own configuration. Disabled/empty while NR mode = none. -->
+                                            <StackPanel Name="PanelDlssNrDanielVersion" Grid.Column="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtSetupNrDanielVersionTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDlssNrDanielVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          IsEnabled="False"
+                                                          SelectionChanged="CmbDlssNrDanielVersion_SelectionChanged"/>
                                             </StackPanel>
                                         </Grid>
                                     </Border>

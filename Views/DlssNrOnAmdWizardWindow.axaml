@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.DlssNrOnAmdWizardWindow"
+        Width="640" SizeToContent="Height" MinHeight="200"
+        WindowStartupLocation="CenterOwner" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent" CanResize="False" ShowInTaskbar="False">
+    <Panel Margin="20">
+        <Border CornerRadius="12" Background="{StaticResource BrBgBase}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1" BoxShadow="0 8 32 0 #80000000">
+            <Grid RowDefinitions="Auto,*">
+                <Border Name="TitleBar" Grid.Row="0" Background="{StaticResource BrBgDeep}" Padding="20,15" CornerRadius="12,12,0,0" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{DynamicResource TxtSetupNr}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Classes="BtnSecondary"
+                                Padding="8,4"
+                                MinWidth="32"
+                                FontSize="14"
+                                Click="BtnClose_Click"
+                                VerticalAlignment="Top"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTip.Tip="{DynamicResource TxtClose}"/>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="22,18" Spacing="14">
+                    <!-- One-time nvngx_dlssnr.dll cache — moved here from the now-removed SetupDlssNrWindow
+                         modal, since both NR modes need it before danielblnc's installer can run. Never
+                         asked again once cached (DlssNrOnAmdService.IsNvngxDlssNrCached). -->
+                    <StackPanel Name="PanelNvngxPicker" IsVisible="False">
+                        <TextBlock Text="{DynamicResource TxtSetupNrNvngxHint}" TextWrapping="Wrap" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeBody}"/>
+                        <Button Name="BtnPickNvngx" Content="{DynamicResource TxtSetupNrPickNvngxBtn}" Classes="BtnSecondary" HorizontalAlignment="Left" Margin="0,12,0,0" Click="BtnPickNvngx_Click"/>
+                    </StackPanel>
+
+                    <StackPanel Name="PanelWizard" Spacing="10">
+                        <TextBlock Name="TxtWizardInstructions" TextWrapping="Wrap" Foreground="{StaticResource BrTextPrimary}"/>
+                        <Button Name="BtnOpenGameFolder" Content="{DynamicResource TxtSetupNrOpenFolderBtn}" Classes="BtnSecondary" HorizontalAlignment="Left" Click="BtnOpenGameFolder_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Name="TxtError" TextWrapping="Wrap" Foreground="{StaticResource BrError}" FontSize="{StaticResource FontSizeCaption}" IsVisible="False"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

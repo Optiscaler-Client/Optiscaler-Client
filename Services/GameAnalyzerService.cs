@@ -44,6 +44,11 @@ public class GameAnalyzerService
     };
     private static readonly string[] _xessNames = new[] { "libxess.dll" };
 
+    // "Setup NR" experimental feature (danielblnc's standalone AMD DLSS Neural Rendering mod) —
+    // no PE version resource to read, so unlike the arrays above this is a plain presence marker,
+    // not fed through FindBestVersionFromCollected. See Game.IsDlssNrOnAmdInstalled.
+    private const string _dlssNrOnAmdMarkerName = "dlssnr_on_amd_weights.bin";
+
     private static readonly HashSet<string> _allTargetFileNames;
     private static readonly string _diskCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache.json");
     private static volatile bool _diskCacheLoaded = false;
@@ -60,6 +65,7 @@ public class GameAnalyzerService
         foreach (var n in _dlssFrameGenNames) _allTargetFileNames.Add(n);
         foreach (var n in _fsrNames) _allTargetFileNames.Add(n);
         foreach (var n in _xessNames) _allTargetFileNames.Add(n);
+        _allTargetFileNames.Add(_dlssNrOnAmdMarkerName);
     }
 
     public static void InvalidateCacheForPath(string? installPath)
@@ -119,6 +125,9 @@ public class GameAnalyzerService
         game.OptiscalerVersion = null; // Will be repopulated from manifest or log
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
+        game.IsDlssNrOnAmdInstalled = false; // DlssNrOnAmdVersion is NOT reset here — no on-disk
+        // version marker to repopulate it from (see _dlssNrOnAmdMarkerName), so it stays whatever
+        // the "Setup NR" wizard itself last recorded rather than being clobbered to null every scan.
 
         HashSet<string> ignoredFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var blockHeuristicFallbackDetection = false;
@@ -333,6 +342,8 @@ public class GameAnalyzerService
             // XeSS
             FindBestVersionFromCollected(game, collectedFiles, _xessNames, ignoredFiles, (g, path, ver) => { g.XessPath = path; g.XessVersion = ver; }, g => g.XessViaOptiscaler = true);
 
+            // "Setup NR" — plain presence check, no version to extract (see _dlssNrOnAmdMarkerName).
+            game.IsDlssNrOnAmdInstalled = collectedFiles.ContainsKey(_dlssNrOnAmdMarkerName);
         }
         catch (Exception ex)
         {

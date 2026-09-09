@@ -94,6 +94,13 @@ namespace OptiscalerClient.Services
         // We will backup ANYTHING we overwrite, but these are known criticals.
         private readonly string[] _criticalFiles = { "dxgi.dll", "version.dll", "winmm.dll", "nvngx.dll", "nvngx_dlssg.dll", "libxess.dll" };
 
+        // Derived from NVIDIA's proprietary DLSS Neural Rendering weights — never redistributed
+        // bundled with a third-party OptiScaler build, no matter who produced the file. The user
+        // must always generate their own via the original extraction tool against their own
+        // legitimately-obtained nvngx_dlssnr.dll. Skipped unconditionally during install/update
+        // so a community build's embedded copy never overwrites (or gets treated as) the real one.
+        private static readonly string[] RedistributionRestrictedFileNames = { "dlssnr_on_amd_weights.bin" };
+
         /// <summary>Installs OptiScaler and returns the resolved game directory the files were placed in,
         /// so callers installing additional components (FSR4 INT8, OptiPatcher) reuse the same directory
         /// instead of re-running directory detection independently.</summary>
@@ -391,6 +398,15 @@ namespace OptiscalerClient.Services
                 if (fileName.Equals("OptiScaler.dll", StringComparison.OrdinalIgnoreCase) ||
                     fileName.Equals("nvngx.dll", StringComparison.OrdinalIgnoreCase))
                 {
+                    continue;
+                }
+
+                // Skip files that would redistribute someone else's NVIDIA-derived weights (see
+                // RedistributionRestrictedFileNames) — never copied, regardless of whether a game-
+                // folder copy already exists (the user's own, legitimately-generated file wins).
+                if (RedistributionRestrictedFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                {
+                    DebugWindow.Log($"[Install] Skipped redistribution-restricted file from package: {fileName}");
                     continue;
                 }
 

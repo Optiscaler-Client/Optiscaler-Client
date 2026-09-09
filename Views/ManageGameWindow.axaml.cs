@@ -61,6 +61,7 @@ namespace OptiscalerClient.Views
         private bool _optiShowingBeta;
         private bool _optiShowingNightly;
         private bool _optiShowingCustom;
+        private bool _optiShowingModded;
         private string? _optiVersionBeforeAutoNightlySwitch;
         private bool _optiBetaBeforeAutoNightlySwitch;
         private bool _optiCustomBeforeAutoNightlySwitch;
@@ -69,6 +70,22 @@ namespace OptiscalerClient.Views
         private Fsr4DllVariant _extrasVariant = Fsr4DllVariant.Int8;
         private bool _extrasTabInitialized;
         private ComponentManagementService? _cachedComponentService;
+        private readonly DlssNrOnAmdService _dlssNrService = new();
+
+        // Setup NR — Matheus wrapper ("Modded" channel) background download, started as soon as a
+        // version is picked in CmbOptiVersion so it's likely already on disk by the time Install runs.
+        // No service-level dedup exists for this download (unlike danielblnc's own, which has one in
+        // DlssNrOnAmdService), so it's tracked here per-window instead — only one Modded selection is
+        // ever "current" at a time for a single ManageGameWindow, so this is enough.
+        private Task<string>? _pendingModdedDownloadTask;
+        private string? _pendingModdedDownloadVersion;
+
+        // CmbOptiVersion's Tag for a Modded item is the *registered* Custom version name
+        // ("custom-amd-presr-{version}", matching ComponentManagementService.DownloadAndImportAmdWrapperVersionAsync)
+        // so the normal install pipeline — which reads CmbOptiVersion's Tag directly as optiscalerVersion —
+        // can find it like any other Custom version. This maps that registered name back to the raw
+        // GitHub release version DownloadAndImportAmdWrapperVersionAsync actually needs as input.
+        private readonly Dictionary<string, string> _moddedVersionRawByRegisteredName = new(StringComparer.OrdinalIgnoreCase);
         private string? _pendingCoverPath;
         private readonly string? _originalCoverPath;
         private const string NewProfileTag = "__NEW_PROFILE__";
@@ -1132,10 +1149,18 @@ namespace OptiscalerClient.Views
             });
         }
 
-        internal static ComboBoxItem BuildVersionItem(string ver, bool isBeta, bool isLatest)
+        internal static ComboBoxItem BuildVersionItem(string ver, bool isBeta, bool isLatest, string? tag = null)
         {
+            // Foreground must be explicit: this TextBlock is built in code with no XAML ancestor to
+            // inherit from, so it falls back to the framework's default (black) — invisible against
+            // the popup's dark background. Reused everywhere BuildVersionItem is called (main
+            // OptiScaler/Extras/OptiPatcher selectors, Setup NR's danielblnc/wrapper selectors, Bulk
+            // Install, Manage Default Versions), so the fix applies uniformly.
+            var textFg = Application.Current?.TryFindResource("BrTextPrimary", out var fgRes) == true && fgRes is IBrush fgBrush
+                ? fgBrush
+                : Brushes.White;
             var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
-            stack.Children.Add(new TextBlock { Text = ver, VerticalAlignment = VerticalAlignment.Center });
+            stack.Children.Add(new TextBlock { Text = ver, Foreground = textFg, VerticalAlignment = VerticalAlignment.Center });
 
             if (isBeta)
             {
@@ -1161,7 +1186,7 @@ namespace OptiscalerClient.Views
                 stack.Children.Add(badge);
             }
 
-            return new ComboBoxItem { Content = stack, Tag = ver };
+            return new ComboBoxItem { Content = stack, Tag = tag ?? ver };
         }
 
         private async Task LoadVersionsAsync()
@@ -1255,8 +1280,16 @@ namespace OptiscalerClient.Views
                 _optiTabInitialized = true;
             }
 
-            UpdateOptiChannelButtons();
-            PopulateOptiVersionCombo(componentService);
+            // Skipped while the "Modded" channel is active: this method (and PopulateVersionSelectors
+            // as a whole) runs twice per LoadVersionsAsync, and on the second pass CmbSetupNr's tag is
+            // already selected so SelectCmbSetupNrTag below is a no-op that won't re-trigger
+            // PopulateModdedVersionComboAsync — populating the Stable/Beta/Nightly/Custom list here
+            // unconditionally would silently stomp the Modded list it had just set.
+            if (!_optiShowingModded)
+            {
+                UpdateOptiChannelButtons();
+                PopulateOptiVersionCombo(componentService);
+            }
 
             // ── Populate FSR4 INT8 Extras selector ────────────────────────────
             PopulateExtrasComboBox(componentService);
@@ -1278,6 +1311,34 @@ namespace OptiscalerClient.Views
             if (experimentalChip != null) experimentalChip.IsVisible = showExperimental;
             if (showExperimental)
                 PopulateRenodxComboBox(componentService);
+
+            // "Setup NR" — Windows-only, danielblnc's mod only targets DXGI/D3D12.
+            var dlssNrPanel = this.FindControl<Control>("PanelDlssNrOnAmd");
+            if (dlssNrPanel != null) dlssNrPanel.IsVisible = showExperimental && OperatingSystem.IsWindows();
+            var dlssNrDanielPanel = this.FindControl<Control>("PanelDlssNrDanielVersion");
+            if (dlssNrDanielPanel != null) dlssNrDanielPanel.IsVisible = showExperimental && OperatingSystem.IsWindows();
+
+            // The mod itself only targets AMD GPUs — stays visible (rather than hidden) so an already
+            // pending/installed selection isn't yanked out from under the user (e.g. after swapping to
+            // a different GPU), but locked so a non-AMD user can't start a doomed install. See
+            // IsSetupNrGpuAllowed for why "unknown vendor" is treated as allowed, not locked.
+            var setupNrGpuOk = IsSetupNrGpuAllowed();
+            var cmbSetupNrGate = this.FindControl<ComboBox>("CmbSetupNr");
+            if (cmbSetupNrGate != null)
+            {
+                cmbSetupNrGate.IsEnabled = setupNrGpuOk;
+                ToolTip.SetTip(cmbSetupNrGate, setupNrGpuOk ? null : GetResourceString("TxtSetupNrRequiresAmdTooltip", "danielblnc's mod requires an AMD GPU."));
+            }
+            // Restoring the selection re-derives locking/tabs/Modded-or-Daniel version lists via
+            // CmbSetupNr_SelectionChanged (only actually fires on a real value change, so this is a
+            // no-op on the second of LoadVersionsAsync's two PopulateVersionSelectors calls). While
+            // actually installed, the mode shown is the one that's installed (InstalledDlssNrOnAmdMode)
+            // rather than "none" — selecting "none" is what triggers the uninstall wizard, so it must
+            // never be the state a re-open silently lands on for an installed mod.
+            var targetSetupNrTag = _game.IsDlssNrOnAmdInstalled
+                ? (_game.InstalledDlssNrOnAmdMode ?? "daniel-only")
+                : (_game.PendingDlssNrOnAmdMode ?? "none");
+            SelectCmbSetupNrTag(targetSetupNrTag);
 
             // This is the point where all five "hard" combos (OptiVersion/Extras/OptiPatcher/
             // NukemFG/Fakenvapi) have real selections for the first time — LoadVersionsAsync runs
@@ -2045,6 +2106,7 @@ namespace OptiscalerClient.Views
             var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
             var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
             var betaInfoPanel = this.FindControl<Border>("BetaInfoPanel");
+            var moddedWarningPanel = this.FindControl<Border>("PanelModdedWarning");
 
             // Since OptiScaler 0.9 these components are included in the package; Nightly
             // obtains Fakenvapi automatically when it is required. Hide both manual selectors
@@ -2053,11 +2115,18 @@ namespace OptiscalerClient.Views
             if (nukemFGPanel != null) nukemFGPanel.IsVisible = !disableNukemFG;
             UpdateOptionsLayout(disableFakenvapi && disableNukemFG);
 
-            // The existing info text applies only to releases that bundle their components.
-            if (betaInfoPanel != null)
-            {
-                betaInfoPanel.IsVisible = isBeta || includedInPackage;
-            }
+            // The "already includes X/Y" info only applies to real OptiScaler releases — while the
+            // "Modded" channel is selected, show the unofficial-build risk warning instead. Neither
+            // applies while danielblnc's mod-only mode is pending/installed: OptiScaler itself is
+            // locked out entirely then, so whatever CmbOptiVersion happens to still have selected
+            // (e.g. a leftover Stable/Beta pick, or just PopulateOptiVersionCombo running again on a
+            // window reopen — see CmbSetupNr_SelectionChanged's own explicit hide, which this call can
+            // otherwise re-undo since it isn't gated on the same real-value-change guard) is moot.
+            bool danielModOnlyInstalledForPanels = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPendingForPanels = !danielModOnlyInstalledForPanels && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyActive = danielModOnlyInstalledForPanels || danielOnlyPendingForPanels;
+            if (betaInfoPanel != null) betaInfoPanel.IsVisible = !danielOnlyActive && !_optiShowingModded && (isBeta || includedInPackage);
+            if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = !danielOnlyActive && _optiShowingModded;
 
             if (disableFakenvapi)
             {
@@ -2880,7 +2949,10 @@ namespace OptiscalerClient.Views
                 var needsNightly = settings.Route != FrameGenerationRoute.Disabled &&
                     settings.Output == FrameGenerationOutput.DlssG &&
                     settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
-                if (needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
+                // Skipped entirely in "Modded" mode (Setup NR's Mod + OptiScaler) — auto-switching to
+                // the official Nightly channel would silently undo the user's NR selector choice, and
+                // the Matheus wrapper isn't part of this channel machinery to switch back into anyway.
+                if (!_optiShowingModded && needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
                 {
                     if (string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
                     {
@@ -2897,7 +2969,7 @@ namespace OptiscalerClient.Views
                     await ShowToastAsync(GetResourceString("TxtMfgRequiresNightlyToast",
                         "MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically."));
                 }
-                else if (!needsNightly && !string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
+                else if (!_optiShowingModded && !needsNightly && !string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
                 {
                     _optiShowingBeta = _optiBetaBeforeAutoNightlySwitch;
                     _optiShowingCustom = _optiCustomBeforeAutoNightlySwitch;
@@ -3548,8 +3620,403 @@ namespace OptiscalerClient.Views
             catch (Exception ex) { DebugWindow.Log($"[ManageGame] Manual install failed: {ex.Message}"); }
         }
 
+        /// <summary>Same folder-resolution OptiScaler's own install uses (GameInstallationService.
+        /// DetermineInstallDirectory — handles Unreal's Binaries/Win64 and Phoenix layouts, not just
+        /// InstallPath's root) — kept in sync so "is the mod's exe staged here" checks (see
+        /// IsDanielModStagedButIncomplete) look in the same place the wizard actually staged it.</summary>
+        private string? ResolveDanielModGameDir() => new GameInstallationService().DetermineInstallDirectory(_game);
+
+        /// <summary>Downloads (if not already cached) and stages danielblnc's installer into the game
+        /// folder, showing progress on the same bar used for OptiScaler downloads — done here, before
+        /// the wizard modal opens, so the modal itself no longer needs its own download step. Returns
+        /// the game folder on success, or null (after showing an error) on failure.</summary>
+        /// <summary>Offers to add a Windows Defender exclusion for the game folder and the mod's
+        /// cache folder before danielblnc's installer ever lands there — that installer is small and
+        /// unsigned, so Defender sometimes flags it when the user later runs it manually themselves
+        /// (an action this app has no visibility into, so there's no failure to react to at that
+        /// point — see WindowsDefenderExclusionHelper). Skips the prompt entirely once
+        /// Game.DlssNrDefenderExclusionAdded is already true. There is deliberately no unprivileged
+        /// "is it already excluded?" probe here anymore — Get-MpPreference now refuses to report
+        /// ExclusionPath to a non-admin process on current Windows builds (it returns an "N/A: Must be
+        /// an administrator..." string with exit code 0 instead of throwing, which used to get
+        /// misread as a literal excluded path and never matched anything — silently useless, so it
+        /// always re-prompted for an exclusion the user had actually already added by hand). The
+        /// user's own word (via the dialog's "Continue" button) is the only reliable signal available
+        /// without elevating just to check. Returns false if the user cancelled outright — the caller
+        /// must not proceed to download/stage the installer in that case.</summary>
+        private async Task<bool> OfferDanielModDefenderExclusionAsync(string gameDir)
+        {
+            if (!OperatingSystem.IsWindows()) return true;
+            if (_game.DlssNrDefenderExclusionAdded) return true;
+
+            var dialog = new ConfirmDialog(this,
+                GetResourceString("TxtSetupNrDefenderExclusionOfferTitle", "Windows Defender exclusion"),
+                GetResourceString("TxtSetupNrDefenderExclusionOfferMsg",
+                    "danielblnc's installer is unsigned, so Defender may flag it. If you trust it, click \"Add exclusion\" (needs admin permission). Otherwise, add the exclusion yourself and press \"Continue\"."),
+                confirmText: GetResourceString("TxtSetupNrAddExclusionOnlyBtn", "Add exclusion"),
+                thirdButtonText: GetResourceString("TxtSetupNrDefenderExclusionContinueBtn", "Continue")
+            );
+            var addException = await dialog.ShowDialog<bool>(this);
+
+            if (dialog.ThirdButtonClicked)
+            {
+                // The user says they've already handled it (manually, or it was excluded before) —
+                // take their word for it and stop asking for this game. Left unverified: if a later
+                // install fails, CancelStagedDanielModInstallAsync resets this so we ask again instead
+                // of trusting an unconfirmed claim forever.
+                _game.DlssNrDefenderExclusionAdded = true;
+                _game.DlssNrDefenderExclusionVerified = false;
+                return true;
+            }
+
+            if (addException)
+            {
+                _game.DlssNrDefenderExclusionAdded = await WindowsDefenderExclusionHelper.TryAddExclusionsAsync(gameDir, _dlssNrService.CacheRootPath);
+                _game.DlssNrDefenderExclusionVerified = _game.DlssNrDefenderExclusionAdded;
+                return true;
+            }
+
+            return false; // Cancel (or the titlebar X) — don't proceed with the install.
+        }
+
+        private async Task<string?> DownloadAndStageDanielModAsync(string version)
+        {
+            var gameDir = ResolveDanielModGameDir();
+            if (gameDir == null)
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    GetResourceString("TxtSetupNrCannotResolveDir", "Could not resolve the game folder.")).ShowDialog<object>(this);
+                return null;
+            }
+
+            // The actual block happens when the user later double-clicks the installer themselves
+            // (outside this app's process — see WindowsDefenderExclusionHelper), not during our own
+            // download/copy, so catching a failure here would be too late. Ask up front instead,
+            // every time, unless it's already excluded — skips the prompt once it's been added once.
+            if (!await OfferDanielModDefenderExclusionAsync(gameDir)) return null;
+
+            var bdProgress = this.FindControl<Border>("BdProgress");
+            var prgDownload = this.FindControl<ProgressBar>("PrgDownload");
+            var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
+            var downloadingFmt = GetResourceString("TxtSetupNrDownloadingFormat", "Downloading {0} v{1}...{2}");
+
+            try
+            {
+                if (bdProgress != null) bdProgress.IsVisible = true;
+                var progress = new Progress<double>(p => Dispatcher.UIThread.Post(() =>
+                {
+                    if (prgDownload != null) prgDownload.Value = p;
+                    if (txtProgressState != null) txtProgressState.Text = string.Format(downloadingFmt, "danielblnc", version, $" {p:P0}");
+                }));
+
+                try
+                {
+                    await _dlssNrService.DownloadAsync(version, progress);
+                    _dlssNrService.Stage(version, gameDir);
+                    return gameDir;
+                }
+                catch (Exception ex) when (DlssNrOnAmdService.IsSmartScreenBlock(ex))
+                {
+                    // Ask before touching Defender settings — never add the exclusion silently. Only
+                    // offered here (reactively, once we actually hit a block) rather than up front on
+                    // every install, since most downloads never get flagged in the first place.
+                    bool exclusionAdded = false;
+                    if (OperatingSystem.IsWindows())
+                    {
+                        var addException = await new ConfirmDialog(this,
+                            GetResourceString("TxtSetupNrSmartScreenBlockedTitle", "Windows Defender blocked this file"),
+                            string.Format(GetResourceString("TxtSetupNrSmartScreenBlockedOffer",
+                                "Windows Defender flagged {0} as a threat and removed it — common for small, unsigned tools like this one. We can add an exclusion for the game folder and retry the download. This needs administrator permission — Windows will ask you to confirm."),
+                                DlssNrOnAmdService.StagedExeFileName),
+                            confirmText: GetResourceString("TxtSetupNrAddExclusionBtn", "Add exclusion & retry")
+                        ).ShowDialog<bool>(this);
+
+                        if (addException)
+                        {
+                            exclusionAdded = await WindowsDefenderExclusionHelper.TryAddExclusionsAsync(gameDir, _dlssNrService.CacheRootPath);
+                            _game.DlssNrDefenderExclusionAdded = exclusionAdded;
+                            _game.DlssNrDefenderExclusionVerified = exclusionAdded;
+                        }
+                    }
+
+                    if (exclusionAdded)
+                    {
+                        try
+                        {
+                            await _dlssNrService.DownloadAsync(version, progress);
+                            _dlssNrService.Stage(version, gameDir);
+                            return gameDir;
+                        }
+                        catch (Exception ex2)
+                        {
+                            await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), string.Format(
+                                GetResourceString("TxtSetupNrLaunchError", "Could not launch the installer: {0}"), ex2.Message)).ShowDialog<object>(this);
+                            return null;
+                        }
+                    }
+
+                    // Declined, or the elevated command itself failed/was cancelled — same manual
+                    // fallback instructions either way.
+                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), string.Format(
+                        GetResourceString("TxtSetupNrSmartScreenBlocked",
+                            "Windows Defender flagged {0} as a threat and removed it — common for small, unsigned tools. Open Windows Security → Virus & threat protection → Protection history to restore it if you trust danielblnc's official GitHub release, then add an exclusion for the game folder and for \"{1}\" so it isn't removed again, and try again."),
+                        DlssNrOnAmdService.StagedExeFileName, _dlssNrService.CacheRootPath)).ShowDialog<object>(this);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    string.Format(GetResourceString("TxtSetupNrLaunchError", "Could not launch the installer: {0}"), ex.Message)).ShowDialog<object>(this);
+                return null;
+            }
+            finally
+            {
+                if (bdProgress != null) bdProgress.IsVisible = false;
+            }
+        }
+
+        /// <summary>True when danielblnc's installer is sitting in the game folder from a previous
+        /// Setup NR run that was interrupted before "I'm done" ever ran (window closed via the X, or
+        /// the installer/weights step never finished) — nothing clears PendingDlssNrOnAmdMode or sets
+        /// IsDlssNrOnAmdInstalled until DlssNrOnAmdWizardWindow.FinishAsync actually succeeds, so this
+        /// state is fully derived from what's already on Game/disk rather than a new flag.</summary>
+        private bool IsDanielModStagedButIncomplete(out string? gameDir)
+        {
+            gameDir = ResolveDanielModGameDir();
+            if (gameDir == null || string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode) || _game.IsDlssNrOnAmdInstalled)
+                return false;
+            return File.Exists(System.IO.Path.Combine(gameDir, DlssNrOnAmdService.StagedExeFileName));
+        }
+
+        /// <summary>Deletes danielblnc's staged installer (and nvngx_dlssnr.dll, if present) and drops
+        /// the pending Setup NR selection — called right after either Install path (manual or auto)
+        /// detects its own failure (see ExecuteInstallAsync/RunDanielModAutoInstallAsync): staging the
+        /// exe never means it's installed, so a run that doesn't finish must leave the game folder
+        /// exactly as if Setup NR was never touched. Shows an error dialog if the delete itself fails
+        /// (e.g. file in use), unlike the silent CleanupOrphanedDanielModStage below. No-op if
+        /// IsDanielModStagedButIncomplete is already false (nothing staged to cancel).
+        ///
+        /// Also un-trusts a merely-claimed Defender exclusion on failure — but never a verified one
+        /// (Game.DlssNrDefenderExclusionVerified): DlssNrDefenderExclusionAdded can be true just because
+        /// the user clicked "Continue" on the offer dialog (their word, never actually confirmed — see
+        /// OfferDanielModDefenderExclusionAsync), and a failed run is exactly the situation where that
+        /// word might have been wrong. A verified exclusion (TryAddExclusions actually succeeded) can't
+        /// be the reason install failed the same way, so it's left alone regardless of why this run
+        /// failed — otherwise Auto Install would re-ask for an exclusion we already know exists every
+        /// time something unrelated (e.g. <paramref name="requiresElevation"/>) goes wrong.</summary>
+        /// <param name="requiresElevation">True when the caller knows this failure was
+        /// DlssNrOnAmdService.AutomatedInstallResult.RequiresElevation — has nothing to do with
+        /// Defender at all, so even an unverified "Continue" claim is left alone rather than re-asked
+        /// for no reason.</param>
+        private async Task CancelStagedDanielModInstallAsync(bool requiresElevation = false)
+        {
+            if (!IsDanielModStagedButIncomplete(out var danielGameDir) || danielGameDir == null) return;
+
+            try
+            {
+                var stagedExe = System.IO.Path.Combine(danielGameDir, DlssNrOnAmdService.StagedExeFileName);
+                var stagedNvngx = System.IO.Path.Combine(danielGameDir, "nvngx_dlssnr.dll");
+                if (File.Exists(stagedExe)) File.Delete(stagedExe);
+                if (File.Exists(stagedNvngx)) File.Delete(stagedNvngx);
+
+                _game.PendingDlssNrOnAmdMode = null;
+                _game.PendingDlssNrOnAmdVersion = null;
+                if (!requiresElevation && !_game.DlssNrDefenderExclusionVerified)
+                    _game.DlssNrDefenderExclusionAdded = false;
+                SelectCmbSetupNrTag("none");
+                UpdateStatus();
+            }
+            catch (Exception ex)
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    $"Could not delete the staged files: {ex.Message}").ShowDialog<object>(this);
+            }
+        }
+
+        /// <summary>Same cleanup as CancelStagedDanielModInstallAsync, but silent and synchronous — for
+        /// UpdateStatus (see below) to self-heal a staged install orphaned by something neither Install
+        /// path's own failure handling could see (e.g. the app being killed mid-install), with no
+        /// dedicated UI or user confirmation needed for a state the user never intentionally caused.</summary>
+        private void CleanupOrphanedDanielModStage()
+        {
+            if (!IsDanielModStagedButIncomplete(out var danielGameDir) || danielGameDir == null) return;
+
+            try
+            {
+                var stagedExe = System.IO.Path.Combine(danielGameDir, DlssNrOnAmdService.StagedExeFileName);
+                var stagedNvngx = System.IO.Path.Combine(danielGameDir, "nvngx_dlssnr.dll");
+                if (File.Exists(stagedExe)) File.Delete(stagedExe);
+                if (File.Exists(stagedNvngx)) File.Delete(stagedNvngx);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] Could not clean up orphaned staged install: {ex.Message}");
+            }
+
+            _game.PendingDlssNrOnAmdMode = null;
+            _game.PendingDlssNrOnAmdVersion = null;
+        }
+
+        /// <summary>"Auto Install" for Setup NR — tries the fully headless/silent install
+        /// (DlssNrOnAmdService.RunAutomatedInstallAsync) without ever showing the Setup NR wizard.
+        /// Still shows whichever of its two prerequisite dialogs is actually needed: the Defender
+        /// exclusion offer (via DownloadAndStageDanielModAsync, unchanged) if it isn't confirmed yet,
+        /// and/or the one-time nvngx_dlssnr.dll picker (reusing the wizard's nvngxPickerOnly mode,
+        /// since that machine-wide cache has to exist before Stage() can copy it into the game folder)
+        /// if it isn't cached yet. On failure, shows the "try Manual Install instead" dialog and
+        /// returns false — no fallback attempted here, since Manual Install is now always available as
+        /// its own separate button rather than something this method needs to degrade into.</summary>
+        private async Task<bool> RunDanielModAutoInstallAsync(bool isModeB)
+        {
+            var version = _game.PendingDlssNrOnAmdVersion ?? "";
+
+            if (!_dlssNrService.IsNvngxDlssNrCached())
+            {
+                var picker = new DlssNrOnAmdWizardWindow(this, _game, version, isModeB, nvngxPickerOnly: true);
+                await picker.ShowDialog<bool>(this);
+                if (!picker.Succeeded) return false;
+            }
+
+            // Shown before DownloadAndStageDanielModAsync (not just around RunAutomatedInstallAsync
+            // below) because that call already includes its own invisible wait the user could easily
+            // read as "did nothing": the Defender exclusion offer's TryAddExclusionsAsync deliberately
+            // pauses a couple seconds after adding a fresh exclusion so Defender's real-time protection
+            // actually picks it up before the install proceeds (see WindowsDefenderExclusionHelper).
+            // The finally block's UpdateStatus() restores whatever the real state actually is
+            // afterwards, whether that's success, failure, or the user having cancelled in between.
+            ShowDanielModAutoInstallingStatus();
+            try
+            {
+                var gameDir = await DownloadAndStageDanielModAsync(version);
+                if (gameDir == null) return false;
+
+                var result = await _dlssNrService.RunAutomatedInstallAsync(_game, gameDir, version, isModeB);
+                if (result == DlssNrOnAmdService.AutomatedInstallResult.Success) return true;
+
+                // Same as the manual path's failure handling: the staged exe never means it's
+                // installed, so don't leave it (or nvngx_dlssnr.dll) sitting in the game folder. Needing
+                // elevation has nothing to do with Defender, so don't un-trust an exclusion that may
+                // well have just been verified this same run (see CancelStagedDanielModInstallAsync).
+                bool requiresElevation = result == DlssNrOnAmdService.AutomatedInstallResult.RequiresElevation;
+                await CancelStagedDanielModInstallAsync(requiresElevation);
+
+                await new ConfirmDialog(this,
+                    GetResourceString("TxtSetupNrAutomationFailedTitle", "Manual install needed"),
+                    requiresElevation
+                        ? GetResourceString("TxtSetupNrAutomationNeedsAdminMsg", "This game's folder needs administrator rights, so Auto Install can't run the installer silently. Use Manual Install instead — Windows will ask you to confirm.")
+                        : GetResourceString("TxtSetupNrAutomationFailedMsg", "We couldn't finish the automated install. Try Manual Install instead."),
+                    isAlert: true).ShowDialog<object>(this);
+                return false;
+            }
+            finally
+            {
+                UpdateStatus();
+            }
+        }
+
+        /// <summary>Visual-only "installing..." state for the status area while Auto Install's headless
+        /// process runs in the background — there's no window/console for the user to look at
+        /// otherwise, so without this the click looks like it did nothing until it finishes or fails.
+        /// Whatever this sets is overwritten by the next UpdateStatus() call (see caller's finally
+        /// block), so nothing here needs to be reverted explicitly.</summary>
+        private void ShowDanielModAutoInstallingStatus()
+        {
+            var txtStatus = this.FindControl<TextBlock>("TxtStatus");
+            var statusIndicator = this.FindControl<Ellipse>("StatusIndicator");
+            var btnInstall = this.FindControl<Button>("BtnInstall");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+            if (txtStatus != null) txtStatus.Text = GetResourceString("TxtSetupNrAutoInstalling", "Installing danielblnc's mod...");
+            if (statusIndicator != null) statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+            if (btnInstall != null) btnInstall.IsEnabled = false;
+            if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
+        }
+
+        /// <summary>Deletes whatever the original daniel-only install created and restores whatever it
+        /// overwrote, straight from the manifest saved during that install (see
+        /// DlssNrOnAmdService.TryFinishInstall/SaveDanielModManifest — shared by both the manual wizard
+        /// and Auto Install) — same pattern GameInstallationService uses for OptiScaler's own uninstall.
+        /// No re-download/re-run of danielblnc's installer needed:
+        /// everything it touched is already tracked. Shared by CmbSetupNr's "none" case and the
+        /// dedicated "Uninstall mod" button (see BtnUninstall_Click), which just re-selects that tag to
+        /// reach the same case rather than duplicating this.</summary>
+        private void UninstallDanielModOnly()
+        {
+            var gameDir = ResolveDanielModGameDir();
+            if (gameDir != null) _dlssNrService.RestoreFromManifest(gameDir);
+        }
+
         private async Task ExecuteInstallAsync(bool isManualMode)
         {
+            // A saved "Setup NR" run is pending for this game (see CmbSetupNr_SelectionChanged) — the
+            // interactive part (staging + running danielblnc's console installer) happens here,
+            // triggered by this same Install button rather than a separate one in that dialog.
+            // Mode A (danielblnc only) stops here; Mode B falls through to the normal install below,
+            // which targets the wrapper Custom version already auto-selected when Setup NR was saved.
+            if (!string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode))
+            {
+                var isModeB = _game.PendingDlssNrOnAmdMode == "daniel-and-opti";
+                bool danielSucceeded;
+
+                if (isManualMode)
+                {
+                    if (await DownloadAndStageDanielModAsync(_game.PendingDlssNrOnAmdVersion ?? "") == null) return;
+                    var wizard = new DlssNrOnAmdWizardWindow(this, _game, _game.PendingDlssNrOnAmdVersion ?? "", isModeB);
+                    await wizard.ShowDialog<bool>(this);
+                    danielSucceeded = wizard.Succeeded;
+                    if (!danielSucceeded)
+                    {
+                        // Closed (X, or the weights marker never showed up) without finishing — the
+                        // staged exe never means it's installed, so clean it up now instead of leaving
+                        // it for the user to notice and clear manually via "Cancel Setup NR install".
+                        await CancelStagedDanielModInstallAsync();
+                    }
+                }
+                else
+                {
+                    danielSucceeded = await RunDanielModAutoInstallAsync(isModeB);
+                }
+
+                // Re-derive the lock from whatever's left instead of assuming success unlocked things
+                // (both paths above clear PendingDlssNrOnAmdMode on success, either outcome).
+                SetOptiScalerControlsLocked(_game.PendingDlssNrOnAmdMode == "daniel-only");
+                if (!danielSucceeded) return;
+
+                if (!isModeB)
+                {
+                    UpdateStatus();
+                    await ShowToastAsync(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
+                    return;
+                }
+
+                // Mode B: weights are generated — make sure the selected Matheus build is actually on
+                // disk before falling through to the normal install below, which reads CmbOptiVersion's
+                // Tag directly as optiscalerVersion. StartModdedVersionDownload already kicked this off
+                // in the background when the version was picked; just await that same task instead of
+                // starting a second, colliding download. Falls back to downloading it directly if it was
+                // never triggered this session (e.g. the combo defaulted to the only available item
+                // without the user touching it) and isn't already registered.
+                var selectedModdedTag = (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
+                if (!string.IsNullOrEmpty(selectedModdedTag) &&
+                    _moddedVersionRawByRegisteredName.TryGetValue(selectedModdedTag, out var selectedModdedRawVersion))
+                {
+                    try
+                    {
+                        if (string.Equals(_pendingModdedDownloadVersion, selectedModdedRawVersion, StringComparison.OrdinalIgnoreCase) &&
+                            _pendingModdedDownloadTask != null)
+                            await _pendingModdedDownloadTask;
+                        else if (_cachedComponentService != null && !_customVersions.Contains(selectedModdedTag))
+                            await _cachedComponentService.DownloadAndImportAmdWrapperVersionAsync(selectedModdedRawVersion);
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[SetupNr] Modded wrapper download failed: {ex.Message}");
+                        await new ConfirmDialog(this, "Error", $"Could not download the OptiScaler wrapper build: {ex.Message}").ShowDialog<object>(this);
+                        return;
+                    }
+                }
+            }
+
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
             var btnUninstall = this.FindControl<Button>("BtnUninstall");
@@ -4364,19 +4831,348 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>Drives the whole "Setup NR" mode switch. Also fires on programmatic selection (e.g.
+        /// PopulateVersionSelectors restoring state on window reopen), which is deliberate — it means
+        /// reopening the window re-derives locking/tabs/version lists from Game state for free instead
+        /// of needing separate restore logic.</summary>
+        private async void CmbSetupNr_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            var cmb = this.FindControl<ComboBox>("CmbSetupNr");
+            var tag = (cmb?.SelectedItem as ComboBoxItem)?.Tag as string;
+            if (tag == null) return;
+
+            var cmbDanielVersion = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+
+            switch (tag)
+            {
+                case "none":
+                    // Reached either by explicit user choice (including the dedicated "Uninstall mod"
+                    // button, which just re-selects this tag — see BtnUninstall_Click) or as the
+                    // natural default when nothing is pending/installed — PopulateVersionSelectors
+                    // only ever pre-selects "none" when Game.IsDlssNrOnAmdInstalled is false, so an
+                    // installed mod always starts pre-selected on its actual mode instead, and this
+                    // branch only runs an uninstall on a real, deliberate switch away from it.
+                    bool wasInstalled = _game.IsDlssNrOnAmdInstalled;
+                    if (wasInstalled)
+                    {
+                        UninstallDanielModOnly();
+                        _game.IsDlssNrOnAmdInstalled = false;
+                        _game.DlssNrOnAmdVersion = null;
+                        _game.InstalledDlssNrOnAmdMode = null;
+                    }
+                    _game.PendingDlssNrOnAmdMode = null;
+                    _game.PendingDlssNrOnAmdVersion = null;
+                    SetOptiScalerControlsLocked(false);
+                    SetOptiTabsForModdedMode(false);
+                    if (_cachedComponentService != null)
+                    {
+                        UpdateOptiChannelButtons();
+                        PopulateOptiVersionCombo(_cachedComponentService);
+                    }
+                    if (cmbDanielVersion != null) { cmbDanielVersion.IsEnabled = false; cmbDanielVersion.Items.Clear(); }
+                    if (btnInstallManual != null) btnInstallManual.IsVisible = true;
+                    // Fire-and-forget: ShowToastAsync runs its own multi-second fade loop before
+                    // returning, and awaiting it here would delay UpdateStatus() below (which is what
+                    // actually hides the "Uninstall mod" button) until the toast finishes animating —
+                    // the button stayed visible for the toast's whole duration instead of updating
+                    // immediately once the uninstall itself is done.
+                    if (wasInstalled) _ = ShowToastAsync(GetResourceString("TxtSetupNrUninstalledDone", "Mod uninstalled."));
+                    break;
+
+                case "daniel-only":
+                    _game.PendingDlssNrOnAmdMode = "daniel-only";
+                    SetOptiScalerControlsLocked(true);
+                    SetOptiTabsForModdedMode(false);
+                    // Both Install buttons are shown for this mode (see UpdateStatus's danielOnlyPending
+                    // block below, which runs right after this switch and is authoritative for their
+                    // visibility/labels) — nothing to set here.
+                    // BetaInfoPanel/PanelModdedWarning live outside PanelOptiScalerVersion (so
+                    // SetOptiScalerControlsLocked doesn't hide them) and PopulateOptiVersionCombo
+                    // isn't called for this mode — hide both explicitly instead of leaving whichever
+                    // was showing before this switch.
+                    var betaInfoPanelDanielOnly = this.FindControl<Border>("BetaInfoPanel");
+                    var moddedWarningPanelDanielOnly = this.FindControl<Border>("PanelModdedWarning");
+                    if (betaInfoPanelDanielOnly != null) betaInfoPanelDanielOnly.IsVisible = false;
+                    if (moddedWarningPanelDanielOnly != null) moddedWarningPanelDanielOnly.IsVisible = false;
+                    _ = PopulateDlssNrDanielVersionComboAsync();
+                    break;
+
+                case "daniel-and-opti":
+                    _game.PendingDlssNrOnAmdMode = "daniel-and-opti";
+                    SetOptiScalerControlsLocked(false);
+                    SetOptiTabsForModdedMode(true);
+                    if (btnInstallManual != null) btnInstallManual.IsVisible = true;
+                    _ = PopulateDlssNrDanielVersionComboAsync();
+                    _ = PopulateModdedVersionComboAsync();
+                    break;
+            }
+
+            UpdateStatus();
+        }
+
+        private void SelectCmbSetupNrTag(string tag)
+        {
+            var cmb = this.FindControl<ComboBox>("CmbSetupNr");
+            if (cmb?.Items == null) return;
+            foreach (var item in cmb.Items)
+            {
+                if (item is ComboBoxItem cbi && string.Equals(cbi.Tag as string, tag, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmb.SelectedItem = cbi;
+                    return;
+                }
+            }
+        }
+
+        /// <summary>Locks (or unlocks) every OptiScaler-related option when danielblnc's mod alone
+        /// ("daniel-only" Setup NR mode) is pending or installed — that mode is standalone and
+        /// directly incompatible with OptiScaler, so nothing OptiScaler-related should be touchable.
+        /// Targets whole option *panels* rather than individual tab buttons/combos: Avalonia computes
+        /// IsEnabled effectively through the visual ancestor chain, so disabling the panel keeps every
+        /// descendant genuinely non-interactive even when something else (e.g. a tab click handler
+        /// re-populating its combo) later sets a child control's own IsEnabled back to true — which is
+        /// exactly what let CmbOptiVersion stay pickable and the INT8/FP8 tabs re-unlock CmbExtrasVersion
+        /// under the old per-leaf-control list.</summary>
+        private static readonly string[] OptiScalerOptionPanelNames =
+        {
+            "PanelOptiScalerVersion", "PanelInjectionMethod", "PanelExtrasVersion", "PanelOptiPatcherVersion",
+            "PanelProfile", "PanelFrameGeneration", "PanelUpscalingQuality", "PanelSpoofingHost",
+            "PanelOutputUpscaler", "PanelFakenvapiVersion", "PanelNukemFGVersion", "PanelRenodxVersion",
+        };
+
+        private void SetOptiScalerControlsLocked(bool locked)
+        {
+            var enabled = !locked;
+            foreach (var name in OptiScalerOptionPanelNames)
+            {
+                var control = this.FindControl<Control>(name);
+                if (control != null) control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>Disables (stays visible, greyed out) every OptiScaler option panel, the
+        /// RenoDX (PanelRenodxVersion, already one of OptiScalerOptionPanelNames). Deliberately does NOT
+        /// touch BorderExperimentalZone itself: CmbSetupNr and CmbDlssNrDanielVersion live directly
+        /// inside it (not under any locked child panel) and must stay interactive — CmbSetupNr is the
+        /// only way out of daniel-only mode, and CmbDlssNrDanielVersion lets the version still be
+        /// changed while it's the only thing installed. Also deliberately does NOT touch
+        /// InstallBtnGroup: while daniel-only is pending, Install must stay enabled (see UpdateStatus's
+        /// single-button override) so the user can actually run the pending install; once daniel-only
+        /// is fully installed, its buttons are hidden outright instead (also UpdateStatus), making their
+        /// enabled state moot.</summary>
+        private void SetInstallOptionsEnabled(bool enabled)
+        {
+            foreach (var name in OptiScalerOptionPanelNames)
+            {
+                var control = this.FindControl<Control>(name);
+                if (control != null) control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>Swaps the OptiScaler version tab bar between the normal Stable/Beta/Nightly/Custom
+        /// set and the single "Modded" indicator used for "Mod + OptiScaler" — does not touch
+        /// _optiShowingBeta/Nightly/Custom, so whatever channel was active before entering Modded mode
+        /// is exactly what's restored on the way back out.</summary>
+        private void SetOptiTabsForModdedMode(bool modded)
+        {
+            _optiShowingModded = modded;
+            var btnStable = this.FindControl<Button>("BtnOptiStable");
+            var btnBeta = this.FindControl<Button>("BtnOptiBeta");
+            var btnNightly = this.FindControl<Button>("BtnOptiNightly");
+            var btnCustom = this.FindControl<Button>("BtnOptiCustom");
+            var btnModded = this.FindControl<Button>("BtnOptiModded");
+            if (btnStable != null) btnStable.IsVisible = !modded;
+            if (btnBeta != null) btnBeta.IsVisible = !modded;
+            if (btnNightly != null) btnNightly.IsVisible = !modded;
+            if (btnCustom != null) btnCustom.IsVisible = !modded && _customVersions.Count > 0;
+            if (btnModded != null) btnModded.IsVisible = modded;
+        }
+
+        /// <summary>Populates CmbOptiVersion with MatheusGViana/dlss-5-amd-project's releases (the
+        /// "Modded" channel) — kept entirely separate from PopulateOptiVersionCombo's Stable/Beta/
+        /// Nightly/Custom filtering rather than wedged in as a 5th branch there, since that logic is
+        /// synchronous and driven by ComponentManagementService's pre-fetched cached lists, while this
+        /// needs its own live GitHub call.</summary>
+        private async Task PopulateModdedVersionComboAsync()
+        {
+            var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
+            if (cmbOptiVersion == null || _cachedComponentService == null) return;
+            var componentService = _cachedComponentService;
+
+            cmbOptiVersion.SelectionChanged -= CmbOptiVersion_SelectionChanged;
+            cmbOptiVersion.Items.Clear();
+            cmbOptiVersion.IsEnabled = false;
+
+            List<DlssNrOnAmdRelease> releases;
+            try
+            {
+                releases = await componentService.GetAmdWrapperReleasesAsync();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] Could not list Matheus wrapper releases: {ex.Message}");
+                releases = new List<DlssNrOnAmdRelease>();
+            }
+
+            _moddedVersionRawByRegisteredName.Clear();
+
+            if (releases.Count == 0)
+            {
+                cmbOptiVersion.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmbOptiVersion.SelectedIndex = 0;
+            }
+            else
+            {
+                for (int i = 0; i < releases.Count; i++)
+                {
+                    var registeredName = "custom-amd-presr-" + ComponentManagementService.SanitizeVersionName(releases[i].Version);
+                    _moddedVersionRawByRegisteredName[registeredName] = releases[i].Version;
+                    cmbOptiVersion.Items.Add(BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0, tag: registeredName));
+                }
+                cmbOptiVersion.SelectedIndex = 0;
+                StartModdedVersionDownload(releases[0].Version);
+            }
+
+            // SelectedIndex above was set while the handler was detached (to avoid a redundant
+            // download kick-off), so drive the checkbox/warning-panel visibility update manually.
+            UpdateCheckboxStatesForVersion(cmbOptiVersion);
+
+            cmbOptiVersion.IsEnabled = true;
+            cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
+        }
+
+        /// <summary>Downloads and registers a Matheus wrapper version as soon as it's picked in
+        /// CmbOptiVersion, in the background — same idea as danielblnc's own dedup-safe background
+        /// download, but tracked per-window here since ComponentManagementService has no equivalent
+        /// in-flight-download dedup for this one. ExecuteInstallAsync awaits this same task (if it
+        /// still matches the current selection) instead of starting a second, colliding download.</summary>
+        private void StartModdedVersionDownload(string version)
+        {
+            if (_cachedComponentService == null) return;
+            if (string.Equals(_pendingModdedDownloadVersion, version, StringComparison.OrdinalIgnoreCase) &&
+                _pendingModdedDownloadTask?.IsCompleted == false)
+                return;
+
+            var componentService = _cachedComponentService;
+            _pendingModdedDownloadVersion = version;
+            _pendingModdedDownloadTask = componentService.DownloadAndImportAmdWrapperVersionAsync(version);
+            _pendingModdedDownloadTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                    DebugWindow.Log($"[SetupNr] Background download of Matheus wrapper v{version} failed: {t.Exception?.GetBaseException().Message}");
+            }, TaskScheduler.Default);
+        }
+
+        /// <summary>Populates CmbDlssNrDanielVersion (danielblnc's own mod version) — shared by both NR
+        /// modes, since both eventually run its installer via DlssNrOnAmdWizardWindow to generate the
+        /// weights.</summary>
+        private async Task PopulateDlssNrDanielVersionComboAsync()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
+            if (cmb == null) return;
+
+            cmb.SelectionChanged -= CmbDlssNrDanielVersion_SelectionChanged;
+            cmb.Items.Clear();
+            cmb.IsEnabled = false;
+
+            List<DlssNrOnAmdRelease> releases;
+            try
+            {
+                releases = await _dlssNrService.GetReleasesAsync();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] Could not list danielblnc releases: {ex.Message}");
+                releases = new List<DlssNrOnAmdRelease>();
+            }
+
+            if (releases.Count == 0)
+            {
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmb.SelectedIndex = 0;
+            }
+            else
+            {
+                for (int i = 0; i < releases.Count; i++)
+                    cmb.Items.Add(BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+                int selectedIndex = 0;
+                if (!string.IsNullOrEmpty(_game.PendingDlssNrOnAmdVersion))
+                {
+                    for (int i = 0; i < cmb.Items.Count; i++)
+                    {
+                        if (cmb.Items[i] is ComboBoxItem cbi && string.Equals(cbi.Tag as string, _game.PendingDlssNrOnAmdVersion, StringComparison.OrdinalIgnoreCase))
+                        {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                cmb.SelectedIndex = selectedIndex;
+                ApplyDlssNrDanielVersionSelection(releases[selectedIndex].Version);
+            }
+
+            // Same AMD gate as CmbSetupNr (see IsSetupNrGpuAllowed) — this combo is repopulated (and
+            // would otherwise unconditionally re-enable itself) every time "daniel-only"/"daniel-and-
+            // opti" is (re)selected, including programmatically on window reopen, so the gate has to be
+            // re-applied here rather than relying on a one-time check elsewhere.
+            var danielVersionGpuOk = IsSetupNrGpuAllowed();
+            cmb.IsEnabled = danielVersionGpuOk;
+            ToolTip.SetTip(cmb, danielVersionGpuOk ? null : GetResourceString("TxtSetupNrRequiresAmdTooltip", "danielblnc's mod requires an AMD GPU."));
+            cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
+        }
+
+        /// <summary>danielblnc's mod only targets AMD GPUs — used to lock (not hide) CmbSetupNr and
+        /// CmbDlssNrDanielVersion for everyone else, even with experimental features on. Permissive
+        /// when detection itself is inconclusive (gpu == null): only a GPU we're sure isn't AMD locks
+        /// these, matching how the rest of this window treats an unknown vendor elsewhere (e.g.
+        /// ConfigureAdditionalComponents' NVIDIA/fakenvapi check defaults to enabled when unsure).</summary>
+        private bool IsSetupNrGpuAllowed()
+        {
+            if (_gpuService == null) return true;
+            var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, new ComponentManagementService().Config.DefaultGpuId);
+            return gpu == null || gpu.Vendor == GpuVendor.AMD;
+        }
+
+        private void CmbDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            var version = ((sender as ComboBox)?.SelectedItem as ComboBoxItem)?.Tag as string;
+            if (!string.IsNullOrEmpty(version)) ApplyDlssNrDanielVersionSelection(version);
+        }
+
+        private void ApplyDlssNrDanielVersionSelection(string version)
+        {
+            _game.PendingDlssNrOnAmdVersion = version;
+            _ = _dlssNrService.DownloadAsync(version).ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                    DebugWindow.Log($"[SetupNr] Background download of danielblnc v{version} failed: {t.Exception?.GetBaseException().Message}");
+            }, TaskScheduler.Default);
+        }
+
         private void BtnUninstall_Click(object sender, RoutedEventArgs e)
         {
             var bdConfirmUninstall = this.FindControl<Grid>("BdConfirmUninstall");
             if (bdConfirmUninstall != null) bdConfirmUninstall.IsVisible = true;
 
             // This same button/modal also handles "Restore original DLL" (bare swap, no OptiScaler
-            // — see UpdateStatus). Swap the copy to match what's actually about to happen instead
-            // of always talking about uninstalling OptiScaler.
-            bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
+            // — see UpdateStatus) and uninstalling danielblnc's mod-only install. Swap the copy to
+            // match what's actually about to happen instead of always talking about uninstalling
+            // OptiScaler. (An interrupted Setup NR run never reaches here — UpdateStatus's
+            // CleanupOrphanedDanielModStage clears it silently before this button is ever clickable.)
+            bool isDanielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool isRestoreDllOnly = !isDanielModOnlyInstalled && !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
             var txtTitle = this.FindControl<TextBlock>("TxtConfirmUninstallTitleBlock");
             var txtMsg = this.FindControl<TextBlock>("TxtConfirmUninstallMsgBlock");
             var btnYes = this.FindControl<Button>("BtnConfirmUninstallYes");
-            if (isRestoreDllOnly)
+            if (isDanielModOnlyInstalled)
+            {
+                if (txtTitle != null) txtTitle.Text = GetResourceString("TxtSetupNrUninstallModConfirmTitle", "Uninstall mod?");
+                if (txtMsg != null) txtMsg.Text = GetResourceString("TxtSetupNrUninstallModConfirmMsg", "Are you sure you want to uninstall danielblnc's mod?\nOnly backed-up original files will be restored.");
+                if (btnYes != null) btnYes.Content = GetResourceString("TxtSetupNrUninstallModConfirmBtn", "✕ Uninstall mod");
+            }
+            else if (isRestoreDllOnly)
             {
                 if (txtTitle != null) txtTitle.Text = GetResourceString("TxtConfirmRestoreDllTitle", "Confirm Restore");
                 if (txtMsg != null) txtMsg.Text = GetResourceString("TxtConfirmRestoreDllMsg", "Are you sure you want to restore the original DLL?\nThe swapped FSR4 INT8 DLL will be replaced back with the backed-up original.");
@@ -4904,6 +5700,15 @@ namespace OptiscalerClient.Views
                 if (btnInstallManual != null) btnInstallManual.IsEnabled = true;
                 if (btnUninstall != null) btnUninstall.IsEnabled = true;
 
+                // danielblnc's mod-only install: re-selecting "none" on CmbSetupNr is exactly the
+                // existing uninstall flow (see CmbSetupNr_SelectionChanged's "none" case), so route
+                // there instead of running the OptiScaler-specific UninstallOptiScaler below.
+                if (_game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only")
+                {
+                    SelectCmbSetupNrTag("none");
+                    return;
+                }
+
                 // Capture before UninstallOptiScaler runs — it resets both flags on _game.
                 bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
 
@@ -5078,9 +5883,73 @@ namespace OptiscalerClient.Views
                 }
             }
 
+            // Everything below overrides whichever labels/visibility the branches above (and these
+            // three calls) just set — called here, before the daniel-mod-specific overrides, so those
+            // always get the final say instead of being clobbered by RefreshInstallActionAvailability
+            // re-showing a button a daniel-mod state had just hidden.
             UpdateInstallButtonsForSwapState();
             CaptureConfigOnlyBaseline();
             RefreshInstallActionAvailability();
+
+            // danielblnc's installer is still sitting in the game folder from a Setup NR run that got
+            // interrupted somewhere neither install path's own failure cleanup could see (e.g. the app
+            // was killed mid-install) — both Install paths already clean up after themselves the moment
+            // they detect failure (see ExecuteInstallAsync/RunDanielModAutoInstallAsync), so this is
+            // only ever reached for state orphaned that way. Silently finish that cleanup here instead
+            // of surfacing a dedicated "Cancel Setup NR install" button for the user to notice and
+            // click — there's nothing to resume (the exe never means it's installed) and no reason to
+            // ask, so recovery just happens automatically the next time this window opens.
+            CleanupOrphanedDanielModStage();
+
+            // danielblnc's mod-only mode locks every OptiScaler option control the moment it's selected
+            // (see CmbSetupNr_SelectionChanged's "daniel-only" case), not just once fully installed —
+            // it's directly incompatible with OptiScaler either way. Re-derive that same locked state
+            // here (rather than only checking "fully installed") since UpdateStatus runs on every change
+            // and would otherwise silently re-enable everything a still-pending selection had just
+            // locked. Negated flag runs on every pass so it also restores everything once neither
+            // pending nor installed anymore (e.g. right after uninstalling).
+            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            SetInstallOptionsEnabled(!(danielModOnlyInstalled || danielOnlyPending));
+
+            if (danielOnlyPending)
+            {
+                // Not yet installed — Auto Install tries the headless/silent path first (see
+                // ExecuteInstallAsync -> RunDanielModAutoInstallAsync); Manual Install always opens the
+                // wizard the user finishes by hand. Reuse the same generic labels/resources the normal
+                // OptiScaler install uses for these two buttons, for a consistent look.
+                if (btnInstall != null)
+                {
+                    btnInstall.IsVisible = true;
+                    btnInstall.IsEnabled = true;
+                    btnInstall.Content = GetResourceString("TxtInstallOpti", "✦ Auto Install");
+                }
+                if (btnInstallManual != null)
+                {
+                    btnInstallManual.IsVisible = true;
+                    btnInstallManual.IsEnabled = true;
+                    btnInstallManual.Content = GetResourceString("TxtBtnManualInstall", "✦ Manual Install");
+                }
+                var cmbInstallActionDanielOnly = this.FindControl<Control>("CmbInstallAction");
+                if (cmbInstallActionDanielOnly != null) cmbInstallActionDanielOnly.IsVisible = false;
+                var cmbInstallActionManualDanielOnly = this.FindControl<Control>("CmbInstallActionManual");
+                if (cmbInstallActionManualDanielOnly != null) cmbInstallActionManualDanielOnly.IsVisible = false;
+            }
+
+            if (danielModOnlyInstalled)
+            {
+                if (txtStatus != null) txtStatus.Text = GetResourceString("TxtSetupNrDanielModInstalled", "DLSS Neural Rendering (Mod) Installed");
+                if (statusIndicator != null) statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(118, 185, 0));
+                if (txtVersion != null) txtVersion.Text = !string.IsNullOrEmpty(_game.DlssNrOnAmdVersion) ? $"v{_game.DlssNrOnAmdVersion}" : "";
+                if (btnInstall != null) btnInstall.IsVisible = false;
+                if (btnInstallManual != null) btnInstallManual.IsVisible = false;
+                if (btnUninstall != null)
+                {
+                    btnUninstall.IsVisible = true;
+                    btnUninstall.IsEnabled = true;
+                    btnUninstall.Content = GetResourceString("TxtSetupNrUninstallModBtn", "Uninstall mod");
+                }
+            }
         }
 
         private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);
@@ -5138,6 +6007,19 @@ namespace OptiscalerClient.Views
                 else
                     xessDisplay = $"Intel XeSS: {_game.XessVersion}";
                 components.Add(MakeUpscalerEntry(xessDisplay, _game.XessViaOptiscaler));
+            }
+
+            if (_game.IsDlssNrOnAmdInstalled)
+            {
+                var nrLabel = GetResourceString("TxtDlssNrBadge", "DLSS Neural Rendering (AMD, experimental)");
+                var nrModeSuffix = _game.InstalledDlssNrOnAmdMode == "daniel-only"
+                    ? GetResourceString("TxtSetupNrModeDanielOnlySuffix", " (mod only)")
+                    : GetResourceString("TxtSetupNrModeDanielAndOptiSuffix", " (+ OptiScaler)");
+                var nrDisplay = (string.IsNullOrEmpty(_game.DlssNrOnAmdVersion)
+                    ? nrLabel
+                    : $"{nrLabel}: {_game.DlssNrOnAmdVersion}") + nrModeSuffix;
+                components.Add(new ComponentEntry(nrDisplay, false, false,
+                    GetResourceString("TxtDlssNrBadgeTooltip", "danielblnc/DLSS-NR-on-AMD via \"Setup NR\" — unofficial, experimental, at your own risk")));
             }
 
             if (_game.IsOptiscalerInstalled)
@@ -5345,6 +6227,15 @@ namespace OptiscalerClient.Views
             bool isBeta = !string.IsNullOrEmpty(selectedTag) && _betaVersions.Contains(selectedTag);
             bool isNightly = !string.IsNullOrEmpty(selectedTag) && _nightlyVersions.Contains(selectedTag);
 
+            // "Modded" channel (Setup NR's Mod + OptiScaler mode) — start downloading/registering
+            // whichever Matheus wrapper build was just picked, same idea as switching OptiScaler tabs
+            // but resolving the registered Tag back to the raw version DownloadAndImportAmdWrapperVersionAsync needs.
+            if (_optiShowingModded && !string.IsNullOrEmpty(selectedTag) &&
+                _moddedVersionRawByRegisteredName.TryGetValue(selectedTag, out var rawModdedVersion))
+            {
+                StartModdedVersionDownload(rawModdedVersion);
+            }
+
             if (!isBeta && !isNightly)
             {
                 ConfigureAdditionalComponents();
@@ -5368,6 +6259,16 @@ namespace OptiscalerClient.Views
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
             var pnlNothingToInstall = this.FindControl<Border>("PnlNothingToInstallInfo");
             if (btnInstall == null || btnInstallManual == null) return;
+
+            // Same reasoning as the identical guard in RefreshInstallActionAvailability: this method is
+            // also called directly from every OptiVersion/Extras combo-change handler, not just through
+            // UpdateStatus, and it derives Auto/Manual's IsEnabled/content from those two combos —
+            // completely irrelevant while daniel-only is pending/installed (OptiScaler is locked out
+            // entirely then), and would otherwise wrongly grey out or relabel the two Setup NR install
+            // buttons. Defer to UpdateStatus's daniel-only block for their content/visibility instead.
+            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            if (danielModOnlyInstalled || danielOnlyPending) return;
 
             var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
             var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
@@ -5612,6 +6513,16 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void RefreshInstallActionAvailability()
         {
+            // danielblnc's mod-only mode has its own Install/Uninstall button state (single collapsed
+            // "Install" button while pending, hidden entirely once installed — see UpdateStatus). This
+            // function is also called on its own after the window's combos repopulate (e.g.
+            // PopulateVersionSelectors), which used to run after UpdateStatus's daniel-only override
+            // and re-split the collapsed button back into Auto/Manual. Bail out here instead so every
+            // caller defers to UpdateStatus's daniel-only handling regardless of call order.
+            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            if (danielModOnlyInstalled || danielOnlyPending) return;
+
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
             var cmbInstallAction = this.FindControl<ComboBox>("CmbInstallAction");
