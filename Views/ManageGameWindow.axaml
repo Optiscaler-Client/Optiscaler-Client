@@ -537,13 +537,18 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Options + Actions (3 columns × 5 rows) -->
+                            <!-- Options + Actions (3 columns × 7 rows: 4 option rows, Experimental, Uninstall, Buttons) -->
                             <Grid ColumnDefinitions="*,*,*"
                                   RowSpacing="10"
                                   ColumnSpacing="12">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- 4th options row, used only in the non-compact layout (Fakenvapi
+                                         and/or NukemFG selectors visible — older/Custom OptiScaler
+                                         builds) — see UpdateOptionsLayout. The compact layout never
+                                         places anything here, so it collapses to zero height. -->
                                     <RowDefinition Height="Auto"/>
                                     <!-- Experimental zone (RenoDX today, future experimental options
                                          go here too) — its own row, always after the regular options
@@ -664,10 +669,7 @@
                                 </StackPanel>
 
                                 <!-- Row 2, Col 0 : Profile selector (position overridden at runtime by
-                                     UpdateOptionsLayout). PanelSpoofingInlineHost is an inline fallback
-                                     slot beside CmbProfile, used ONLY in non-compact layout — see the
-                                     comment on PanelSpoofingHost below for why Spoofing can't always get
-                                     its own column. -->
+                                     UpdateOptionsLayout). -->
                                 <StackPanel Name="PanelProfile" Grid.Row="2" Grid.Column="0">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtProfileLbl}"
@@ -686,15 +688,12 @@
                                                        Margin="0,-1,0,0"/>
                                         </Border>
                                     </StackPanel>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,4,0,0">
-                                        <ComboBox Name="CmbProfile"
-                                                  Grid.Column="0"
-                                                  HorizontalAlignment="Stretch"
-                                                  Classes="BtnSelector"
-                                                  HorizontalContentAlignment="Left"
-                                                  VerticalContentAlignment="Center"/>
-                                        <StackPanel Name="PanelSpoofingInlineHost" Grid.Column="1" MinWidth="110" IsVisible="False"/>
-                                    </Grid>
+                                    <ComboBox Name="CmbProfile"
+                                              Margin="0,4,0,0"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
                                 <!-- Row 2, Col 1 : Compact per-game FG configuration (position overridden at runtime by UpdateOptionsLayout) -->
@@ -765,13 +764,9 @@
                                               SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
                                 </StackPanel>
 
-                                <!-- Row 2, Col 2 : DXGI Spoofing selector — own column, but only free in
-                                     compact layout (no Fakenvapi/NukemFG game), where Upscaling Quality
-                                     moves up to row 1 (see UpdateOptionsLayout). In non-compact layout
-                                     Upscaling Quality keeps this exact cell, so UpdateOptionsLayout
-                                     instead moves PanelSpoofingContent into PanelSpoofingInlineHost next
-                                     to Profile — there's no genuinely free column left in that row when
-                                     Fakenvapi/NukemFG are both present. -->
+                                <!-- Row 2, Col 2 : DXGI Spoofing selector (position overridden at runtime
+                                     by UpdateOptionsLayout — this default only applies in compact
+                                     layout; non-compact repositions it into the 4th options row). -->
                                 <StackPanel Name="PanelSpoofingHost" Grid.Row="2" Grid.Column="2">
                                     <StackPanel Name="PanelSpoofingContent">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -800,8 +795,8 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Row 4, Col 0 : Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
-                                <StackPanel Name="PanelOutputUpscaler" Grid.Row="4" Grid.Column="0">
+                                <!-- Per-game output upscaler override (position overridden at runtime by UpdateOptionsLayout) -->
+                                <StackPanel Name="PanelOutputUpscaler" Grid.Row="1" Grid.Column="1">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -904,7 +899,7 @@
                                      underneath it instead of just sitting inside the box. Declared after
                                      BorderExperimentalZone in this same Grid cell so it paints on top
                                      (Grid children z-order by declaration order). -->
-                                <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
                                     <Border Name="BorderExperimentalZone"
                                             BorderBrush="{StaticResource BrExperimental}"
                                             BorderThickness="1"
@@ -1049,9 +1044,9 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 4, Col 2 : Uninstall button -->
+                                <!-- Row 5, Col 2 : Uninstall button -->
                                 <Button Name="BtnUninstall"
-                                        Grid.Row="4" Grid.Column="2"
+                                        Grid.Row="5" Grid.Column="2"
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
@@ -1059,8 +1054,8 @@
                                         IsVisible="False"
                                         Click="BtnUninstall_Click"/>
 
-                                <!-- Row 5, all columns : Install buttons right-aligned, Cleanup left-aligned -->
-                                <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3">
+                                <!-- Row 6, all columns : Install buttons right-aligned, Cleanup left-aligned -->
+                                <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
                                     <!-- Cleanup button — left side -->
                                     <Button Name="BtnFolderCleanup"
                                             Content="{DynamicResource TxtFolderCleanup}"

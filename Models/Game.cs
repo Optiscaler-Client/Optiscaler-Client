@@ -66,7 +66,7 @@ public class Game
     public bool XessViaOptiscaler { get; set; }
 
     public bool DlssIsNative => DlssVersion != null && !DlssViaOptiscaler;
-    // The FSR4 INT8 mod DLL is one of the files _fsrNames detects as "FSR" (GameAnalyzerService),
+    // The FSR 4 Swap mod DLL is one of the files _fsrNames detects as "FSR" (GameAnalyzerService),
     // so a swap makes FsrVersion/FsrIsNative light up exactly like a game-native FSR install would
     // — misleading, since it's neither native nor a straightforward OptiScaler injection. IsSwapped
     // gets its own badge state (see MainWindow.axaml/ManageGameWindow "Detected Components") and is
@@ -123,7 +123,7 @@ public class Game
     // "take my word for it" one plausibly could.
     public bool DlssNrDefenderExclusionVerified { get; set; }
 
-    // True when a FSR4 INT8 DLL was swapped directly into the game folder without installing
+    // True when a FSR 4 Swap DLL was swapped directly into the game folder without installing
     // OptiScaler (independent of IsOptiscalerInstalled — both can be true at once). Fsr4ExtraVersion
     // above doubles as "which version" for this too, whether injected via OptiScaler or swapped raw.
     public bool IsFsr4DllSwapped { get; set; }

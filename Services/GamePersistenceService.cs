@@ -1,4 +1,4 @@
-﻿// OptiScaler Client - A frontend for managing OptiScaler installations
+// OptiScaler Client - A frontend for managing OptiScaler installations
 // Copyright (C) 2026 Agustín Montaña (Agustinm28)
 //
 // This program is free software: you can redistribute it and/or modify

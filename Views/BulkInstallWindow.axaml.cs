@@ -131,14 +131,28 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
 
 
-        // Initialize injection method selector
+        // Initialize injection method selector — pre-select the configured default (same "Auto"/
+        // unset -> dxgi.dll fallback as ManageGameWindow/MainWindow Quick Install), instead of always
+        // starting at index 0 regardless of what's configured in Manage Default Versions.
         var cmbInjectionMethod = this.FindControl<ComboBox>("CmbInjectionMethod");
         if (cmbInjectionMethod != null)
         {
             cmbInjectionMethod.SelectedIndex = 0; // Default to dxgi.dll
+            var defaultInjectionMethod = _componentService.Config.DefaultInjectionMethod;
+            if (!string.IsNullOrEmpty(defaultInjectionMethod) && !defaultInjectionMethod.Equals("auto", StringComparison.OrdinalIgnoreCase))
+            {
+                for (int i = 0; i < cmbInjectionMethod.Items.Count; i++)
+                {
+                    if ((cmbInjectionMethod.Items[i] as ComboBoxItem)?.Tag?.ToString() == defaultInjectionMethod)
+                    {
+                        cmbInjectionMethod.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
         }
 
-        // Populate FSR4 INT8 versions
+        // Populate FSR 4 Swap versions
         PopulateExtrasComboBox();
 
         // Populate OptiPatcher versions
@@ -156,6 +170,23 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // Populate output upscaler selector
         PopulateOutputUpscalerSelector();
 
+        // Seed Frame Generation from the configured default — same clone shape MainWindow Quick
+        // Install / ManageGameWindow use. Without this it always started Disabled regardless of what
+        // was configured in Manage Default Versions.
+        var defaultFgSettings = _componentService.Config.DefaultFrameGenerationSettings;
+        if (defaultFgSettings != null)
+        {
+            _frameGenerationSettings = new GameFrameGenerationSettings
+            {
+                Route = defaultFgSettings.Route,
+                Output = defaultFgSettings.Output,
+                MultiFrameMode = defaultFgSettings.MultiFrameMode,
+                AdvancedMode = defaultFgSettings.AdvancedMode,
+                DynamicTargetFps = defaultFgSettings.DynamicTargetFps,
+                NvngxReplacement = defaultFgSettings.NvngxReplacement,
+                DlssEnablerVersion = defaultFgSettings.DlssEnablerVersion
+            };
+        }
         UpdateFrameGenerationSummary();
 
         // Fade in animation
@@ -602,7 +633,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var injectionItem = cmbInjectionMethod?.SelectedItem as ComboBoxItem;
         string injectionMethod = injectionItem?.Tag?.ToString() ?? "dxgi.dll";
 
-        // Get selected Extras (FSR4 INT8) version
+        // Get selected Extras (FSR 4 Swap) version
         var selectedExtrasItem = cmbExtrasVersion?.SelectedItem as ComboBoxItem;
         var selectedExtrasVersion = selectedExtrasItem?.Tag?.ToString();
         bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
@@ -619,7 +650,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             if (!injectExtras)
             {
                 await new ConfirmDialog(this, "Nothing to install",
-                    "Select an OptiScaler version or an FSR4 INT8 version before installing.").ShowDialog<object>(this);
+                    "Select an OptiScaler version or an FSR 4 Swap version before installing.").ShowDialog<object>(this);
                 return;
             }
 
@@ -654,6 +685,14 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         int totalGames = selectedGames.Count;
         int currentGame = 0;
 
+        // AMD DLSS Neural Rendering ("Setup NR") default — see ManageDefaultVersionsWindow and
+        // DlssNrOnAmdService.InstallForQuickPathAsync. Per-game (each needs its own gameDir/manifest),
+        // but nvngx_dlssnr.dll is a single machine-wide file: if the user declines that one prompt for
+        // the first game that needs it, don't keep re-showing it for every other game in this batch.
+        var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
+        var dlssNrService = new DlssNrOnAmdService();
+        var nvngxDeclinedThisBatch = false;
+
         // Same machine for the whole batch, so resolve this once rather than per game.
         var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
         var isRdna4ForFsr4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
@@ -677,8 +716,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         {
             try
             {
+                var streamlineVersion = _frameGenerationSettings.StreamlineVersion;
+                if (string.IsNullOrEmpty(streamlineVersion))
+                    streamlineVersion = _componentService.LatestStreamlineVersion;
                 if (progressBar != null) progressBar.IsIndeterminate = true;
-                streamlineCacheDir = await _componentService.DownloadLatestStreamlineAsync();
+                streamlineCacheDir = await _componentService.DownloadStreamlineAsync(streamlineVersion ?? "");
             }
             catch (Exception ex)
             {
@@ -764,8 +806,62 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // Apply the shared output-upscaler selection as a per-game copy, same pattern as FG.
                 gameItem.Game.OutputUpscalerSettings = new GameOutputUpscalerSettings { Backend = _outputUpscalerSettings.Backend };
 
+                var versionForGame = version;
+                var injectionMethodForGame = injectionMethod;
+                // ShowExperimentalFeatures is a separate switch from this default's own AMD-only gate
+                // in Settings — re-checked here so turning it off disables the default immediately
+                // rather than only hiding the UI that configured it.
+                if (_componentService.Config.ShowExperimentalFeatures &&
+                    !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none" &&
+                    !gameItem.Game.IsDlssNrOnAmdInstalled &&
+                    !(nvngxDeclinedThisBatch && !dlssNrService.IsNvngxDlssNrCached()))
+                {
+                    var (dlssNrResult, wrapperVersion) = await dlssNrService
+                        .InstallForQuickPathAsync(this, gameItem.Game, dlssNrDefaultMode, _componentService);
+
+                    if (dlssNrDefaultMode == "daniel-only")
+                    {
+                        // Standalone mod, not compatible with OptiScaler — mirrors
+                        // ManageGameWindow.ExecuteInstallAsync, which returns right after Mode A
+                        // succeeds/fails instead of falling through to an OptiScaler/OptiPatcher
+                        // install. Skip the rest of this game's per-game install body entirely.
+                        if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success)
+                        {
+                            gameItem.IsInstalled = true;
+                            gameItem.CanInstall = false;
+                            gameItem.IsSelected = false;
+                        }
+                        else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Failed)
+                        {
+                            DebugWindow.Log($"[BulkInstall] Failed to install danielblnc's mod for {gameItem.Name}.");
+                        }
+                        else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Skipped && !dlssNrService.IsNvngxDlssNrCached())
+                        {
+                            nvngxDeclinedThisBatch = true;
+                        }
+
+                        await Task.Delay(100);
+                        continue;
+                    }
+
+                    if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success &&
+                        dlssNrDefaultMode == "daniel-and-opti" && !string.IsNullOrEmpty(wrapperVersion))
+                    {
+                        // "Mod + OptiScaler": install the matching wrapper build instead of the
+                        // batch's normally configured version, dxgi.dll injection (danielblnc's own
+                        // proxy always answers "dbghelp" — see DriveInstallerAsync) — same override
+                        // ManageGameWindow/MainWindow's Quick Install apply for Mode B.
+                        versionForGame = wrapperVersion;
+                        injectionMethodForGame = "dxgi.dll";
+                    }
+                    else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Skipped && !dlssNrService.IsNvngxDlssNrCached())
+                    {
+                        nvngxDeclinedThisBatch = true;
+                    }
+                }
+
                 // Get cache paths
-                var optiCacheDir = _componentService.GetOptiScalerCachePath(version);
+                var optiCacheDir = _componentService.GetOptiScalerCachePath(versionForGame);
                 var installFakenvapiForGame = installFakenvapi;
                 var fakeCacheDir = installFakenvapiForGame
                     ? _componentService.GetFakenvapiCachePath(selectedFakenvapiVersion!)
@@ -807,12 +903,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     resolvedGameDir = _installService.InstallOptiScaler(
                         gameItem.Game,
                         optiCacheDir,
-                        injectionMethod, // Use selected injection method
+                        injectionMethodForGame,
                         installFakenvapiForGame,
                         fakeCacheDir,
                         installNukemFG,
                         nukemCacheDir,
-                        optiscalerVersion: version,
+                        optiscalerVersion: versionForGame,
                         profile: selectedProfile,
                         isRdna4: isRdna4ForFsr4, isRdna2: isRdna2ForFsr4,
                         installStreamline: installStreamlineForGame,
@@ -824,12 +920,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     );
                 });
 
-                // ── FSR4 INT8 DLL injection ────────────────────────────────────────
+                // ── FSR 4 Swap DLL injection ────────────────────────────────────────
                 if (injectExtras && !string.IsNullOrEmpty(selectedExtrasVersion))
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
-                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading FSR4 INT8 v{selectedExtrasVersion} for {gameItem.Name}...";
+                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading FSR 4 Swap v{selectedExtrasVersion} for {gameItem.Name}...";
                         if (progressBar != null) progressBar.IsIndeterminate = false;
                     });
 
@@ -843,11 +939,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                     catch (Exception ex)
                     {
-                        DebugWindow.Log($"[BulkInstall] Failed to download FSR4 INT8 v{selectedExtrasVersion}: {ex.Message}");
+                        DebugWindow.Log($"[BulkInstall] Failed to download FSR 4 Swap v{selectedExtrasVersion}: {ex.Message}");
                         continue; // Skip FSR4 installation but continue with OptiScaler
                     }
 
-                    // Copy FSR4 INT8 DLL to game directory
+                    // Copy FSR 4 Swap DLL to game directory
                     await Task.Run(() =>
                     {
                         var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
@@ -862,7 +958,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                             _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);
                         }
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
-                        DebugWindow.Log($"[BulkInstall] Copied FSR4 INT8 DLL to {destPath} for {gameItem.Name}");
+                        DebugWindow.Log($"[BulkInstall] Copied FSR 4 Swap DLL to {destPath} for {gameItem.Name}");
                     });
                 }
 
@@ -962,7 +1058,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     }
 
     /// <summary>
-    /// Batch counterpart to ManageGameWindow.ExecuteDllSwapAsync — replaces the FSR4 INT8 DLL
+    /// Batch counterpart to ManageGameWindow.ExecuteDllSwapAsync — replaces the FSR 4 Swap DLL
     /// directly in each selected game's folder, without installing OptiScaler. Auto-detection only
     /// (no per-game manual file picker makes sense in a batch context). If none of
     /// Fsr4Int8DllHelper.SwapTargetFileNames exists yet, the DLL is still copied in under its
@@ -995,7 +1091,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             currentGame++;
 
             if (txtProgressStatus != null)
-                txtProgressStatus.Text = $"Swapping FSR4 INT8 DLL for {gameItem.Name}...";
+                txtProgressStatus.Text = $"Swapping FSR 4 Swap DLL for {gameItem.Name}...";
             if (txtProgressCount != null)
                 txtProgressCount.Text = $"{currentGame} / {totalGames}";
             if (progressBar != null)
@@ -1032,7 +1128,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     var rdna2Path = _componentService.GetCachedCustomAmdxc64Path(extrasVersion);
                     if (rdna2Path == null)
                     {
-                        DebugWindow.Log($"[BulkInstall][DllSwap] FSR4 INT8 v{extrasVersion} has no amdxc64.dll replacement for {gameItem.Name}, skipping.");
+                        DebugWindow.Log($"[BulkInstall][DllSwap] FSR 4 Swap v{extrasVersion} has no amdxc64.dll replacement for {gameItem.Name}, skipping.");
                         skippedCount++;
                         continue;
                     }
@@ -1113,8 +1209,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         UpdateSelectionCount();
 
         var summary = skippedCount > 0
-            ? $"Swapped the FSR4 INT8 DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}. Skipped {skippedCount} game{(skippedCount != 1 ? "s" : "")} with no matching DLL to replace."
-            : $"Swapped the FSR4 INT8 DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}.";
+            ? $"Swapped the FSR 4 Swap DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}. Skipped {skippedCount} game{(skippedCount != 1 ? "s" : "")} with no matching DLL to replace."
+            : $"Swapped the FSR 4 Swap DLL on {swappedCount} game{(swappedCount != 1 ? "s" : "")}.";
         await new ConfirmDialog(this, "Bulk DLL Swap Complete", summary, isAlert: true).ShowDialog<bool>(this);
 
         Close();
@@ -1252,7 +1348,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             Tag = NewProfileTag
         });
 
-        var defaultName = _profileService.GetDefaultProfile()?.Name;
+        // GetDefaultProfile() always returns the built-in profile — it doesn't know about
+        // Config.DefaultProfileName. Prefer the configured default (matching ManageGameWindow's own
+        // resolution) and only fall back to GetDefaultProfile() when it's unset or no longer exists.
+        var configuredDefaultName = _componentService.Config.DefaultProfileName;
+        var defaultName = !string.IsNullOrWhiteSpace(configuredDefaultName) && profiles.Any(p => p.Name.Equals(configuredDefaultName, StringComparison.OrdinalIgnoreCase))
+            ? configuredDefaultName
+            : _profileService.GetDefaultProfile()?.Name;
         var selectedIndex = profiles.FindIndex(p => p.Name == defaultName);
         cmbProfile.SelectedIndex = selectedIndex >= 0 ? selectedIndex : Math.Max(0, profiles.Count - 1);
 
@@ -1278,7 +1380,22 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             combo.Items.Add(new ComboBoxItem { Content = "FSR 4", Tag = OutputUpscalerBackend.Fsr4 });
             combo.Items.Add(new ComboBoxItem { Content = "XeSS", Tag = OutputUpscalerBackend.XeSS });
             combo.Items.Add(new ComboBoxItem { Content = "DLSS", Tag = OutputUpscalerBackend.Dlss });
-            combo.SelectedIndex = 0;
+
+            // Pre-select the configured default — SelectionChanged is suppressed by
+            // _isUpdatingOutputUpscaler here, so _outputUpscalerSettings must be set to match
+            // explicitly rather than relying on that handler.
+            var defaultBackend = _componentService.Config.DefaultOutputUpscalerBackend ?? OutputUpscalerBackend.Default;
+            var selectedIndex = 0;
+            for (int i = 0; i < combo.Items.Count; i++)
+            {
+                if ((combo.Items[i] as ComboBoxItem)?.Tag is OutputUpscalerBackend tag && tag == defaultBackend)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+            combo.SelectedIndex = selectedIndex;
+            _outputUpscalerSettings.Backend = defaultBackend;
         }
         finally
         {

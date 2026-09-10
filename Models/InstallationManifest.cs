@@ -107,7 +107,7 @@ namespace OptiscalerClient.Models
         public string? MigrationSource { get; set; }
 
         /// <summary>
-        /// True when a FSR4 INT8 DLL was swapped directly into the game folder (independent of
+        /// True when a FSR 4 Swap DLL was swapped directly into the game folder (independent of
         /// IncludesOptiscaler — a game can have either, or both, tracked in the same manifest).
         /// See GameInstallationService.SwapFsr4Dll.
         /// </summary>
@@ -116,7 +116,7 @@ namespace OptiscalerClient.Models
         /// <summary>Name of the swapped-in file in the game root (one of Fsr4Int8DllHelper.SwapTargetFileNames).</summary>
         public string? DllSwapTargetFileName { get; set; }
 
-        /// <summary>FSR4 INT8 version whose content was used for the swap.</summary>
+        /// <summary>FSR 4 Swap version whose content was used for the swap.</summary>
         public string? DllSwapExtrasVersion { get; set; }
     }
 }

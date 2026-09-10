@@ -96,6 +96,21 @@
                                Foreground="{StaticResource BrTextSecondary}"
                                HorizontalAlignment="Center"
                                TextAlignment="Center"/>
+                    <!-- Optional compact info pill (e.g. a computed total size) — hidden unless a
+                         caller passes badgeText, so every existing caller is unaffected. -->
+                    <Border Name="BadgeInfo"
+                            IsVisible="False"
+                            Background="{StaticResource BrBgElevated}"
+                            BorderBrush="{StaticResource BrBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="12,4"
+                            HorizontalAlignment="Center">
+                        <TextBlock Name="TxtBadge"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource BrAccent}"/>
+                    </Border>
                     <TextBlock Name="TxtLink"
                                IsVisible="False"
                                TextWrapping="Wrap"

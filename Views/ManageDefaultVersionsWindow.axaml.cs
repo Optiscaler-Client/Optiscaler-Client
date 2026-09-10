@@ -29,6 +29,11 @@ namespace OptiscalerClient.Views
         private bool _fsr4SwapAskEveryTime = true;
         private List<string> _fsr4SwapDefaultFileKeys = new();
         private GamepadDialogNavigationHelper? _gamepadHelper;
+        private readonly DlssNrOnAmdService _dlssNrService = new();
+        /// <summary>Whether CmbDefaultOptiScalerVersion currently shows the "Modded" wrapper releases
+        /// (Setup NR default mode = "daniel-and-opti") instead of the normal Stable/Beta/Nightly/
+        /// Custom channels — see SetOptiDefaultTabsForModdedMode.</summary>
+        private bool _isDlssNrOnAmdModdedActive;
 
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
@@ -131,6 +136,7 @@ namespace OptiscalerClient.Views
             PopulateDefaultProfileCombo();
             PopulateDefaultUpscalingQualityCombo();
             PopulateDefaultOutputUpscalerCombo();
+            PopulateDefaultDlssNrOnAmdModeCombo();
 
             _defaultFrameGenerationSettings = _componentService.Config.DefaultFrameGenerationSettings;
             UpdateDefaultFrameGenerationSummary();
@@ -326,7 +332,7 @@ namespace OptiscalerClient.Views
             ToolTip.SetTip(cmbNukemFG, locked ? "Included in OptiScaler 0.9+" : null);
         }
 
-        // ── FSR4 INT8/FP8 Extras ────────────────────────────────────────────
+        // ── FSR 4 Swap/FP8 Extras ────────────────────────────────────────────
 
         private void PopulateDefaultExtrasCombo()
         {
@@ -607,6 +613,214 @@ namespace OptiscalerClient.Views
             }
         }
 
+        // ── AMD DLSS Neural Rendering mod default ────────────────────────────
+
+        /// <summary>Same permissive-when-unknown check as ManageGameWindow.IsSetupNrGpuAllowed —
+        /// only a GPU we're sure isn't AMD hides this section, so the default can never end up
+        /// configured for hardware that can't use it.</summary>
+        private bool IsAmdDefaultGpu()
+        {
+            if (_gpuService == null) return true;
+            var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+            return gpu == null || gpu.Vendor == GpuVendor.AMD;
+        }
+
+        /// <summary>Gates the whole "Experimental" zone exactly like ManageGameWindow's
+        /// PopulateVersionSelectors does for its own copy of the same Border/Chip pair — hidden
+        /// entirely unless ShowExperimentalFeatures is on, further locked to AMD hardware since that's
+        /// the only GPU vendor the mod itself supports.</summary>
+        private void PopulateDefaultDlssNrOnAmdModeCombo()
+        {
+            var showExperimental = _componentService.Config.ShowExperimentalFeatures && IsAmdDefaultGpu();
+            var zone = this.FindControl<Control>("BorderExperimentalZone");
+            if (zone != null) zone.IsVisible = showExperimental;
+            var chip = this.FindControl<Control>("BorderExperimentalChip");
+            if (chip != null) chip.IsVisible = showExperimental;
+
+            var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
+            if (cmb == null) return;
+
+            cmb.SelectionChanged -= CmbDefaultDlssNrOnAmdMode_SelectionChanged;
+            var saved = _componentService.Config.DefaultDlssNrOnAmdMode;
+            cmb.SelectedIndex = 0; // "none"
+            for (int i = 0; i < cmb.Items.Count; i++)
+            {
+                if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == saved)
+                {
+                    cmb.SelectedIndex = i;
+                    break;
+                }
+            }
+            cmb.SelectionChanged += CmbDefaultDlssNrOnAmdMode_SelectionChanged;
+
+            ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
+        }
+
+        private void CmbDefaultDlssNrOnAmdMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+            => ApplyDlssNrOnAmdModeSelection((sender as ComboBox)?.SelectedItem is ComboBoxItem item ? item.Tag as string : null);
+
+        /// <summary>Every other default-versions control besides the Daniel version combo itself —
+        /// mirrors ManageGameWindow.OptiScalerOptionPanelNames/SetOptiScalerControlsLocked exactly:
+        /// "daniel-only" means the mod runs standalone, with no OptiScaler involved at all, so none of
+        /// these settings apply. Grid/Button parents cover their child tab buttons for free (Avalonia
+        /// disables input on children of a disabled control).</summary>
+        private static readonly string[] DefaultOptionsControlNames =
+        {
+            "GridOptiDefaultTabs", "CmbDefaultOptiScalerVersion", "GridExtrasDefaultTabs", "CmbDefaultExtrasVersion",
+            "CmbDefaultOptiPatcherVersion", "CmbDefaultFakenvapiVersion", "CmbDefaultNukemFGVersion",
+            "CmbDefaultInjectionMethod", "CmbDefaultProfile", "BtnDefaultFrameGeneration",
+            "CmbDefaultUpscalingQuality", "CmbDefaultOutputUpscaler", "BtnFsr4SwapOptions",
+        };
+
+        private void SetDefaultOptionsLocked(bool locked)
+        {
+            var enabled = !locked;
+            foreach (var name in DefaultOptionsControlNames)
+            {
+                var control = this.FindControl<Control>(name);
+                if (control != null) control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>Mirrors CmbSetupNr_SelectionChanged's own consequences in ManageGameWindow: the
+        /// Daniel version combo enables/populates, "daniel-only" locks every other default (the mod
+        /// runs standalone, with no OptiScaler involved), and "daniel-and-opti" switches
+        /// CmbDefaultOptiScalerVersion over to the Modded wrapper releases (see
+        /// SetOptiDefaultTabsForModdedMode) exactly like CmbOptiVersion does there.</summary>
+        private void ApplyDlssNrOnAmdModeSelection(string? tag)
+        {
+            var mode = tag ?? "none";
+            SetDefaultOptionsLocked(mode == "daniel-only");
+
+            var cmbDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
+            if (mode == "none")
+            {
+                if (cmbDaniel != null) { cmbDaniel.IsEnabled = false; cmbDaniel.Items.Clear(); }
+                SetOptiDefaultTabsForModdedMode(false);
+                return;
+            }
+
+            _ = PopulateDefaultDlssNrDanielVersionComboAsync();
+
+            if (mode == "daniel-and-opti")
+            {
+                SetOptiDefaultTabsForModdedMode(true);
+                _ = PopulateDefaultModdedOptiVersionComboAsync();
+            }
+            else
+            {
+                SetOptiDefaultTabsForModdedMode(false);
+            }
+        }
+
+        /// <summary>Populates CmbDefaultDlssNrDanielVersion from danielblnc's own releases — same
+        /// source and "pick a specific one, defaulting to latest" shape as ManageGameWindow's
+        /// PopulateDlssNrDanielVersionComboAsync, just persisted instead of applied to a live install.</summary>
+        private async Task PopulateDefaultDlssNrDanielVersionComboAsync()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
+            if (cmb == null) return;
+
+            cmb.Items.Clear();
+            cmb.IsEnabled = false;
+
+            List<DlssNrOnAmdRelease> releases;
+            try
+            {
+                releases = await _dlssNrService.GetReleasesAsync();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DefaultVersions] Could not list danielblnc releases: {ex.Message}");
+                releases = new List<DlssNrOnAmdRelease>();
+            }
+
+            if (releases.Count == 0)
+            {
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmb.SelectedIndex = 0;
+                return;
+            }
+
+            for (int i = 0; i < releases.Count; i++)
+                cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+            var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+            var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
+            cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+            cmb.IsEnabled = true;
+        }
+
+        /// <summary>Mirrors ManageGameWindow's SetOptiTabsForModdedMode — hides Stable/Beta/Nightly/
+        /// Custom and shows the plain "Modded" indicator instead, since that's the only "channel"
+        /// available while Setup NR default mode = "daniel-and-opti".</summary>
+        private void SetOptiDefaultTabsForModdedMode(bool modded)
+        {
+            if (_isDlssNrOnAmdModdedActive == modded) return;
+            _isDlssNrOnAmdModdedActive = modded;
+
+            var btnStable = this.FindControl<Button>("BtnOptiDefaultStable");
+            var btnBeta = this.FindControl<Button>("BtnOptiDefaultBeta");
+            var btnNightly = this.FindControl<Button>("BtnOptiDefaultNightly");
+            var btnCustom = this.FindControl<Button>("BtnOptiDefaultCustom");
+            var btnModded = this.FindControl<Button>("BtnOptiDefaultModded");
+            if (btnStable != null) btnStable.IsVisible = !modded;
+            if (btnBeta != null) btnBeta.IsVisible = !modded;
+            if (btnNightly != null) btnNightly.IsVisible = !modded;
+            if (btnCustom != null) btnCustom.IsVisible = !modded && _componentService.CustomVersions.Count > 0;
+            if (btnModded != null) btnModded.IsVisible = modded;
+
+            // Leaving Modded — restore whatever normal channel/version was showing before, same as
+            // reopening this window fresh would.
+            if (!modded)
+                PopulateDefaultOptiScalerVersionCombo(showBeta: _optiDefaultShowingBeta, showNightly: _optiDefaultShowingNightly, showCustom: _optiDefaultShowingCustom, restoreSaved: true);
+        }
+
+        /// <summary>Populates CmbDefaultOptiScalerVersion with MatheusGViana/dlss-5-amd-project's
+        /// releases while Setup NR default mode = "daniel-and-opti" — same source and "pick one,
+        /// defaulting to latest" shape as ManageGameWindow's PopulateModdedVersionComboAsync. Tags are
+        /// the raw release version (e.g. "1.7.3"), not a registered custom-version name: Quick/Bulk
+        /// Install resolve and download the actual wrapper build at install time (see
+        /// DlssNrOnAmdService.InstallForQuickPathAsync) — this combo only pins which release to use.</summary>
+        private async Task PopulateDefaultModdedOptiVersionComboAsync()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
+            if (cmb == null || !_isDlssNrOnAmdModdedActive) return;
+
+            cmb.SelectionChanged -= CmbDefaultOptiScalerVersion_SelectionChanged;
+            cmb.Items.Clear();
+            cmb.IsEnabled = false;
+
+            List<DlssNrOnAmdRelease> releases;
+            try
+            {
+                releases = await _componentService.GetAmdWrapperReleasesAsync();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DefaultVersions] Could not list MatheusGViana wrapper releases: {ex.Message}");
+                releases = new List<DlssNrOnAmdRelease>();
+            }
+
+            if (releases.Count == 0)
+            {
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmb.SelectedIndex = 0;
+            }
+            else
+            {
+                for (int i = 0; i < releases.Count; i++)
+                    cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+                var saved = _componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
+                var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
+                cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+                cmb.IsEnabled = true;
+            }
+
+            cmb.SelectionChanged += CmbDefaultOptiScalerVersion_SelectionChanged;
+        }
+
         // ── Profile ─────────────────────────────────────────────────────────
 
         private void PopulateDefaultProfileCombo()
@@ -876,13 +1090,22 @@ namespace OptiscalerClient.Views
         {
             // Save OptiScaler version. This window is now the sole owner of the pinned default —
             // Manage Local Versions no longer has an "always use latest" toggle to defer to.
+            // While Setup NR default mode = "daniel-and-opti", CmbDefaultOptiScalerVersion shows
+            // Modded wrapper releases instead (see SetOptiDefaultTabsForModdedMode) — that selection
+            // is a different setting (DefaultDlssNrOnAmdWrapperVersion, saved further below) and must
+            // never overwrite the user's actual non-modded OptiScaler default.
             var cmbOpti = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
-            if (cmbOpti?.SelectedItem is ComboBoxItem optiItem)
+            if (!_isDlssNrOnAmdModdedActive && cmbOpti?.SelectedItem is ComboBoxItem optiItem)
             {
                 var ver = optiItem.Tag?.ToString();
                 if (ver == "auto")
                 {
                     _componentService.Config.AutoLatestOptiScalerDefault = true;
+                    // Remember which tab "Latest version available" was picked from — see
+                    // EffectiveDefaultOptiScalerVersion, which resolves auto through this channel
+                    // instead of always assuming Stable.
+                    _componentService.Config.DefaultOptiScalerChannel =
+                        _optiDefaultShowingNightly ? "nightly" : _optiDefaultShowingBeta ? "beta" : "stable";
                 }
                 else
                 {
@@ -934,6 +1157,29 @@ namespace OptiscalerClient.Views
                 var method = injectionItem.Tag?.ToString();
                 _componentService.Config.DefaultInjectionMethod =
                     string.IsNullOrEmpty(method) || method.Equals("auto", StringComparison.OrdinalIgnoreCase) ? null : method;
+            }
+
+            // Save AMD DLSS Neural Rendering mod default (only ever offered when experimental
+            // features are on and AMD is the configured default GPU — see
+            // PopulateDefaultDlssNrOnAmdModeCombo's BorderExperimentalZone/Chip gate).
+            var cmbDlssNr = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
+            if (cmbDlssNr?.SelectedItem is ComboBoxItem dlssNrItem)
+            {
+                _componentService.Config.DefaultDlssNrOnAmdMode = dlssNrItem.Tag?.ToString() ?? "none";
+            }
+
+            var cmbDlssNrDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
+            if (cmbDlssNrDaniel?.SelectedItem is ComboBoxItem danielItem && danielItem.Tag is string danielVer)
+            {
+                _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
+            }
+
+            // CmbDefaultOptiScalerVersion doubles as the Modded-wrapper-version picker while
+            // _isDlssNrOnAmdModdedActive — its Tag here is the raw wrapper release version (e.g.
+            // "1.7.3"), not a registered custom-version name (see PopulateDefaultModdedOptiVersionComboAsync).
+            if (_isDlssNrOnAmdModdedActive && cmbOpti?.SelectedItem is ComboBoxItem wrapperItem && wrapperItem.Tag is string wrapperVer)
+            {
+                _componentService.Config.DefaultDlssNrOnAmdWrapperVersion = wrapperVer;
             }
 
             // Save Profile

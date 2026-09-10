@@ -411,6 +411,15 @@ namespace OptiscalerClient.Views
                     _componentService.SaveConfiguration();
                 }
 
+                if (_componentService.Config.ForcedSoftwareRenderingActive && !_componentService.Config.NotifiedAboutSoftwareRendering)
+                {
+                    var title = GetResourceString("TxtSoftwareRenderingNoticeTitle", "Rendering Mode Changed");
+                    var msg = GetResourceString("TxtSoftwareRenderingNoticeMessage", "The program has switched to software rendering mode due to multiple recurring crashes.\n\nYou can return to hardware rendering (recommended) from Settings.");
+                    await new ConfirmDialog(this, title, msg, isAlert: true).ShowDialog<bool>(this);
+                    _componentService.Config.NotifiedAboutSoftwareRendering = true;
+                    _componentService.SaveConfiguration();
+                }
+
                 if (!hadSavedGames)
                 {
                     if (_componentService.Config.HasCompletedInitialScan)
@@ -1926,34 +1935,39 @@ namespace OptiscalerClient.Views
 
         private async void BtnClearAppCache_Click(object sender, RoutedEventArgs e)
         {
+            var baseDir = AppPaths.GetAppDataRoot();
+
+            // Every component's version/release cache lives as its own top-level *.json file here
+            // (games.json, config.json, releases_cache.json, fakenvapi_cache.json,
+            // streamline_releases_cache.json, amd_wrapper_releases_cache.json, ...). Enumerating
+            // instead of a hardcoded list means a full reset actually stays full: a hardcoded array
+            // silently misses every cache file added after it was written (which is exactly what
+            // happened here — Streamline's and the AMD wrapper's caches, both added this session,
+            // were never in this list). Subfolders (Covers/, Cache/, user profiles) are handled
+            // separately below or intentionally left alone.
+            var filesToDelete = System.IO.Directory.GetFiles(baseDir, "*.json");
+
+            string[] dirsToDelete =
+            [
+                System.IO.Path.Combine(baseDir, "Covers"),
+                System.IO.Path.Combine(baseDir, "Cache"),
+            ];
+
+            var totalBytes = filesToDelete.Sum(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
+                            + dirsToDelete.Sum(GetDirectorySizeBytes);
+
+            var sizeInfo = string.Format(GetResourceString("TxtClearAppCacheSizeInfo", "Total size: {0}"), FormatBytes(totalBytes));
             var dialog = new ConfirmDialog(
                 this,
                 GetResourceString("TxtClearAppCacheTitle", "Clear Application Cache"),
-                GetResourceString("TxtClearAppCacheDialogMsg", "Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.\n\nThe application will close after clearing. On the next launch it will re-scan your library and re-download version information."));
+                GetResourceString("TxtClearAppCacheDialogMsg", "Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.\n\nThe application will close after clearing. On the next launch it will re-scan your library and re-download version information."),
+                badgeText: sizeInfo);
 
             var confirmed = await dialog.ShowDialog<bool>(this);
             if (!confirmed) return;
 
             try
             {
-                var baseDir = AppPaths.GetAppDataRoot();
-
-                string[] filesToDelete =
-                [
-                    System.IO.Path.Combine(baseDir, "games.json"),
-                    System.IO.Path.Combine(baseDir, "extras_cache.json"),
-                    System.IO.Path.Combine(baseDir, "releases_cache.json"),
-                    System.IO.Path.Combine(baseDir, "versions.json"),
-                    System.IO.Path.Combine(baseDir, "analysis_cache.json"),
-                    System.IO.Path.Combine(baseDir, "config.json"),
-                ];
-
-                string[] dirsToDelete =
-                [
-                    System.IO.Path.Combine(baseDir, "Covers"),
-                    System.IO.Path.Combine(baseDir, "Cache"),
-                ];
-
                 foreach (var file in filesToDelete)
                 {
                     if (File.Exists(file))
@@ -1972,6 +1986,25 @@ namespace OptiscalerClient.Views
             {
                 await new ConfirmDialog(this, "Error", $"Failed to clear cache: {ex.Message}", isAlert: true).ShowDialog<object>(this);
             }
+        }
+
+        private static long GetDirectorySizeBytes(string dir)
+        {
+            if (!Directory.Exists(dir)) return 0;
+            try { return new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length); }
+            catch { return 0; }
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            const double kb = 1024, mb = kb * 1024, gb = mb * 1024;
+            return bytes switch
+            {
+                >= (long)gb => $"{bytes / gb:0.##} GB",
+                >= (long)mb => $"{bytes / mb:0.#} MB",
+                >= (long)kb => $"{bytes / kb:0} KB",
+                _ => $"{bytes} B"
+            };
         }
 
         private async void BtnManageScanSources_Click(object sender, RoutedEventArgs e)
@@ -3977,7 +4010,7 @@ namespace OptiscalerClient.Views
 
             infoStack.Children.Add(new TextBlock
             {
-                Text = GetResourceString("TxtVersionMgmtInfoDesc", "OptiScaler, OptiPatcher, FSR4 INT8, Fakenvapi and NukemFG versions can be managed from the Local cache & Default version management section in Settings."),
+                Text = GetResourceString("TxtVersionMgmtInfoDesc", "OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi and NukemFG versions can be managed from the Local cache & Default version management section in Settings."),
                 Foreground = this.FindResource("BrTextSecondary") as IBrush,
                 TextWrapping = TextWrapping.Wrap,
                 FontSize = 13
@@ -5144,7 +5177,10 @@ namespace OptiscalerClient.Views
 
         private void UpdateFastInstallButton(Button button, Game game)
         {
-            if (game.IsOptiscalerInstalled)
+            // "danielblnc mod only" never installs OptiScaler, so IsOptiscalerInstalled alone would
+            // never flip this button to Uninstall for it — check its own installed flag too.
+            bool danielModOnlyInstalled = game.IsDlssNrOnAmdInstalled && game.InstalledDlssNrOnAmdMode == "daniel-only";
+            if (game.IsOptiscalerInstalled || danielModOnlyInstalled)
             {
                 button.Content = GetResourceString("TxtQuickUninstall", "🗑️ Quick Uninstall");
                 button.Foreground = this.FindResource("BrAccentWarm") as IBrush ?? Brushes.Orange;
@@ -5288,9 +5324,25 @@ namespace OptiscalerClient.Views
                     // Check if OptiScaler is already installed
                     if (selectedGame.IsOptiscalerInstalled)
                     {
+                        // Mode B (daniel-and-opti): the mod has its own manifest, never touched by
+                        // UninstallOptiScaler below — restore it first, while OptiScaler's manifest
+                        // still exists (RestoreFromManifest's shared-file check relies on it), mirroring
+                        // ManageGameWindow.BtnConfirmUninstallYes_Click. Otherwise the mod's setup.exe/
+                        // nvngx/weights/proxy DLL are left behind and IsDlssNrOnAmdInstalled never
+                        // clears, permanently stuck NotApplicable in InstallForQuickPathAsync — every
+                        // later Quick Install on this game then silently falls back to plain OptiScaler.
+                        if (selectedGame.IsDlssNrOnAmdInstalled && selectedGame.InstalledDlssNrOnAmdMode == "daniel-and-opti")
+                        {
+                            var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
+                            if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                            selectedGame.IsDlssNrOnAmdInstalled = false;
+                            selectedGame.DlssNrOnAmdVersion = null;
+                            selectedGame.InstalledDlssNrOnAmdMode = null;
+                        }
+
                         // Uninstall OptiScaler directly without confirmation
                         var installService = new GameInstallationService();
-                        installService.UninstallOptiScaler(selectedGame);
+                        var uninstallResult = installService.UninstallOptiScaler(selectedGame);
 
                         // Update game status
                         selectedGame.IsOptiscalerInstalled = false;
@@ -5301,23 +5353,114 @@ namespace OptiscalerClient.Views
 
                         _persistenceService.SaveGames(_games);
                         GameAnalyzerService.FlushCacheToDisk();
+
+                        // Mirrors ManageGameWindow.BtnConfirmUninstallYes_Click: files that could be
+                        // native to the game (e.g. a DLL OptiScaler swapped at runtime while the user
+                        // switched upscalers in-game, never touched at install time so there's no
+                        // backup to restore) are deliberately left behind rather than guessed-deleted.
+                        // This quick-uninstall path used to discard that info entirely, so the folder
+                        // looked silently "dirty" with no explanation.
+                        if (uninstallResult.RemainingSensitiveFiles.Count > 0)
+                        {
+                            var remainingTitle = GetResourceString("TxtOptiUninstallResidueTitle", "OptiScaler Uninstalled");
+                            var remainingFormat = GetResourceString("TxtOptiUninstallResidueMsg",
+                                "OptiScaler was uninstalled, but {0} file(s) that could belong to the game were left behind as a precaution:\n\n{1}\n\nIf you're sure the game didn't ship these, use \"Folder Cleanup\" to remove them.");
+                            var fileList = string.Join("\n", uninstallResult.RemainingSensitiveFiles.Select(f => $"• {f}"));
+                            var remainingMsg = string.Format(remainingFormat, uninstallResult.RemainingSensitiveFiles.Count, fileList);
+                            await new ConfirmDialog(this, remainingTitle, remainingMsg).ShowDialog<object>(this);
+                        }
+                    }
+                    else if (selectedGame.IsDlssNrOnAmdInstalled && selectedGame.InstalledDlssNrOnAmdMode == "daniel-only")
+                    {
+                        // Standalone mod, no OptiScaler involved — mirrors
+                        // ManageGameWindow.UninstallDanielModOnly (CmbSetupNr's "none" case / the
+                        // dedicated "Uninstall mod" button there).
+                        var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
+                        if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+
+                        selectedGame.IsDlssNrOnAmdInstalled = false;
+                        selectedGame.DlssNrOnAmdVersion = null;
+                        selectedGame.InstalledDlssNrOnAmdMode = null;
+
+                        RefreshGameLists();
+
+                        _persistenceService.SaveGames(_games);
+                        GameAnalyzerService.FlushCacheToDisk();
                     }
                     else
                     {
                         // Install OptiScaler
                         var installService = new GameInstallationService();
 
+                        // Locked in first (before any dialog the mod step below might show) so a
+                        // second click can't re-enter this same install while the first is paused on
+                        // the nvngx/Defender-exclusion modal.
+                        SetQuickInstallLoading(button);
+
+                        // AMD DLSS Neural Rendering ("Setup NR") default — see
+                        // ManageDefaultVersionsWindow and DlssNrOnAmdService.InstallForQuickPathAsync.
+                        // Only ever configured when the default GPU is AMD (see that window's own
+                        // gate), so no separate vendor check is needed here — but ShowExperimentalFeatures
+                        // is a *different* switch (in this same window's Settings), so turning it off
+                        // must disable this default's effect immediately, not just hide the UI that
+                        // configured it — re-checked here rather than trusting the stored value alone.
+                        string? modeBWrapperVersion = null;
+                        var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
+                        if (_componentService.Config.ShowExperimentalFeatures &&
+                            !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none")
+                        {
+                            var (dlssNrResult, wrapperVersion) = await new DlssNrOnAmdService()
+                                .InstallForQuickPathAsync(this, selectedGame, dlssNrDefaultMode, _componentService);
+
+                            if (dlssNrDefaultMode == "daniel-only")
+                            {
+                                // Standalone mod, not compatible with OptiScaler — mirrors
+                                // ManageGameWindow.ExecuteInstallAsync, which returns right after Mode A
+                                // succeeds/fails instead of falling through to an OptiScaler install.
+                                if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Failed)
+                                {
+                                    await new ConfirmDialog(
+                                        this,
+                                        GetResourceString("TxtError", "Error"),
+                                        GetResourceString("TxtSetupNrDanielInstallFailed", "Failed to install danielblnc's mod."),
+                                        isAlert: true
+                                    ).ShowDialog<bool>(this);
+                                }
+                                else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success)
+                                {
+                                    RefreshGameLists();
+                                    _persistenceService.SaveGames(_games);
+                                    ShowToast(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
+                                    await HideToastAfterAsync(1500);
+                                }
+                                return;
+                            }
+
+                            if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success && dlssNrDefaultMode == "daniel-and-opti")
+                                modeBWrapperVersion = wrapperVersion;
+                        }
+
                         // Determine version to install: use configured default, fall back to latest per channel
                         string versionToInstall;
 
-                        var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
-                        if (!string.IsNullOrEmpty(configuredDefault))
+                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
                         {
-                            versionToInstall = configuredDefault;
+                            // "Mod + OptiScaler" just installed (or reused) the mod — install the
+                            // matching wrapper build instead of the normally configured version,
+                            // same override ManageGameWindow.ExecuteInstallAsync applies for Mode B.
+                            versionToInstall = modeBWrapperVersion;
                         }
                         else
                         {
-                            versionToInstall = _componentService.LatestStableVersion ?? "";
+                            var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
+                            if (!string.IsNullOrEmpty(configuredDefault))
+                            {
+                                versionToInstall = configuredDefault;
+                            }
+                            else
+                            {
+                                versionToInstall = _componentService.LatestStableVersion ?? "";
+                            }
                         }
 
                         if (string.IsNullOrEmpty(versionToInstall))
@@ -5337,12 +5480,6 @@ namespace OptiscalerClient.Views
                             ShowSecondaryToast(string.Format(inProgressFmtMain, versionToInstall));
                             return;
                         }
-
-                        // Loading state must cover every step below (Streamline/Fakenvapi/DLSS
-                        // Enabler downloads included) — not just the OptiScaler download — otherwise
-                        // the button looks idle while those still run, and the game row only flips
-                        // to "installed" once RefreshGameLists() runs at the very end.
-                        SetQuickInstallLoading(button);
 
                         // Get cache paths
                         var optiCacheDir = _componentService.GetOptiScalerCachePath(versionToInstall);
@@ -5385,12 +5522,17 @@ namespace OptiscalerClient.Views
                             }
                         }
 
-                        // Quick Install never opened Manage for this game, so it has no per-game FG
-                        // settings of its own yet — seed one from the configured default (cloned, so
-                        // ApplyFrameGenerationSettings below stamping AppliedAtUtc on it doesn't mutate
-                        // the shared default object).
+                        // Re-seed from the configured default (cloned, so ApplyFrameGenerationSettings
+                        // below stamping AppliedAtUtc on it doesn't mutate the shared default object)
+                        // whenever this game's FG hasn't actually been applied yet — same AppliedAtUtc
+                        // check as ManageGameWindow.SetupFrameGenerationButton (IsOptiscalerInstalled is
+                        // always false here, we're in the install branch, so that half of that check is
+                        // implied). Without this, a game whose FrameGenerationSettings was ever touched
+                        // (e.g. just by opening Manage once) stayed frozen on that stale snapshot forever
+                        // and silently ignored any default configured afterward — Quick Install only
+                        // picked up a new default after Manage happened to be reopened for that game.
                         var defaultFgSettings = _componentService.Config.DefaultFrameGenerationSettings;
-                        if (selectedGame.FrameGenerationSettings == null && defaultFgSettings != null)
+                        if ((selectedGame.FrameGenerationSettings == null || selectedGame.FrameGenerationSettings.AppliedAtUtc == null) && defaultFgSettings != null)
                         {
                             selectedGame.FrameGenerationSettings = new GameFrameGenerationSettings
                             {
@@ -5420,8 +5562,11 @@ namespace OptiscalerClient.Views
                         {
                             try
                             {
+                                var streamlineVersion = selectedGame.FrameGenerationSettings?.StreamlineVersion;
+                                if (string.IsNullOrEmpty(streamlineVersion))
+                                    streamlineVersion = _componentService.LatestStreamlineVersion;
                                 ShowToast(string.Format(GetResourceString("TxtExtractingFormat", "Extracting and installing v{0}..."), "Streamline"), showProgress: true, progressPercent: null);
-                                streamlineCacheDir = await _componentService.DownloadLatestStreamlineAsync();
+                                streamlineCacheDir = await _componentService.DownloadStreamlineAsync(streamlineVersion ?? "");
                             }
                             catch (Exception downloadEx)
                             {
@@ -5513,6 +5658,13 @@ namespace OptiscalerClient.Views
                         if (string.IsNullOrEmpty(injectionMethod) || injectionMethod.Equals("auto", StringComparison.OrdinalIgnoreCase))
                             injectionMethod = "dxgi.dll";
 
+                        // "Mod + OptiScaler" always answers danielblnc's own proxy-DLL prompt with
+                        // "dbghelp" (see DlssNrOnAmdService.DriveInstallerAsync) — force dxgi.dll for
+                        // OptiScaler's own slot regardless of any other configured default so the two
+                        // never collide.
+                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
+                            injectionMethod = "dxgi.dll";
+
                         // Install with default settings (backup always enabled)
                         var preferredGpuForFsr4 = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
                         var isRdna4 = GpuSelectionHelper.IsRdna4(preferredGpuForFsr4);
@@ -5587,7 +5739,7 @@ namespace OptiscalerClient.Views
                             );
                         });
 
-                        // ── FSR4 INT8 DLL injection (respect configured default extras)
+                        // ── FSR 4 Swap DLL injection (respect configured default extras)
                         var configuredExtras = _componentService.Config.DefaultExtrasVersion;
                         if (configuredExtras == ComponentManagementService.LatestAvailableTag)
                             configuredExtras = _componentService.LatestExtrasVersion;
@@ -5596,9 +5748,9 @@ namespace OptiscalerClient.Views
                             var configuredExtrasIsInt8 = _componentService.GetExtrasDllVariant(configuredExtras) == Fsr4DllVariant.Int8;
                             try
                             {
-                                ShowToast(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR4 INT8 v{0}... {1}%"), configuredExtras, 0), showProgress: true, progressPercent: 0);
+                                ShowToast(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR 4 Swap v{0}... {1}%"), configuredExtras, 0), showProgress: true, progressPercent: 0);
                                 string extrasDllPath;
-                                var extrasProgress = new Progress<double>(p => UpdateToastProgress(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR4 INT8 v{0}... {1}%"), configuredExtras, (int)p), p));
+                                var extrasProgress = new Progress<double>(p => UpdateToastProgress(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR 4 Swap v{0}... {1}%"), configuredExtras, (int)p), p));
                                 extrasDllPath = await _componentService.DownloadExtrasDllAsync(configuredExtras, extrasProgress);
 
                                 // Copy into game directory
@@ -5606,7 +5758,7 @@ namespace OptiscalerClient.Views
                                 var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
                                 var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
                                 if (!File.Exists(extrasDllPath))
-                                    throw new Exception("FSR4 INT8 package is corrupt or incomplete.");
+                                    throw new Exception("FSR 4 Swap package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);
                                 if (configuredExtrasIsInt8)
                                 {
@@ -5617,7 +5769,7 @@ namespace OptiscalerClient.Views
                                     installSvc.ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
                                 }
                                 selectedGame.Fsr4ExtraVersion = configuredExtras;
-                                ShowToast($"FSR4 INT8 v{configuredExtras} injected", showProgress: false, progressPercent: null);
+                                ShowToast($"FSR 4 Swap v{configuredExtras} injected", showProgress: false, progressPercent: null);
                                 Dispatcher.UIThread.Post(() =>
                                 {
                                     var icon = this.FindControl<TextBlock>("TxtToastIcon");
@@ -5630,7 +5782,7 @@ namespace OptiscalerClient.Views
                                 await new ConfirmDialog(
                                     this,
                                     GetResourceString("TxtWarning", "Warning"),
-                                    $"FSR4 INT8 download/inject failed (OptiScaler was still installed):\n{ex.Message}",
+                                    $"FSR 4 Swap download/inject failed (OptiScaler was still installed):\n{ex.Message}",
                                     isAlert: true
                                 ).ShowDialog<bool>(this);
                             }
@@ -5653,6 +5805,14 @@ namespace OptiscalerClient.Views
                             }
                         }
                         catch (Exception ex) { DebugWindow.Log($"[QuickInstall] Compatibility List lookup failed: {ex.Message}"); }
+
+                        // "auto" is a sentinel meaning "only install if the Compatibility List flags
+                        // this game as needing it" — if that lookup above didn't resolve a real version,
+                        // configuredPatcher is still literally the string "auto", which is not a real
+                        // OptiPatcher release and must not be downloaded as one (that's the "Cannot
+                        // install OptiScaler vauto: No OptiPatcher.asi asset found" error). Skip instead.
+                        if (patcherIsAuto && configuredPatcher != null && configuredPatcher.Equals("auto", StringComparison.OrdinalIgnoreCase))
+                            configuredPatcher = null;
 
                         if (!string.IsNullOrEmpty(configuredPatcher) && !configuredPatcher.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
@@ -5763,7 +5923,7 @@ namespace OptiscalerClient.Views
                             parts.Add($"NukemFG {configuredNukemFG}");
                         var configuredExtrasFinal = _componentService.Config.DefaultExtrasVersion;
                         if (!string.IsNullOrEmpty(configuredExtrasFinal) && !configuredExtrasFinal.Equals("none", StringComparison.OrdinalIgnoreCase))
-                            parts.Add($"FSR4 INT8 {configuredExtrasFinal}");
+                            parts.Add($"FSR 4 Swap {configuredExtrasFinal}");
                         if (!string.IsNullOrEmpty(configuredPatcher) && !configuredPatcher.Equals("none", StringComparison.OrdinalIgnoreCase))
                             parts.Add($"OptiPatcher {configuredPatcher}");
 

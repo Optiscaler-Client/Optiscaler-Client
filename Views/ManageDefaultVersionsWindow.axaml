@@ -75,6 +75,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -139,6 +140,20 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiDefaultCustom_Click"/>
+                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while
+                                             the Setup NR default mode = "Mod + OptiScaler" — the only
+                                             "channel" available in that state, mirrors ManageGameWindow's
+                                             own BtnOptiModded. -->
+                                        <Button Name="BtnOptiDefaultModded"
+                                                Grid.Column="0" Grid.ColumnSpan="4"
+                                                Content="Modded"
+                                                Classes="BtnPrimary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                IsVisible="False"
+                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbDefaultOptiScalerVersion"
                                               Classes="BtnSelector"
@@ -512,8 +527,101 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 4 : compatibility list info, spans all columns -->
-                                <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                                <!-- Row 4, all columns : Experimental zone (AMD DLSS Neural Rendering
+                                     "Setup NR" defaults) — bordered strip so experimental controls read
+                                     as visually distinct, mirroring ManageGameWindow's own
+                                     BorderExperimentalZone/BorderExperimentalChip exactly. Hidden
+                                     entirely unless Config.ShowExperimentalFeatures is on AND the
+                                     configured default GPU is AMD (see
+                                     ManageDefaultVersionsWindow.axaml.cs's
+                                     PopulateDefaultDlssNrOnAmdModeCombo, which toggles both children
+                                     below the same way PopulateVersionSelectors does there). -->
+                                <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                    <Border Name="BorderExperimentalZone"
+                                            BorderBrush="{StaticResource BrExperimental}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="12,16,12,12"
+                                            IsVisible="False">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                            <StackPanel Name="PanelDefaultDlssNrOnAmd" Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtDlssNrOnAmdTitle}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtDefaultDlssNrOnAmdDesc}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDefaultDlssNrOnAmdMode"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          SelectionChanged="CmbDefaultDlssNrOnAmdMode_SelectionChanged">
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeNone}" Tag="none"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielOnlyShort}" Tag="daniel-only"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielAndOptiShort}" Tag="daniel-and-opti"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <!-- Version of danielblnc's mod itself, pinned for Quick/Bulk
+                                                 Install the same way ManageGameWindow's CmbDlssNrDanielVersion
+                                                 pins it for a single game. Disabled while mode = none. -->
+                                            <StackPanel Name="PanelDefaultDlssNrDanielVersion" Grid.Column="1">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtSetupNrDanielVersionTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDefaultDlssNrDanielVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          IsEnabled="False"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <Border Name="BorderExperimentalChip"
+                                            Background="{StaticResource BrBgDeep}"
+                                            Padding="6,0"
+                                            Margin="14,-7,0,0"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            IsVisible="False">
+                                        <TextBlock Text="{DynamicResource TxtExperimentalZoneLbl}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   Foreground="{StaticResource BrExperimental}"/>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Row 5 : compatibility list info, spans all columns — always last. -->
+                                <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3"
                                         Background="{StaticResource BrBgElevated}"
                                         BorderBrush="{StaticResource BrBorderSubtle}"
                                         BorderThickness="1"

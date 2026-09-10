@@ -136,6 +136,13 @@ namespace OptiscalerClient.Models
         /// </summary>
         public bool AutoLatestOptiScalerDefault { get; set; } = true;
         /// <summary>
+        /// Which channel AutoLatestOptiScalerDefault tracks: "stable" (default), "beta", or "nightly".
+        /// Set from whichever tab was showing in Manage Default Versions when "Latest version
+        /// available" was saved — without this, "auto" always meant latest STABLE regardless of which
+        /// tab the user had open, silently discarding an explicit Beta/Nightly choice.
+        /// </summary>
+        public string DefaultOptiScalerChannel { get; set; } = "stable";
+        /// <summary>
         /// The default OptiPatcher version to pre-select in ManageGameWindow / Quick Install.
         /// Null or "none" means "do not install".
         /// </summary>
@@ -169,6 +176,23 @@ namespace OptiscalerClient.Models
         /// (resolved per-game from the compatibility list, falling back to dxgi.dll).
         /// </summary>
         public string? DefaultInjectionMethod { get; set; } = null;
+        /// <summary>
+        /// Default AMD DLSS Neural Rendering ("Setup NR") mode: "none" (default), "daniel-only", or
+        /// "daniel-and-opti". Pre-selects ManageGameWindow's Setup NR combo for a never-touched game,
+        /// and drives whether Quick Install / Bulk Install install the mod automatically — see
+        /// DlssNrOnAmdService.InstallForQuickPathAsync. Only ever offered in Settings when the
+        /// configured default GPU is AMD AND ShowExperimentalFeatures is on, so every consumer of
+        /// this field must also re-check ShowExperimentalFeatures itself — turning the experimental
+        /// switch off must disable this default's effect immediately, not just hide its UI.
+        /// </summary>
+        public string DefaultDlssNrOnAmdMode { get; set; } = "none";
+        /// <summary>Pinned danielblnc/DLSS-NR-on-AMD release for DefaultDlssNrOnAmdMode. Null/not found
+        /// in the current release list means "use the latest available" at install time.</summary>
+        public string? DefaultDlssNrOnAmdDanielVersion { get; set; } = null;
+        /// <summary>Pinned MatheusGViana/dlss-5-amd-project (the "Modded" OptiScaler wrapper) release,
+        /// only meaningful when DefaultDlssNrOnAmdMode is "daniel-and-opti". Null/not found means "use
+        /// the latest available" at install time.</summary>
+        public string? DefaultDlssNrOnAmdWrapperVersion { get; set; } = null;
         /// <summary>
         /// The default upscaling quality preset to pre-select in ManageGameWindow. Null means
         /// "Game controlled" (no override).
@@ -277,6 +301,8 @@ namespace OptiscalerClient.Models
         /// app silently re-exposing them to the same crash on some future launch.
         /// </summary>
         public bool ForcedSoftwareRenderingActive { get; set; } = false;
+
+        public bool NotifiedAboutSoftwareRendering { get; set; } = false;
 
         /// <summary>
         /// Consecutive app launches that did not reach a clean shutdown (see RunInProgress).
@@ -422,5 +448,24 @@ namespace OptiscalerClient.Models
     {
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
         public List<DlssEnablerMirrorReleaseEntry> Releases { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A single NVIDIA Streamline SDK release entry stored in the local cache.
+    /// </summary>
+    public class StreamlineReleaseEntry
+    {
+        public string Version { get; set; } = string.Empty;
+        public string? DownloadUrl { get; set; }
+        public bool IsLatest { get; set; }
+    }
+
+    /// <summary>
+    /// Local cache of Streamline SDK release metadata.
+    /// </summary>
+    public class StreamlineReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<StreamlineReleaseEntry> Releases { get; set; } = new();
     }
 }

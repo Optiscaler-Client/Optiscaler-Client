@@ -25,6 +25,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
@@ -33,6 +35,15 @@ using static OptiscalerClient.Helpers.HttpRetryHelper;
 namespace OptiscalerClient.Services
 {
     public sealed record DlssNrOnAmdRelease(string Version, string DownloadUrl, string AssetName, string? Sha256);
+
+    /// <summary>Local disk cache of danielblnc/DLSS-NR-on-AMD's release list, so a fresh app launch
+    /// doesn't have to hit api.github.com again for something that changes rarely — see
+    /// DlssNrOnAmdService.GetReleasesAsync.</summary>
+    public class DlssNrOnAmdReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<DlssNrOnAmdRelease> Releases { get; set; } = new();
+    }
 
     /// <summary>
     /// Lists, downloads and stages danielblnc/DLSS-NR-on-AMD's setup.exe (the standalone AMD Neural
@@ -50,26 +61,75 @@ namespace OptiscalerClient.Services
         private const string SetupExeName = "dlssnr_on_amd_setup.exe";
         public const string StagedExeFileName = SetupExeName;
         private const string CachedNvngxFileName = "nvngx_dlssnr.dll";
+        private const string WeightsMarkerFileName = "dlssnr_on_amd_weights.bin";
 
-        // Written by the mod's DLL at game runtime (troubleshooting log), not by the setup.exe run —
-        // it never exists yet when DlssNrOnAmdWizardWindow.SaveDanielModManifest snapshots the game
-        // folder right after "I'm done", so it can never be captured as a "created" file the normal
-        // way. Unambiguous name (nothing else in a game folder is called this), so RestoreFromManifest
-        // always attempts to delete it directly instead of relying on the manifest for it.
-        private const string RuntimeLogFileName = "dlssnr_on_amd.log";
+        // Written next to the cached Mode B output files so TryUseCachedModeBOutput can report the
+        // mod version that actually produced them, even though a later install may have a different
+        // version pre-selected in the UI — not itself one of the mod's own output files, so it's
+        // excluded when copying the cache into a game folder.
+        private const string ModeBOutputVersionFileName = "_source_version.txt";
+
+        // Written by the mod's DLL at game runtime — troubleshooting logs, and (dlssnr_amd_pass*.dll)
+        // the per-GPU "pass" shader binaries it bakes from the weights the first time the game
+        // actually launches with the mod loaded — not by the setup.exe run, or by TryUseCachedModeBOutput
+        // copying the cache into a new game. They never exist yet when SaveDanielModManifest/
+        // TryUseCachedModeBOutput snapshot or list the game folder right after install/reuse finishes,
+        // so they can never be captured as "created" files the normal way. Names are unambiguous
+        // (nothing else in a game folder is called this), so RestoreFromManifest always sweeps for
+        // them directly instead of relying on the manifest.
+        private static readonly string[] RuntimeArtifactFileNames = { "dlssnr_on_amd.log", "amd_presr.log", "amd_bridge.log" };
+        private const string RuntimePassFileGlob = "dlssnr_amd_pass*.dll";
 
         private readonly string _cacheDir;
         private readonly string _nvngxCacheDir;
+        private readonly string _modeBOutputCacheDir;
         private readonly BackupStoreService _backupStore = new();
         private static HttpClient HttpClient => NetworkService.GetHttpClient();
 
         private static List<DlssNrOnAmdRelease>? _cachedReleases;
+        private static DateTime _cachedReleasesLastUpdated = DateTime.MinValue;
+        private readonly string _releasesCacheFile;
+        private static bool _releasesLoadedFromDisk;
+        private static readonly object _releasesCacheLock = new();
+
+        // Once loaded, _cachedReleases never expired on its own — a released fixed after the first
+        // successful fetch stayed cached forever across every future app launch, so a genuinely new
+        // danielblnc release would never surface without manually deleting the cache file. This TTL
+        // gives it the same "checked again periodically" behavior every other component gets from
+        // ComponentManagementService's shared 15-minute cooldown (this service is separate from that
+        // batch, so it needs its own — RefreshDlssNrOnAmdOnStartupAsync already calls GetReleasesAsync
+        // on every app launch, this just makes that call actually re-check once it's stale).
+        private static readonly TimeSpan ReleasesCacheTtl = TimeSpan.FromHours(12);
 
         public DlssNrOnAmdService()
         {
             var baseDir = AppPaths.GetAppDataRoot();
             _cacheDir = Path.Combine(baseDir, "Cache", "DlssNrOnAmd");
             _nvngxCacheDir = Path.Combine(baseDir, "Cache", "DlssNr");
+            _modeBOutputCacheDir = Path.Combine(baseDir, "Cache", "DlssNrModeBOutput");
+            _releasesCacheFile = Path.Combine(baseDir, "dlssnr_on_amd_releases_cache.json");
+
+            lock (_releasesCacheLock)
+            {
+                if (!_releasesLoadedFromDisk)
+                {
+                    _releasesLoadedFromDisk = true;
+                    try
+                    {
+                        if (File.Exists(_releasesCacheFile))
+                        {
+                            var loaded = JsonSerializer.Deserialize(File.ReadAllText(_releasesCacheFile), OptimizerContext.Default.DlssNrOnAmdReleasesCache);
+                            if (loaded != null && loaded.Releases.Count > 0)
+                            {
+                                _cachedReleases = loaded.Releases;
+                                _cachedReleasesLastUpdated = loaded.LastUpdated;
+                                DebugWindow.Log($"[DlssNrOnAmd] Loaded {loaded.Releases.Count} release(s) from local cache (last updated: {loaded.LastUpdated}).");
+                            }
+                        }
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Failed to load releases cache: {ex.Message}"); }
+                }
+            }
         }
 
         // ── nvngx_dlssnr.dll — asked once, cached for every future install ──────────────
@@ -120,11 +180,123 @@ namespace OptiscalerClient.Services
             }
         }
 
+        // ── "Mode B output" cache — weights + whatever came with them ──
+        //
+        // Confirmed (by hashing dlssnr_on_amd_weights.bin generated on 3 different games with the same
+        // GPU) that the weights file is derived purely from the input nvngx_dlssnr.dll, not the game,
+        // so the whole output of a successful install (whichever proxy DLL name the installer ended up
+        // using) can be cached once and replayed into future game folders, skipping danielblnc's
+        // installer (and its weight conversion) entirely from then on.
+        //
+        // Seeded from the FIRST successful install of either mode (see TryFinishInstall) — but only
+        // ever *consumed* by Mode B ("daniel-and-opti"), which always answers the installer's proxy-DLL
+        // prompt with the same fixed name ("dbghelp"), so its own fresh runs are guaranteed to produce
+        // output identical to whatever got cached. Mode A ("daniel-only") never reuses this cache for
+        // itself — its proxy DLL name isn't fixed by us, so a second daniel-only install can't assume
+        // its own output would match what's cached — it always runs the real installer again; the point
+        // of caching from it is purely to let a *later* Mode B install on another game skip its run.
+
+        public bool IsModeBOutputCached() => File.Exists(Path.Combine(_modeBOutputCacheDir, WeightsMarkerFileName));
+
+        /// <summary>Total size of the cached Mode B output, for display in Manage Local Versions.</summary>
+        public long GetModeBOutputCacheSize()
+        {
+            if (!Directory.Exists(_modeBOutputCacheDir)) return 0;
+            return Directory.GetFiles(_modeBOutputCacheDir).Sum(f => new FileInfo(f).Length);
+        }
+
+        /// <summary>Removes the cached Mode B output (Manage Local Versions' nvngx_dlssnr.dll page).
+        /// Only affects the machine-wide cache; games that already installed the mod keep their own
+        /// copy untouched. The next "Mod + OptiScaler" install on any game regenerates it by running
+        /// danielblnc's installer again.</summary>
+        public void DeleteModeBOutputCache()
+        {
+            if (Directory.Exists(_modeBOutputCacheDir)) Directory.Delete(_modeBOutputCacheDir, recursive: true);
+        }
+
+        /// <summary>Caches every file a just-finished install produced (either mode), except the
+        /// setup.exe and nvngx_dlssnr.dll copies (already cached independently, and not part of the
+        /// game-invariant output). Called once, right after a real (non-cached) install succeeds.</summary>
+        private void CacheModeBOutput(InstallSession session, string danielVersion)
+        {
+            var manifest = _backupStore.LoadManifest(session.ManifestStoreKey);
+            if (manifest == null) return;
+
+            Directory.CreateDirectory(_modeBOutputCacheDir);
+            var copied = 0;
+            foreach (var f in manifest.FilesCreated)
+            {
+                if (string.Equals(f.RelativePath, StagedExeFileName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(f.RelativePath, CachedNvngxFileName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var source = Path.Combine(session.GameDir, f.RelativePath);
+                if (!File.Exists(source)) continue;
+                File.Copy(source, Path.Combine(_modeBOutputCacheDir, f.RelativePath), overwrite: true);
+                copied++;
+            }
+
+            if (copied == 0) return; // nothing game-invariant was produced (shouldn't happen) — don't claim a cache exists
+            File.WriteAllText(Path.Combine(_modeBOutputCacheDir, ModeBOutputVersionFileName), danielVersion);
+            DebugWindow.Log($"[DlssNrOnAmd] Cached Mode B output ({copied} file(s)) — future \"Mod + OptiScaler\" installs will skip danielblnc's installer.");
+        }
+
+        /// <summary>Skips staging/running danielblnc's installer entirely by copying the cached Mode B
+        /// output straight into this game's folder (see CacheModeBOutput). Backs up any pre-existing
+        /// top-level DLL a cached file would collide with, same as a real install session would.
+        /// Returns false (caller falls back to the normal install) if nothing is cached yet.</summary>
+        public bool TryUseCachedModeBOutput(Game game, string gameDir, string danielVersion)
+        {
+            if (!IsModeBOutputCached()) return false;
+
+            var manifestStoreKey = gameDir + "::dlssnr";
+            var manifest = new InstallationManifest
+            {
+                OperationStatus = "committed",
+                StartedAtUtc = DateTime.UtcNow.ToString("O"),
+                FinishedAtUtc = DateTime.UtcNow.ToString("O"),
+                IncludesOptiscaler = false,
+                InstalledGameDirectory = gameDir,
+            };
+
+            foreach (var cachedFile in Directory.GetFiles(_modeBOutputCacheDir))
+            {
+                var name = Path.GetFileName(cachedFile);
+                if (string.Equals(name, ModeBOutputVersionFileName, StringComparison.OrdinalIgnoreCase)) continue;
+
+                var destPath = Path.Combine(gameDir, name);
+                var existedBefore = File.Exists(destPath);
+                if (existedBefore && name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                    _backupStore.BackupFile(manifestStoreKey, gameDir, name);
+
+                File.Copy(cachedFile, destPath, overwrite: true);
+
+                if (existedBefore)
+                    manifest.FilesOverwritten.Add(new ManifestFileRecord { RelativePath = name, BackupRelativePath = name, ExistedBefore = true });
+                else
+                    manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = name, ExistedBefore = false });
+            }
+
+            _backupStore.SaveManifest(manifestStoreKey, manifest);
+
+            var versionFile = Path.Combine(_modeBOutputCacheDir, ModeBOutputVersionFileName);
+            var sourceVersion = File.Exists(versionFile) ? File.ReadAllText(versionFile).Trim() : danielVersion;
+
+            game.PendingDlssNrOnAmdMode = null;
+            game.PendingDlssNrOnAmdVersion = null;
+            game.IsDlssNrOnAmdInstalled = true;
+            game.DlssNrOnAmdVersion = string.IsNullOrWhiteSpace(sourceVersion) ? danielVersion : sourceVersion;
+            game.InstalledDlssNrOnAmdMode = "daniel-and-opti";
+
+            DebugWindow.Log($"[DlssNrOnAmd] Reused cached Mode B output for '{gameDir}' — skipped danielblnc's installer.");
+            return true;
+        }
+
         // ── Release listing (GitHub Releases API, newest-first as returned by GitHub) ──
 
         public async Task<List<DlssNrOnAmdRelease>> GetReleasesAsync(bool forceRefresh = false)
         {
-            if (!forceRefresh && _cachedReleases != null)
+            if (!forceRefresh && _cachedReleases != null && DateTime.UtcNow - _cachedReleasesLastUpdated < ReleasesCacheTtl)
                 return _cachedReleases;
 
             var releases = new List<DlssNrOnAmdRelease>();
@@ -149,7 +321,11 @@ namespace OptiscalerClient.Services
 
                     if (!element.TryGetProperty("assets", out var assets)) continue;
 
-                    string? exeUrl = null, exeName = null, checksumsText = null;
+                    // Checksum is deliberately NOT fetched here anymore (see FetchChecksumForReleaseAsync)
+                    // — this ran on every app startup via RefreshDlssNrOnAmdOnStartupAsync, so fetching
+                    // every release's checksums.txt here meant one extra request per release just to
+                    // populate a list nobody had opened yet.
+                    string? exeUrl = null, exeName = null;
                     foreach (var asset in assets.EnumerateArray())
                     {
                         if (!asset.TryGetProperty("name", out var nameProp) ||
@@ -157,34 +333,31 @@ namespace OptiscalerClient.Services
                             continue;
                         var name = nameProp.GetString() ?? "";
                         var assetUrl = urlProp.GetString();
-                        if (assetUrl == null) continue;
-
-                        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        if (assetUrl != null && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                         {
                             exeUrl = assetUrl;
                             exeName = name;
-                        }
-                        else if (name.Contains("sha256", StringComparison.OrdinalIgnoreCase) &&
-                                 (name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || !name.Contains('.')))
-                        {
-                            try
-                            {
-                                var resp = await GetWithRetryAsync(() => HttpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
-                                if (resp.IsSuccessStatusCode)
-                                    checksumsText = await resp.Content.ReadAsStringAsync();
-                            }
-                            catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Checksums fetch failed for {version}: {ex.Message}"); }
+                            break;
                         }
                     }
 
                     if (exeUrl == null || exeName == null) continue; // no usable asset — skip this release
 
-                    var sha256 = ExtractSha256For(checksumsText, exeName);
-                    releases.Add(new DlssNrOnAmdRelease(version, exeUrl, exeName, sha256));
+                    releases.Add(new DlssNrOnAmdRelease(version, exeUrl, exeName, null));
                 }
 
                 DebugWindow.Log($"[DlssNrOnAmd] {RepoOwner}/{RepoName} -> {releases.Count} usable release(s)");
                 _cachedReleases = releases;
+                if (releases.Count > 0)
+                {
+                    try
+                    {
+                        _cachedReleasesLastUpdated = DateTime.UtcNow;
+                        var cache = new DlssNrOnAmdReleasesCache { LastUpdated = _cachedReleasesLastUpdated, Releases = releases };
+                        File.WriteAllText(_releasesCacheFile, JsonSerializer.Serialize(cache, OptimizerContext.Default.DlssNrOnAmdReleasesCache));
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Failed to save releases cache: {ex.Message}"); }
+                }
             }
             catch (Exception ex)
             {
@@ -207,6 +380,44 @@ namespace OptiscalerClient.Services
                 if (parts.Length < 2) continue;
                 if (parts[^1].EndsWith(assetName, StringComparison.OrdinalIgnoreCase))
                     return parts[0];
+            }
+            return null;
+        }
+
+        /// <summary>Fetches the SHA256 for one specific release's .exe asset by re-querying that single
+        /// tag — only called at download time, for the one version actually being installed, since
+        /// GetReleasesAsync no longer fetches checksums for the whole list.</summary>
+        private async Task<string?> FetchChecksumForReleaseAsync(string version, string exeAssetName)
+        {
+            foreach (var prefix in new[] { "v", "" })
+            {
+                try
+                {
+                    var apiUrl = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/tags/{prefix}{version}";
+                    var resp = await GetWithRetryAsync(() => HttpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                    if (!resp.IsSuccessStatusCode) continue;
+
+                    using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+                    if (!doc.RootElement.TryGetProperty("assets", out var assets)) continue;
+
+                    foreach (var asset in assets.EnumerateArray())
+                    {
+                        if (!asset.TryGetProperty("name", out var nameProp) ||
+                            !asset.TryGetProperty("browser_download_url", out var urlProp))
+                            continue;
+                        var name = nameProp.GetString() ?? "";
+                        var assetUrl = urlProp.GetString();
+                        if (assetUrl == null || !name.Contains("sha256", StringComparison.OrdinalIgnoreCase) ||
+                            !(name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || !name.Contains('.')))
+                            continue;
+
+                        var checksumResp = await GetWithRetryAsync(() => HttpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
+                        if (!checksumResp.IsSuccessStatusCode) continue;
+                        var sha256 = ExtractSha256For(await checksumResp.Content.ReadAsStringAsync(), exeAssetName);
+                        if (sha256 != null) return sha256;
+                    }
+                }
+                catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Checksum lookup for v{version} failed: {ex.Message}"); }
             }
             return null;
         }
@@ -288,14 +499,15 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[DlssNrOnAmd] Downloading {release.DownloadUrl}");
                 await StreamToFileAsync(release.DownloadUrl, tempPath, progress);
 
-                if (!string.IsNullOrEmpty(release.Sha256))
+                var expectedSha256 = release.Sha256 ?? await FetchChecksumForReleaseAsync(release.Version, release.AssetName);
+                if (!string.IsNullOrEmpty(expectedSha256))
                 {
                     var actual = ComputeSha256(tempPath);
-                    if (!string.Equals(actual, release.Sha256, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
                     {
                         File.Delete(tempPath);
                         throw new InvalidOperationException(
-                            $"Downloaded file hash mismatch for {release.AssetName} — expected {release.Sha256}, got {actual}. Discarded.");
+                            $"Downloaded file hash mismatch for {release.AssetName} — expected {expectedSha256}, got {actual}. Discarded.");
                     }
                     DebugWindow.Log($"[DlssNrOnAmd] SHA256 verified for {release.AssetName}");
                 }
@@ -424,10 +636,14 @@ namespace OptiscalerClient.Services
         /// while polling.</summary>
         public bool TryFinishInstall(InstallSession session, Game game, string danielVersion, bool isModeB)
         {
-            var markerPath = Path.Combine(session.GameDir, "dlssnr_on_amd_weights.bin");
+            var markerPath = Path.Combine(session.GameDir, WeightsMarkerFileName);
             if (!File.Exists(markerPath)) return false;
 
             SaveDanielModManifest(session);
+            // Seed the cache from whichever mode finishes first (see the cache's own comment above
+            // IsModeBOutputCached) — only Mode B ever consumes it, but Mode A's output is just as
+            // usable as a future Mode B install's starting point.
+            if (!IsModeBOutputCached()) CacheModeBOutput(session, danielVersion);
 
             // Resolve the pending mode regardless of outcome — the wizard step is "used up" either
             // way, a failed wrapper install shouldn't leave a stale pending flag prompting a repeat.
@@ -608,7 +824,7 @@ namespace OptiscalerClient.Services
             }
             else
             {
-                var markerPath = Path.Combine(gameDir, "dlssnr_on_amd_weights.bin");
+                var markerPath = Path.Combine(gameDir, WeightsMarkerFileName);
                 var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(15);
                 success = false;
                 while (DateTime.UtcNow < deadline)
@@ -795,16 +1011,168 @@ namespace OptiscalerClient.Services
                 catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not restore '{f.RelativePath}': {ex.Message}"); }
             }
 
-            // Not manifest-tracked (see RuntimeLogFileName) — only ever this mod's, so always safe.
+            // Not manifest-tracked (see RuntimeArtifactFileNames/RuntimePassFileGlob) — only ever this
+            // mod's, so always safe to sweep directly regardless of what the manifest recorded.
+            foreach (var name in RuntimeArtifactFileNames)
+            {
+                try
+                {
+                    var path = Path.Combine(gameDir, name);
+                    if (File.Exists(path)) File.Delete(path);
+                }
+                catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not delete '{name}': {ex.Message}"); }
+            }
             try
             {
-                var logPath = Path.Combine(gameDir, RuntimeLogFileName);
-                if (File.Exists(logPath)) File.Delete(logPath);
+                foreach (var passFile in Directory.GetFiles(gameDir, RuntimePassFileGlob))
+                {
+                    try { File.Delete(passFile); }
+                    catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not delete '{passFile}': {ex.Message}"); }
+                }
             }
-            catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not delete '{RuntimeLogFileName}': {ex.Message}"); }
+            catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not sweep '{RuntimePassFileGlob}': {ex.Message}"); }
 
             _backupStore.DeleteBackup(storeKey);
         }
+
+        // ── Quick Install / Bulk Install headless orchestration ─────────────────────────
+        //
+        // ManageGameWindow.ExecuteInstallAsync drives this same sequence interactively (wizard,
+        // status text, per-step dialogs). Quick Install and Bulk Install have no room for that — this
+        // is the single shared "do it with as few prompts as possible" version both call instead of
+        // each re-implementing the sequence. The only prompts it ever shows are the two genuinely
+        // unavoidable ones: picking nvngx_dlssnr.dll the very first time ever, and (only on that same
+        // first-ever run, before anything is cached) the Windows Defender exclusion offer. Every
+        // later call, for any game, takes the instant cached path and shows nothing at all.
+
+        public enum QuickPathResult { NotApplicable, Skipped, Failed, Success }
+
+        /// <summary>Installs the AMD DLSS Neural Rendering mod for <paramref name="mode"/>
+        /// ("daniel-only" or "daniel-and-opti") on <paramref name="game"/> with as few prompts as
+        /// possible, for Quick Install / Bulk Install. Returns NotApplicable when there's nothing to
+        /// do (mode is "none"/unrecognized, or the game already has the mod), Skipped when the user
+        /// declined the one unavoidable prompt (caller should fall back to a plain OptiScaler
+        /// install), or Success/Failed once an install was actually attempted — Success carries the
+        /// registered wrapper OptiScaler version name to install when <paramref name="mode"/> is
+        /// "daniel-and-opti" (the caller must install that build, with dxgi.dll injection, instead of
+        /// its own normally-configured OptiScaler version).</summary>
+        public async Task<(QuickPathResult Result, string? WrapperVersionName)> InstallForQuickPathAsync(
+            Window owner, Game game, string mode, ComponentManagementService componentService)
+        {
+            if (mode != "daniel-only" && mode != "daniel-and-opti") return (QuickPathResult.NotApplicable, null);
+            if (game.IsDlssNrOnAmdInstalled) return (QuickPathResult.NotApplicable, null);
+
+            var isModeB = mode == "daniel-and-opti";
+            var gameDir = new GameInstallationService().DetermineInstallDirectory(game);
+            if (string.IsNullOrEmpty(gameDir)) return (QuickPathResult.Failed, null);
+
+            if (!IsNvngxDlssNrCached())
+            {
+                var picker = new DlssNrOnAmdWizardWindow(owner, game, "", isModeB, nvngxPickerOnly: true);
+                await picker.ShowDialog<bool>(owner);
+                if (!IsNvngxDlssNrCached())
+                {
+                    DebugWindow.Log("[SetupNr] Quick path: nvngx_dlssnr.dll still not provided — skipping the mod for this game.");
+                    return (QuickPathResult.Skipped, null);
+                }
+            }
+
+            // Prefer the version pinned in Settings (ManageDefaultVersionsWindow's Modded-mode
+            // combos) over "whatever's newest right now" — falls back to latest when unset, or when
+            // the pinned one no longer exists in the current release list.
+            var releases = await GetReleasesAsync();
+            var pinnedDaniel = componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+            var danielVersion = (!string.IsNullOrEmpty(pinnedDaniel) &&
+                    releases.Any(r => string.Equals(r.Version, pinnedDaniel, StringComparison.OrdinalIgnoreCase)))
+                ? pinnedDaniel
+                : releases.FirstOrDefault()?.Version;
+            if (string.IsNullOrEmpty(danielVersion))
+            {
+                DebugWindow.Log("[SetupNr] Quick path: no danielblnc/DLSS-NR-on-AMD release available.");
+                return (QuickPathResult.Failed, null);
+            }
+
+            string? wrapperVersionName = null;
+            if (isModeB)
+            {
+                var wrapperReleases = await componentService.GetAmdWrapperReleasesAsync();
+                var pinnedWrapper = componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
+                var wrapperRawVersion = (!string.IsNullOrEmpty(pinnedWrapper) &&
+                        wrapperReleases.Any(r => string.Equals(r.Version, pinnedWrapper, StringComparison.OrdinalIgnoreCase)))
+                    ? pinnedWrapper
+                    : wrapperReleases.FirstOrDefault()?.Version;
+                if (string.IsNullOrEmpty(wrapperRawVersion))
+                {
+                    DebugWindow.Log("[SetupNr] Quick path: no MatheusGViana/dlss-5-amd-project release available.");
+                    return (QuickPathResult.Failed, null);
+                }
+                try
+                {
+                    wrapperVersionName = await componentService.DownloadAndImportAmdWrapperVersionAsync(wrapperRawVersion);
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[SetupNr] Quick path: wrapper build download/import failed: {ex.Message}");
+                    return (QuickPathResult.Failed, null);
+                }
+            }
+
+            if (isModeB && IsModeBOutputCached())
+            {
+                var ok = TryUseCachedModeBOutput(game, gameDir, danielVersion);
+                DebugWindow.Log($"[SetupNr] Quick path: reused cached Mode B output for '{gameDir}' -> {(ok ? "success" : "failed")}.");
+                return (ok ? QuickPathResult.Success : QuickPathResult.Failed, wrapperVersionName);
+            }
+
+            // First-ever run on this machine (or Mode A, which is never cached) — stage and run the
+            // real installer. Offers the Defender exclusion once, up front, same copy as
+            // ManageGameWindow.OfferDanielModDefenderExclusionAsync; does not replicate that window's
+            // reactive "retry once after a SmartScreen block" path — acceptable here because every
+            // later call for any game takes the cached branch above and never reaches this again.
+            try
+            {
+                await DownloadAsync(danielVersion);
+                Stage(danielVersion, gameDir);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] Quick path: could not download/stage danielblnc's installer: {ex.Message}");
+                return (QuickPathResult.Failed, wrapperVersionName);
+            }
+
+            if (OperatingSystem.IsWindows() && !game.DlssNrDefenderExclusionAdded)
+            {
+                var dialog = new ConfirmDialog(owner,
+                    FindString("TxtSetupNrDefenderExclusionOfferTitle", "Windows Defender exclusion"),
+                    FindString("TxtSetupNrDefenderExclusionOfferMsg",
+                        "danielblnc's installer is unsigned, so Defender may flag it. If you trust it, click \"Add exclusion\" (needs admin permission). Otherwise, add the exclusion yourself and press \"Continue\"."),
+                    confirmText: FindString("TxtSetupNrAddExclusionOnlyBtn", "Add exclusion"),
+                    thirdButtonText: FindString("TxtSetupNrDefenderExclusionContinueBtn", "Continue")
+                );
+                var addException = await dialog.ShowDialog<bool>(owner);
+                if (dialog.ThirdButtonClicked)
+                {
+                    game.DlssNrDefenderExclusionAdded = true;
+                    game.DlssNrDefenderExclusionVerified = false;
+                }
+                else if (addException)
+                {
+                    game.DlssNrDefenderExclusionAdded = await WindowsDefenderExclusionHelper.TryAddExclusionsAsync(gameDir, CacheRootPath);
+                    game.DlssNrDefenderExclusionVerified = game.DlssNrDefenderExclusionAdded;
+                }
+                else
+                {
+                    DebugWindow.Log("[SetupNr] Quick path: user declined the Defender exclusion — skipping the mod for this game.");
+                    return (QuickPathResult.Skipped, wrapperVersionName);
+                }
+            }
+
+            var result = await RunAutomatedInstallAsync(game, gameDir, danielVersion, isModeB);
+            return (result == AutomatedInstallResult.Success ? QuickPathResult.Success : QuickPathResult.Failed, wrapperVersionName);
+        }
+
+        private static string FindString(string key, string fallback)
+            => Application.Current?.FindResource(key) as string ?? fallback;
 
         /// <summary>Walks the exception (and any InnerException) looking for the ERROR_VIRUS_INFECTED
         /// signature — either the Win32 code itself or the message text, since callers wrap the

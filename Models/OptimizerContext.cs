@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using OptiscalerClient.Models;
+using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Models
 {
@@ -38,6 +39,9 @@ namespace OptiscalerClient.Models
     [JsonSerializable(typeof(DlssEnablerMirrorReleaseEntry))]
     [JsonSerializable(typeof(DlssEnablerMirrorReleasesCache))]
     [JsonSerializable(typeof(List<DlssEnablerMirrorReleaseEntry>))]
+    [JsonSerializable(typeof(StreamlineReleaseEntry))]
+    [JsonSerializable(typeof(StreamlineReleasesCache))]
+    [JsonSerializable(typeof(List<StreamlineReleaseEntry>))]
     [JsonSerializable(typeof(CompatibilityListEntry))]
     [JsonSerializable(typeof(CompatibilityListCache))]
     [JsonSerializable(typeof(List<CompatibilityListEntry>))]
@@ -51,6 +55,9 @@ namespace OptiscalerClient.Models
     [JsonSerializable(typeof(RenodxCacheEntry))]
     [JsonSerializable(typeof(RenodxCache))]
     [JsonSerializable(typeof(List<RenodxCacheEntry>))]
+    [JsonSerializable(typeof(DlssNrOnAmdRelease))]
+    [JsonSerializable(typeof(DlssNrOnAmdReleasesCache))]
+    [JsonSerializable(typeof(List<DlssNrOnAmdRelease>))]
     [JsonSerializable(typeof(OptiScalerProfile))]
     [JsonSerializable(typeof(List<OptiScalerProfile>))]
     [JsonSerializable(typeof(Dictionary<string, Dictionary<string, string>>))]

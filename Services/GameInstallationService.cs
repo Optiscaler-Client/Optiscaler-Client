@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Views;
@@ -102,7 +103,7 @@ namespace OptiscalerClient.Services
         private static readonly string[] RedistributionRestrictedFileNames = { "dlssnr_on_amd_weights.bin" };
 
         /// <summary>Installs OptiScaler and returns the resolved game directory the files were placed in,
-        /// so callers installing additional components (FSR4 INT8, OptiPatcher) reuse the same directory
+        /// so callers installing additional components (FSR 4 Swap, OptiPatcher) reuse the same directory
         /// instead of re-running directory detection independently.</summary>
         public string InstallOptiScaler(Game game, string cachePath, string injectionDllName = "dxgi.dll",
                                      bool installFakenvapi = false, string fakenvapiCachePath = "",
@@ -589,14 +590,14 @@ namespace OptiscalerClient.Services
             // 2.5 above just (re)generated OptiScaler.ini from whichever profile was applied, which may
             // not carry those keys — so if this game already has that DLL sitting in gameDir from an
             // earlier install, re-force them here. This way switching/reconfiguring a profile can never
-            // silently disable FSR4 INT8 for a game that already has it active.
+            // silently disable FSR 4 Swap for a game that already has it active.
             var existingExtrasDll = Fsr4Int8DllHelper.FindIn(gameDir);
             if (existingExtrasDll != null && !isRdna4 &&
                 string.Equals(Path.GetFileName(existingExtrasDll), Fsr4Int8DllHelper.CurrentFileName, StringComparison.OrdinalIgnoreCase))
             {
                 rollbackJournal.CaptureFile("OptiScaler.ini");
                 ConfigureFsr4IntFallback(gameDir, isRdna4, isRdna2);
-                DebugWindow.Log($"[Install] Re-applied FSR4 INT8 forcing keys after profile write (Current extras DLL already present)");
+                DebugWindow.Log($"[Install] Re-applied FSR 4 Swap forcing keys after profile write (Current extras DLL already present)");
             }
 
             // DXGI Spoofing override (Manage Game's per-game selector, next to Profile). Same narrow
@@ -820,6 +821,28 @@ namespace OptiscalerClient.Services
             {
                 rollbackJournal.CaptureFile("OptiScaler.ini");
                 ApplyOutputUpscalerSettings(game, gameDir);
+            }
+
+            // "Mod + OptiScaler" (danielblnc's AMD Neural Rendering mod + this wrapper build): by
+            // this point in the flow, ManageGameWindow's daniel-mod step has already set
+            // InstalledDlssNrOnAmdMode before falling through to this same install. The wrapper's own
+            // OptiScaler.ini ships [DlssNr] Enabled=false — flip just that key as the final INI layer
+            // so neural rendering actually turns on immediately instead of requiring the user to find
+            // and enable it by hand. Skipped when Frame Generation is also configured: the wrapper's own
+            // README says Neural Rendering ships disabled in fresh installs specifically because it
+            // isn't fully vetted yet, and stacking it with FG's own Streamline/DLSS Enabler hooks has
+            // been observed to crash the game on launch — leave the wrapper's safer default alone for
+            // that combination instead of forcing it on.
+            var fgConfigured = game.FrameGenerationSettings != null && game.FrameGenerationSettings.Route != FrameGenerationRoute.Disabled;
+            if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti" && !fgConfigured)
+            {
+                rollbackJournal.CaptureFile("OptiScaler.ini");
+                ModifyOptiScalerIni(gameDir, "Enabled", "true", "DlssNr");
+                DebugWindow.Log($"[Install] Enabled [DlssNr] in OptiScaler.ini for {game.Name} (Mod + OptiScaler).");
+            }
+            else if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
+            {
+                DebugWindow.Log($"[Install] Frame Generation is configured for {game.Name} — leaving [DlssNr] Enabled at the wrapper's own default instead of forcing it on (known-unstable combination).");
             }
 
             // Save manifest to external store
@@ -1257,6 +1280,32 @@ namespace OptiscalerClient.Services
 
         public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
 
+        /// <summary>Deletes a file, retrying briefly on a sharing violation. The game process can still
+        /// hold a handle on its own injection proxy (dxgi.dll) or dlss-enabler-headless.dll for a moment
+        /// after its window closes — uninstalling immediately after closing the game hit exactly that
+        /// window and silently left both behind (File.Delete threw, caught, logged, never retried).</summary>
+        private static void DeleteFileWithRetry(string path, int maxAttempts = 6, int delayMs = 150)
+        {
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try { File.Delete(path); return; }
+                catch (Exception ex) when (attempt < maxAttempts && IsLikelySharingViolation(ex)) { Thread.Sleep(delayMs); }
+            }
+        }
+
+        /// <summary>Same as <see cref="DeleteFileWithRetry"/>, for directories (e.g. the "OptiScaler"
+        /// folder holding dlss-enabler-headless.dll/Streamline DLLs while the game is still tearing down).</summary>
+        private static void DeleteDirectoryWithRetry(string path, bool recursive, int maxAttempts = 6, int delayMs = 150)
+        {
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try { Directory.Delete(path, recursive); return; }
+                catch (Exception ex) when (attempt < maxAttempts && IsLikelySharingViolation(ex)) { Thread.Sleep(delayMs); }
+            }
+        }
+
+        private static bool IsLikelySharingViolation(Exception ex) => ex is IOException or UnauthorizedAccessException;
+
         public UninstallResult UninstallOptiScaler(Game game)
         {
             // ── Determine candidate root directory ───────────────────────────────
@@ -1402,13 +1451,13 @@ namespace OptiscalerClient.Services
                     {
                         var filePath = Path.Combine(gameDir, installedFile);
                         if (File.Exists(filePath))
-                            File.Delete(filePath);
+                            DeleteFileWithRetry(filePath);
                     }
                     catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to delete '{installedFile}': {ex.Message}"); }
                 }
 
                 // Step 1b: Unconditionally remove known OptiScaler files not tracked in the manifest
-                // (e.g. the FSR4 INT8 Extras DLL and OptiPatcher.asi, which are installed through
+                // (e.g. the FSR 4 Swap Extras DLL and OptiPatcher.asi, which are installed through
                 // separate flows outside InstallOptiScaler's manifest tracking). Mirrors Step 3b below,
                 // which does the same thing for known directories.
                 foreach (var artifact in KnownOptiscalerArtifacts)
@@ -1418,7 +1467,7 @@ namespace OptiscalerClient.Services
                     {
                         if (File.Exists(artifactPath))
                         {
-                            File.Delete(artifactPath);
+                            DeleteFileWithRetry(artifactPath);
                             DebugWindow.Log($"[Uninstall] Removed known OptiScaler file not tracked in manifest: {artifact}");
                         }
                     }
@@ -1470,7 +1519,7 @@ namespace OptiscalerClient.Services
                     {
                         var dirPath = Path.Combine(gameDir, installedDir);
                         if (Directory.Exists(dirPath) && !Directory.EnumerateFileSystemEntries(dirPath).Any())
-                            Directory.Delete(dirPath, false);
+                            DeleteDirectoryWithRetry(dirPath, false);
                     }
                     catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to remove directory '{installedDir}': {ex.Message}"); }
                 }
@@ -1485,7 +1534,7 @@ namespace OptiscalerClient.Services
                     {
                         if (Directory.Exists(dirPath))
                         {
-                            Directory.Delete(dirPath, true);
+                            DeleteDirectoryWithRetry(dirPath, true);
                             DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {knownDir}");
                         }
                     }
@@ -1523,7 +1572,7 @@ namespace OptiscalerClient.Services
                             catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to restore legacy backup file: {ex.Message}"); }
                         }
 
-                        try { Directory.Delete(innerLegacyBackupDir, true); }
+                        try { DeleteDirectoryWithRetry(innerLegacyBackupDir, true); }
                         catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to delete legacy backup dir: {ex.Message}"); }
                     }
                 }
@@ -1541,7 +1590,7 @@ namespace OptiscalerClient.Services
                             // Always delete OptiScaler config/log
                             if (fileName.StartsWith("OptiScaler", StringComparison.OrdinalIgnoreCase))
                             {
-                                File.Delete(filePath);
+                                DeleteFileWithRetry(filePath);
                                 continue;
                             }
 
@@ -1550,7 +1599,7 @@ namespace OptiscalerClient.Services
                             // when there was no backup — safe to delete)
                             var backupPath = Path.Combine(legacyBackupDir, fileName);
                             if (!File.Exists(backupPath) && !Directory.Exists(legacyBackupDir))
-                                File.Delete(filePath);
+                                DeleteFileWithRetry(filePath);
                         }
                         catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to clean legacy artifact '{fileName}': {ex.Message}"); }
                     }
@@ -1559,12 +1608,21 @@ namespace OptiscalerClient.Services
 
             // Clean up runtime-generated files that no game would have
             // (these are created when the game runs with OptiScaler, not during install)
-            foreach (var runtimeFile in new[] { "OptiScaler.log", "fakenvapi.log", "fakenvapi.ini" })
+            foreach (var runtimeFile in new[] { "OptiScaler.log", "fakenvapi.log", "fakenvapi.ini", "dlss-enabler.log" })
             {
                 var runtimePath = Path.Combine(gameDir, runtimeFile);
-                try { if (File.Exists(runtimePath)) File.Delete(runtimePath); }
+                try { if (File.Exists(runtimePath)) DeleteFileWithRetry(runtimePath); }
                 catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not delete runtime file '{runtimeFile}': {ex.Message}"); }
             }
+
+            // dlss-enabler-headless.dll itself lives in OptiScaler/ (see InstallOptiScaler's DLSS
+            // Enabler step), not gameDir root — its own runtime log lands next to it there, not above.
+            try
+            {
+                var enablerLogPath = Path.Combine(gameDir, "OptiScaler", "dlss-enabler.log");
+                if (File.Exists(enablerLogPath)) DeleteFileWithRetry(enablerLogPath);
+            }
+            catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not delete runtime file 'OptiScaler/dlss-enabler.log': {ex.Message}"); }
 
             // Remove external backup store entry
             _backupStore.DeleteBackup(storeKey ?? gameDir);
@@ -1573,7 +1631,7 @@ namespace OptiscalerClient.Services
             // (first uninstall after migration from v1.0.4, or if migration was skipped)
             if (Directory.Exists(legacyBackupDir))
             {
-                try { Directory.Delete(legacyBackupDir, true); }
+                try { DeleteDirectoryWithRetry(legacyBackupDir, true); }
                 catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not remove legacy backup directory: {ex.Message}"); }
             }
 
@@ -1702,7 +1760,7 @@ namespace OptiscalerClient.Services
             }
 
             // Step 1b: unconditionally sweep known OptiScaler files even if untracked in the manifest
-            // (e.g. the FSR4 INT8 Extras DLL / OptiPatcher.asi, installed through separate flows).
+            // (e.g. the FSR 4 Swap Extras DLL / OptiPatcher.asi, installed through separate flows).
             foreach (var artifact in KnownOptiscalerArtifacts)
             {
                 try
@@ -2782,10 +2840,10 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Forces OptiScaler to use the FSR4 INT8 software fallback on GPUs that lack native FP8 hardware.
+        /// Forces OptiScaler to use the FSR 4 Swap software fallback on GPUs that lack native FP8 hardware.
         /// RDNA4 (Radeon RX 9000) gets FSR4 automatically with the default Fsr4ForceModel=0 (no override),
         /// but every other GPU needs Fsr4ForceModel=2 set explicitly — otherwise OptiScaler silently falls
-        /// back to FSR3 and the injected FSR4 INT8 DLL never activates (it won't even show up in-game).
+        /// back to FSR3 and the injected FSR 4 Swap DLL never activates (it won't even show up in-game).
         /// UpscalerIndex must also be forced to 0: on "auto" it only resolves to the FSR4 backend for
         /// RDNA4, and to FSR3 for everything else, so without it Fsr4ForceModel never even gets a FSR4
         /// backend to apply to.
@@ -2796,10 +2854,10 @@ namespace OptiscalerClient.Services
         ///
         /// LoadCustomAmdxc64OnRdna2 tells OptiScaler to load a custom amdxc64.dll from OptiDllPath
         /// (".\OptiScaler\amdxc64.dll" by default). Most Extras releases don't bundle that file — it
-        /// isn't produced by the FSR4 INT8 build process, it has to be sourced separately (historically,
+        /// isn't produced by the FSR 4 Swap build process, it has to be sourced separately (historically,
         /// hand-extracted from an old AMD Adrenalin driver package). Setting this key with no file behind
         /// it makes OptiScaler try to load a DLL that doesn't exist, which was suspected as a cause of
-        /// games failing to launch after installing FSR4 INT8 on RDNA2 (2026-08-17) — so this only gets
+        /// games failing to launch after installing FSR 4 Swap on RDNA2 (2026-08-17) — so this only gets
         /// set when that file has actually been placed there (see the copy step in the call sites, which
         /// pulls it from ComponentManagementService.GetCachedCustomAmdxc64Path if the downloaded Extras
         /// archive included one). No file there → key stays unset, same as before.

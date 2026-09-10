@@ -37,7 +37,7 @@ namespace OptiscalerClient.Views
         /// Confirm (e.g. "Continue" for "I already handled this myself") — hidden when left null.
         /// Closes with a false result like Cancel; check <see cref="ThirdButtonClicked"/> to tell them
         /// apart.</param>
-        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null, string? thirdButtonText = null)
+        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null, string? thirdButtonText = null, string? badgeText = null)
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
@@ -76,6 +76,14 @@ namespace OptiscalerClient.Views
             {
                 txtLink.Text = linkText ?? linkUrl;
                 txtLink.IsVisible = true;
+            }
+
+            var badgeInfo = this.FindControl<Border>("BadgeInfo");
+            var txtBadge = this.FindControl<TextBlock>("TxtBadge");
+            if (badgeInfo != null && txtBadge != null && !string.IsNullOrEmpty(badgeText))
+            {
+                txtBadge.Text = badgeText;
+                badgeInfo.IsVisible = true;
             }
 
             // Manual Dragging implementation for BorderOnly windows

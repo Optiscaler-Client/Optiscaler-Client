@@ -1065,6 +1065,7 @@
                                                              CornerRadius="6"
                                                              Padding="8,3"
                                                              Margin="8,0,8,8"
+                                                             MaxWidth="189"
                                                              HorizontalAlignment="Left"
                                                              VerticalAlignment="Bottom"
                                                              IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -1077,6 +1078,8 @@
                                                                         Foreground="{StaticResource BrAccent}"
                                                                         FontSize="{StaticResource FontSizeCaption}"
                                                                         FontWeight="SemiBold"
+                                                                        MaxWidth="95"
+                                                                        TextTrimming="CharacterEllipsis"
                                                                         IsVisible="{Binding OptiscalerVersion, Converter={StaticResource NullToVisibilityConverter}}"/>
                                                          </StackPanel>
                                                      </Border>

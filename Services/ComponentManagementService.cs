@@ -85,6 +85,10 @@ namespace OptiscalerClient.Services
         private static DlssEnablerMirrorReleasesCache _dlssEnablerMirrorCache = new();
         private static System.Collections.Generic.List<string>? _cachedDlssEnablerMirrorVersions = null;
         private static string? _cachedLatestDlssEnablerMirrorVersion = null;
+        // Persistent local cache of Streamline SDK release metadata
+        private static StreamlineReleasesCache _streamlineReleasesCache = new();
+        private static System.Collections.Generic.List<string>? _cachedStreamlineVersions = null;
+        private static string? _cachedLatestStreamlineVersion = null;
         // Metadata ledger for RenoDX's per-game addon cache (see GetRenodxCachePath) — unlike the
         // caches above, this isn't a list of versions, it's one entry per game.
         private static RenodxCache _renodxCache = new();
@@ -113,11 +117,21 @@ namespace OptiscalerClient.Services
         public const string LatestAvailableTag = "__latest__";
 
         /// <summary>
-        /// Effective OptiScaler default: null when auto-latest is on (callers already fall back to the
-        /// latest version in whichever channel is showing), otherwise the explicitly pinned version.
+        /// Effective OptiScaler default: the explicitly pinned version, or — when auto-latest is on —
+        /// the latest version in Config.DefaultOptiScalerChannel (the tab that was showing in Manage
+        /// Default Versions when "Latest version available" was saved). Previously this returned null
+        /// for every "auto" case and every caller's own fallback was hardcoded to LatestStableVersion,
+        /// so picking "Auto" while the Nightly/Beta tab was open silently installed latest Stable
+        /// instead — this is the single place that now gets it right for every caller.
         /// </summary>
         public string? EffectiveDefaultOptiScalerVersion =>
-            Config.AutoLatestOptiScalerDefault ? null : Config.DefaultOptiScalerVersion;
+            !Config.AutoLatestOptiScalerDefault ? Config.DefaultOptiScalerVersion :
+            Config.DefaultOptiScalerChannel switch
+            {
+                "nightly" => LatestNightlyVersion ?? LatestStableVersion,
+                "beta" => LatestBetaVersion ?? LatestStableVersion,
+                _ => LatestStableVersion
+            };
         public string? LatestBetaVersion => _cachedLatestBetaVersion;
         public string? LatestNightlyVersion => _cachedLatestNightlyVersion;
         public string? LatestStableVersion => _cachedLatestStableVersion;
@@ -193,6 +207,14 @@ namespace OptiscalerClient.Services
         /// <summary>The latest DLSS Enabler mirror version tag, or null if none fetched yet.</summary>
         public string? LatestDlssEnablerMirrorVersion => _cachedLatestDlssEnablerMirrorVersion;
 
+        /// <summary>All Streamline SDK versions known from NVIDIA's own releases (whether downloaded
+        /// locally yet or not) — fetched once at startup alongside every other component instead of
+        /// per-install (see FetchStreamlineReleasesAsync, called from CheckForUpdatesAsync).</summary>
+        public System.Collections.Generic.List<string> StreamlineAvailableVersions
+            => _cachedStreamlineVersions ?? new System.Collections.Generic.List<string>();
+        /// <summary>The latest Streamline SDK version tag, or null if none fetched yet.</summary>
+        public string? LatestStreamlineVersion => _cachedLatestStreamlineVersion;
+
         public string? OptiScalerVersion => _localVersions.OptiScalerVersion;
         public string? FakenvapiVersion => _localVersions.FakenvapiVersion;
         public string? NukemFGVersion => _localVersions.NukemFGVersion;
@@ -228,7 +250,9 @@ namespace OptiscalerClient.Services
             LoadOptiPatcherCache();
             LoadFakenvapiCache();
             LoadDlssEnablerMirrorCache();
+            LoadStreamlineReleasesCache();
             LoadRenodxCache();
+            LoadAmdWrapperReleasesCache();
         }
 
         private void LoadConfiguration()
@@ -403,7 +427,7 @@ namespace OptiscalerClient.Services
             }
         }
 
-        // ── Extras (FSR4 INT8) cache ──────────────────────────────────────────────
+        // ── Extras (FSR 4 Swap) cache ──────────────────────────────────────────────
 
         private void LoadExtrasCache()
         {
@@ -729,8 +753,12 @@ namespace OptiscalerClient.Services
                         var optiPatcherTask = FetchOptiPatcherReleasesAsync();
                         await Task.Delay(150);
                         var dlssEnablerMirrorTask = FetchDlssEnablerMirrorReleasesAsync();
+                        await Task.Delay(150);
+                        var streamlineTask = FetchStreamlineReleasesAsync();
+                        await Task.Delay(150);
+                        var amdWrapperTask = FetchAmdWrapperReleasesAsync();
 
-                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask);
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask, streamlineTask, amdWrapperTask);
 
                         var stableEntries = await optiVersionsTask;
                         var betaEntries = await optiBetasTask;
@@ -851,6 +879,44 @@ namespace OptiscalerClient.Services
                             RebuildInMemoryDlssEnablerMirrorCache();
                         }
 
+                        var newStreamline = await streamlineTask;
+                        if (newStreamline.Count > 0)
+                        {
+                            var existingStreamline = new System.Collections.Generic.HashSet<string>(
+                                _streamlineReleasesCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+                            foreach (var e in _streamlineReleasesCache.Releases) e.IsLatest = false;
+                            foreach (var entry in newStreamline)
+                            {
+                                if (!existingStreamline.Contains(entry.Version))
+                                    _streamlineReleasesCache.Releases.Add(entry);
+                                else
+                                {
+                                    var ex = _streamlineReleasesCache.Releases.FirstOrDefault(
+                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                                    if (ex != null)
+                                    {
+                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                                        ex.IsLatest = entry.IsLatest;
+                                    }
+                                }
+                            }
+                            _streamlineReleasesCache.LastUpdated = DateTime.Now;
+                            SaveStreamlineReleasesCache();
+                            RebuildInMemoryStreamlineCache();
+                        }
+
+                        // DlssNrOnAmdRelease has no IsLatest flag (GitHub already returns newest-first,
+                        // and this list is small enough to just replace wholesale each check — same
+                        // approach DlssNrOnAmdService.GetReleasesAsync uses for the same record type).
+                        var newAmdWrapper = await amdWrapperTask;
+                        if (newAmdWrapper.Count > 0)
+                        {
+                            _amdWrapperReleasesCache.Releases = newAmdWrapper;
+                            _amdWrapperReleasesCache.LastUpdated = DateTime.Now;
+                            SaveAmdWrapperReleasesCache();
+                            _cachedAmdWrapperReleases = newAmdWrapper;
+                        }
+
                     }
                     catch (Exception apiEx)
                     {
@@ -863,6 +929,7 @@ namespace OptiscalerClient.Services
                         RebuildInMemoryOptiPatcherCache();
                         RebuildInMemoryFakenvapiCache();
                         RebuildInMemoryDlssEnablerMirrorCache();
+                        RebuildInMemoryStreamlineCache();
                         // Rate limit must propagate so the UI can show a warning dialog
                         if (apiEx is GitHubRateLimitException) throw;
                     }
@@ -1100,7 +1167,7 @@ namespace OptiscalerClient.Services
             return (versions, latestVersion);
         }
 
-        // ── OptiScaler Extras (FSR4 INT8 / FP8) ──────────────────────────────────
+        // ── OptiScaler Extras (FSR 4 Swap / FP8) ──────────────────────────────────
 
         /// <summary>
         /// Fetches all releases from the OptiScaler Extras (INT8) repo.
@@ -1227,7 +1294,7 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Returns the cache directory for a specific Extras (FSR4 INT8) DLL version.
+        /// Returns the cache directory for a specific Extras (FSR 4 Swap) DLL version.
         /// </summary>
         public string GetExtrasDllCachePath(string version)
             => Path.Combine(_cacheDir, "Extras", version);
@@ -1311,7 +1378,7 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Downloads the Extras zip for the given version and extracts the FSR4 INT8 DLL
+        /// Downloads the Extras zip for the given version and extracts the FSR 4 Swap DLL
         /// (amd_fidelityfx_upscaler_dx12.dll or its newer name, amdxcffx64.dll) into the
         /// per-version cache folder. Returns the path to the extracted DLL file.
         /// </summary>
@@ -1412,7 +1479,7 @@ namespace OptiscalerClient.Services
 
             var dllPath = Fsr4Int8DllHelper.FindIn(extractDir);
             if (dllPath == null)
-                throw new Exception("FSR4 INT8 DLL not found inside the downloaded archive.");
+                throw new Exception("FSR 4 Swap DLL not found inside the downloaded archive.");
 
             return dllPath;
         }
@@ -1618,6 +1685,66 @@ namespace OptiscalerClient.Services
             DebugWindow.Log($"[DlssEnablerMirrorCache] Rebuilt in-memory: {_cachedDlssEnablerMirrorVersions.Count} version(s), latest={_cachedLatestDlssEnablerMirrorVersion}");
         }
 
+        // ── Streamline SDK release cache ─────────────────────────────────────────
+        // Fetched once at startup (CheckForUpdatesAsync) instead of per-install — see
+        // FetchStreamlineReleasesAsync below and DownloadStreamlineAsync's per-version cache check.
+
+        private void LoadStreamlineReleasesCache()
+        {
+            if (_streamlineReleasesCache.Releases.Count > 0) return;
+            var file = Path.Combine(_baseDir, "streamline_releases_cache.json");
+            if (!File.Exists(file)) return;
+            try
+            {
+                var json = File.ReadAllText(file);
+                var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.StreamlineReleasesCache);
+                if (loaded != null)
+                {
+                    _streamlineReleasesCache = loaded;
+                    RebuildInMemoryStreamlineCache();
+                    DebugWindow.Log($"[StreamlineCache] Loaded {_streamlineReleasesCache.Releases.Count} entries from local cache.");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[StreamlineCache] Failed to load: {ex.Message}");
+            }
+        }
+
+        private void SaveStreamlineReleasesCache()
+        {
+            try
+            {
+                var file = Path.Combine(_baseDir, "streamline_releases_cache.json");
+                var json = JsonSerializer.Serialize(_streamlineReleasesCache, OptimizerContext.Default.StreamlineReleasesCache);
+                File.WriteAllText(file, json);
+                DebugWindow.Log($"[StreamlineCache] Saved {_streamlineReleasesCache.Releases.Count} entries.");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[StreamlineCache] Failed to save: {ex.Message}");
+            }
+        }
+
+        private void RebuildInMemoryStreamlineCache()
+        {
+            if (_streamlineReleasesCache.Releases == null || _streamlineReleasesCache.Releases.Count == 0)
+            {
+                _cachedStreamlineVersions = new System.Collections.Generic.List<string>();
+                return;
+            }
+            _cachedLatestStreamlineVersion = _streamlineReleasesCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
+                ?? _streamlineReleasesCache.Releases.FirstOrDefault()?.Version;
+
+            _cachedStreamlineVersions = _streamlineReleasesCache.Releases
+                .Select(r => r.Version)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(ParseVersionForSort)
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            DebugWindow.Log($"[StreamlineCache] Rebuilt in-memory: {_cachedStreamlineVersions.Count} version(s), latest={_cachedLatestStreamlineVersion}");
+        }
+
         /// <summary>
         /// Fetches all releases from the DLSS Enabler mirror repo. Looks for a .zip asset per release.
         /// </summary>
@@ -1693,6 +1820,92 @@ namespace OptiscalerClient.Services
             catch (Exception ex)
             {
                 DebugWindow.Log($"[DlssEnablerMirrorVersions] {repoLabel} → ERROR: {ex.Message}");
+            }
+
+            return entries;
+        }
+
+        /// <summary>
+        /// Fetches recent NVIDIA Streamline SDK releases — same shape as
+        /// FetchDlssEnablerMirrorReleasesAsync, called once at startup (CheckForUpdatesAsync) instead
+        /// of per-install. Picks the first non-ARM "streamline-sdk-*.zip" asset per release (recent
+        /// releases also publish "-aarch64"/"-arm64ec" builds with no bin/x64 directory at all).
+        /// </summary>
+        private async Task<System.Collections.Generic.List<StreamlineReleaseEntry>> FetchStreamlineReleasesAsync()
+        {
+            var entries = new System.Collections.Generic.List<StreamlineReleaseEntry>();
+            var config = _config.Streamline;
+            var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
+
+            try
+            {
+                if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
+                {
+                    DebugWindow.Log($"[StreamlineVersions] Skipping {repoLabel}: empty config");
+                    return entries;
+                }
+
+                var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=10";
+                var response = await GetWithRetryAsync(() => _httpClient, url);
+                DebugWindow.Log($"[StreamlineVersions] GET {url} → HTTP {(int)response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                bool latestMarked = false;
+
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    DebugWindow.Log($"[StreamlineVersions] ERROR: Expected JSON array, got {doc.RootElement.ValueKind}");
+                    return entries;
+                }
+
+                foreach (var element in doc.RootElement.EnumerateArray())
+                {
+                    if (!element.TryGetProperty("tag_name", out var tagName)) continue;
+                    var version = tagName.GetString();
+                    if (string.IsNullOrEmpty(version)) continue;
+
+                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        version = version.Substring(1);
+
+                    string? downloadUrl = null;
+                    if (element.TryGetProperty("assets", out var assets))
+                    {
+                        foreach (var asset in assets.EnumerateArray())
+                        {
+                            if (!asset.TryGetProperty("name", out var nameProp) ||
+                                !asset.TryGetProperty("browser_download_url", out var urlProp))
+                                continue;
+                            var assetName = nameProp.GetString() ?? "";
+                            var assetUrl = urlProp.GetString();
+                            if (assetUrl != null &&
+                                assetName.StartsWith("streamline-sdk-", StringComparison.OrdinalIgnoreCase) &&
+                                assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                                !assetName.Contains("aarch64", StringComparison.OrdinalIgnoreCase) &&
+                                !assetName.Contains("arm64", StringComparison.OrdinalIgnoreCase))
+                            {
+                                downloadUrl = assetUrl;
+                                break;
+                            }
+                        }
+                    }
+                    if (downloadUrl == null) continue; // no usable asset — skip this release entirely
+
+                    entries.Add(new StreamlineReleaseEntry
+                    {
+                        Version = version,
+                        DownloadUrl = downloadUrl,
+                        IsLatest = !latestMarked,
+                    });
+                    latestMarked = true;
+                }
+
+                DebugWindow.Log($"[StreamlineVersions] {repoLabel} → {entries.Count} release(s)");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[StreamlineVersions] {repoLabel} → ERROR: {ex.Message}");
             }
 
             return entries;
@@ -1906,6 +2119,15 @@ namespace OptiscalerClient.Services
         /// </summary>
         public async Task<string> DownloadLatestFakenvapiAsync(IProgress<double>? progress = null)
         {
+            // Prefer the release list already fetched at startup (see FetchFakenvapiReleasesAsync /
+            // CheckForUpdatesAsync) instead of re-querying GitHub here — this fires on every Nightly
+            // install that needs Fakenvapi, and unconditionally hitting /releases/latest each time is
+            // what burns through the unauthenticated rate limit (same bug DownloadStreamlineAsync had
+            // before it was fixed to do the same thing). Only fall back to a live lookup below if the
+            // cache is genuinely empty (e.g. first run before any successful startup fetch).
+            if (!string.IsNullOrEmpty(_cachedLatestFakenvapiVersion))
+                return await DownloadFakenvapiAsync(_cachedLatestFakenvapiVersion, progress);
+
             var config = _config.Fakenvapi;
             if (string.IsNullOrWhiteSpace(config.RepoOwner) || string.IsNullOrWhiteSpace(config.RepoName))
                 throw new InvalidOperationException("The Fakenvapi repository is not configured.");
@@ -2402,58 +2624,69 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Resolves NVIDIA's current Streamline SDK release and caches only the runtime DLLs from
-        /// its bin/x64 directory. OptiScaler Nightly uses these files at runtime; stable and beta
-        /// releases deliberately do not call this method.
+        /// Downloads (if not already cached) a specific Streamline SDK release and caches only the
+        /// runtime DLLs from its bin/x64 directory. OptiScaler Nightly uses these files at runtime;
+        /// stable and beta releases deliberately do not call this method. The release list itself is
+        /// fetched once at startup (see FetchStreamlineReleasesAsync / CheckForUpdatesAsync) — this
+        /// method only resolves the one version's download URL (from that cached list, falling back to
+        /// a single targeted per-tag lookup if it's missing there) and downloads/extracts it, mirroring
+        /// DownloadDlssEnablerMirrorAsync's cache-first/API-fallback shape exactly.
         /// </summary>
-        public async Task<string> DownloadLatestStreamlineAsync(IProgress<double>? progress = null)
+        public async Task<string> DownloadStreamlineAsync(string version, IProgress<double>? progress = null)
         {
-            var config = _config.Streamline;
-            if (string.IsNullOrWhiteSpace(config.RepoOwner) || string.IsNullOrWhiteSpace(config.RepoName))
-                throw new InvalidOperationException("The Streamline repository is not configured.");
+            var cacheDir = GetStreamlineCachePath(version);
+            if (IsStreamlineCached(version))
+            {
+                DebugWindow.Log($"[Streamline] v{version} already cached at {cacheDir}");
+                return cacheDir;
+            }
 
             LastError = null;
-            string version = "unknown";
-            string? assetName = null;
-            string? downloadUrl = null;
-
             try
             {
-                var releaseUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/latest";
-                DebugWindow.Log($"[Streamline] Looking up latest release: {releaseUrl}");
-                using var response = await GetWithRetryAsync(() => _httpClient, releaseUrl, maxRetries: 2, timeoutSeconds: 20);
-                response.EnsureSuccessStatusCode();
+                string? downloadUrl = _streamlineReleasesCache.Releases
+                    .FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
+                    ?.DownloadUrl;
 
-                using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                if (document.RootElement.TryGetProperty("tag_name", out var tagProperty))
-                    version = tagProperty.GetString() ?? version;
-
-                if (document.RootElement.TryGetProperty("assets", out var assets))
+                if (string.IsNullOrEmpty(downloadUrl))
                 {
-                    foreach (var asset in assets.EnumerateArray())
+                    var config = _config.Streamline;
+                    foreach (var prefix in new[] { "v", "" })
                     {
-                        var name = asset.TryGetProperty("name", out var nameProperty) ? nameProperty.GetString() : null;
-                        var url = asset.TryGetProperty("browser_download_url", out var urlProperty) ? urlProperty.GetString() : null;
-                        if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(url) &&
-                            name.StartsWith("streamline-sdk-", StringComparison.OrdinalIgnoreCase) &&
-                            name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        try
                         {
-                            assetName = name;
-                            downloadUrl = url;
-                            break;
+                            var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
+                            var resp = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                            if (!resp.IsSuccessStatusCode) continue;
+
+                            using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+                            if (doc.RootElement.TryGetProperty("assets", out var assets))
+                            {
+                                foreach (var asset in assets.EnumerateArray())
+                                {
+                                    var name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                                    var url = asset.TryGetProperty("browser_download_url", out var urlProp) ? urlProp.GetString() : null;
+                                    // Recent releases also publish "-aarch64"/"-arm64ec" ARM builds
+                                    // alongside the plain x64 one — those have no bin/x64 directory.
+                                    if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(url) &&
+                                        name.StartsWith("streamline-sdk-", StringComparison.OrdinalIgnoreCase) &&
+                                        name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                                        !name.Contains("aarch64", StringComparison.OrdinalIgnoreCase) &&
+                                        !name.Contains("arm64", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        downloadUrl = url;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!string.IsNullOrEmpty(downloadUrl)) break;
                         }
+                        catch (Exception ex) { DebugWindow.Log($"[Streamline] Tag lookup attempt failed: {ex.Message}"); }
                     }
                 }
 
-                if (string.IsNullOrWhiteSpace(downloadUrl) || string.IsNullOrWhiteSpace(assetName))
-                    throw new VersionUnavailableException(version, "The latest Streamline release has no streamline-sdk ZIP asset.");
-
-                var cacheDir = GetStreamlineCachePath(version);
-                if (IsStreamlineCached(version))
-                {
-                    DebugWindow.Log($"[Streamline] {version} already cached at {cacheDir}");
-                    return cacheDir;
-                }
+                if (string.IsNullOrEmpty(downloadUrl))
+                    throw new VersionUnavailableException(version, "No streamline-sdk ZIP asset found for this version.");
 
                 var cacheRoot = Path.Combine(_cacheDir, "Streamline");
                 var tempArchive = Path.Combine(Path.GetTempPath(), $"Streamline_{Guid.NewGuid():N}.zip");
@@ -2461,19 +2694,19 @@ namespace OptiscalerClient.Services
 
                 try
                 {
-                    DebugWindow.Log($"[Streamline] Downloading asset: {assetName}");
+                    DebugWindow.Log($"[Streamline] Downloading {downloadUrl}");
                     await StreamToFileAsync(() => _httpClient, downloadUrl, tempArchive, progress,
                         estimatedBytes: 230L * 1024 * 1024, timeoutSeconds: 600);
 
                     Directory.CreateDirectory(stagingDir);
                     var extractedCount = await Task.Run(() => ExtractStreamlineRuntimeDlls(tempArchive, stagingDir));
                     if (extractedCount == 0 || !File.Exists(Path.Combine(stagingDir, "sl.common.dll")))
-                        throw new InvalidDataException("The Streamline SDK archive does not contain the required bin/x64 runtime DLLs.");
+                        throw new InvalidDataException($"Streamline v{version} does not contain the required bin/x64 runtime DLLs.");
 
                     if (Directory.Exists(cacheDir))
                         Directory.Delete(cacheDir, recursive: true);
                     Directory.Move(stagingDir, cacheDir);
-                    DebugWindow.Log($"[Streamline] Cached {extractedCount} runtime DLL(s) from {version} at {cacheDir}");
+                    DebugWindow.Log($"[Streamline] Cached {extractedCount} runtime DLL(s) for v{version} at {cacheDir}");
                     return cacheDir;
                 }
                 finally
@@ -2519,8 +2752,24 @@ namespace OptiscalerClient.Services
 
             foreach (var dir in Directory.GetDirectories(streamlineDir))
             {
-                if (File.Exists(Path.Combine(dir, "sl.common.dll")))
-                    versions.Add(Path.GetFileName(dir));
+                if (!File.Exists(Path.Combine(dir, "sl.common.dll"))) continue;
+
+                var name = Path.GetFileName(dir);
+                if (name.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Older builds cached releases under their raw "v"-prefixed tag name;
+                    // FetchStreamlineReleasesAsync normalizes to the bare number, so leaving
+                    // this as-is would list the same version twice (and the "v" spelling
+                    // can't be Version.TryParse'd, so it always sorted to the bottom).
+                    var canonical = name.Substring(1);
+                    var canonicalDir = Path.Combine(streamlineDir, canonical);
+                    if (Directory.Exists(canonicalDir))
+                        continue; // canonical copy already cached — drop the stale duplicate
+                    try { Directory.Move(dir, canonicalDir); name = canonical; }
+                    catch { /* leave as-is if rename fails (e.g. file in use) */ }
+                }
+
+                versions.Add(name);
             }
 
             static Version parseStreamlineVer(string v)
@@ -2899,18 +3148,47 @@ namespace OptiscalerClient.Services
         private const string AmdWrapperRepoOwner = "MatheusGViana";
         private const string AmdWrapperRepoName = "dlss-5-amd-project";
 
-        // In-memory only (no disk persistence, unlike the other channels' caches) — just enough to
-        // avoid re-hitting GitHub (plus a per-release checksum.txt fetch) every time ManageGameWindow
-        // repopulates the "Modded" combo, which was making every reopen of the window visibly stall
-        // for a second or two while on that channel.
+        // Cached in memory for the rest of this process and on disk (see
+        // LoadAmdWrapperReleasesCache/SaveAmdWrapperReleasesCache) — populated by
+        // FetchAmdWrapperReleasesAsync, one of the parallel tasks in CheckForUpdatesAsync, so this
+        // list is kept fresh across app launches the same way as every other component (OptiScaler,
+        // Fakenvapi, Streamline, ...) instead of only refreshing when the user happens to open
+        // "Mod + OptiScaler". Sha256 is deliberately NOT fetched here (unlike before) — checking it
+        // for every release on every startup would mean one extra request per release just to
+        // populate a dropdown; DownloadAndImportAmdWrapperVersionAsync resolves it lazily, only for
+        // the one version actually being installed.
         private static System.Collections.Generic.List<DlssNrOnAmdRelease>? _cachedAmdWrapperReleases = null;
+        private static DlssNrOnAmdReleasesCache _amdWrapperReleasesCache = new();
 
         /// <summary>Lists releases of the community AMD Neural Rendering OptiScaler wrapper,
-        /// newest-first (GitHub's own release order). Looks for a .zip asset per release.</summary>
+        /// newest-first (GitHub's own release order) — memory/disk cache first, falling back to a
+        /// live fetch only if neither has anything yet (e.g. the startup batch hasn't completed, or
+        /// this is the very first launch after enabling the experimental feature).</summary>
         public async Task<System.Collections.Generic.List<DlssNrOnAmdRelease>> GetAmdWrapperReleasesAsync()
         {
             if (_cachedAmdWrapperReleases != null) return _cachedAmdWrapperReleases;
+            if (_amdWrapperReleasesCache.Releases.Count > 0)
+            {
+                _cachedAmdWrapperReleases = _amdWrapperReleasesCache.Releases;
+                return _cachedAmdWrapperReleases;
+            }
 
+            var releases = await FetchAmdWrapperReleasesAsync();
+            if (releases.Count > 0)
+            {
+                _cachedAmdWrapperReleases = releases;
+                _amdWrapperReleasesCache.Releases = releases;
+                _amdWrapperReleasesCache.LastUpdated = DateTime.Now;
+                SaveAmdWrapperReleasesCache();
+            }
+            return releases;
+        }
+
+        /// <summary>Cheap variant of the listing above: tag + .zip asset URL only, no per-release
+        /// checksum fetch. Called from CheckForUpdatesAsync's startup batch (see FetchStreamlineReleasesAsync
+        /// for the identical shape) so this list refreshes the same way as every other component.</summary>
+        private async Task<System.Collections.Generic.List<DlssNrOnAmdRelease>> FetchAmdWrapperReleasesAsync()
+        {
             var releases = new System.Collections.Generic.List<DlssNrOnAmdRelease>();
             try
             {
@@ -2933,7 +3211,7 @@ namespace OptiscalerClient.Services
 
                     if (!element.TryGetProperty("assets", out var assets)) continue;
 
-                    string? zipUrl = null, zipName = null, checksumsText = null;
+                    string? zipUrl = null, zipName = null;
                     foreach (var asset in assets.EnumerateArray())
                     {
                         if (!asset.TryGetProperty("name", out var nameProp) ||
@@ -2941,43 +3219,16 @@ namespace OptiscalerClient.Services
                             continue;
                         var name = nameProp.GetString() ?? "";
                         var assetUrl = urlProp.GetString();
-                        if (assetUrl == null) continue;
-
-                        if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        if (assetUrl != null && name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             zipUrl = assetUrl;
                             zipName = name;
-                        }
-                        else if (name.Contains("sha256", StringComparison.OrdinalIgnoreCase) &&
-                                 name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
-                        {
-                            try
-                            {
-                                var resp = await GetWithRetryAsync(() => _httpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
-                                if (resp.IsSuccessStatusCode)
-                                    checksumsText = await resp.Content.ReadAsStringAsync();
-                            }
-                            catch (Exception ex) { DebugWindow.Log($"[AmdWrapperVersions] Checksums fetch failed for {version}: {ex.Message}"); }
+                            break;
                         }
                     }
 
                     if (zipUrl == null || zipName == null) continue;
-
-                    string? sha256 = null;
-                    if (checksumsText != null)
-                    {
-                        foreach (var line in checksumsText.Split('\n'))
-                        {
-                            var parts = line.Trim().Split(new[] { ' ', '*' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (parts.Length >= 2 && parts[^1].EndsWith(zipName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                sha256 = parts[0];
-                                break;
-                            }
-                        }
-                    }
-
-                    releases.Add(new DlssNrOnAmdRelease(version, zipUrl, zipName, sha256));
+                    releases.Add(new DlssNrOnAmdRelease(version, zipUrl, zipName, null));
                 }
 
                 DebugWindow.Log($"[AmdWrapperVersions] {AmdWrapperRepoOwner}/{AmdWrapperRepoName} -> {releases.Count} usable release(s)");
@@ -2986,8 +3237,86 @@ namespace OptiscalerClient.Services
             {
                 DebugWindow.Log($"[AmdWrapperVersions] Release listing failed: {ex.Message}");
             }
-            if (releases.Count > 0) _cachedAmdWrapperReleases = releases;
             return releases;
+        }
+
+        /// <summary>Fetches the SHA256 for one specific release's zip asset by re-querying that single
+        /// tag (mirrors DownloadStreamlineAsync's per-tag fallback shape) — only called at download
+        /// time, for the one version actually being installed, since FetchAmdWrapperReleasesAsync no
+        /// longer fetches checksums for the whole list.</summary>
+        private async Task<string?> FetchAmdWrapperChecksumAsync(string version, string zipAssetName)
+        {
+            foreach (var prefix in new[] { "v", "" })
+            {
+                try
+                {
+                    var apiUrl = $"https://api.github.com/repos/{AmdWrapperRepoOwner}/{AmdWrapperRepoName}/releases/tags/{prefix}{version}";
+                    var resp = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                    if (!resp.IsSuccessStatusCode) continue;
+
+                    using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+                    if (!doc.RootElement.TryGetProperty("assets", out var assets)) continue;
+
+                    foreach (var asset in assets.EnumerateArray())
+                    {
+                        if (!asset.TryGetProperty("name", out var nameProp) ||
+                            !asset.TryGetProperty("browser_download_url", out var urlProp))
+                            continue;
+                        var name = nameProp.GetString() ?? "";
+                        var assetUrl = urlProp.GetString();
+                        if (assetUrl == null || !name.Contains("sha256", StringComparison.OrdinalIgnoreCase) ||
+                            !name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        var checksumResp = await GetWithRetryAsync(() => _httpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
+                        if (!checksumResp.IsSuccessStatusCode) continue;
+                        var checksumsText = await checksumResp.Content.ReadAsStringAsync();
+                        foreach (var line in checksumsText.Split('\n'))
+                        {
+                            var parts = line.Trim().Split(new[] { ' ', '*' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2 && parts[^1].EndsWith(zipAssetName, StringComparison.OrdinalIgnoreCase))
+                                return parts[0];
+                        }
+                    }
+                }
+                catch (Exception ex) { DebugWindow.Log($"[AmdWrapperVersions] Checksum lookup for v{version} failed: {ex.Message}"); }
+            }
+            return null;
+        }
+
+        private void LoadAmdWrapperReleasesCache()
+        {
+            if (_amdWrapperReleasesCache.Releases.Count > 0) return;
+            var file = Path.Combine(_baseDir, "amd_wrapper_releases_cache.json");
+            if (!File.Exists(file)) return;
+            try
+            {
+                var json = File.ReadAllText(file);
+                var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.DlssNrOnAmdReleasesCache);
+                if (loaded != null)
+                {
+                    _amdWrapperReleasesCache = loaded;
+                    DebugWindow.Log($"[AmdWrapperVersions] Loaded {_amdWrapperReleasesCache.Releases.Count} release(s) from local cache (last updated: {_amdWrapperReleasesCache.LastUpdated}).");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[AmdWrapperVersions] Failed to load cache: {ex.Message}");
+            }
+        }
+
+        private void SaveAmdWrapperReleasesCache()
+        {
+            try
+            {
+                var file = Path.Combine(_baseDir, "amd_wrapper_releases_cache.json");
+                var json = JsonSerializer.Serialize(_amdWrapperReleasesCache, OptimizerContext.Default.DlssNrOnAmdReleasesCache);
+                File.WriteAllText(file, json);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[AmdWrapperVersions] Failed to save cache: {ex.Message}");
+            }
         }
 
         /// <summary>Downloads the given AMD wrapper release (verifying SHA256 when the release
@@ -2995,22 +3324,38 @@ namespace OptiscalerClient.Services
         /// registers it as a Custom OptiScaler version. Returns the registered version name.</summary>
         public async Task<string> DownloadAndImportAmdWrapperVersionAsync(string version, IProgress<double>? progress = null)
         {
+            var versionName = "custom-amd-presr-" + SanitizeVersionName(version);
+
+            // Already downloaded and extracted by an earlier call (this run or a previous session) —
+            // nothing to redo. Without this check, every "Mod + OptiScaler" selection
+            // (PopulateModdedVersionComboAsync's background prefetch, and ExecuteInstallAsync's own
+            // await before falling through to the OptiScaler install) re-hit GitHub and re-extracted
+            // the whole zip unconditionally, stalling Install for several seconds with no visible
+            // progress even though the result was already sitting on disk.
+            if (CustomVersions.Contains(versionName) && Directory.Exists(Path.Combine(_cacheDir, "OptiScaler", versionName)))
+            {
+                DebugWindow.Log($"[AmdWrapperDownload] {versionName} already imported — skipping re-download.");
+                return versionName;
+            }
+
             var releases = await GetAmdWrapperReleasesAsync();
             var release = releases.FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
                 ?? throw new VersionUnavailableException(version, "Release not found or has no .zip asset.");
 
-            var versionName = "custom-amd-presr-" + SanitizeVersionName(version);
             var tempZip = Path.Combine(Path.GetTempPath(), $"AmdWrapper_{Guid.NewGuid()}.zip");
             try
             {
                 await StreamToFileAsync(() => _httpClient, release.DownloadUrl, tempZip, progress);
 
-                if (!string.IsNullOrEmpty(release.Sha256))
+                // The cached listing no longer carries a checksum (see FetchAmdWrapperReleasesAsync) —
+                // resolve it here, for just this one version, right before verifying.
+                var expectedSha256 = release.Sha256 ?? await FetchAmdWrapperChecksumAsync(release.Version, release.AssetName);
+                if (!string.IsNullOrEmpty(expectedSha256))
                 {
                     var actual = ComputeSha256(tempZip);
-                    if (!string.Equals(actual, release.Sha256, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
                         throw new InvalidOperationException(
-                            $"Downloaded file hash mismatch for {release.AssetName} — expected {release.Sha256}, got {actual}. Discarded.");
+                            $"Downloaded file hash mismatch for {release.AssetName} — expected {expectedSha256}, got {actual}. Discarded.");
                     DebugWindow.Log($"[AmdWrapperDownload] SHA256 verified for {release.AssetName}");
                 }
                 else
