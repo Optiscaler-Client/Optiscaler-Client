@@ -1,0 +1,23 @@
+name: Nix build
+
+on:
+  push:
+    paths:
+      - "**/*.csproj"
+      - "nix-deps.json"
+      - "flake.nix"
+      - "flake.lock"
+  pull_request:
+    paths:
+      - "**/*.csproj"
+      - "nix-deps.json"
+      - "flake.nix"
+      - "flake.lock"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - run: nix build .#default -L
