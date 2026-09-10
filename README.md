@@ -1,6 +1,6 @@
 ﻿# ✦ OptiScaler Client
 
-[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.6.1)
+[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.7)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-yellow.svg?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-E95420?style=flat-square&logo=linux)](https://www.linux.org)
@@ -52,11 +52,26 @@
 
 ### Component Management
 
-- **OptiScaler** — Core upscaling mod with stable and beta version channels.
+- **OptiScaler** — Core upscaling mod with stable, beta, and nightly version channels.
 - **Fakenvapi** — Compatibility layer for **AMD/Intel GPUs**, installed alongside OptiScaler when needed.
 - **Nukem's DLSSG-to-FSR3** — Frame generation bridge that converts DLSS Frame Gen to FSR3.
-- **FSR 4 INT8 Extras** — INT8 shader injection for non-RDNA 4 GPUs.
+- **FSR 4 DLL (Swap)** — Switch between INT8 and FP8 FSR 4 builds, or just swap the game's FSR 4 files directly without installing OptiScaler. Supports importing custom FSR 4 DLL versions.
 - **OptiPatcher** — ASI plugin loader, automatically configured with `LoadAsiPlugins=true` in OptiScaler.ini.
+- **DLSS Enabler** — Optional Frame Generation / Multi Frame Generation support, downloaded from an unofficial mirror since official builds are Nexus Mods-only.
+
+### Game Management Shortcuts
+
+- **Output Upscaler Selector** — Override a game's upscaling technology (Default, FSR 2/3/4, XeSS, DLSS) directly from the Manage window, without opening Profiles.
+- **Upscaling Quality Selector** — Override the upscaler's input resolution (Game controlled, Native AA, Ultra Quality, Quality, Balanced, Performance, Ultra Performance, or a custom scale factor) directly from the Manage window.
+- **Frame Generation & Multi Frame Generation** — Pick a Frame Generation technology and multiplier (x3–x6 for DLSS-G output) with automatic path/nvngx/Streamline setup, or use Advanced Options for manual control. Includes DLSS Enabler support for Multi Frame Generation.
+- **Spoofing Toggle** — Enable or disable vendor spoofing per game, with an Auto default.
+
+### Experimental Features
+
+Optional integrations, enabled from **Settings → Experimental**:
+
+- **RenoDx Addons** — Automatically fetches the per-game RenoDx addon for use with ReShade.
+- **Nvidia Neural Rendering Mod for AMD** — Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally combined with MatheusGViana's community OptiScaler wrapper so Neural Rendering and OptiScaler (including Multi Frame Generation) can run together.
 
 ### Profiles
 
@@ -65,6 +80,8 @@
 - **Advanced Mode Editor** — Full section-based settings editor with search and sidebar navigation.
 - **Default Profile** — Set a default profile that is applied automatically during Quick Install and Bulk Install.
 - **Built-in Default** — "OptiScaler Standard" profile ships out-of-the-box with sensible defaults.
+- **Recommended Configuration** — Per-game recommended settings pulled from the OptiScaler compatibility page and the Luma Unreal Engine list, with automatic injection method selection based on community data.
+- **Update Without Reinstalling** — Changing a single simple setting offers a lightweight config update instead of a full reinstall.
 
 ## Network & Proxy
 
@@ -74,12 +91,12 @@
 
 ### Settings & Customization
 
-- **Default Versions** — Configure default OptiScaler, Extras, and OptiPatcher versions for Quick Install.
-- **Beta Channel Toggle** — Show or hide beta versions in all version selectors.
+- **Default Versions & Quick Install Settings** — Configure the default OptiScaler, FSR 4, Fakenvapi, OptiPatcher, injection method, upscaler, and frame generation settings applied by Quick Install and when opening Manage.
+- **Beta & Nightly Channel Toggles** — Show or hide beta and nightly OptiScaler versions in all version selectors.
 - **GPU Detection** — Automatically detects installed GPUs with platform-specific providers and discrete GPU preference logic.
 - **Preferred GPU Selection** — Choose which GPU is used for installation decisions.
 - **Scan Source Management** — Enable/disable per-platform scanners and configure custom folders.
-- **Cache Management** — View and delete cached OptiScaler and Extras versions to free storage.
+- **Cache Management** — View and delete cached OptiScaler, FSR 4, Fakenvapi, NukemFG, OptiPatcher, and RenoDX versions, and see total disk usage per component.
 - **SteamGridDB Integration** — Optional API key for improved cover art fetching.
 - **Clear Application Cache** — Full reset: delete all stored data (games, covers, config, analysis cache).
 
@@ -95,6 +112,7 @@
 - **Loading Overlays** — Animated indicators during scanning and startup checks.
 - **Window State Persistence** — Window size, position, and maximized state are saved across sessions.
 - **Configurable Animations** — UI transitions can be disabled in Settings for performance.
+- **Collapsible Recommended Config Sidebar** — Collapse the per-game recommended configuration sidebar in Manage to reclaim space.
 
 ### Localization
 
@@ -224,6 +242,9 @@ This program is distributed in the hope that it will be useful, but **WITHOUT AN
 - **[fakenvapi](https://github.com/optiscaler/fakenvapi)**: Essential compatibility layer developed by the OptiScaler team.
 - **[OptiPatcher](https://github.com/optiscaler/OptiPatcher)**: ASI plugin loader by the OptiScaler team.
 - **[NukemFG (DLSSG-to-FSR3)](https://github.com/Nukem9/dlssg-to-fsr3)**: Frame Generation bridge by Nukem.
+- **[DLSS Enabler](https://www.nexusmods.com/site/mods/757)**: DLSS Upscaler/Frame Generation simulation on any DX12 GPU, by artur07305. Distributed via an unofficial mirror since the official builds are Nexus Mods-only.
+- **[DLSS-NR-on-AMD](https://github.com/danielblnc/DLSS-NR-on-AMD)**: Unofficial DLSS Neural Rendering mod for AMD GPUs, by danielblnc.
+- **[dlss-5-amd-project](https://github.com/MatheusGViana/dlss-5-amd-project)**: Community wrapper to run OptiScaler alongside the AMD Neural Rendering mod, by MatheusGViana.
 
 This client application is merely a frontend interface to help users more easily manage and install the amazing work done by the OptiScaler team and other contributors. While OptiScaler Client itself is licensed under GPL-3.0-or-later, the third-party components it downloads and manages may be subject to their own respective licenses.
 
