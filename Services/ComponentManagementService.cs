@@ -599,7 +599,7 @@ namespace OptiscalerClient.Services
             _cachedBetaVersions = new System.Collections.Generic.HashSet<string>(
                 betasList.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
             var nightlyList = all.Where(r => r.IsNightly)
-                                 .OrderByDescending(r => r.Version, StringComparer.OrdinalIgnoreCase)
+                                 .OrderByDescending(r => r.Version, Helpers.VersionComparer.Instance)
                                  .ToList();
             _cachedNightlyVersions = new System.Collections.Generic.HashSet<string>(
                 nightlyList.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
