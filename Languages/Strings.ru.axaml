@@ -410,7 +410,7 @@
     <x:String x:Key="TxtHelpPageGamepad">Поддержка геймпадов</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Устранение неполадок</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Отказ от ответственности ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">Это не официальный проект OptiScaler. Я не имею никакой связи с командой OptiScaler. Это личный проект, разработанный без коммерческих целей. Каждый может попробовать использовать это программное обеспечение на свой страх и риск.&#x0a;&#x0a;Благодарности: Особая благодарность команде OptiScaler; этот инструмент возможен только благодаря их невероятной работе над оригинальным модом.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">Это не официальный проект OptiScaler. Я не имею никакой связи с командой OptiScaler. Это личный проект, разработанный без коммерческих целей. Каждый может попробовать использовать это программное обеспечение на свой страх и риск.&#x0a;&#x0a;Благодарности: Особая благодарность команде OptiScaler; этот инструмент возможен только благодаря их невероятной работе над оригинальным модом. Также спасибо artur07305 (DLSS Enabler), danielblnc (мод DLSS Neural Rendering для AMD) и MatheusGViana (community-обёртка OptiScaler + Neural Rendering) за работу над этими опциональными экспериментальными интеграциями.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Распространяется под лицензией GPL-3.0-or-later. Это свободное программное обеспечение: вы можете изменять и распространять его на определённых условиях. Подробности см. в файле LICENSE.&#x0a;&#x0a;Сторонние компоненты (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) подпадают под действие их соответствующих лицензий.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">Система</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Лицензия &amp; Авторские права</x:String>
@@ -979,7 +979,10 @@
     <x:String x:Key="TxtUpscalingQualityApplyError">Не удалось применить настройки качества апскейлинга:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Выберите делитель, используемый для расчёта внутреннего входного разрешения на основе выходного разрешения.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Настраиваемое качество апскейлинга</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Исправлено: FSR 4 Swap мог не запускать игру на видеокартах RDNA2 из-за внутренней настройки, указывающей на файл, который клиент на самом деле никогда не предоставлял.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Исправлено: NukemFG (DLSSG-to-FSR3) принудительно включался даже в играх без встроенной генерации кадров DLSS, из-за чего OptiScaler постоянно просил «включить генерацию кадров», хотя это было невозможно выполнить.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Новое: кнопка «Проверить обновления» в разделе «Справка» со значком рядом с версией приложения, когда доступен новый релиз.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Новое: FSR 4 INT8 заменён на FSR 4 DLL (Swap), позволяющий переключаться между INT8 и FP8 и напрямую заменять файлы FSR 4 игры без установки OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Новое: генерацию кадров и Multi Frame Generation теперь можно настроить прямо в окне «Управление», включая поддержку DLSS Enabler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Новое: в окне «Управление» появились селекторы «Output Upscaler» и «Upscaling Quality» для переопределения профиля игры без перехода в «Профили».</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Новое: раздел «Экспериментальное» (в настройках) добавляет поддержку аддонов RenoDx и интеграцию Nvidia Neural Rendering Mod для AMD.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Исправлено: исчезновение ключей FSR 4 DLL после переустановки с другим профилем, а также несохранение изменений при выходе из окна профиля.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• И многое другое.</x:String>
 </ResourceDictionary>

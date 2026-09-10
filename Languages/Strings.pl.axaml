@@ -411,7 +411,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpPageGamepad">Obsługa gamepadów</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Rozwiązywanie problemów</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Zastrzeżenie ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">To nie jest oficjalny projekt OptiScaler. Nie mam żadnych powiązań z zespołem OptiScaler. To osobisty projekt opracowany bez celów komercyjnych. Każdy może próbować używać tego oprogramowania na własne ryzyko.&#x0a;&#x0a;Uznania: Specjalne podziękowania dla zespołu OptiScaler; to narzędzie jest możliwe tylko dzięki ich niesamowitej pracy nad oryginalnym modem.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">To nie jest oficjalny projekt OptiScaler. Nie mam żadnych powiązań z zespołem OptiScaler. To osobisty projekt opracowany bez celów komercyjnych. Każdy może próbować używać tego oprogramowania na własne ryzyko.&#x0a;&#x0a;Uznania: Specjalne podziękowania dla zespołu OptiScaler; to narzędzie jest możliwe tylko dzięki ich niesamowitej pracy nad oryginalnym modem. Podziękowania również dla artur07305 (DLSS Enabler), danielblnc (mod DLSS Neural Rendering dla AMD) i MatheusGViana (społecznościowy wrapper OptiScaler + Neural Rendering) za pracę stojącą za tymi opcjonalnymi eksperymentalnymi integracjami.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Licencjonowane na zasadach GPL-3.0-or-later. To wolne oprogramowanie: możesz je zmieniać i rozpowszechniać na określonych warunkach. Szczegóły znajdują się w pliku LICENSE.&#x0a;&#x0a;Komponenty stron trzecich (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) podlegają odpowiednim licencjom.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">System</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Licencja &amp; Prawa autorskie</x:String>
@@ -984,7 +984,10 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtUpscalingQualityApplyError">Nie można zastosować konfiguracji jakości skalowania:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Wybierz dzielnik używany do obliczenia wewnętrznej rozdzielczości wejściowej na podstawie rozdzielczości wyjściowej.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Niestandardowa jakość skalowania</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Naprawiono: FSR 4 Swap mógł nie uruchamiać gry na GPU RDNA2 z powodu wewnętrznego ustawienia wskazującego na plik, którego klient w rzeczywistości nigdy nie dostarczał.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Naprawiono: NukemFG (DLSSG-to-FSR3) był wymuszany nawet w grach bez natywnego Generowania Klatek DLSS, przez co OptiScaler wciąż prosił o "włączenie Generowania Klatek" bez możliwości spełnienia tego warunku.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nowość: przycisk "Sprawdź aktualizacje" w Pomocy, z plakietką przy wersji aplikacji, gdy dostępna jest nowa wersja.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nowość: FSR 4 INT8 zostało zastąpione przez FSR 4 DLL (Swap), pozwalające przełączać się między INT8 a FP8 i bezpośrednio podmieniać pliki FSR 4 gry bez instalowania OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nowość: Generowanie Klatek i Multi Frame Generation można teraz skonfigurować bezpośrednio w oknie Manage, wraz ze wsparciem dla DLSS Enabler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nowość: okno Manage zyskało selektory "Output Upscaler" i "Upscaling Quality", umożliwiające nadpisanie profilu gry bez wchodzenia w Profiles.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Nowość: sekcja Experimental (w Settings) dodaje wsparcie dla dodatków RenoDx oraz integrację z Nvidia Neural Rendering Mod dla AMD.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Naprawiono: znikanie kluczy FSR 4 DLL po reinstalacji z innym profilem oraz brak zapisywania zmian w oknie Profile po jego opuszczeniu.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• I wiele więcej.</x:String>
 </ResourceDictionary>

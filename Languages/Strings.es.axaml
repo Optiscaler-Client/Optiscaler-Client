@@ -437,7 +437,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtHelpPageGamepad">Soporte de Mando</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">Preguntas Frecuentes y Solución de Problemas</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Aviso Legal ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">Este no es un proyecto oficial de OptiScaler. No tengo ninguna afiliación con el equipo de OptiScaler. Este es un proyecto personal desarrollado sin ningún propósito comercial. Cualquiera puede intentar usar este software bajo su propio riesgo.&#x0a;&#x0a;Créditos: Un agradecimiento especial al equipo de OptiScaler; esta herramienta solo es posible gracias a su increíble trabajo en el mod original.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">Este no es un proyecto oficial de OptiScaler. No tengo ninguna afiliación con el equipo de OptiScaler. Este es un proyecto personal desarrollado sin ningún propósito comercial. Cualquiera puede intentar usar este software bajo su propio riesgo.&#x0a;&#x0a;Créditos: Un agradecimiento especial al equipo de OptiScaler; esta herramienta solo es posible gracias a su increíble trabajo en el mod original. Gracias también a artur07305 (DLSS Enabler), danielblnc (mod de Neural Rendering de DLSS para AMD) y MatheusGViana (wrapper comunitario de OptiScaler + Neural Rendering) por el trabajo detrás de estas integraciones experimentales opcionales.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">Sistema</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Licencia y Derechos de Autor</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Licenciado bajo GPL-3.0-or-later. Este es software libre: puedes cambiarlo y redistribuirlo bajo ciertas condiciones. Consulta el archivo LICENSE para más detalles.&#x0a;&#x0a;Los componentes de terceros (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) están sujetos a sus respectivas licencias.</x:String>
@@ -986,7 +986,10 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtCompatSidebarWikiFgInputs">Entradas de FG</x:String>
     <x:String x:Key="TxtCompatSidebarWikiFilename">Método de inyección</x:String>
     <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} problema(s) conocido(s) reportado(s) — consulta la página wiki para más detalles.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Corregido: FSR 4 Swap podía fallar al iniciar el juego en GPU RDNA2, causado por un ajuste interno que apuntaba a un archivo que el cliente nunca llegó a proporcionar.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Corregido: NukemFG (DLSSG-to-FSR3) se activaba forzosamente incluso en juegos sin generación de fotogramas DLSS nativa, dejando a OptiScaler pidiendo "activar Frame Generation" sin ninguna forma de satisfacerlo.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nuevo: botón "Buscar actualizaciones" en Ayuda, con una insignia junto a la versión de la app cuando hay una nueva versión disponible.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nuevo: FSR 4 INT8 fue reemplazado por FSR 4 DLL (Swap), que te permite alternar entre INT8 y FP8 y reemplazar directamente los archivos FSR 4 del juego sin instalar OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nuevo: ahora podés configurar Frame Generation y Multi Frame Generation directamente desde la ventana Manage, con soporte para DLSS Enabler incluido.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nuevo: la ventana Manage suma los selectores "Output Upscaler" y "Upscaling Quality" para sobrescribir el perfil de un juego sin entrar a Profiles.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Nuevo: la sección Experimental (en Settings) agrega soporte para addons de RenoDx e integración del Nvidia Neural Rendering Mod para AMD.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Corregido: las claves de FSR 4 DLL que desaparecían al reinstalar con un perfil distinto, y los cambios en la ventana Profile que no se guardaban al salir de la ventana.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Y un montón de cosas más.</x:String>
 </ResourceDictionary>

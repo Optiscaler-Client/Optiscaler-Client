@@ -418,7 +418,7 @@
     <x:String x:Key="TxtHelpPageGamepad">ゲームパッド対応</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; トラブルシューティング</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免責事項 ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">これはOptiScalerの公式プロジェクトではありません。OptiScalerチームとは一切関係ありません。これは商業目的なく開発された個人プロジェクトです。誰でも自己責任でこのソフトウェアを試用・利用できます。&#x0a;&#x0a;クレジット: OptiScalerチームへの特別な感謝を捧げます。このツールは彼らの素晴らしいオリジナルModの仕事があって初めて成り立っています。</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">これはOptiScalerの公式プロジェクトではありません。OptiScalerチームとは一切関係ありません。これは商業目的なく開発された個人プロジェクトです。誰でも自己責任でこのソフトウェアを試用・利用できます。&#x0a;&#x0a;クレジット: OptiScalerチームへの特別な感謝を捧げます。このツールは彼らの素晴らしいオリジナルModの仕事があって初めて成り立っています。また、これらのオプションの実験的統合を支えてくれた artur07305(DLSS Enabler)、danielblnc(AMD向けDLSS Neural Renderingのmod)、MatheusGViana(コミュニティ製OptiScaler + Neural Renderingラッパー)にも感謝します。</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later ライセンスの下で提供されています。これはフリーソフトウェアです: 一定の条件のもとで変更・再配布が可能です。詳細はLICENSEファイルをご覧ください。&#x0a;&#x0a;サードパーティコンポーネント (OptiScaler、Fakenvapi、NukemFG、FSR 4 Swap) はそれぞれのライセンスに従います。</x:String>
     <x:String x:Key="TxtHelpSystemTitle">システム</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">ライセンス &amp; 著作権</x:String>
@@ -756,9 +756,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 修正: FSR 4 Swap が RDNA2 GPU でゲームの起動に失敗する場合がある問題を修正しました。原因は、クライアントが実際には提供していないファイルを指す内部設定でした。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正: NukemFG（DLSSG-to-FSR3）が、ネイティブのDLSSフレーム生成を持たないゲームでも強制的に有効化され、OptiScalerが満たす方法のないまま「フレーム生成を有効にしてください」と要求し続ける問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: ヘルプに「アップデートを確認」ボタンを追加しました。新しいリリースが利用可能な場合、アプリバージョンの横にバッジが表示されます。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: FSR 4 INT8 が FSR 4 DLL（Swap）に置き換わり、OptiScaler をインストールせずに INT8 と FP8 を切り替えたり、ゲームの FSR 4 ファイルを直接入れ替えたりできるようになりました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 新機能: フレーム生成とマルチフレーム生成を、Manage ウィンドウから直接設定できるようになりました。DLSS Enabler にも対応しています。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: Manage ウィンドウに「Output Upscaler」と「Upscaling Quality」セレクターが追加され、Profiles を開かずにゲームのプロファイルを上書きできます。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 新機能: 設定の実験的セクションに、RenoDx アドオン対応と AMD 向け Nvidia Neural Rendering Mod 統合が追加されました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: 別のプロファイルで再インストールした後に FSR 4 DLL キーが消える問題と、Profile ウィンドウを離れた際に変更が保存されない問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• そしてまだまだ盛りだくさんです。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>

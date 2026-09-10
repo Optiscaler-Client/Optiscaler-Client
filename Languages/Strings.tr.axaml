@@ -410,7 +410,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpPageGamepad">Gamepad Desteği</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">SSS &amp; Sorun Giderme</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Yasal Uyarı ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">Bu resmi bir OptiScaler projesi değildir. OptiScaler ekibiyle hiçbir bağlantım yoktur. Bu, herhangi bir ticari amaç güdülmeden geliştirilen kişisel bir projedir. Herkes bu yazılımı kendi sorumluluğunda kullanmakta özgürdür.&#x0a;&#x0a;Katkılar: OptiScaler ekibine özel teşekkürler; bu araç yalnızca orijinal mod üzerindeki inanılmaz çalışmaları sayesinde mümkündür.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">Bu resmi bir OptiScaler projesi değildir. OptiScaler ekibiyle hiçbir bağlantım yoktur. Bu, herhangi bir ticari amaç güdülmeden geliştirilen kişisel bir projedir. Herkes bu yazılımı kendi sorumluluğunda kullanmakta özgürdür.&#x0a;&#x0a;Katkılar: OptiScaler ekibine özel teşekkürler; bu araç yalnızca orijinal mod üzerindeki inanılmaz çalışmaları sayesinde mümkündür. Ayrıca artur07305'e (DLSS Enabler), danielblnc'ye (AMD için DLSS Neural Rendering modu) ve MatheusGViana'ya (topluluk OptiScaler + Neural Rendering wrapper'ı) bu isteğe bağlı deneysel entegrasyonların arkasındaki emek için de teşekkürler.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later lisansı altında lisanslanmıştır. Bu özgür yazılımdır: belirli koşullar altında değiştirip yeniden dağıtabilirsiniz. Ayrıntılar için LICENSE dosyasına bakın.&#x0a;&#x0a;Üçüncü taraf bileşenler (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) kendi lisanslarına tabidir.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">Sistem</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Lisans &amp; Telif Hakkı</x:String>
@@ -978,7 +978,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtUpscalingQualityApplyError">Upscaling kalite yapılandırması uygulanamadı:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Çıkış çözünürlüğünden dahili giriş çözünürlüğünü hesaplamak için kullanılan böleni seçin.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Özel Upscaling Kalitesi</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Düzeltildi: FSR 4 Swap, istemcinin gerçekte hiçbir zaman sağlamadığı bir dosyaya işaret eden dahili bir ayar nedeniyle RDNA2 GPU'larında oyunu başlatamayabiliyordu.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Düzeltildi: NukemFG (DLSSG-to-FSR3), yerel DLSS Kare Oluşturma özelliği olmayan oyunlarda bile zorla etkinleştiriliyordu ve bu da OptiScaler'ın karşılanması mümkün olmayan bir şekilde sürekli "Kare Oluşturmayı etkinleştir" istemesine yol açıyordu.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Yeni: Yardım'da "Güncellemeleri Denetle" düğmesi eklendi; yeni bir sürüm mevcut olduğunda uygulama sürümünün yanında bir rozet gösterilir.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Yeni: FSR 4 INT8, artık INT8 ve FP8 arasında geçiş yapmanızı ve OptiScaler yüklemeden doğrudan oyunun FSR 4 dosyalarını değiştirmenizi sağlayan FSR 4 DLL (Swap) ile değiştirildi.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Yeni: Kare Oluşturma ve Çoklu Kare Oluşturma artık DLSS Enabler desteği dahil olmak üzere doğrudan Yönet penceresinden ayarlanabiliyor.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Yeni: Yönet penceresine, Profiller'e gitmeden bir oyunun profilini geçersiz kılmak için Çıkış Ölçekleyici ve Ölçekleme Kalitesi seçicileri eklendi.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Yeni: Ayarlar'daki Deneysel bölümü, RenoDx eklenti desteği ve AMD için Nvidia Neural Rendering Mod entegrasyonu ekliyor.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Düzeltildi: Farklı bir profille yeniden yüklendikten sonra FSR 4 DLL anahtarlarının kaybolması ve Profil penceresinden çıkıldığında değişikliklerin kaydedilmemesi sorunu.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Ve çok daha fazlası.</x:String>
 </ResourceDictionary>

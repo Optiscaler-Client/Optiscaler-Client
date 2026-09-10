@@ -411,7 +411,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpPageGamepad">Gamepad-ondersteuning</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Probleemoplossing</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Disclaimer ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">Dit is geen officieel OptiScaler-project. Ik heb geen enkele band met het OptiScaler-team. Dit is een persoonlijk project dat zonder commercieel doel is ontwikkeld. Iedereen is vrij om deze software op eigen risico te proberen en te gebruiken.&#x0a;&#x0a;Credits: Een speciale dank aan het OptiScaler-team; dit hulpmiddel is alleen mogelijk dankzij hun ongelooflijke werk aan de originele mod.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">Dit is geen officieel OptiScaler-project. Ik heb geen enkele band met het OptiScaler-team. Dit is een persoonlijk project dat zonder commercieel doel is ontwikkeld. Iedereen is vrij om deze software op eigen risico te proberen en te gebruiken.&#x0a;&#x0a;Credits: Een speciale dank aan het OptiScaler-team; dit hulpmiddel is alleen mogelijk dankzij hun ongelooflijke werk aan de originele mod. Ook dank aan artur07305 (DLSS Enabler), danielblnc (DLSS Neural Rendering-mod voor AMD) en MatheusGViana (community-wrapper voor OptiScaler + Neural Rendering) voor het werk achter deze optionele experimentele integraties.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Gelicentieerd onder GPL-3.0-or-later. Dit is vrije software: u kunt het wijzigen en verspreiden onder bepaalde voorwaarden. Zie het LICENSE-bestand voor details.&#x0a;&#x0a;Componenten van derden (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) vallen onder hun respectieve licenties.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">Systeem</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Licentie &amp; Auteursrecht</x:String>
@@ -984,7 +984,10 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtUpscalingQualityApplyError">De upscaling-kwaliteitsconfiguratie kon niet worden toegepast:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Kies de deler die wordt gebruikt om de interne invoerresolutie te berekenen op basis van de outputresolutie.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Aangepaste upscaling-kwaliteit</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Opgelost: FSR 4 Swap kon het spel niet starten op RDNA2-GPU's, veroorzaakt door een interne instelling die verwees naar een bestand dat de client in werkelijkheid nooit had geleverd.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Opgelost: NukemFG (DLSSG-to-FSR3) werd geforceerd ingeschakeld, zelfs bij spellen zonder native DLSS Frame Generation, waardoor OptiScaler bleef vragen om "Frame Generation in te schakelen" zonder dat hieraan kon worden voldaan.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Nieuw: knop "Controleren op updates" in Help, met een badge naast de app-versie zodra er een nieuwe release beschikbaar is.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: FSR 4 INT8 is vervangen door FSR 4 DLL (Swap), waarmee je kunt wisselen tussen INT8 en FP8 en de FSR 4-bestanden van het spel direct kunt vervangen zonder OptiScaler te installeren.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nieuw: Frame Generation en Multi Frame Generation kunnen nu direct vanuit het Manage-venster worden ingesteld, inclusief ondersteuning voor DLSS Enabler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nieuw: het Manage-venster heeft nu de selectors "Output Upscaler" en "Upscaling Quality" om het profiel van een spel te overschrijven zonder naar Profiles te gaan.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Nieuw: een Experimentele sectie (in Settings) voegt ondersteuning toe voor RenoDx-addons en integratie van de Nvidia Neural Rendering Mod voor AMD.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Opgelost: FSR 4 DLL-sleutels die verdwenen na herinstallatie met een ander profiel, en wijzigingen in het Profile-venster die niet werden opgeslagen bij het verlaten ervan.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• En nog veel meer.</x:String>
 </ResourceDictionary>

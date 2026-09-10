@@ -411,7 +411,7 @@
     <x:String x:Key="TxtHelpPageGamepad">게임패드 지원</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; 문제 해결</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">면책 조항 ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">이것은 OptiScaler의 공식 프로젝트가 아닙니다. 저는 OptiScaler 팀과 아무런 관련이 없습니다. 이것은 상업적 목적 없이 개발된 개인 프로젝트입니다. 누구든지 자신의 책임 하에 이 소프트웨어를 사용할 수 있습니다.&#x0a;&#x0a;크레딧: OptiScaler 팀에 특별한 감사를 드립니다. 이 도구는 그들의 놀라운 원본 모드 작업 덕분에 가능합니다.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">이것은 OptiScaler의 공식 프로젝트가 아닙니다. 저는 OptiScaler 팀과 아무런 관련이 없습니다. 이것은 상업적 목적 없이 개발된 개인 프로젝트입니다. 누구든지 자신의 책임 하에 이 소프트웨어를 사용할 수 있습니다.&#x0a;&#x0a;크레딧: OptiScaler 팀에 특별한 감사를 드립니다. 이 도구는 그들의 놀라운 원본 모드 작업 덕분에 가능합니다. 이러한 선택적 실험적 통합을 위해 애써주신 artur07305(DLSS Enabler), danielblnc(AMD용 DLSS Neural Rendering 모드), MatheusGViana(커뮤니티 OptiScaler + Neural Rendering 래퍼)에게도 감사드립니다.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later 라이선스에 따라 사용이 허가되었습니다. 이것은 자유 소프트웨어입니다: 특정 조건 하에 수정 및 재배포가 가능합니다. 자세한 내용은 LICENSE 파일을 참조하세요.&#x0a;&#x0a;서드파티 컴포넌트 (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap)는 각각의 라이선스를 따릅니다.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">시스템</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">라이선스 &amp; 저작권</x:String>
@@ -980,7 +980,10 @@
     <x:String x:Key="TxtUpscalingQualityApplyError">업스케일링 품질 설정을 적용할 수 없습니다:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">출력 해상도로부터 내부 입력 해상도를 계산할 때 사용할 배율을 선택하세요.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">사용자 지정 업스케일링 품질</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 수정: FSR 4 Swap이 RDNA2 GPU에서 게임 실행에 실패할 수 있었던 문제를 수정했습니다. 클라이언트가 실제로 제공한 적이 없는 파일을 가리키던 내부 설정이 원인이었습니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 수정: 네이티브 DLSS 프레임 생성이 없는 게임에서도 NukemFG(DLSSG-to-FSR3)가 강제로 활성화되어, OptiScaler가 만족시킬 방법 없이 계속 "프레임 생성 활성화"를 요구하던 문제를 수정했습니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 신규: 도움말에 "업데이트 확인" 버튼이 추가되었으며, 새 버전이 있을 때 앱 버전 옆에 배지가 표시됩니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 신규: FSR 4 INT8이 FSR 4 DLL(Swap)로 대체되어, OptiScaler를 설치하지 않고도 INT8과 FP8 사이를 전환하고 게임의 FSR 4 파일을 직접 교체할 수 있습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 신규: 이제 프레임 생성 및 다중 프레임 생성을 Manage 창에서 직접 설정할 수 있으며, DLSS Enabler도 지원합니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 신규: Manage 창에 "Output Upscaler" 및 "Upscaling Quality" 선택기가 추가되어 Profiles로 이동하지 않고도 게임 프로필을 재정의할 수 있습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 신규: 설정의 실험적 섹션에 RenoDx 애드온 지원과 AMD용 Nvidia Neural Rendering Mod 통합이 추가되었습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 수정: 다른 프로필로 재설치한 후 FSR 4 DLL 키가 사라지던 문제와 Profile 창을 나갈 때 변경 사항이 저장되지 않던 문제를 수정했습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 그 외에도 다양한 변경 사항이 있습니다.</x:String>
 </ResourceDictionary>

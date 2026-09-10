@@ -411,7 +411,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtHelpPageGamepad">Gamepad-Unterstützung</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Fehlerbehebung</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Haftungsausschluss ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">Dies ist kein offizielles OptiScaler-Projekt. Ich habe keine Verbindung zum OptiScaler-Team. Dies ist ein persönliches Projekt, das ohne kommerzielle Absichten entwickelt wurde. Jeder kann diese Software auf eigenes Risiko ausprobieren und verwenden.&#x0a;&#x0a;Credits: Ein besonderer Dank gilt dem OptiScaler-Team; dieses Tool ist nur dank ihrer unglaublichen Arbeit am Original-Mod möglich.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">Dies ist kein offizielles OptiScaler-Projekt. Ich habe keine Verbindung zum OptiScaler-Team. Dies ist ein persönliches Projekt, das ohne kommerzielle Absichten entwickelt wurde. Jeder kann diese Software auf eigenes Risiko ausprobieren und verwenden.&#x0a;&#x0a;Credits: Ein besonderer Dank gilt dem OptiScaler-Team; dieses Tool ist nur dank ihrer unglaublichen Arbeit am Original-Mod möglich. Danke auch an artur07305 (DLSS Enabler), danielblnc (DLSS-Neural-Rendering-Mod für AMD) und MatheusGViana (Community-Wrapper für OptiScaler + Neural Rendering) für die Arbeit hinter diesen optionalen experimentellen Integrationen.</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Lizenziert unter GPL-3.0-or-later. Dies ist freie Software: Sie können sie unter bestimmten Bedingungen ändern und weitergeben. Weitere Informationen finden Sie in der LICENSE-Datei.&#x0a;&#x0a;Drittanbieterkomponenten (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) unterliegen ihren jeweiligen Lizenzen.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">System</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Lizenz &amp; Urheberrecht</x:String>
@@ -984,7 +984,10 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeMessage">Das Programm wurde aufgrund mehrfacher wiederkehrender Abstürze in den Software-Rendering-Modus versetzt.&#x0a;&#x0a;Du kannst in den Einstellungen zum Hardware-Rendering (empfohlen) zurückkehren.</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Render-Modus geändert</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Behoben: FSR 4 Swap konnte das Spiel auf RDNA2-GPUs nicht starten, verursacht durch eine interne Einstellung, die auf eine Datei verwies, die der Client nie tatsächlich bereitgestellt hatte.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Behoben: NukemFG (DLSSG-to-FSR3) wurde selbst bei Spielen ohne native DLSS-Frame-Generierung zwangsweise aktiviert, wodurch OptiScaler weiterhin zur Aktivierung von Frame Generation aufforderte, ohne dass dies erfüllt werden konnte.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Neu: Schaltfläche "Nach Updates suchen" in der Hilfe, mit einem Badge neben der App-Version, sobald eine neue Version verfügbar ist.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Neu: FSR 4 INT8 wurde durch FSR 4 DLL (Swap) ersetzt, wodurch zwischen INT8 und FP8 gewechselt und die FSR-4-Dateien des Spiels direkt ausgetauscht werden können, ohne OptiScaler zu installieren.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Neu: Frame Generation und Multi Frame Generation können jetzt direkt im Manage-Fenster eingerichtet werden, einschließlich Unterstützung für DLSS Enabler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Neu: Das Manage-Fenster bietet jetzt die Auswahlfelder "Output Upscaler" und "Upscaling Quality", um das Profil eines Spiels zu überschreiben, ohne Profiles zu öffnen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Neu: Ein experimenteller Bereich (in Settings) fügt Unterstützung für RenoDx-Addons und die Integration der Nvidia Neural Rendering Mod für AMD hinzu.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Behoben: FSR-4-DLL-Schlüssel verschwanden nach einer Neuinstallation mit einem anderen Profil, und Änderungen im Profile-Fenster wurden beim Verlassen nicht gespeichert.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Und noch viel mehr.</x:String>
 </ResourceDictionary>

@@ -417,7 +417,7 @@
     <x:String x:Key="TxtHelpPageGamepad">手柄支持</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">常见问题 &amp; 故障排除</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免责声明 ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">这不是 OptiScaler 的官方项目。我与 OptiScaler 团队没有任何关联。这是一个没有任何商业目的的个人项目。任何人都可以自行承担风险使用此软件。&#x0a;&#x0a;致谢：特别感谢 OptiScaler 团队；本工具的实现完全得益于他们在原版模组上的卓越工作。</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">这不是 OptiScaler 的官方项目。我与 OptiScaler 团队没有任何关联。这是一个没有任何商业目的的个人项目。任何人都可以自行承担风险使用此软件。&#x0a;&#x0a;致谢：特别感谢 OptiScaler 团队；本工具的实现完全得益于他们在原版模组上的卓越工作。同样感谢 artur07305(DLSS Enabler)、danielblnc(AMD 版 DLSS Neural Rendering mod)以及 MatheusGViana(社区版 OptiScaler + Neural Rendering 包装器)，为这些可选的实验性集成所付出的努力。</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;根据 GPL-3.0-or-later 授权。这是自由软件：可以在特定条件下修改和重新分发。详情请参阅 LICENSE 文件。&#x0a;&#x0a;第三方组件（OptiScaler、Fakenvapi、NukemFG、FSR 4 Swap）受其各自许可证的约束。</x:String>
     <x:String x:Key="TxtHelpSystemTitle">系统</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">许可证 &amp; 版权</x:String>
@@ -755,9 +755,12 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 修复：FSR 4 Swap 可能因内部设置指向客户端实际未提供的文件，而导致游戏在 RDNA2 显卡上无法启动。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 修复：即使游戏没有原生 DLSS 帧生成，NukemFG（DLSSG-to-FSR3）也会被强制启用，导致 OptiScaler 一直要求"启用帧生成"却无法满足该条件。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增："帮助"中的"检查更新"按钮，当有新版本可用时会在应用版本号旁显示徽章。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：FSR 4 INT8 已被 FSR 4 DLL（Swap）取代，现在可以在 INT8 和 FP8 之间切换，并直接替换游戏的 FSR 4 文件，无需安装 OptiScaler。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 新增：现在可以直接在管理窗口中设置帧生成和多帧生成，包括对 DLSS Enabler 的支持。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增：管理窗口新增了"输出放大器"和"放大质量"选择器，无需进入配置文件即可覆盖游戏的配置。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 新增：实验性功能区（设置中）新增了对 RenoDx 插件的支持以及 AMD 版 Nvidia Neural Rendering Mod 的集成。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修复：使用不同配置重新安装后 FSR 4 DLL 密钥消失的问题，以及离开配置文件窗口后更改未保存的问题。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 还有更多改进。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>
