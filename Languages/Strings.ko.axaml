@@ -931,6 +931,8 @@
     <x:String x:Key="TxtMfgRequiresNightlyToast">DLSS Enabler를 사용한 MFG에는 Nightly OptiScaler 버전이 필요합니다 — 자동으로 전환되었습니다.</x:String>
     <x:String x:Key="TxtMfgWrongChannelToast">선택한 OptiScaler 버전에서는 MFG가 작동하지 않을 수 있습니다 — Nightly 버전을 권장합니다.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">선택된 DLSS Enabler 버전이 없습니다. 먼저 이 게임의 프레임 생성을 구성하세요.</x:String>
+    <x:String x:Key="TxtUpscalingQuality">업스케일링 품질</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">게임의 업스케일링 품질 비율을 재정의합니다. '게임 제어'는 입력 해상도를 게임에 맡깁니다.</x:String>
     <x:String x:Key="TxtOutputUpscaler">출력 업스케일러</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">선택한 프로필 위에서 이 게임에 OptiScaler가 사용하는 업스케일러 백엔드를 재정의합니다. "기본값"은 프로필의 선택을 그대로 유지합니다.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">한 번도 설정하지 않은 모든 게임에 미리 선택되고, 빠른 설치/일괄 설치로 자동 설치되는 기본 "Setup NR" 모드입니다. 위의 기본 GPU가 AMD일 때만 표시됩니다.</x:String>

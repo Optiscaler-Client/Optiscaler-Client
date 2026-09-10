@@ -961,6 +961,8 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtHelpGMFgMfgText">Escolhe quantos quadros gerados podem ser criados para cada quadro renderizado. Disponível apenas para rotas, saídas e hardware compatíveis.</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedTitle">Rotas avançadas</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedText">Mostra rotas manuais e experimentais. Deixe desativado a menos que você saiba que o jogo precisa de uma rota específica.</x:String>
+    <x:String x:Key="TxtUpscalingQuality">Qualidade de upscaling</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Substitui a proporção de qualidade de upscaling do jogo. Controlado pelo jogo deixa a resolução de entrada a cargo do jogo.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Upscaler de saída</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Substitui o backend de upscaler que o OptiScaler usa para este jogo, sobre o perfil selecionado. "Padrão" mantém a escolha do perfil inalterada.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Modo "Setup NR" padrão a ser pré-selecionado para cada jogo nunca configurado, e instalado automaticamente com a Instalação Rápida / Instalação em Massa. Exibido apenas quando a GPU padrão acima é AMD.</x:String>

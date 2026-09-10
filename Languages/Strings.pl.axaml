@@ -950,6 +950,8 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtMfgRequiresNightlyToast">MFG z DLSS Enabler wymaga wersji Nightly OptiScaler — przełączono automatycznie.</x:String>
     <x:String x:Key="TxtMfgWrongChannelToast">MFG może nie działać z wybraną wersją OptiScaler — zalecana jest wersja Nightly.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">Nie wybrano wersji DLSS Enabler. Najpierw skonfiguruj generowanie klatek dla tej gry.</x:String>
+    <x:String x:Key="TxtUpscalingQuality">Jakość skalowania</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Zastępuje współczynnik jakości skalowania gry. Sterowane przez grę pozostawia rozdzielczość wejściową grze.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Upscaler wyjściowy</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Zastępuje backend upscalera używany przez OptiScaler dla tej gry, na wierzchu wybranego profilu. "Domyślny" pozostawia wybór profilu bez zmian.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Domyślny tryb "Setup NR" wstępnie wybierany dla każdej nigdy nieskonfigurowanej gry oraz instalowany automatycznie przy Szybkiej instalacji / Instalacji masowej. Widoczny tylko wtedy, gdy domyślna GPU powyżej to AMD.</x:String>

@@ -950,6 +950,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtMfgRequiresNightlyToast">MFG met DLSS Enabler vereist een Nightly OptiScaler-versie — automatisch overgeschakeld.</x:String>
     <x:String x:Key="TxtMfgWrongChannelToast">MFG werkt mogelijk niet met de geselecteerde OptiScaler-versie — een Nightly-versie wordt aanbevolen.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">Geen DLSS Enabler-versie geselecteerd. Configureer eerst Framegeneratie voor deze game.</x:String>
+    <x:String x:Key="TxtUpscalingQuality">Upscaling-kwaliteit</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Overschrijft de upscaling-kwaliteitsverhouding van het spel. Door spel bepaald laat de invoerresolutie aan het spel over.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Output-upscaler</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Overschrijft welke upscaler-backend OptiScaler voor dit spel gebruikt, bovenop het geselecteerde profiel. "Standaard" laat de keuze van het profiel ongewijzigd.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Standaard "Setup NR"-modus die wordt voorgeselecteerd voor elke nog niet geconfigureerde game, en automatisch wordt geïnstalleerd met Snel installeren / Bulkinstallatie. Alleen zichtbaar als de standaard-GPU hierboven AMD is.</x:String>

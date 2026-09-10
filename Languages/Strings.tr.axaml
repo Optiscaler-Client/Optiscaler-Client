@@ -940,6 +940,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpGMFgMfgText">İşlenen her kare için kaç kare oluşturulabileceğini seçer. Yalnızca uyumlu yollar, çıkışlar ve donanım için kullanılabilir.</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedTitle">Gelişmiş yollar</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedText">Manuel ve deneysel yolları gösterir. Oyunun belirli bir yol gerektirdiğini bilmiyorsanız bunu kapalı bırakın.</x:String>
+    <x:String x:Key="TxtUpscalingQuality">Upscaling kalitesi</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Oyunun upscaling kalite oranını geçersiz kılar. Oyun kontrollü, giriş çözünürlüğünü oyuna bırakır.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Çıkış Upscaler</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Seçili profilin üzerine, OptiScaler'ın bu oyun için kullandığı upscaler arka ucunu geçersiz kılar. "Varsayılan" profildeki seçimi değiştirmeden bırakır.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Hiç yapılandırılmamış her oyun için önceden seçilecek ve Hızlı Kurulum / Toplu Kurulum ile otomatik olarak kurulacak varsayılan "Setup NR" modu. Yalnızca yukarıdaki varsayılan GPU AMD olduğunda gösterilir.</x:String>
