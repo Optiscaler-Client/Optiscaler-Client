@@ -77,8 +77,12 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             if (hasFsrFg) outputs.Add(FrameGenerationOutput.FsrFg);
             if (hasXeFg) outputs.Add(FrameGenerationOutput.XeFg);
             if (hasNukem) outputs.Add(FrameGenerationOutput.Nukem);
-            // Same reasoning as the route above: don't require pre-existing streamline files.
-            if (hasDlssG) outputs.Add(FrameGenerationOutput.DlssG);
+            // Unlike the route above, this isn't gated on hasDlssG: DLSS Enabler's replacement
+            // provider (FGNvngxReplacement=Nukems/FFX/Arturs/Combo — see ApplyAutoNvngxReplacement)
+            // exists specifically to fake DLSS-G output on games/GPUs with no native DLSS-G asset at
+            // all, so this must stay selectable exactly like Auto/Disabled or that whole mechanism
+            // becomes unreachable outside the permissive Default-settings capabilities.
+            outputs.Add(FrameGenerationOutput.DlssG);
             if (hasDlssG && hasNukem) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
         }
 
@@ -151,13 +155,40 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         return [MultiFrameGenerationMode.X2];
     }
 
+    /// <summary>Resolves Route=Auto the same way everywhere: normally via <see cref="GetRecommendation"/>
+    /// (native-capability detection), with two overrides:
+    /// 1. Output explicitly pinned to DLSS-G through DLSS Enabler's replacement provider (Arturs/Combo)
+    ///    — that path fakes DLSS-G output without any native DLSS-G asset, so a per-game recommendation
+    ///    built from native detection would wrongly downgrade it (often to Disabled) on every game that
+    ///    doesn't ship real DLSS-G files, silently discarding an explicit Output/multiplier choice.
+    /// 2. Recommendation resolved to DlssGStreamline and Nukem is also available. DlssGStreamline hooks
+    ///    the swapchain directly through Streamline's own interposer/proxy-factory upgrade
+    ///    (DxgiFactoryHooks::HookToDLSSGFactory) — confirmed via OptiScaler.log to silently kill the game
+    ///    mid-hook on this setup (no crash dump, no Defender flag — an external termination, not our
+    ///    code throwing) on every game/OptiScaler version tried. Nukem reads the exact same native
+    ///    DLSS-G signal through a self-contained converter DLL instead, without that interposer hook, and
+    ///    was confirmed to start cleanly in the same scenario (manually pinned via Advanced routes).
+    ///    Preferred over DlssGStreamline whenever available; DlssGStreamline remains the fallback when
+    ///    Nukem isn't (native DLSS-G present but no converter DLL) — better than nothing.</summary>
+    private static FrameGenerationRoute ResolveEffectiveRoute(GameFrameGenerationSettings settings, FrameGenerationRecommendation recommendation, FrameGenerationCapabilities capabilities)
+    {
+        if (settings.Route != FrameGenerationRoute.Auto) return settings.Route;
+        if (settings.Output == FrameGenerationOutput.DlssG &&
+            settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
+            return FrameGenerationRoute.DlssGStreamline;
+        if (recommendation.Route == FrameGenerationRoute.DlssGStreamline &&
+            capabilities.AvailableRoutes.Contains(FrameGenerationRoute.Nukem))
+            return FrameGenerationRoute.Nukem;
+        return recommendation.Route;
+    }
+
     public bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null)
     {
         if (settings.Route == FrameGenerationRoute.Disabled)
             return false;
 
         var recommendation = GetRecommendation(capabilities);
-        var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
+        var effectiveRoute = ResolveEffectiveRoute(settings, recommendation, capabilities);
         if (effectiveRoute == FrameGenerationRoute.Disabled)
             return false;
 
@@ -174,12 +205,18 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
     {
         var usesNightlySchema = UsesNightlyFrameGenerationSchema(optiscalerVersion);
         var recommendation = GetRecommendation(c);
-        var effectiveRoute = settings.Route == FrameGenerationRoute.Auto ? recommendation.Route : settings.Route;
+        var effectiveRoute = ResolveEffectiveRoute(settings, recommendation, c);
         var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
+        // DlssGStreamline resolved via the Arturs/Combo replacement (see ResolveEffectiveRoute) never
+        // appears in a non-native game's AvailableRoutes — that's the whole point of the replacement,
+        // so it must bypass this native-capability gate the same way AdvancedMode already does.
+        var routeViaNvngxReplacement = effectiveRoute == FrameGenerationRoute.DlssGStreamline &&
+            effectiveOutput == FrameGenerationOutput.DlssG &&
+            settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
 
         if (c.IsAntiCheatDetected && effectiveRoute != FrameGenerationRoute.Disabled)
             throw new InvalidOperationException("Frame generation cannot be applied while anti-cheat is detected.");
-        if (!settings.AdvancedMode && !c.AvailableRoutes.Contains(effectiveRoute))
+        if (!settings.AdvancedMode && !routeViaNvngxReplacement && !c.AvailableRoutes.Contains(effectiveRoute))
             throw new InvalidOperationException("Selected frame-generation route is not available for this game.");
         var availableMfgModes = GetAvailableMfgModes(effectiveRoute, effectiveOutput, c, settings.NvngxReplacement);
         // A multiplier is irrelevant while FG is disabled. Older saved game settings used

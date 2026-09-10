@@ -22,7 +22,7 @@ using System.Text.RegularExpressions;
 namespace OptiscalerClient.Helpers
 {
     /// <summary>
-    /// AMD renamed the FSR4 INT8 mod DLL between releases (amd_fidelityfx_upscaler_dx12.dll -> amdxcffx64.dll).
+    /// AMD renamed the FSR 4 Swap mod DLL between releases (amd_fidelityfx_upscaler_dx12.dll -> amdxcffx64.dll).
     /// Centralizes the known names so every consumer recognizes either one.
     /// </summary>
     public static class Fsr4Int8DllHelper
@@ -131,6 +131,52 @@ namespace OptiscalerClient.Helpers
             return null;
         }
 
+        /// <summary>
+        /// Attempts to find a file in the game directory that corresponds to the given standard FSR DLL name,
+        /// even if it was renamed by the developers (e.g., Hogwarts Legacy renames the loader).
+        /// It checks the OriginalFilename and FileDescription metadata.
+        /// </summary>
+        public static string? FindRenamedTarget(string gameDir, string standardName)
+        {
+            var standardPath = Path.Combine(gameDir, standardName);
+            if (File.Exists(standardPath)) return standardPath;
+
+            var logicalKey = GetLogicalKey(standardName);
+            var searchWord = logicalKey switch
+            {
+                "FrameGeneration" => "Frame Generation",
+                "RadianceCache" => "Radiance Cache",
+                _ => logicalKey
+            };
+
+            try
+            {
+                var possibleFiles = System.IO.Directory.GetFiles(gameDir, "*fidelityfx*.dll")
+                                    .Concat(System.IO.Directory.GetFiles(gameDir, "*amdxc*.dll"))
+                                    .Distinct(System.StringComparer.OrdinalIgnoreCase);
+
+                foreach (var file in possibleFiles)
+                {
+                    var vi = System.Diagnostics.FileVersionInfo.GetVersionInfo(file);
+                    
+                    if (string.Equals(vi.OriginalFilename, standardName, System.StringComparison.OrdinalIgnoreCase))
+                        return file;
+
+                    if (!string.IsNullOrEmpty(searchWord) && 
+                        (vi.FileDescription?.Contains(searchWord, System.StringComparison.OrdinalIgnoreCase) == true))
+                    {
+                        return file;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore any IO or access exceptions
+            }
+
+            return null;
+        }
+
         public static bool ExistsIn(string directory) => FindIn(directory) != null;
 
         /// <summary>Formats GitHub tags for display without changing their cache/config identity.</summary>
@@ -168,7 +214,7 @@ namespace OptiscalerClient.Helpers
 
         /// <summary>
         /// The 3 filenames the DLL-swap feature will look for/replace directly in a game's root
-        /// folder: both names of the main FSR4 INT8 DLL, plus the RDNA2 companion. Deliberately a
+        /// folder: both names of the main FSR 4 Swap DLL, plus the RDNA2 companion. Deliberately a
         /// separate list from KnownFileNames — that one is used elsewhere to detect the Extras DLL
         /// as installed *through OptiScaler*, and must not start matching CustomRdna2FileName (which
         /// normally lives in ".\OptiScaler\", not the game root, and has a different source — see
@@ -213,7 +259,7 @@ namespace OptiscalerClient.Helpers
             var packagedUpscaler = files.FirstOrDefault(f => upscalerNames.Contains(f, System.StringComparer.OrdinalIgnoreCase));
             if (packagedUpscaler != null)
             {
-                var existingUpscaler = FindIn(gameDir);
+                var existingUpscaler = FindRenamedTarget(gameDir, LegacyFileName) ?? FindRenamedTarget(gameDir, CurrentFileName);
                 var targetName = existingUpscaler != null ? Path.GetFileName(existingUpscaler) : packagedUpscaler;
                 candidates.Add((Path.Combine(gameDir, targetName), Path.Combine(cacheDir, packagedUpscaler)));
             }
@@ -221,7 +267,11 @@ namespace OptiscalerClient.Helpers
             foreach (var extra in new[] { RadianceCacheFileName, LoaderFileName, FrameGenerationFileName, DenoiserFileName })
             {
                 if (files.Contains(extra, System.StringComparer.OrdinalIgnoreCase))
-                    candidates.Add((Path.Combine(gameDir, extra), Path.Combine(cacheDir, extra)));
+                {
+                    var existingExtra = FindRenamedTarget(gameDir, extra);
+                    var targetName = existingExtra != null ? Path.GetFileName(existingExtra) : extra;
+                    candidates.Add((Path.Combine(gameDir, targetName), Path.Combine(cacheDir, extra)));
+                }
             }
 
             return candidates;

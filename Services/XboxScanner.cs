@@ -1,4 +1,4 @@
-﻿using OptiscalerClient.Models;
+using OptiscalerClient.Models;
 using System.IO;
 
 namespace OptiscalerClient.Services;

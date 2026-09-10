@@ -1,4 +1,4 @@
-﻿using OptiscalerClient.Models;
+using OptiscalerClient.Models;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;

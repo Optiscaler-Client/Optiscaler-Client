@@ -1,4 +1,4 @@
-﻿namespace OptiscalerClient.Models;
+namespace OptiscalerClient.Models;
 
 /// <summary>
 /// Represents a single entry in the scan exclusion list.

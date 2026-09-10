@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -235,11 +236,11 @@ namespace OptiscalerClient.Views
 
             // ── DLSS Enabler ─────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("dlss-enabler",
-                Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uE9CE"));
+                Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uF4B6"));
 
             // ── Streamline (auto-downloaded, list + delete only) ─────────────
             sidebar.Children.Add(CreateTopButton("streamline",
-                Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE945"));
+                Application.Current?.FindResource("TxtStreamline") as string ?? "Streamline", "\uE7F7"));
 
             // \u2500\u2500 RenoDX (experimental, opt-in \u2014 hidden entirely unless the switch is on) \u2500\u2500\u2500\u2500\u2500\u2500\u2500
             if (_componentService.Config.ShowExperimentalFeatures)
@@ -252,13 +253,13 @@ namespace OptiscalerClient.Views
             if (_componentService.Config.ShowExperimentalFeatures && OperatingSystem.IsWindows())
             {
                 sidebar.Children.Add(CreateTopButton("dlssnronamd",
-                    Application.Current?.FindResource("TxtSetupNr") as string ?? "Setup NR", "\uF4B6"));
+                    Application.Current?.FindResource("TxtSetupNr") as string ?? "Setup NR", "\uE8B0"));
 
                 // The one-time nvngx_dlssnr.dll cache Setup NR needs (see DlssNrOnAmdService) is its
                 // own machine-wide file, not a per-version download like the list above \u2014 a dedicated
                 // page so it can be added/updated/removed without going through Setup NR again.
                 sidebar.Children.Add(CreateTopButton("nvngxdlssnr",
-                    Application.Current?.FindResource("TxtSetupNrNvngxPageLbl") as string ?? "nvngx_dlssnr.dll", "\uE8B0"));
+                    Application.Current?.FindResource("TxtSetupNrNvngxPageLbl") as string ?? "nvngx_dlssnr.dll", "\uF4D3"));
             }
 
             // Section rendering/selection is the caller's responsibility (each constructor calls
@@ -364,15 +365,21 @@ namespace OptiscalerClient.Views
 
         private void RenderOptiScalerWithTabs(StackPanel content)
         {
+            // Total across every channel (Stable/Beta/Nightly/Custom/Modded combined), not just the
+            // active tab — switching tabs shouldn't make the number on top jump around.
+            var totalBytes = _componentService.GetDownloadedOptiScalerVersions()
+                .Sum(v => GetDirectorySizeBytes(_componentService.GetOptiScalerCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(totalBytes));
+
             // ── Tab bar ──────────────────────────────────────────────────────
             var tabGrid = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
+                ColumnDefinitions = new ColumnDefinitions("*,*,*,*,*"),
                 Margin = new Thickness(0, 0, 0, 16)
             };
 
-            var tabs = new[] { "opti-stable", "opti-beta", "opti-nightly", "opti-custom" };
-            var tabLabels = new[] { "Stable", "Beta", "Nightly", "Custom" };
+            var tabs = new[] { "opti-stable", "opti-beta", "opti-nightly", "opti-custom", "opti-modded" };
+            var tabLabels = new[] { "Stable", "Beta", "Nightly", "Custom", "Modded" };
             var tabButtons = new Button[tabs.Length];
 
             for (int i = 0; i < tabs.Length; i++)
@@ -418,8 +425,18 @@ namespace OptiscalerClient.Views
                 case "opti-custom":
                     RenderOptiScalerCustom(content);
                     break;
+                case "opti-modded":
+                    RenderOptiScalerModded(content);
+                    break;
             }
         }
+
+        /// <summary>True for OptiScaler builds downloaded through Setup NR's "Mod + OptiScaler" flow
+        /// (MatheusGViana/dlss-5-amd-project — see ComponentManagementService.DownloadAndImportAmdWrapperVersionAsync),
+        /// which registers them as Custom versions under this name prefix. Kept out of the plain
+        /// "Custom" tab and shown in their own "Modded" tab instead, since they're a distinct source.</summary>
+        private static bool IsAmdWrapperVersion(string version) =>
+            version.StartsWith("custom-amd-presr-", StringComparison.OrdinalIgnoreCase);
 
         private void RenderOptiScalerVersions(StackPanel content, bool showBeta, bool showNightly = false)
         {
@@ -441,7 +458,28 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in filtered)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false));
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, sizeBytes: GetDirectorySizeBytes(_componentService.GetOptiScalerCachePath(ver))));
+        }
+
+        /// <summary>OptiScaler builds from Setup NR's "Mod + OptiScaler" community wrapper — see
+        /// <see cref="IsAmdWrapperVersion"/>. List + delete only, same shape as Streamline's tab:
+        /// these are never manually imported, only downloaded through Setup NR.</summary>
+        private void RenderOptiScalerModded(StackPanel content)
+        {
+            var customSet = _componentService.CustomVersions;
+            var filtered = _componentService.GetDownloadedOptiScalerVersions()
+                .Where(v => customSet.Contains(v) && IsAmdWrapperVersion(v))
+                .ToList();
+
+            if (filtered.Count == 0)
+            {
+                content.Children.Add(MakeEmptyLabel(
+                    Application.Current?.FindResource("TxtNoModdedVersions") as string ?? "No modded versions cached."));
+                return;
+            }
+
+            foreach (var ver in filtered)
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, sizeBytes: GetDirectorySizeBytes(_componentService.GetOptiScalerCachePath(ver))));
         }
 
 
@@ -493,7 +531,7 @@ namespace OptiscalerClient.Views
 
             var customSet    = _componentService.CustomVersions;
             var allDownloaded = _componentService.GetDownloadedOptiScalerVersions();
-            var filtered     = allDownloaded.Where(v => customSet.Contains(v)).ToList();
+            var filtered     = allDownloaded.Where(v => customSet.Contains(v) && !IsAmdWrapperVersion(v)).ToList();
 
             if (filtered.Count == 0)
             {
@@ -504,12 +542,14 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in filtered)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false));
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, sizeBytes: GetDirectorySizeBytes(_componentService.GetOptiScalerCachePath(ver))));
         }
 
         private void RenderOptiPatcher(StackPanel content)
         {
             var versions = _componentService.GetDownloadedOptiPatcherVersions();
+            var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_componentService.GetOptiPatcherCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
 
             if (versions.Count == 0)
             {
@@ -518,12 +558,18 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in versions)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false, isOptiPatcher: true));
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isOptiPatcher: true, sizeBytes: sizes[ver]));
         }
 
 
         private void RenderFsr4WithTabs(StackPanel content)
         {
+            // Total across both variants and both sources (Mirror + Custom, INT8 + FP8 combined) —
+            // switching tabs shouldn't make the number on top jump around.
+            var fsr4TotalBytes = _componentService.GetDownloadedExtrasVersions()
+                .Sum(v => GetDirectorySizeBytes(_componentService.GetExtrasDllCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(fsr4TotalBytes));
+
             // ── Tab bar row 1: Mirror | Custom ───────────────────────────────
             var sourceTabGrid = new Grid
             {
@@ -670,13 +716,15 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in filtered)
-                content.Children.Add(CreateVersionCard(ver, isExtras: true));
+                content.Children.Add(CreateVersionCard(ver, isExtras: true, sizeBytes: GetDirectorySizeBytes(_componentService.GetExtrasDllCachePath(ver))));
         }
 
 
         private void RenderFakenvapi(StackPanel content)
         {
             var downloadedVersions = _componentService.GetDownloadedFakenvapiVersions();
+            var sizes = downloadedVersions.ToDictionary(v => v, v => GetDirectorySizeBytes(_componentService.GetFakenvapiCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
 
             if (downloadedVersions.Count == 0)
             {
@@ -685,11 +733,15 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in downloadedVersions)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isNukemFG: false, isFakenvapi: true));
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isNukemFG: false, isFakenvapi: true, sizeBytes: sizes[ver]));
         }
 
         private void RenderNukemfg(StackPanel content)
         {
+            var nukemSizes = _componentService.GetDownloadedNukemFGVersions()
+                .ToDictionary(v => v, v => GetDirectorySizeBytes(_componentService.GetNukemFGCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(nukemSizes.Values.Sum()));
+
             // Import archive button row
             var importRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16) };
             var btnImport = new Button
@@ -725,15 +777,14 @@ namespace OptiscalerClient.Views
             });
 
             // Version list
-            var nukemVersions = _componentService.GetDownloadedNukemFGVersions();
-            if (nukemVersions.Count == 0)
+            if (nukemSizes.Count == 0)
             {
                 content.Children.Add(MakeEmptyLabel("No NukemFG versions cached."));
             }
             else
             {
-                foreach (var ver in nukemVersions)
-                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isNukemFG: true));
+                foreach (var ver in nukemSizes.Keys)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isNukemFG: true, sizeBytes: nukemSizes[ver]));
             }
         }
 
@@ -744,71 +795,20 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void RenderDlssNrOnAmd(StackPanel content)
         {
-            var downloadRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 16), ColumnSpacing = 8 };
-            var cmbVersion = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
-            Grid.SetColumn(cmbVersion, 0);
-            var btnDownload = new Button
-            {
-                Content = Application.Current?.FindResource("TxtSetupNrDownloadBtn") as string ?? "Download",
-                Padding = new Thickness(12, 5),
-                FontSize = 11,
-                IsEnabled = false
-            };
-            btnDownload.Classes.Add("BtnBase");
-            Grid.SetColumn(btnDownload, 1);
-            downloadRow.Children.Add(cmbVersion);
-            downloadRow.Children.Add(btnDownload);
-            content.Children.Add(downloadRow);
+            // No manual version picker here — versions land automatically (Setup NR's Save button
+            // backgrounds the download, see DlssNrOnAmdService); this page is list + delete only.
+            var versions = _dlssNrService.GetDownloadedVersions();
+            var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrService.GetCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
 
-            var listPanel = new StackPanel { Spacing = 8 };
-            content.Children.Add(listPanel);
-
-            void RefreshList()
+            if (versions.Count == 0)
             {
-                listPanel.Children.Clear();
-                var versions = _dlssNrService.GetDownloadedVersions();
-                if (versions.Count == 0)
-                    listPanel.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
-                else
-                    foreach (var ver in versions)
-                        listPanel.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrOnAmd: true));
+                content.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
+                return;
             }
 
-            RefreshList();
-
-            _ = _dlssNrService.GetReleasesAsync().ContinueWith(t =>
-            {
-                if (t.IsFaulted || t.Result.Count == 0) return;
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    var cached = _dlssNrService.GetDownloadedVersions();
-                    cmbVersion.ItemsSource = t.Result.Select(r => r.Version).Where(v => !cached.Contains(v, StringComparer.OrdinalIgnoreCase)).ToList();
-                    if (cmbVersion.ItemsSource is System.Collections.Generic.List<string> { Count: > 0 })
-                    {
-                        cmbVersion.SelectedIndex = 0;
-                        btnDownload.IsEnabled = true;
-                    }
-                });
-            }, TaskScheduler.Default);
-
-            btnDownload.Click += async (s, e) =>
-            {
-                if (cmbVersion.SelectedItem is not string version) return;
-                btnDownload.IsEnabled = false;
-                try
-                {
-                    await _dlssNrService.DownloadAsync(version);
-                    RefreshList();
-                }
-                catch (Exception ex)
-                {
-                    await new ConfirmDialog(this, "Error", $"Failed to download version: {ex.Message}").ShowDialog<object>(this);
-                }
-                finally
-                {
-                    btnDownload.IsEnabled = true;
-                }
-            };
+            foreach (var ver in versions)
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrOnAmd: true, sizeBytes: sizes[ver]));
         }
 
         /// <summary>
@@ -821,7 +821,20 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void RenderNvngxDlssNr(StackPanel content)
         {
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), VerticalAlignment = VerticalAlignment.Center };
+            var txtTotalSize = CreateTotalSizeBadge(0);
+            content.Children.Add(txtTotalSize);
+
+            void UpdateTotalSize()
+            {
+                long total = 0;
+                if (_dlssNrService.IsNvngxDlssNrCached())
+                    total += SafeFileLength(_dlssNrService.CachedNvngxDlssNrPath);
+                if (_dlssNrService.IsModeBOutputCached())
+                    total += _dlssNrService.GetModeBOutputCacheSize();
+                SetTotalSizeBadgeText(txtTotalSize, total);
+            }
+
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"), VerticalAlignment = VerticalAlignment.Center };
 
             var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
             stack.Children.Add(new TextBlock
@@ -846,6 +859,10 @@ namespace OptiscalerClient.Views
             grid.Children.Add(btnAddUpdate);
             Grid.SetColumn(btnAddUpdate, 1);
 
+            var badgeSize = CreateSizeBadge(0);
+            grid.Children.Add(badgeSize);
+            Grid.SetColumn(badgeSize, 2);
+
             var btnDelete = new Button
             {
                 Content = Application.Current?.FindResource("TxtDeletePlain") as string ?? "Delete",
@@ -855,7 +872,7 @@ namespace OptiscalerClient.Views
             };
             btnDelete.Classes.Add("BtnSecondary");
             grid.Children.Add(btnDelete);
-            Grid.SetColumn(btnDelete, 2);
+            Grid.SetColumn(btnDelete, 3);
 
             var card = new Border
             {
@@ -879,6 +896,9 @@ namespace OptiscalerClient.Views
                     ? Application.Current?.FindResource("TxtSetupNrUpdateNvngxBtn") as string ?? "Update nvngx_dlssnr.dll..."
                     : Application.Current?.FindResource("TxtSetupNrPickNvngxBtn") as string ?? "Select nvngx_dlssnr.dll...";
                 btnDelete.IsVisible = cached;
+                badgeSize.IsVisible = cached;
+                if (cached) SetSizeBadgeText(badgeSize, SafeFileLength(_dlssNrService.CachedNvngxDlssNrPath));
+                UpdateTotalSize();
             }
             Refresh();
 
@@ -919,6 +939,84 @@ namespace OptiscalerClient.Views
                 _dlssNrService.DeleteCachedNvngx();
                 Refresh();
             };
+
+            // Mode B ("Mod + OptiScaler") weights cache — see DlssNrOnAmdService's Mode B output cache
+            // notes. Only shown once something is actually cached: there's nothing else to do here,
+            // it's generated automatically on the first "Mod + OptiScaler" install, never picked by hand.
+            var weightsGrid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), VerticalAlignment = VerticalAlignment.Center };
+            var weightsStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            weightsStack.Children.Add(new TextBlock
+            {
+                Text = Application.Current?.FindResource("TxtSetupNrWeightsPageLbl") as string ?? "Neural Rendering Mod Weights",
+                FontWeight = FontWeight.Bold,
+                Foreground = this.FindResource("BrTextPrimary") as IBrush ?? Brushes.White
+            });
+            var txtWeightsSubtitle = new TextBlock
+            {
+                FontSize = 12,
+                Foreground = this.FindResource("BrTextSecondary") as IBrush,
+                Margin = new Thickness(0, 2, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            };
+            weightsStack.Children.Add(txtWeightsSubtitle);
+            weightsGrid.Children.Add(weightsStack);
+            Grid.SetColumn(weightsStack, 0);
+
+            var badgeWeightsSize = CreateSizeBadge(0);
+            weightsGrid.Children.Add(badgeWeightsSize);
+            Grid.SetColumn(badgeWeightsSize, 1);
+
+            var btnDeleteWeights = new Button
+            {
+                Content = Application.Current?.FindResource("TxtDeletePlain") as string ?? "Delete",
+                Padding = new Thickness(12, 4),
+                FontSize = 11,
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            btnDeleteWeights.Classes.Add("BtnSecondary");
+            weightsGrid.Children.Add(btnDeleteWeights);
+            Grid.SetColumn(btnDeleteWeights, 2);
+
+            var weightsCard = new Border
+            {
+                Background = this.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(16, 12),
+                Margin = new Thickness(0, 8, 0, 0),
+                Child = weightsGrid
+            };
+            content.Children.Add(weightsCard);
+
+            void RefreshWeightsCard()
+            {
+                var cached = _dlssNrService.IsModeBOutputCached();
+                weightsCard.IsVisible = cached;
+                if (!cached) { UpdateTotalSize(); return; }
+
+                var sizeBytes = _dlssNrService.GetModeBOutputCacheSize();
+                var sizeMb = (int)Math.Round(sizeBytes / 1024.0 / 1024.0);
+                txtWeightsSubtitle.Text = string.Format(
+                    Application.Current?.FindResource("TxtSetupNrWeightsCachedStatus") as string ?? "Cached ({0} MB) — future \"Mod + OptiScaler\" installs skip danielblnc's installer.",
+                    sizeMb);
+                SetSizeBadgeText(badgeWeightsSize, sizeBytes);
+                UpdateTotalSize();
+            }
+            RefreshWeightsCard();
+
+            btnDeleteWeights.Click += async (s, e) =>
+            {
+                var confirmed = await new ConfirmDialog(this,
+                    Application.Current?.FindResource("TxtSetupNrDeleteWeightsTitle") as string ?? "Delete cached weights",
+                    Application.Current?.FindResource("TxtSetupNrDeleteWeightsMsg") as string ?? "Are you sure you want to delete the cached weights? The next \"Mod + OptiScaler\" install (on any game) will run danielblnc's installer again to regenerate them.",
+                    false
+                ).ShowDialog<bool>(this);
+                if (!confirmed) return;
+
+                _dlssNrService.DeleteModeBOutputCache();
+                RefreshWeightsCard();
+            };
         }
 
         /// <summary>
@@ -930,6 +1028,10 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void RenderRenodx(StackPanel content)
         {
+            var allEntries = _componentService.GetAllCachedRenodxEntries();
+            var totalBytes = allEntries.Sum(e => GetDirectorySizeBytes(_componentService.GetRenodxCachePath(e.GameKey)));
+            content.Children.Add(CreateTotalSizeBadge(totalBytes));
+
             var topRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, 12) };
             var txtSearch = new TextBox
             {
@@ -1005,7 +1107,7 @@ namespace OptiscalerClient.Views
 
         private Border CreateRenodxCard(RenodxCacheEntry entry)
         {
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto"), VerticalAlignment = VerticalAlignment.Center };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*, Auto, Auto"), VerticalAlignment = VerticalAlignment.Center };
 
             var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
             stack.Children.Add(new TextBlock
@@ -1023,6 +1125,10 @@ namespace OptiscalerClient.Views
             grid.Children.Add(stack);
             Grid.SetColumn(stack, 0);
 
+            var badgeSize = CreateSizeBadge(GetDirectorySizeBytes(_componentService.GetRenodxCachePath(entry.GameKey)));
+            grid.Children.Add(badgeSize);
+            Grid.SetColumn(badgeSize, 1);
+
             var btnDelete = new Button
             {
                 Content = Application.Current?.FindResource("TxtDeletePlain") as string ?? "Delete",
@@ -1034,7 +1140,7 @@ namespace OptiscalerClient.Views
             btnDelete.Classes.Add("BtnSecondary");
             btnDelete.Click += BtnDelete_Click;
             grid.Children.Add(btnDelete);
-            Grid.SetColumn(btnDelete, 1);
+            Grid.SetColumn(btnDelete, 2);
 
             return new Border
             {
@@ -1049,6 +1155,14 @@ namespace OptiscalerClient.Views
 
         private void RenderDlssEnablerWithTabs(StackPanel content)
         {
+            // Total across both sources (Mirror + Custom combined) — switching tabs shouldn't make
+            // the number on top jump around.
+            var dlssTotalBytes = _componentService.GetDownloadedDlssEnablerMirrorVersions()
+                    .Sum(v => GetDirectorySizeBytes(_componentService.GetDlssEnablerMirrorCachePath(v)))
+                + _componentService.GetDownloadedDlssEnablerVersions()
+                    .Sum(v => GetDirectorySizeBytes(_componentService.GetDlssEnablerCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(dlssTotalBytes));
+
             // ── Tab bar: Mirror | Custom ──────────────────────────────────────
             var tabGrid = new Grid
             {
@@ -1099,7 +1213,7 @@ namespace OptiscalerClient.Views
                 else
                 {
                     foreach (var ver in mirrorVersions)
-                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnablerMirror: true));
+                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnablerMirror: true, sizeBytes: GetDirectorySizeBytes(_componentService.GetDlssEnablerMirrorCachePath(ver))));
                 }
             }
             else
@@ -1148,7 +1262,7 @@ namespace OptiscalerClient.Views
                 else
                 {
                     foreach (var ver in versions)
-                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true));
+                        content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isDlssEnabler: true, sizeBytes: GetDirectorySizeBytes(_componentService.GetDlssEnablerCachePath(ver))));
                 }
             }
         }
@@ -1157,6 +1271,9 @@ namespace OptiscalerClient.Views
         private void RenderStreamline(StackPanel content)
         {
             var versions = _componentService.GetDownloadedStreamlineVersions();
+            var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_componentService.GetStreamlineCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
+
             if (versions.Count == 0)
             {
                 content.Children.Add(MakeEmptyLabel(Application.Current?.FindResource("TxtNoStreamlineVersions") as string ?? "No Streamline SDK versions cached."));
@@ -1164,12 +1281,101 @@ namespace OptiscalerClient.Views
             }
 
             foreach (var ver in versions)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isStreamline: true));
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isStreamline: true, sizeBytes: sizes[ver]));
+        }
+
+        // ── Size helpers ─────────────────────────────────────────────────────
+
+        private static long GetDirectorySizeBytes(string dir)
+        {
+            if (!Directory.Exists(dir)) return 0;
+            try { return new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length); }
+            catch { return 0; }
+        }
+
+        private static long SafeFileLength(string path)
+        {
+            try { return File.Exists(path) ? new FileInfo(path).Length : 0; }
+            catch { return 0; }
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            const double kb = 1024, mb = kb * 1024, gb = mb * 1024;
+            return bytes switch
+            {
+                >= (long)gb => $"{bytes / gb:0.##} GB",
+                >= (long)mb => $"{bytes / mb:0.#} MB",
+                >= (long)kb => $"{bytes / kb:0} KB",
+                _ => $"{bytes} B"
+            };
+        }
+
+        private string FormatTotalSizeText(long totalBytes) => string.Format(
+            Application.Current?.FindResource("TxtCacheTotalSizeFormat") as string ?? "Total size: {0}",
+            FormatBytes(totalBytes));
+
+        /// <summary>Compact pill shown at the top of each page with the summed size of everything it
+        /// lists — call <see cref="SetTotalSizeBadgeText"/> to update it in place after the page's own
+        /// items (and their sizes) are known.</summary>
+        private Border CreateTotalSizeBadge(long totalBytes)
+        {
+            return new Border
+            {
+                Background = this.FindResource("BrBgElevated") as IBrush ?? Brushes.Transparent,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(12, 4),
+                Margin = new Thickness(0, 0, 0, 12),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Child = new TextBlock
+                {
+                    Text = FormatTotalSizeText(totalBytes),
+                    FontSize = 12,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = this.FindResource("BrAccent") as IBrush ?? Brushes.DeepSkyBlue
+                }
+            };
+        }
+
+        private void SetTotalSizeBadgeText(Border badge, long totalBytes)
+        {
+            if (badge.Child is TextBlock tb) tb.Text = FormatTotalSizeText(totalBytes);
+        }
+
+        /// <summary>Small pill showing one item's own on-disk size, placed to the left of its Delete
+        /// button. Update via <see cref="SetSizeBadgeText"/> if the item's card stays alive and the
+        /// size can change without a full re-render.</summary>
+        private Border CreateSizeBadge(long bytes)
+        {
+            return new Border
+            {
+                Background = this.FindResource("BrBgElevated") as IBrush ?? Brushes.Transparent,
+                BorderBrush = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(8, 3),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 0, 0),
+                Child = new TextBlock
+                {
+                    Text = FormatBytes(bytes),
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = this.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray
+                }
+            };
+        }
+
+        private void SetSizeBadgeText(Border badge, long bytes)
+        {
+            if (badge.Child is TextBlock tb) tb.Text = FormatBytes(bytes);
         }
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, long? sizeBytes = null)
         {
             var grid = new Grid
             {
@@ -1202,6 +1408,13 @@ namespace OptiscalerClient.Views
 
             grid.Children.Add(stack);
             Grid.SetColumn(stack, 0);
+
+            if (sizeBytes.HasValue)
+            {
+                var badgeSize = CreateSizeBadge(sizeBytes.Value);
+                grid.Children.Add(badgeSize);
+                Grid.SetColumn(badgeSize, 1);
+            }
 
             if (isDeletable)
             {
@@ -1327,7 +1540,7 @@ namespace OptiscalerClient.Views
                 else if (info.IsExtras)
                 {
                     title = "Delete FSR4 Extra";
-                    msg = $"Are you sure you want to delete FSR4 INT8 Extra {info.Version}?";
+                    msg = $"Are you sure you want to delete FSR 4 Swap Extra {info.Version}?";
                 }
                 else if (info.IsRenodx)
                 {

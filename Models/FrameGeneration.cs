@@ -62,6 +62,10 @@ public sealed class GameFrameGenerationSettings
     public FrameGenerationNvngxReplacement NvngxReplacement { get; set; } = FrameGenerationNvngxReplacement.None;
     /// <summary>Cache folder name (Cache/DlssEnabler/{name}/) of the DLSS Enabler version selected for this game. Required when NvngxReplacement is Arturs or Combo.</summary>
     public string? DlssEnablerVersion { get; set; }
+    /// <summary>Pinned Streamline SDK version (e.g. "2.14.1"), or null to always use whichever is
+    /// currently latest (ComponentManagementService.LatestStreamlineVersion). Only meaningful when
+    /// FrameGenerationConfigurationService.RequiresStreamline is true for the effective settings.</summary>
+    public string? StreamlineVersion { get; set; }
 }
 
 public enum FrameGenerationRecommendationLevel

@@ -284,6 +284,30 @@
                                           HorizontalContentAlignment="Left"
                                           SelectionChanged="CmbDlssEnablerVersion_SelectionChanged"/>
                             </StackPanel>
+
+                            <StackPanel Name="PnlStreamlineVersion" Spacing="4" IsVisible="False">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="{DynamicResource TxtStreamlineVersionLbl}"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <Border Background="{StaticResource BrBgElevated}"
+                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                            BorderThickness="1" CornerRadius="8"
+                                            Width="16" Height="16"
+                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                            ToolTip.Tip="{DynamicResource TxtStreamlineVersionTooltip}">
+                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Margin="0,-1,0,0"/>
+                                    </Border>
+                                </StackPanel>
+                                <ComboBox Name="CmbStreamlineVersion"
+                                          HorizontalAlignment="Stretch"
+                                          Classes="BtnSelector"
+                                          HorizontalContentAlignment="Left"
+                                          SelectionChanged="CmbStreamlineVersion_SelectionChanged"/>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 

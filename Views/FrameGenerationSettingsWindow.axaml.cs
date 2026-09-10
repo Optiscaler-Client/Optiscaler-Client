@@ -43,6 +43,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private readonly GameFrameGenerationSettings _initialSettings = new();
     private readonly GpuVendor _gpuVendor;
     private string _selectedDlssEnablerVersion = "";
+    private string _selectedStreamlineVersion = ComponentManagementService.LatestAvailableTag;
     // Mirror is the default tab: it's the automated path (download-on-select), Custom is the
     // manual-import fallback. Starts on Custom only when a previously-saved selection is a
     // Custom name (i.e. not tagged with the DlssEnablerMirrorTagPrefix).
@@ -89,9 +90,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             DynamicTargetFps = saved?.DynamicTargetFps,
             AppliedAtUtc = saved?.AppliedAtUtc,
             NvngxReplacement = saved?.NvngxReplacement ?? FrameGenerationNvngxReplacement.None,
-            DlssEnablerVersion = saved?.DlssEnablerVersion
+            DlssEnablerVersion = saved?.DlssEnablerVersion,
+            StreamlineVersion = saved?.StreamlineVersion
         };
         _selectedDlssEnablerVersion = _initialSettings.DlssEnablerVersion ?? "";
+        _selectedStreamlineVersion = _initialSettings.StreamlineVersion ?? ComponentManagementService.LatestAvailableTag;
         _dlssEnablerShowingMirror = string.IsNullOrEmpty(_initialSettings.DlssEnablerVersion)
             || ComponentManagementService.IsDlssEnablerMirrorTag(_initialSettings.DlssEnablerVersion);
 
@@ -139,6 +142,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
             if (versionPanel != null) versionPanel.IsVisible = needsVersion;
             if (needsVersion) PopulateDlssEnablerVersions(_selectedDlssEnablerVersion);
+            UpdateStreamlineVersionVisibility();
             PopulateFgMultiplier(_initialSettings.MultiFrameMode);
             var targetFpsBox = this.FindControl<TextBox>("TxtDynamicTargetFps");
             if (targetFpsBox != null)
@@ -254,6 +258,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         {
             PopulateNvngxReplacements(FrameGenerationNvngxReplacement.None);
             if (versionPanel != null) versionPanel.IsVisible = false;
+            UpdateStreamlineVersionVisibility();
             return;
         }
 
@@ -275,6 +280,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
         var needsVersion = replacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
         if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+        UpdateStreamlineVersionVisibility();
         if (!needsVersion) return;
 
         _dlssEnablerShowingMirror = true;
@@ -356,6 +362,61 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         else { SetInactive(btnMirror); SetActive(btnCustom); }
     }
 
+    /// <summary>Streamline has one source (NVIDIA's own repo, fetched once at startup — see
+    /// ComponentManagementService.CheckForUpdatesAsync) so unlike DLSS Enabler there's no
+    /// Mirror/Custom tab pair here, just a plain version list with a "Latest" sentinel — same
+    /// literal-string convention (not localized) every other "Latest version available" sentinel in
+    /// this codebase already uses (ManageDefaultVersionsWindow, ManageGameWindow).</summary>
+    private void PopulateStreamlineVersions(string selected)
+    {
+        var combo = this.FindControl<ComboBox>("CmbStreamlineVersion");
+        if (combo == null) return;
+
+        var componentService = new ComponentManagementService();
+        combo.Items.Clear();
+        combo.Items.Add(new ComboBoxItem { Content = "Latest version available", Tag = ComponentManagementService.LatestAvailableTag, Classes = { "SentinelOption" } });
+
+        // Union of remotely-known releases and anything already cached locally (covers the case
+        // where a version was downloaded before but the GitHub API call just failed).
+        var versions = componentService.StreamlineAvailableVersions
+            .Concat(componentService.GetDownloadedStreamlineVersions())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(v => Version.TryParse(v, out var parsed) ? parsed : new Version(0, 0))
+            .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase);
+        foreach (var version in versions)
+            combo.Items.Add(new ComboBoxItem { Content = version, Tag = version });
+
+        SelectStringTag(combo, selected);
+    }
+
+    /// <summary>Recomputes whether the current (live combo) settings need Streamline at all — same
+    /// FrameGenerationConfigurationService.RequiresStreamline check the install path uses, called with
+    /// a null optiscalerVersion since only the narrow nightly-Nukem edge case needs the real one and
+    /// that doesn't affect whether this picker should be shown. Called from every point that already
+    /// recomputes PnlDlssEnablerVersion's visibility, since both depend on the same Route/Output/
+    /// NvngxReplacement selection.</summary>
+    private void UpdateStreamlineVersionVisibility()
+    {
+        var panel = this.FindControl<StackPanel>("PnlStreamlineVersion");
+        if (panel == null) return;
+
+        var current = new GameFrameGenerationSettings
+        {
+            Route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute"),
+            Output = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput"),
+            NvngxReplacement = GetSelectedTag<FrameGenerationNvngxReplacement>("CmbFgNvngxReplacement"),
+        };
+        var needsStreamline = new FrameGenerationConfigurationService().RequiresStreamline(current, _capabilities);
+        panel.IsVisible = needsStreamline;
+        if (needsStreamline) PopulateStreamlineVersions(_selectedStreamlineVersion);
+    }
+
+    private void CmbStreamlineVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdating) return;
+        _selectedStreamlineVersion = GetSelectedStringTag("CmbStreamlineVersion");
+    }
+
     private void BtnDlssEnablerMirror_Click(object? sender, RoutedEventArgs e)
     {
         if (_dlssEnablerShowingMirror) return;
@@ -382,6 +443,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     {
         if (_isUpdating) return;
         UpdateDlssStreamlineRouteInfo();
+        UpdateStreamlineVersionVisibility();
     }
 
     /// <summary>Shows an info banner reminding the user that "DLSS-G via Streamline" needs
@@ -395,7 +457,13 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var panel = this.FindControl<Border>("PnlDlssStreamlineRouteInfo");
         if (panel == null) return;
         var selectedRoute = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
-        var effectiveRoute = selectedRoute == FrameGenerationRoute.Auto ? _recommendation.Route : selectedRoute;
+        // Mirrors FrameGenerationConfigurationService.ResolveEffectiveRoute's Nukem preference: Auto
+        // doesn't actually land on DlssGStreamline when Nukem covers the same native DLSS-G signal
+        // without Streamline's crash-prone interposer hook.
+        var effectiveRoute = selectedRoute != FrameGenerationRoute.Auto ? selectedRoute
+            : _recommendation.Route == FrameGenerationRoute.DlssGStreamline && _capabilities.AvailableRoutes.Contains(FrameGenerationRoute.Nukem)
+                ? FrameGenerationRoute.Nukem
+                : _recommendation.Route;
         panel.IsVisible = effectiveRoute == FrameGenerationRoute.DlssGStreamline;
     }
 
@@ -447,6 +515,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
         var versionPanel = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
         if (versionPanel != null) versionPanel.IsVisible = needsVersion;
+        UpdateStreamlineVersionVisibility();
 
         _isUpdating = true;
         try
@@ -491,11 +560,18 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private void ChkAdvancedRoutes_IsCheckedChanged(object? sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var selectedRoute = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+        var isAdvanced = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true;
+        // Leaving Advanced mode must drop back to Auto (unless the simple Output is Disabled) —
+        // otherwise a route picked while exploring Advanced routes stays selected even though the
+        // combo is hidden again, matching the same invariant BtnSave_Click now enforces.
+        var selectedRoute = isAdvanced ? GetSelectedTag<FrameGenerationRoute>("CmbFgRoute")
+            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled : FrameGenerationRoute.Auto;
         _isUpdating = true;
         try
         {
             PopulateRoutes(selectedRoute);
+            UpdateDlssStreamlineRouteInfo();
+            UpdateStreamlineVersionVisibility();
             UpdateDependentControlState();
         }
         finally { _isUpdating = false; }
@@ -543,7 +619,14 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private void BtnSave_Click(object? sender, RoutedEventArgs e)
     {
-        var route = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+        // CmbFgRoute can be left holding a concrete value (e.g. DLSS-G via Streamline) from an
+        // earlier visit to Advanced routes even after the checkbox is unchecked again — toggling
+        // Advanced off only re-populates the (hidden) combo, it doesn't clear the selection. Outside
+        // Advanced mode the route must always be Auto, or a stale concrete pick silently survives
+        // into a "simple mode" save and bypasses ResolveEffectiveRoute's route resolution entirely.
+        var isAdvanced = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true;
+        var route = isAdvanced ? GetSelectedTag<FrameGenerationRoute>("CmbFgRoute")
+            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled : FrameGenerationRoute.Auto;
         if (route == FrameGenerationRoute.Disabled)
         {
             Close(new GameFrameGenerationSettings
@@ -555,7 +638,8 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
                 DynamicTargetFps = _initialSettings.DynamicTargetFps,
                 AppliedAtUtc = _initialSettings.AppliedAtUtc,
                 NvngxReplacement = FrameGenerationNvngxReplacement.None,
-                DlssEnablerVersion = null
+                DlssEnablerVersion = null,
+                StreamlineVersion = null
             });
             return;
         }
@@ -572,6 +656,17 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             dynamicTargetFps = parsedFps;
         }
 
+        // Only persisted when this session's settings actually need Streamline — otherwise a value
+        // picked while it briefly applied (e.g. before switching Output away from DLSS-G) would
+        // linger unused. "Latest version available" is stored as null, same as every other
+        // LatestAvailableTag sentinel, and re-resolved to whatever's actually latest at install time.
+        var needsStreamline = this.FindControl<StackPanel>("PnlStreamlineVersion")?.IsVisible == true;
+        var streamlineTag = GetSelectedStringTag("CmbStreamlineVersion");
+        var streamlineVersion = needsStreamline && !string.IsNullOrEmpty(streamlineTag) &&
+            streamlineTag != ComponentManagementService.LatestAvailableTag
+            ? streamlineTag
+            : null;
+
         Close(new GameFrameGenerationSettings
         {
             Route = route,
@@ -583,7 +678,8 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             NvngxReplacement = replacement,
             DlssEnablerVersion = needsVersion && !string.IsNullOrEmpty(selectedVersion) && selectedVersion != NewDlssEnablerTag
                 ? selectedVersion
-                : null
+                : null,
+            StreamlineVersion = streamlineVersion
         });
     }
 
