@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -69,6 +69,7 @@
     <x:String x:Key="TxtCustomVersions">Özel OptiScaler Sürümleri</x:String>
     <x:String x:Key="TxtImportArchive">Arşiv İçe Aktar</x:String>
     <x:String x:Key="TxtNoCustomVersions">İçe aktarılmış özel sürüm yok.</x:String>
+    <x:String x:Key="TxtNoModdedVersions">Önbelleğe alınmış modded sürüm yok.</x:String>
     <x:String x:Key="TxtCustomVersionWarning">⚠ Özel OptiScaler yapılarını 7z, zip veya rar arşivi olarak içe aktarın. Arşiv uygulama tarafından izlenemeyen dosyalar içeriyorsa kurulum/kaldırma başarısız olabilir. Yalnızca OptiScaler sürüm dosyalarını ekleyin.</x:String>
     <x:String x:Key="TxtImporting">İçe aktarılıyor...</x:String>
     <x:String x:Key="TxtConfirmDelMsg">Bu sürümü silmek istediğinizden emin misiniz?</x:String>
@@ -141,9 +142,9 @@
     <x:String x:Key="TxtBtnManualSwapDll">✦ Manuel DLL Değişimi</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Orijinal DLL'yi Geri Yükle</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Yüklenecek bir şey yok</x:String>
-    <x:String x:Key="TxtErrNoOptiOrExtrasText">Yüklemeden önce bir OptiScaler sürümü veya FSR4 INT8 sürümü seçin.</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">Yüklemeden önce bir OptiScaler sürümü veya FSR 4 Swap sürümü seçin.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Seçilen dosya oyun klasörünün içinde olmalıdır.</x:String>
-    <x:String x:Key="TxtSwapDllNoRdna2Companion">Bu FSR4 INT8 sürümü amdxc64.dll için bir değişiklik içermiyor. Farklı bir sürüm veya hedef dosya seçin.</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">Bu FSR 4 Swap sürümü amdxc64.dll için bir değişiklik içermiyor. Farklı bir sürüm veya hedef dosya seçin.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">FSR4 v{0}, {1} içine değiştirildi.</x:String>
     <x:String x:Key="TxtFsr4SwapSelectTitle">Değiştirilecek dosyaları seçin</x:String>
     <x:String x:Key="TxtFsr4SwapSelectDesc">Bu FSR4 paketi birden fazla dosya içeriyor. Oyun klasörüne kopyalanacak veya değiştirilecek dosyaları seçin.</x:String>
@@ -160,7 +161,7 @@
     <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">{1} dosyadan {0} tanesi seçildi</x:String>
     <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">FSR 4 Değiştirme Seçenekleri'nde (Ayarlar) hiçbir dosya seçilmedi. Orada en az birini işaretleyin veya "Her seferinde bana sor" seçeneğine geri dönün.</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">Geri Yüklemeyi Onayla</x:String>
-    <x:String x:Key="TxtConfirmRestoreDllMsg">Orijinal DLL'yi geri yüklemek istediğinizden emin misiniz?&#x0a;Değiştirilen FSR4 INT8 DLL'si, yedeklenen orijinaliyle değiştirilecek.</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">Orijinal DLL'yi geri yüklemek istediğinizden emin misiniz?&#x0a;Değiştirilen FSR 4 Swap DLL'si, yedeklenen orijinaliyle değiştirilecek.</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">Orijinal DLL başarıyla geri yüklendi.</x:String>
     <x:String x:Key="TxtFsr4SwappedTip">OptiScaler kurulmadan doğrudan değiştirildi</x:String>
     <x:String x:Key="TxtRestoreDllResidueTitle">Orijinal DLL Geri Yüklendi</x:String>
@@ -172,7 +173,7 @@
 
     <x:String x:Key="TxtTooltipOptiScalerVersion">Bu oyun için yüklemek istediğiniz belirli OptiScaler sürümünü seçin.</x:String>
     <x:String x:Key="TxtTooltipInjectionMethod">OptiScaler'ın nasıl yüklendiğini belirler. Oyun uyumluluğuna bağlı olarak yaygın seçenekler dxgi.dll veya version.dll'dir.</x:String>
-    <x:String x:Key="TxtTooltipFsr4Int8">FSR 4 INT8 mod DLL'sini enjekte eder. Bu, RDNA 4 olmayan GPU'ların FSR 4 özelliklerini kullanmasına olanak tanır. RX 9000 serisi (RDNA 4) bir GPU'nuz varsa 'Yok'u seçin.</x:String>
+    <x:String x:Key="TxtTooltipFsr4Int8">FSR 4 Swap mod DLL'sini enjekte eder. Bu, RDNA 4 olmayan GPU'ların FSR 4 özelliklerini kullanmasına olanak tanır. RX 9000 serisi (RDNA 4) bir GPU'nuz varsa 'Yok'u seçin.</x:String>
 
     <x:String x:Key="TxtOptiInstalled">OptiScaler Yüklü</x:String>
     <x:String x:Key="TxtOptiNotInstalled">Yüklü Değil</x:String>
@@ -188,6 +189,7 @@
 
     <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler kaldırıldı, ancak oyuna ait olabilecek {0} dosya önlem amacıyla bırakıldı:&#x0a;&#x0a;{1}&#x0a;&#x0a;Oyunun bunları içermediğinden eminseniz, kaldırmak için "Klasör Temizliği"ni kullanın.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Kaldırma başarısız: {0}</x:String>
+    <x:String x:Key="TxtSetupNrReuseWeightsCacheFailedFormat">Önbelleğe alınmış ağırlıklar yeniden kullanılamadı: {0}&#10;&#10;Oyun şu anda çalışıyor mu? Kapatıp tekrar deneyin.</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Yükleme Başarılı</x:String>
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
@@ -351,7 +353,7 @@
     <x:String x:Key="TxtApply">Uygula</x:String>
     <x:String x:Key="TxtNoImageSelected">Seçili görsel yok</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0} için bir indirme zaten devam ediyor.</x:String>
-    <x:String x:Key="TxtDownloadingExtrasFormat">FSR4 INT8 v{0} indiriliyor... {1}%</x:String>
+    <x:String x:Key="TxtDownloadingExtrasFormat">FSR 4 Swap v{0} indiriliyor... {1}%</x:String>
     <x:String x:Key="TxtVersionUnavailable">OptiScaler v{0} şu anda kurulamaz.
 
 Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekrar deneyin.</x:String>
@@ -366,8 +368,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDonateKofiBtn">Ko-fi'de Destekle</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Bu sürüm zaten Fakenvapi ve NukemFG içerir</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Bir Optiscaler sürümü veya bir FSR 4 DLL'i (Değişim) seçin.</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultTitle">Varsayılan FSR4 INT8</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultDesc">Oyun açılırken önceden seçilen varsayılan FSR4 INT8 mod sürümü. RDNA 4 GPU'lar (RX 9000 serisi) otomatik olarak Hiçbirini kullanır.</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultTitle">Varsayılan FSR 4 Swap</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultDesc">Oyun açılırken önceden seçilen varsayılan FSR 4 Swap mod sürümü. RDNA 4 GPU'lar (RX 9000 serisi) otomatik olarak Hiçbirini kullanır.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Henüz yayınlanmamış bir sürümü test etmek için amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll ve/veya amdxc64.dll içeren bir .zip/.7z/.rar paketi (veya tek bir .dll) içe aktarın.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">Varsayılan GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Varsayılan değerler ve GPU'ya özgü kılavuz için kullanılır.</x:String>
@@ -390,6 +392,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtClearAppCacheDesc">Taranan oyunları, kapak resimleri ve önbelleğe alınmış sürüm verilerini kaldırır. Uygulama bir sonraki başlatılmada yeniden tarar.</x:String>
     <x:String x:Key="TxtClearCacheBtn">Önbelleği Temizle</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Uyarı: Bu işlem taranan tüm oyunları, kapak resimlerini ve önbelleğe alınmış OptiScaler sürüm verilerini kalıcı olarak siler.&#x0a;&#x0a;Temizleme sonrası uygulama kapanacaktır. Bir sonraki başlatılmada kütüphane yeniden taranacak ve sürüm bilgileri yeniden indirilecektir.</x:String>
+    <x:String x:Key="TxtClearAppCacheSizeInfo">Toplam boyut: {0}</x:String>
+    <x:String x:Key="TxtCacheTotalSizeFormat">Toplam boyut: {0}</x:String>
     <x:String x:Key="TxtWarning">Uyarı</x:String>
     <x:String x:Key="TxtNoVersionsFound">Kurulum için kullanılabilir OptiScaler sürümü bulunamadı.</x:String>
     <!-- Help Window -->
@@ -407,7 +411,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpPageTroubleshooting">SSS &amp; Sorun Giderme</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Yasal Uyarı ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">Bu resmi bir OptiScaler projesi değildir. OptiScaler ekibiyle hiçbir bağlantım yoktur. Bu, herhangi bir ticari amaç güdülmeden geliştirilen kişisel bir projedir. Herkes bu yazılımı kendi sorumluluğunda kullanmakta özgürdür.&#x0a;&#x0a;Katkılar: OptiScaler ekibine özel teşekkürler; bu araç yalnızca orijinal mod üzerindeki inanılmaz çalışmaları sayesinde mümkündür.</x:String>
-    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later lisansı altında lisanslanmıştır. Bu özgür yazılımdır: belirli koşullar altında değiştirip yeniden dağıtabilirsiniz. Ayrıntılar için LICENSE dosyasına bakın.&#x0a;&#x0a;Üçüncü taraf bileşenler (OptiScaler, Fakenvapi, NukemFG, FSR4 INT8) kendi lisanslarına tabidir.</x:String>
+    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later lisansı altında lisanslanmıştır. Bu özgür yazılımdır: belirli koşullar altında değiştirip yeniden dağıtabilirsiniz. Ayrıntılar için LICENSE dosyasına bakın.&#x0a;&#x0a;Üçüncü taraf bileşenler (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) kendi lisanslarına tabidir.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">Sistem</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Lisans &amp; Telif Hakkı</x:String>
 
@@ -450,7 +454,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpMWGameListLabel">Oyun Listesi 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">Tespit edilen tüm oyunları kapak görseli, başlık ve kurulum durumuyla gösterir.</x:String>
     <x:String x:Key="TxtHelpMWBadgeColorsLabel">Rozet Renkleri 🎨</x:String>
-    <x:String x:Key="TxtHelpMWBadgeColorsText">Her kapak, algılanan her yükseltici (DLSS, FSR, XeSS) için bir rozet gösterir. Dolu, içi dolu bir rozet, teknolojinin oyuna özgü olduğu anlamına gelir. Daha soluk, dış hatlı bir rozet, OptiScaler tarafından eklendiği anlamına gelir. FSR için amber renkli bir rozet, FSR4 INT8 DLL'sinin OptiScaler kurulmadan doğrudan oyun klasöründe değiştirildiği anlamına gelir.</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">Her kapak, algılanan her yükseltici (DLSS, FSR, XeSS) için bir rozet gösterir. Dolu, içi dolu bir rozet, teknolojinin oyuna özgü olduğu anlamına gelir. Daha soluk, dış hatlı bir rozet, OptiScaler tarafından eklendiği anlamına gelir. FSR için amber renkli bir rozet, FSR 4 Swap DLL'sinin OptiScaler kurulmadan doğrudan oyun klasöründe değiştirildiği anlamına gelir.</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">Yönet Düğmesi ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">Seçilen oyun için yönetim penceresini açarak OptiScaler'ı kurmanızı, yapılandırmanızı ve yönetmenizi sağlar.</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Hızlı Kurulum Düğmesi ✦</x:String>
@@ -500,15 +504,33 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpGMOptiPatcherText">Desteklenen oyunlarda sahtecilik yapmadan DLSS/DLSS-FG girişlerini açığa çıkaran isteğe bağlı bir ASI eklentisi. AMD ve Intel kullanıcılarının D3D12 hatalarından kaçınmasına yardımcı olur ve DXGI sahteciliğinin neden olduğu ek yükü veya çökmeleri önler.</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">Enjeksiyon yöntemi 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">OptiScaler'ın oyun sürecine nasıl enjekte edileceğini seçin. Çoğu durumda varsayılan seçenek (dxgi.dll) yeterlidir.</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">RDNA 3'ten eski GPU'lar için FSR 4'ün INT 8 sürümünü enjekte etmeye olanak tanıyan seçici. RDNA 3 ve RDNA 4 GPU'lar, FSR 4 INT8'i resmi AMD sürücüsünden zaten yerel olarak aldığından bu onlar için gerekli değildir.</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL Değişimi (FSR4 INT8) 🔁</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapText">OptiScaler kurulmadan yalnızca oyun klasöründeki FSR4 INT8 DLL'sini değiştirmek için, bir FSR4 INT8 sürümünü seçili tutarken OptiScaler Sürümünü 'None' olarak ayarlayın. Otomatik DLL Değiştirme, mevcut DLL'yi otomatik olarak bulup değiştirir; Manuel DLL Değiştirme ise bulunamazsa onu kendiniz seçmenizi sağlar. Orijinal dosya yedeklenir, bu nedenle Kaldır düğmesi geri almak için 'Orijinal DLL'yi geri yükle' haline gelir. DLL değiştirme ve OptiScaler kurulumu, herhangi bir sırada birbiriyle tamamen uyumludur. Toplu Kurulum'dan aynı anda birden fazla oyun için de kullanılabilir.</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 Swap ⚡</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">RDNA 3'ten eski GPU'lar için FSR 4'ün INT 8 sürümünü enjekte etmeye olanak tanıyan seçici. RDNA 3 ve RDNA 4 GPU'lar, FSR 4 Swap'i resmi AMD sürücüsünden zaten yerel olarak aldığından bu onlar için gerekli değildir.</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL Değişimi (FSR 4 Swap) 🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">OptiScaler kurulmadan yalnızca oyun klasöründeki FSR 4 Swap DLL'sini değiştirmek için, bir FSR 4 Swap sürümünü seçili tutarken OptiScaler Sürümünü 'None' olarak ayarlayın. Otomatik DLL Değiştirme, mevcut DLL'yi otomatik olarak bulup değiştirir; Manuel DLL Değiştirme ise bulunamazsa onu kendiniz seçmenizi sağlar. Orijinal dosya yedeklenir, bu nedenle Kaldır düğmesi geri almak için 'Orijinal DLL'yi geri yükle' haline gelir. DLL değiştirme ve OptiScaler kurulumu, herhangi bir sırada birbiriyle tamamen uyumludur. Toplu Kurulum'dan aynı anda birden fazla oyun için de kullanılabilir.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Yüklü Bileşenler 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">Oyun klasöründe algılanan yükselticileri listeler. Dolu bir rozet, yükselticinin oyuna özgü olduğu anlamına gelir; daha soluk, dış hatlı bir rozet ise OptiScaler tarafından eklendiği anlamına gelir. Amber renkli bir rozet (yalnızca FSR), FSR4 INT8 DLL'sinin OptiScaler kurulmadan doğrudan değiştirildiği anlamına gelir. Ayrıntılar için herhangi bir öğenin üzerine gelin.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Oyun klasöründe algılanan yükselticileri listeler. Dolu bir rozet, yükselticinin oyuna özgü olduğu anlamına gelir; daha soluk, dış hatlı bir rozet ise OptiScaler tarafından eklendiği anlamına gelir. Amber renkli bir rozet (yalnızca FSR), FSR 4 Swap DLL'sinin OptiScaler kurulmadan doğrudan değiştirildiği anlamına gelir. Ayrıntılar için herhangi bir öğenin üzerine gelin.</x:String>
     <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX (Deneysel) 🧪</x:String>
     <x:String x:Key="TxtHelpGMRenodxText">ReShade üzerinde çalışan, oyuna özel isteğe bağlı bir HDR/tone-mapping eklentisidir; yalnızca Ayarlar'da 'Deneysel Özellikler' etkinleştirildiğinde gösterilir. 'Otomatik', bu oyun için doğru eklentiyi RenoDX wiki'sinden otomatik olarak bulup indirir; bu oyun için önbelleğe alınmış bir eklentiyi de seçebilir veya Yerel Sürümleri Yönet üzerinden manuel olarak ekleyebilirsiniz. Oyun klasöründe ReShade'in zaten kurulu olmasını gerektirir - OptiScaler'ın kendi enjeksiyon DLL'i ile çakışırsa (ikisi de genellikle dxgi.dll kullanır), uygulama mevcut ReShade kurulumunun üzerine yazmak yerine onu otomatik olarak korur.</x:String>
 
+
+    <!-- Help - Experimental -->
+    <x:String x:Key="TxtHelpExpWhatTitle">Deneysel Bölge nedir?</x:String>
+    <x:String x:Key="TxtHelpExpWhatContent">OptiScaler Client her şeyden önce bir OptiScaler yöneticisidir. Deneysel Bölge, OptiScaler'ın kendisinin bir parçası olmayan ancak topluluğun istediği veya zaten iyi bildiği ekstralar için Oyun Yönetimi içinde açıkça ayrılmış, isteğe bağlı bir alandır. Bunları kendi geçiş düğmeleri ve görünür bir uyarı kenarlığı arkasında tutmak, neyin OptiScaler olup neyin olmadığını bulanıklaştırmadan onları desteklememizi sağlar.</x:String>
+    <x:String x:Key="TxtHelpExpEnableContent">Varsayılan olarak kapalıdır. Oyun Yönetimi ve Yerel Sürümleri Yönet kısmında görünmesi için Ayarlar'dan 'Deneysel / eklenti özelliklerini göster' seçeneğini etkinleştirin.</x:String>
+    <x:String x:Key="TxtHelpExpContainsTitle">Neler içerir</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLabel">RenoDX</x:String>
+    <x:String x:Key="TxtHelpExpRenodxText">ReShade üzerinde çalışan, oyuna özel bir HDR/ton haritalama eklentisi. Lütfen fikri mülkiyet nedenleriyle temel sürümlerini otomatik olarak indiremediğimizi, ancak oyuna özel eklentileri indirebildiğimizi unutmayın. 'Otomatik', mevcut oyun için doğru eklentiyi doğrudan RenoDX wiki'sinden çözer ve indirir; ReShade'in oyun klasöründe zaten yüklü olmasını gerektirir.</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLinkLabel">GitHub'da RenoDX ↗</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLabel">AMD üzerinde DLSS Neural Rendering</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">AMD GPU'larında danielblnc'nin resmi olmayan DLSS Neural Rendering modunu çalıştırır. İsteğe bağlı olarak, OptiScaler ve Neural Rendering'in birlikte çalışabilmesi için resmi olmayan bir topluluk OptiScaler sarmalayıcı yapısıyla (MatheusGViana) birleştirilebilir - OptiScaler'ın kendisinin henüz resmi Neural Rendering desteği yoktur.</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLinkLabel">GitHub'da DLSS-NR-on-AMD ↗</x:String>
+    <x:String x:Key="TxtHelpExpDllTitle">Neden NVIDIA'nın DLL'ini sağlayamıyoruz</x:String>
+    <x:String x:Key="TxtHelpExpDllContent">DLSS Neural Rendering, NVIDIA'ya ait bir dosya olan nvngx_dlssnr.dll'ye ihtiyaç duyar. Bunu yeniden dağıtmamıza izin verilmiyor, bu nedenle uygulama onu asla indirmez veya paketlemez. Halihazırda DLSS 5 içeren herhangi bir oyundan çıkardığınız kendi yasal kopyanızı sağlamanız gerekir. Bir kez istenir ve gelecekteki kurulumlarda yeniden kullanılmak üzere önbelleğe alınır.</x:String>
+    <x:String x:Key="TxtHelpExpSupportTitle">Destek düzeyi</x:String>
+    <x:String x:Key="TxtHelpExpSupportContent">Buradaki her şey bu projenin ve OptiScaler'ın dışında sürdürülen üçüncü taraf bir mod veya topluluk yapısıdır. Bunları bağlarız, sürümlerini önbelleğe alırız ve iş akışını sorunsuz tutmaya çalışırız, ancak sürüm sıklıklarını, hatalarını veya her oyun veya GPU ile ne kadar iyi oynadıklarını kontrol edemeyiz. Destek, elimizden geldiğince sağlanır ve OptiScaler'ın kendi özellikleri kadar derin veya test edilmiş değildir.</x:String>
+    <x:String x:Key="TxtHelpExpWarningTitle">Resmi olmayan yapılar ⚠️</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">'Mod + OptiScaler' sarmalayıcı yapısı OptiScaler projesi tarafından dağıtılmaz veya doğrulanmaz. Doğrudan GitHub sürümlerinden indirilir ve sürüm bir tane yayınladığında sağlama toplamı doğrulanır, ancak içeriğin kendisi bizim tarafımızdan veya OptiScaler tarafından denetlenmez. Riski size ait olmak üzere kurun.</x:String>
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
     <x:String x:Key="TxtHelpProfTitle">Profil Oluşturma ve Yönetme</x:String>
@@ -527,6 +549,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpSetProfileText">Farklı profilleri yönetmenizi sağlar. Daha fazla bilgi için 'Profil Sistemi' sayfasına bakın.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Tarama Kaynakları</x:String>
     <x:String x:Key="TxtHelpSetScanText">'Tara' düğmesine tıklandığında hangi kaynakların taranacağını yönetin: Steam, Epic gibi platformlar ve özel klasörler dahil.</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsLabel">Varsayılan sürümler ve Hızlı Kurulum ayarları</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsText">Hızlı Kurulum (Quick Install) sırasında veya bir oyunu ilk kez yönetirken kullanılan varsayılan sürümleri ve ayarları yönetmenizi sağlar. Varsayılan OptiScaler sürümünü, FSR INT8 sürümünü ve daha fazlasını seçebilirsiniz.</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">Varsayılan FSR INT8</x:String>
     <x:String x:Key="TxtHelpSetFsr4Text">Enjeksiyon bölümü için varsayılan FSR INT8 sürümünü seçin. AMD 7000 veya 9000 serisi GPU kullanıcılarının 'Hiçbiri' seçmesi önerilir.</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">Varsayılan GPU Seçimi</x:String>
@@ -574,10 +598,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Proton Plus veya ProtonUp-Qt aracılığıyla yönetilebilen GE-Proton kullanılması önerilir.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">Uygulama kendini güncellemiyor / bir paket yöneticisi tarafından yönetildiğini söylüyor</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">OptiScaler İstemcisi bir paket yöneticisi (ör. AUR, Nix) aracılığıyla yüklendiyse, çakışmaları önlemek için uygulama içi güncellemeler devre dışı bırakılır. Bunun yerine uygulamayı paket yöneticiniz aracılığıyla güncelleyin (ör. Arch/AUR'da 'yay -Syu').</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1, RDNA2 GPU'larda hayalet görüntü, takılma veya siyah ekrana neden oluyor</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Bu, özellikle RDNA2 GPU'larda (Radeon RX 6000 serisi ve RDNA2 tabanlı APU/el konsolları) sürücü tabanlı FSR4 INT8 sürümünü (4.1.1 ve sonrası) etkileyen, bilinen ve şu anda düzeltilmemiş bir AMD sürücü derleyici regresyonudur. Bu uygulamanın veya OptiScaler'ın kendisinin hatası değildir.</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">GPU'nuz RDNA2 ise, 4.1.1 yerine FSR4 INT8 4.0.2c sürümünü kullanın — bu, etkilenmeyen farklı bir uygulama kullanır ve doğru şekilde çalışır.</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Manage Game içinde her oyun için belirli bir FSR4 INT8 sürümü seçebilir veya Settings → Local cache &amp; Default version management içinde varsayılan tercihinizi belirleyebilirsiniz.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR 4 Swap 4.1.1, RDNA2 GPU'larda hayalet görüntü, takılma veya siyah ekrana neden oluyor</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">Bu, özellikle RDNA2 GPU'larda (Radeon RX 6000 serisi ve RDNA2 tabanlı APU/el konsolları) sürücü tabanlı FSR 4 Swap sürümünü (4.1.1 ve sonrası) etkileyen, bilinen ve şu anda düzeltilmemiş bir AMD sürücü derleyici regresyonudur. Bu uygulamanın veya OptiScaler'ın kendisinin hatası değildir.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">GPU'nuz RDNA2 ise, 4.1.1 yerine FSR 4 Swap 4.0.2c sürümünü kullanın — bu, etkilenmeyen farklı bir uygulama kullanır ve doğru şekilde çalışır.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Manage Game içinde her oyun için belirli bir FSR 4 Swap sürümü seçebilir veya Settings → Local cache &amp; Default version management içinde varsayılan tercihinizi belirleyebilirsiniz.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Bu sorun yalnızca AMD'nin güncellenmiş bir sürücü yayınlamasıyla düzelebilir; şu anda istemci tarafında bir çözüm bulunmamaktadır.</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Uyumluluk Listesinde OLAN bir oyun için önerilen yapılandırma bulunamadı</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">Bu, yerel oyun adının otomatik aramanın bulabilmesi için wiki'deki girişle yeterince eşleşmemesi durumunda olur. Manage penceresinde oyunun adını Uyumluluk Listesinde görünen adla eşleşecek şekilde düzenleyin, ardından Manage'i kapatıp yeniden açın — arama yalnızca pencere açıldığında çalışır.</x:String>
@@ -689,7 +713,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>
-    <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR4 INT8, Fakenvapi ve NukemFG sürümleri Ayarlar'daki Yerel önbellek &amp; Varsayılan sürüm yönetimi bölümünden yönetilebilir.</x:String>
+    <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi ve NukemFG sürümleri Ayarlar'daki Yerel önbellek &amp; Varsayılan sürüm yönetimi bölümünden yönetilebilir.</x:String>
     <x:String x:Key="TxtSetDefault">Varsayılan Yap</x:String>
     <x:String x:Key="TxtClearDefault">Temizle</x:String>
     <x:String x:Key="TxtDefaultBadge">VARSAYILAN</x:String>
@@ -761,9 +785,13 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrNvngxVersionFormat">Sürüm {0}</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxTitle">nvngx_dlssnr.dll'yi sil</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxMsg">Önbelleğe alınmış nvngx_dlssnr.dll'yi silmek istediğinizden emin misiniz? Mod'u zaten kurmuş oyunlar kendi kopyalarını korur.</x:String>
+    <x:String x:Key="TxtSetupNrWeightsPageLbl">Neural Rendering Mod ağırlıkları</x:String>
+    <x:String x:Key="TxtSetupNrWeightsCachedStatus">Önbelleğe alındı ({0} MB) — gelecekteki "Mod + OptiScaler" kurulumları danielblnc'nin yükleyicisini atlayacak.</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsTitle">Önbelleğe alınmış ağırlıkları sil</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsMsg">Önbelleğe alınmış ağırlıkları silmek istediğinizden emin misiniz? Bir sonraki "Mod + OptiScaler" kurulumu (herhangi bir oyunda) bunları yeniden oluşturmak için danielblnc'nin yükleyicisini tekrar çalıştıracak.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">Yalnızca danielblnc modu (OptiScaler olmadan)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (resmi olmayan wrapper)</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">Bu mod, OptiScaler projesi tarafından dağıtılmayan veya doğrulanmayan RESMİ OLMAYAN bir OptiScaler derlemesi (topluluk wrapper'ı) kullanır. GitHub'dan indirilir ve sürüm bir sağlama toplamı yayınlarsa doğrulanır, ancak içeriğin kendisi denetlenmez. Kendi sorumluluğunuzda kurun.</x:String>
+    <x:String x:Key="TxtSetupNrWrapperWarning">Şu anda OptiScaler'ın Neural Rendering için resmi desteği bulunmuyor, bu nedenle birlikte kullanabilmek için topluluk tarafından sarmalanmış bir sürüm (MatheusGViana) gereklidir. Kendi sorumluluğunuzda kurun.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Mod sürümü (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD weights'lerini oluşturmak için kullanılan danielblnc'nin DLSS Neural Rendering mod sürümü. Hem "danielblnc mod only" hem de "Mod + OptiScaler" için gereklidir.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper sürümü (topluluk, resmi olmayan)</x:String>
@@ -892,6 +920,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Ara kareler için FSR FG'yi, geri kalanı için DLSS Enabler'ı birleştirerek x6'ya kadar MFG'ye olanak tanır.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler sürümü</x:String>
     <x:String x:Key="TxtDlssEnablerVersionTooltip">Kullanılacak bir DLSS Enabler sürümü seçin veya özel bir sürüm içe aktarın.</x:String>
+    <x:String x:Key="TxtStreamlineVersionLbl">Streamline sürümü</x:String>
+    <x:String x:Key="TxtStreamlineVersionTooltip">DLSS-G Frame Generation için kullanılacak bir Streamline SDK sürümü seçin veya Latest olarak bırakın.</x:String>
     <x:String x:Key="TxtDlssEnablerTabMirror">Mirror</x:String>
     <x:String x:Key="TxtDlssEnablerTabCustom">Özel</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">Resmi olmayan DLSS Enabler mirror'ı. Belirli bir sürüme mi ihtiyacınız var? Özel sekmesinden ekleyin.</x:String>
@@ -912,6 +942,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpGMFgAdvancedText">Manuel ve deneysel yolları gösterir. Oyunun belirli bir yol gerektirdiğini bilmiyorsanız bunu kapalı bırakın.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Çıkış Upscaler</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Seçili profilin üzerine, OptiScaler'ın bu oyun için kullandığı upscaler arka ucunu geçersiz kılar. "Varsayılan" profildeki seçimi değiştirmeden bırakır.</x:String>
+    <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Hiç yapılandırılmamış her oyun için önceden seçilecek ve Hızlı Kurulum / Toplu Kurulum ile otomatik olarak kurulacak varsayılan "Setup NR" modu. Yalnızca yukarıdaki varsayılan GPU AMD olduğunda gösterilir.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Varsayılan</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Çıkış upscaler yapılandırması uygulanamadı:</x:String>
 </ResourceDictionary>

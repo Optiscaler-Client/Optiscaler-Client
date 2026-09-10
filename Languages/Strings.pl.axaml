@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     
@@ -69,6 +69,7 @@
     <x:String x:Key="TxtCustomVersions">Niestandardowe wersje OptiScaler</x:String>
     <x:String x:Key="TxtImportArchive">Importuj archiwum</x:String>
     <x:String x:Key="TxtNoCustomVersions">Nie zaimportowano żadnych niestandardowych wersji.</x:String>
+    <x:String x:Key="TxtNoModdedVersions">Brak zapisanych w pamięci podręcznej wersji modded.</x:String>
     <x:String x:Key="TxtCustomVersionWarning">⚠ Importuj niestandardowe buildy OptiScaler jako archiwa 7z, zip lub rar. Instalacja/deinstalacja może się nie powieść, jeśli archiwum zawiera pliki nieśledzalne przez aplikację. Dołącz tylko pliki wydania OptiScaler.</x:String>
     <x:String x:Key="TxtImporting">Importowanie...</x:String>
     <x:String x:Key="TxtConfirmDelMsg">Czy na pewno chcesz usunąć tę wersję?</x:String>
@@ -141,9 +142,9 @@
     <x:String x:Key="TxtBtnManualSwapDll">✦ Ręczna zamiana DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Przywróć oryginalny DLL</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">Nic do zainstalowania</x:String>
-    <x:String x:Key="TxtErrNoOptiOrExtrasText">Wybierz wersję OptiScaler lub wersję FSR4 INT8 przed instalacją.</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">Wybierz wersję OptiScaler lub wersję FSR 4 Swap przed instalacją.</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">Wybrany plik musi znajdować się w folderze gry.</x:String>
-    <x:String x:Key="TxtSwapDllNoRdna2Companion">Ta wersja FSR4 INT8 nie zawiera zamiennika dla amdxc64.dll. Wybierz inną wersję lub inny plik docelowy.</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">Ta wersja FSR 4 Swap nie zawiera zamiennika dla amdxc64.dll. Wybierz inną wersję lub inny plik docelowy.</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">Zamieniono FSR4 v{0} w {1}.</x:String>
     <x:String x:Key="TxtFsr4SwapSelectTitle">Wybierz pliki do zamiany</x:String>
     <x:String x:Key="TxtFsr4SwapSelectDesc">Ten pakiet FSR4 zawiera wiele plików. Wybierz, które skopiować lub zastąpić w folderze gry.</x:String>
@@ -160,7 +161,7 @@
     <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">Wybrano {0} z {1} plików</x:String>
     <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">W Opcjach zamiany FSR 4 (Ustawienia) nie wybrano żadnych plików. Zaznacz tam co najmniej jeden lub przełącz z powrotem na "Pytaj mnie za każdym razem".</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">Potwierdź przywrócenie</x:String>
-    <x:String x:Key="TxtConfirmRestoreDllMsg">Czy na pewno chcesz przywrócić oryginalny plik DLL?&#x0a;Zamieniony plik DLL FSR4 INT8 zostanie zastąpiony zapisaną kopią oryginału.</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">Czy na pewno chcesz przywrócić oryginalny plik DLL?&#x0a;Zamieniony plik DLL FSR 4 Swap zostanie zastąpiony zapisaną kopią oryginału.</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">Oryginalny DLL został pomyślnie przywrócony.</x:String>
     <x:String x:Key="TxtFsr4SwappedTip">Zamieniono bezpośrednio, bez instalowania OptiScaler</x:String>
     <x:String x:Key="TxtRestoreDllResidueTitle">Przywrócono oryginalny DLL</x:String>
@@ -172,7 +173,7 @@
 
     <x:String x:Key="TxtTooltipOptiScalerVersion">Wybierz konkretną wersję OptiScaler, którą chcesz zainstalować dla tej gry.</x:String>
     <x:String x:Key="TxtTooltipInjectionMethod">Określa sposób ładowania OptiScaler. Typowe wybory to dxgi.dll lub version.dll w zależności od kompatybilności gry.</x:String>
-    <x:String x:Key="TxtTooltipFsr4Int8">Wstrzykuje bibliotekę DLL moda FSR 4 INT8. Pozwala to procesorom graficznym innym niż RDNA 4 na korzystanie z funkcji FSR 4. Wybierz 'Brak', jeśli masz kartę graficzną z serii RX 9000 (RDNA 4).</x:String>
+    <x:String x:Key="TxtTooltipFsr4Int8">Wstrzykuje bibliotekę DLL moda FSR 4 Swap. Pozwala to procesorom graficznym innym niż RDNA 4 na korzystanie z funkcji FSR 4. Wybierz 'Brak', jeśli masz kartę graficzną z serii RX 9000 (RDNA 4).</x:String>
 
     <x:String x:Key="TxtOptiInstalled">OptiScaler zainstalowany</x:String>
     <x:String x:Key="TxtOptiNotInstalled">Nie zainstalowany</x:String>
@@ -188,6 +189,7 @@
 
     <x:String x:Key="TxtOptiUninstallResidueMsg">OptiScaler został odinstalowany, ale {0} plik(ów), które mogą należeć do gry, pozostawiono na wszelki wypadek:&#x0a;&#x0a;{1}&#x0a;&#x0a;Jeśli masz pewność, że gra ich nie zawierała, użyj funkcji "Czyszczenie folderu", aby je usunąć.</x:String>
     <x:String x:Key="TxtOptiUninstallFail">Odinstalowanie nie powiodło się: {0}</x:String>
+    <x:String x:Key="TxtSetupNrReuseWeightsCacheFailedFormat">Nie udało się ponownie użyć zapisanych wag: {0}&#10;&#10;Czy gra jest obecnie uruchomiona? Zamknij ją i spróbuj ponownie.</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">Instalacja pomyślna</x:String>
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
@@ -351,7 +353,7 @@
     <x:String x:Key="TxtApply">Zastosuj</x:String>
     <x:String x:Key="TxtNoImageSelected">Nie wybrano obrazu</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Pobieranie dla v{0} jest już w toku.</x:String>
-    <x:String x:Key="TxtDownloadingExtrasFormat">Pobieranie FSR4 INT8 v{0}... {1}%</x:String>
+    <x:String x:Key="TxtDownloadingExtrasFormat">Pobieranie FSR 4 Swap v{0}... {1}%</x:String>
     <x:String x:Key="TxtVersionUnavailable">Nie można zainstalować OptiScaler v{0} w tym momencie.
 
 Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i spróbuj ponownie później.</x:String>
@@ -366,8 +368,8 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtDonateKofiBtn">Wesprzyj na Ko-fi</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">Ta wersja zawiera już Fakenvapi i NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Wybierz wersję Optiscaler lub DLL FSR 4 (Zamiana).</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultTitle">Domyślny FSR4 INT8</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultDesc">Domyślna wersja moda FSR4 INT8 wstępnie wybierana przy otwieraniu gry. GPU RDNA 4 (seria RX 9000) automatycznie używają opcji Brak.</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultTitle">Domyślny FSR 4 Swap</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultDesc">Domyślna wersja moda FSR 4 Swap wstępnie wybierana przy otwieraniu gry. GPU RDNA 4 (seria RX 9000) automatycznie używają opcji Brak.</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">Zaimportuj pakiet .zip/.7z/.rar (lub pojedynczy plik .dll) zawierający amd_fidelityfx_upscaler_dx12.dll, amdxcffx64.dll i/lub amdxc64.dll, aby przetestować jeszcze nieopublikowaną wersję.</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">Domyślny GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">Używany do wartości domyślnych i wskazówek specyficznych dla GPU.</x:String>
@@ -390,6 +392,8 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtClearAppCacheDesc">Usuwa zeskanowane gry, okładki i dane wersji z pamięci podręcznej. Aplikacja ponownie przeskanuje przy następnym uruchomieniu.</x:String>
     <x:String x:Key="TxtClearCacheBtn">Wyczyść pamięć</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Ostrzeżenie: Spowoduje to trwałe usunięcie wszystkich zeskanowanych gier, okładek i danych wersji OptiScaler z pamięci podręcznej.&#x0a;&#x0a;Aplikacja zostanie zamknięta po wyczyszczeniu. Przy następnym uruchomieniu ponownie przeskanuje bibliotekę i pobierze informacje o wersjach.</x:String>
+    <x:String x:Key="TxtClearAppCacheSizeInfo">Całkowity rozmiar: {0}</x:String>
+    <x:String x:Key="TxtCacheTotalSizeFormat">Całkowity rozmiar: {0}</x:String>
     <x:String x:Key="TxtWarning">Ostrzeżenie</x:String>
     <x:String x:Key="TxtNoVersionsFound">Brak dostępnych wersji OptiScaler do instalacji.</x:String>
     <!-- Help Window -->
@@ -400,6 +404,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpPageFeatures">Funkcje</x:String>
     <x:String x:Key="TxtHelpPageMainWindow">Główne okno</x:String>
     <x:String x:Key="TxtHelpPageGameManagement">Zarządzanie grami</x:String>
+    <x:String x:Key="TxtHelpPageExperimental">Eksperymentalne</x:String>
     <x:String x:Key="TxtHelpPageProfiles">System profili</x:String>
     <x:String x:Key="TxtHelpPageSettings">Ustawienia &amp; Konfiguracja</x:String>
     <x:String x:Key="TxtHelpPageBulkOperations">Operacje zbiorcze</x:String>
@@ -407,7 +412,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Rozwiązywanie problemów</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Zastrzeżenie ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">To nie jest oficjalny projekt OptiScaler. Nie mam żadnych powiązań z zespołem OptiScaler. To osobisty projekt opracowany bez celów komercyjnych. Każdy może próbować używać tego oprogramowania na własne ryzyko.&#x0a;&#x0a;Uznania: Specjalne podziękowania dla zespołu OptiScaler; to narzędzie jest możliwe tylko dzięki ich niesamowitej pracy nad oryginalnym modem.</x:String>
-    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Licencjonowane na zasadach GPL-3.0-or-later. To wolne oprogramowanie: możesz je zmieniać i rozpowszechniać na określonych warunkach. Szczegóły znajdują się w pliku LICENSE.&#x0a;&#x0a;Komponenty stron trzecich (OptiScaler, Fakenvapi, NukemFG, FSR4 INT8) podlegają odpowiednim licencjom.</x:String>
+    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Licencjonowane na zasadach GPL-3.0-or-later. To wolne oprogramowanie: możesz je zmieniać i rozpowszechniać na określonych warunkach. Szczegóły znajdują się w pliku LICENSE.&#x0a;&#x0a;Komponenty stron trzecich (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) podlegają odpowiednim licencjom.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">System</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">Licencja &amp; Prawa autorskie</x:String>
 
@@ -450,7 +455,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpMWGameListLabel">Lista gier 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">Wyświetla wszystkie wykryte gry z okładką, tytułem i stanem instalacji.</x:String>
     <x:String x:Key="TxtHelpMWBadgeColorsLabel">Kolory plakietek 🎨</x:String>
-    <x:String x:Key="TxtHelpMWBadgeColorsText">Na każdej okładce widoczna jest plakietka dla każdego wykrytego skalera (DLSS, FSR, XeSS). Pełna, wypełniona plakietka oznacza, że technologia jest natywna dla gry. Bledsza, obrysowana plakietka oznacza, że została dodana przez OptiScaler. W przypadku FSR bursztynowa plakietka oznacza, że DLL FSR4 INT8 został podmieniony bezpośrednio w folderze gry, bez instalowania OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">Na każdej okładce widoczna jest plakietka dla każdego wykrytego skalera (DLSS, FSR, XeSS). Pełna, wypełniona plakietka oznacza, że technologia jest natywna dla gry. Bledsza, obrysowana plakietka oznacza, że została dodana przez OptiScaler. W przypadku FSR bursztynowa plakietka oznacza, że DLL FSR 4 Swap został podmieniony bezpośrednio w folderze gry, bez instalowania OptiScaler.</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">Przycisk Zarządzaj ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">Otwiera okno zarządzania wybraną grą, gdzie można instalować, konfigurować i zarządzać OptiScaler.</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">Przycisk Szybka instalacja ✦</x:String>
@@ -500,14 +505,51 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpGMOptiPatcherText">Opcjonalna wtyczka ASI, która udostępnia wejścia DLSS/DLSS-FG bez spoofingu w obsługiwanych grach. Pomaga użytkownikom AMD i Intel unikać błędów D3D12 oraz zapobiega narzutowi lub awariom spowodowanym spoofingiem DXGI.</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">Metoda wstrzykiwania 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">Wybierz sposób wstrzykiwania OptiScaler do procesu gry. W większości przypadków domyślna opcja (dxgi.dll) jest wystarczająca.</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">Selektor umożliwiający wstrzyknięcie wersji INT 8 FSR 4 dla kart GPU starszych niż RDNA 3. Karty RDNA 3 i RDNA 4 otrzymują FSR 4 INT8 natywnie z oficjalnego sterownika AMD, więc nie jest to dla nich potrzebne.</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapLabel">Podmiana DLL (FSR4 INT8) 🔁</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapText">Ustaw Wersję OptiScaler na 'None', zachowując wybraną wersję FSR4 INT8, aby podmienić tylko bibliotekę DLL FSR4 INT8 w folderze gry, bez instalowania OptiScaler. Auto-Swap DLL automatycznie znajduje i zastępuje istniejącą bibliotekę DLL; Manual-Swap DLL pozwala wybrać ją samodzielnie, jeśli nie zostanie znaleziona. Oryginalny plik jest tworzony jako kopia zapasowa, dzięki czemu przycisk Odinstaluj zmienia się w 'Przywróć oryginalną bibliotekę DLL', aby cofnąć zmianę. Podmiana DLL i instalacja OptiScaler są w pełni kompatybilne ze sobą, niezależnie od kolejności. Dostępne również dla wielu gier jednocześnie z poziomu Instalacji zbiorczej.</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 Swap ⚡</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">Selektor umożliwiający wstrzyknięcie wersji INT 8 FSR 4 dla kart GPU starszych niż RDNA 3. Karty RDNA 3 i RDNA 4 otrzymują FSR 4 Swap natywnie z oficjalnego sterownika AMD, więc nie jest to dla nich potrzebne.</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">Podmiana DLL (FSR 4 Swap) 🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">Ustaw Wersję OptiScaler na 'None', zachowując wybraną wersję FSR 4 Swap, aby podmienić tylko bibliotekę DLL FSR 4 Swap w folderze gry, bez instalowania OptiScaler. Auto-Swap DLL automatycznie znajduje i zastępuje istniejącą bibliotekę DLL; Manual-Swap DLL pozwala wybrać ją samodzielnie, jeśli nie zostanie znaleziona. Oryginalny plik jest tworzony jako kopia zapasowa, dzięki czemu przycisk Odinstaluj zmienia się w 'Przywróć oryginalną bibliotekę DLL', aby cofnąć zmianę. Podmiana DLL i instalacja OptiScaler są w pełni kompatybilne ze sobą, niezależnie od kolejności. Dostępne również dla wielu gier jednocześnie z poziomu Instalacji zbiorczej.</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">Zainstalowane komponenty 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">Wyświetla listę skalerów wykrytych w folderze gry. Pełna plakietka oznacza, że skaler jest natywny dla gry; bledsza, obrysowana plakietka oznacza, że został dodany przez OptiScaler. Bursztynowa plakietka (tylko dla FSR) oznacza, że DLL FSR4 INT8 został podmieniony bezpośrednio, bez instalowania OptiScaler. Najedź na dowolny wpis, aby zobaczyć szczegóły.</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">Wyświetla listę skalerów wykrytych w folderze gry. Pełna plakietka oznacza, że skaler jest natywny dla gry; bledsza, obrysowana plakietka oznacza, że został dodany przez OptiScaler. Bursztynowa plakietka (tylko dla FSR) oznacza, że DLL FSR 4 Swap został podmieniony bezpośrednio, bez instalowania OptiScaler. Najedź na dowolny wpis, aby zobaczyć szczegóły.</x:String>
     <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX (Eksperymentalne) 🧪</x:String>
     <x:String x:Key="TxtHelpGMRenodxText">Opcjonalny dodatek HDR/tone-mapping dla danej gry, działający na bazie ReShade, widoczny tylko po włączeniu 'Funkcji eksperymentalnych' w Ustawieniach. Opcja „Auto” automatycznie wyszukuje i pobiera właściwy dodatek dla tej gry z wiki RenoDX; możesz też wybrać dodatek już zbuforowany dla tej gry lub dodać go ręcznie w Zarządzaniu lokalnymi wersjami. Wymaga wcześniejszej instalacji ReShade w folderze gry - jeśli koliduje to z własną biblioteką DLL wstrzykiwania OptiScaler (obie zwykle używają dxgi.dll), aplikacja automatycznie zachowuje istniejącą instalację ReShade zamiast ją nadpisywać.</x:String>
+
+
+    <!-- Help - Zarządzanie grami (Spoofing / DLSS NR / Streamline) -->
+    <x:String x:Key="TxtHelpGMSpoofingLabel">Spoofing 🎭</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">Zastępuje własny spoofing GPU DXGI OptiScaler dla tej gry, który udaje GPU Nvidia, aby gry obsługujące wyłącznie DLSS działały na AMD/Intel. Auto podąża za domyślnym zachowaniem OptiScaler (włączone na AMD/Intel, wyłączone na Nvidia); zastąp to dla danej gry, jeśli tytuł wymaga odwrotnego zachowania.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrLabel">DLSS Neural Rendering na AMD (Eksperymentalne) 🧪</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">Również część Strefy eksperymentalnej (zobacz stronę pomocy „Eksperymentalne”). Uruchamia nieoficjalny mod DLSS Neural Rendering autorstwa danielblnc na GPU AMD, opcjonalnie połączony z nieoficjalną, społecznościową kompilacją wrapper OptiScaler, ponieważ sam OptiScaler nie obsługuje jeszcze Neural Rendering.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesTitle">Tryby</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">„Brak” wyłącza tę funkcję. „Tylko mod danielblnc” instaluje wyłącznie mod Neural Rendering dla AMD. „Mod + OptiScaler” dodatkowo podmienia na nieoficjalną, społecznościową kompilację wrapper, dzięki czemu OptiScaler i Neural Rendering mogą działać razem.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllText">Mod wymaga Twojej własnej, legalnej kopii pliku nvngx_dlssnr.dll firmy NVIDIA, wyodrębnionej z dowolnej gry obsługującej już DLSS 5. Nie możemy sami udostępnić tego pliku z powodów prawnych. Jest on pytany tylko raz i buforowany do przyszłych instalacji.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionTitle">Wersja moda</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionText">Wybierz, której wersji moda danielblnc użyć, lub pozostaw na najnowszej dostępnej.</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineTitle">Wersja Streamline</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineText">Wybierz konkretną wersję SDK NVIDIA Streamline do użycia z DLSS-G Frame Generation lub pozostaw na Najnowszej.</x:String>
+
+    <!-- Help - Ustawienia (Domyślne AMD DLSS NR) -->
+    <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">Domyślne AMD DLSS Neural Rendering 🧪</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultText">Wstępnie wybiera tryb „Setup NR” dla każdej nigdy nieskonfigurowanej gry i pozwala Szybkiej instalacji / Instalacji zbiorczej zainstalować go automatycznie. Widoczne tylko wtedy, gdy domyślna GPU powyżej to AMD, a Funkcje eksperymentalne są włączone.</x:String>
+
+    <!-- Help - Eksperymentalne -->
+    <x:String x:Key="TxtHelpExpWhatTitle">Czym jest Strefa eksperymentalna?</x:String>
+    <x:String x:Key="TxtHelpExpWhatContent">OptiScaler Client to przede wszystkim menedżer OptiScaler. Strefa eksperymentalna to wyraźnie wydzielony, opcjonalny obszar w oknie Zarządzaj grą dla dodatków, które nie są częścią samego OptiScaler, ale o które prosiła społeczność lub które są już dobrze znane. Utrzymywanie ich za własnym przełącznikiem i widoczną ramką ostrzegawczą pozwala nam je wspierać bez zacierania granicy między tym, co jest, a co nie jest OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpExpEnableContent">Domyślnie wyłączona. Włącz „Pokaż funkcje eksperymentalne / dodatki” w Ustawieniach, aby ją ujawnić w oknie Zarządzaj grą i w Zarządzaniu lokalnymi wersjami.</x:String>
+    <x:String x:Key="TxtHelpExpContainsTitle">Co zawiera</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLabel">RenoDX</x:String>
+    <x:String x:Key="TxtHelpExpRenodxText">Opcjonalny dodatek HDR/tone-mapping dla danej gry, działający na bazie ReShade. Należy pamiętać, że ze względu na prawa własności intelektualnej nie możemy automatycznie pobierać jego podstawowych wersji, ale możemy pobierać dodatki dla poszczególnych gier. „Auto” automatycznie wyszukuje i pobiera odpowiedni dodatek dla bieżącej gry bezpośrednio z wiki RenoDX; wymaga wcześniejszej instalacji ReShade w folderze gry.</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLinkLabel">RenoDX na GitHub ↗</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLabel">DLSS Neural Rendering na AMD</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">Uruchamia nieoficjalny mod DLSS Neural Rendering autorstwa danielblnc na GPU AMD, opcjonalnie połączony z nieoficjalną, społecznościową kompilacją wrapper OptiScaler (MatheusGViana), dzięki czemu OptiScaler i Neural Rendering mogą działać razem - sam OptiScaler nie ma jeszcze oficjalnego wsparcia dla Neural Rendering.</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLinkLabel">DLSS-NR-on-AMD na GitHub ↗</x:String>
+    <x:String x:Key="TxtHelpExpDllTitle">Dlaczego nie możemy udostępnić DLL firmy NVIDIA</x:String>
+    <x:String x:Key="TxtHelpExpDllContent">DLSS Neural Rendering wymaga pliku nvngx_dlssnr.dll, należącego do firmy NVIDIA. Nie wolno nam go redystrybuować, więc aplikacja nigdy go nie pobiera ani nie dołącza. Dostarczasz własną, legalną kopię, wyodrębnioną z dowolnej gry, która już obsługuje DLSS 5. Jest pytany tylko raz i buforowany do ponownego użycia w przyszłych instalacjach.</x:String>
+    <x:String x:Key="TxtHelpExpSupportTitle">Poziom wsparcia</x:String>
+    <x:String x:Key="TxtHelpExpSupportContent">Wszystko, co się tu znajduje, to mod stron trzecich lub kompilacja społecznościowa utrzymywana poza tym projektem i poza OptiScaler. Integrujemy je, buforujemy ich wydania i staramy się zapewnić płynny przebieg pracy, ale nie mamy kontroli nad ich tempem wydań, błędami ani tym, jak dobrze współpracują z każdą grą czy GPU. Wsparcie jest udzielane najlepiej jak to możliwe i nie jest tak dogłębne ani przetestowane jak własne funkcje OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpExpWarningTitle">Nieoficjalne kompilacje ⚠️</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">Kompilacja wrapper „Mod + OptiScaler” nie jest dystrybuowana ani weryfikowana przez projekt OptiScaler. Jest pobierana bezpośrednio z jej wydań na GitHub, a jej suma kontrolna jest weryfikowana, gdy wydanie ją publikuje, ale sama zawartość nie jest audytowana ani przez nas, ani przez OptiScaler. Instaluj na własne ryzyko.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -522,11 +564,13 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpSetCacheLabel">Zarządzanie lokalnym cache</x:String>
     <x:String x:Key="TxtHelpSetCacheText">Umożliwia przeglądanie i usuwanie zbuforowanych wersji OptiScaler, FSR INT8, Fakenvapi, NukemFG, OptiPatcher i dodatków RenoDX (widoczne tylko przy włączonych Funkcjach eksperymentalnych) oraz zarządzanie domyślną wersją każdego z nich. Włączenie 'Zawsze używaj najnowszej dostępnej wersji jako domyślnej' dla OptiScaler blokuje ręczny wybór wersji w oknie Zarządzaj domyślnymi wersjami - wyłącz tę opcję tam, aby wybrać konkretną wersję.</x:String>
     <x:String x:Key="TxtHelpSetExperimentalLabel">Funkcje eksperymentalne 🧪</x:String>
-    <x:String x:Key="TxtHelpSetExperimentalText">Włącz 'Pokaż funkcje eksperymentalne / dodatki', aby ujawnić selektor RenoDX w oknie Zarządzaj grą oraz jego dedykowaną sekcję w Zarządzaniu lokalnymi wersjami. To wyłącznie przełącznik widoczności - jego włączenie samo w sobie niczego nie instaluje ani nie konfiguruje.</x:String>
+    <x:String x:Key="TxtHelpSetExperimentalText">Włącz „Pokaż funkcje eksperymentalne / dodatki”, aby ujawnić Strefę eksperymentalną w oknie Zarządzaj grą (RenoDX oraz, w systemie Windows, DLSS Neural Rendering na AMD) wraz z ich dedykowanymi sekcjami w Zarządzaniu lokalnymi wersjami. To wyłącznie przełącznik widoczności - jego włączenie samo w sobie niczego nie instaluje ani nie konfiguruje. Zobacz stronę pomocy „Eksperymentalne”, aby dowiedzieć się więcej.</x:String>
     <x:String x:Key="TxtHelpSetProfileLabel">Zarządzanie profilami</x:String>
     <x:String x:Key="TxtHelpSetProfileText">Umożliwia zarządzanie różnymi profilami. Więcej informacji na stronie 'System profili'.</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">Źródła skanowania</x:String>
     <x:String x:Key="TxtHelpSetScanText">Zarządzaj źródłami skanowanymi po kliknięciu 'Skanuj', w tym platformami jak Steam i Epic oraz niestandardowymi folderami.</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsLabel">Domyślne wersje i ustawienia Quick Install</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsText">Pozwala zarządzać domyślnymi wersjami i ustawieniami używanymi podczas Szybkiej Instalacji (Quick Install) lub przy pierwszym zarządzaniu grą. Możesz wybrać domyślną wersję OptiScaler, FSR INT8 i inne.</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">Domyślny FSR INT8</x:String>
     <x:String x:Key="TxtHelpSetFsr4Text">Wybierz domyślną wersję FSR INT8 dla sekcji wtrysku. Użytkownikom kart AMD serii 7000 lub 9000 zaleca się wybór 'Brak'.</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">Domyślny wybór GPU</x:String>
@@ -575,10 +619,10 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">Zalecane jest używanie GE-Proton, którym można zarządzać za pomocą Proton Plus lub ProtonUp-Qt.</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">Aplikacja nie aktualizuje się sama / mówi, że jest zarządzana przez menedżera pakietów</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">Jeśli OptiScaler Client został zainstalowany za pomocą menedżera pakietów (np. AUR, Nix), aktualizacje w aplikacji są wyłączone, aby uniknąć konfliktów. Zaktualizuj aplikację za pomocą swojego menedżera pakietów (np. 'yay -Syu' w Arch/AUR).</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 powoduje smużenie, zacinanie się lub czarny ekran na GPU RDNA2</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">To znany, obecnie nienaprawiony regres w kompilatorze sterownika AMD, dotyczący sterownikowej wersji FSR4 INT8 (wersja 4.1.1 i nowsze) konkretnie na GPU RDNA2 (seria Radeon RX 6000 oraz APU/handheldy oparte na RDNA2). To nie jest błąd tej aplikacji ani samego OptiScaler.</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Jeśli Twoja karta graficzna to RDNA2, użyj wersji FSR4 INT8 4.0.2c zamiast 4.1.1 — korzysta z innej implementacji, której ten problem nie dotyczy, i działa poprawnie.</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Możesz wybrać konkretną wersję FSR4 INT8 dla każdej gry w Manage Game albo ustawić preferowaną wersję domyślną w Settings → Local cache &amp; Default version management.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR 4 Swap 4.1.1 powoduje smużenie, zacinanie się lub czarny ekran na GPU RDNA2</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">To znany, obecnie nienaprawiony regres w kompilatorze sterownika AMD, dotyczący sterownikowej wersji FSR 4 Swap (wersja 4.1.1 i nowsze) konkretnie na GPU RDNA2 (seria Radeon RX 6000 oraz APU/handheldy oparte na RDNA2). To nie jest błąd tej aplikacji ani samego OptiScaler.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">Jeśli Twoja karta graficzna to RDNA2, użyj wersji FSR 4 Swap 4.0.2c zamiast 4.1.1 — korzysta z innej implementacji, której ten problem nie dotyczy, i działa poprawnie.</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">Możesz wybrać konkretną wersję FSR 4 Swap dla każdej gry w Manage Game albo ustawić preferowaną wersję domyślną w Settings → Local cache &amp; Default version management.</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">Może to naprawić tylko AMD, wydając zaktualizowany sterownik; obecnie nie ma obejścia po stronie klienta.</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">Nie znaleziono zalecanej konfiguracji dla gry, która JEST na Liście Kompatybilności</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">Dzieje się tak, gdy lokalna nazwa gry nie jest wystarczająco podobna do wpisu na wiki, aby automatyczne wyszukiwanie mogło ją znaleźć. Zmień nazwę gry w oknie Zarządzaj, aby pasowała do nazwy widocznej na Liście Kompatybilności, a następnie zamknij okno Zarządzaj i otwórz je ponownie — wyszukiwanie uruchamia się tylko przy otwieraniu okna.</x:String>
@@ -690,7 +734,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtDownloadingOptiPatcher">Pobieranie OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Instalowanie OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Zarządzanie wersjami</x:String>
-    <x:String x:Key="TxtVersionMgmtInfoDesc">Wersjami OptiScaler, OptiPatcher, FSR4 INT8, Fakenvapi i NukemFG można zarządzać z sekcji Lokalna pamięć podręczna &amp; Zarządzanie wersjami domyślnymi w Ustawieniach.</x:String>
+    <x:String x:Key="TxtVersionMgmtInfoDesc">Wersjami OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi i NukemFG można zarządzać z sekcji Lokalna pamięć podręczna &amp; Zarządzanie wersjami domyślnymi w Ustawieniach.</x:String>
     <x:String x:Key="TxtSetDefault">Ustaw domyślny</x:String>
     <x:String x:Key="TxtClearDefault">Wyczyść</x:String>
     <x:String x:Key="TxtDefaultBadge">DOMYŚLNY</x:String>
@@ -762,9 +806,13 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrNvngxVersionFormat">Wersja {0}</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxTitle">Usuń nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxMsg">Czy na pewno chcesz usunąć zapisany plik nvngx_dlssnr.dll? Gry, na których mod jest już zainstalowany, zachowają własną kopię.</x:String>
+    <x:String x:Key="TxtSetupNrWeightsPageLbl">Wagi moda Neural Rendering</x:String>
+    <x:String x:Key="TxtSetupNrWeightsCachedStatus">Zapisane w pamięci podręcznej ({0} MB) — kolejne instalacje "Mod + OptiScaler" pominą instalator danielblnc.</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsTitle">Usuń zapisane wagi</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsMsg">Czy na pewno chcesz usunąć zapisane wagi? Następna instalacja "Mod + OptiScaler" (na dowolnej grze) ponownie uruchomi instalator danielblnc, aby je odtworzyć.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">Tylko mod danielblnc (bez OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (nieoficjalny wrapper)</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">Ten tryb używa NIEOFICJALNEJ wersji OptiScaler (wrapper społeczności), niedystrybuowanej ani nieweryfikowanej przez projekt OptiScaler. Jest pobierana z GitHub, a suma kontrolna jest weryfikowana, gdy wydanie ją publikuje, ale sama zawartość nie jest audytowana. Instalujesz na własne ryzyko.</x:String>
+    <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler obecnie nie ma oficjalnego wsparcia dla Neural Rendering, dlatego do jego użycia razem wymagana jest wersja opakowana przez społeczność (MatheusGViana). Instalujesz na własne ryzyko.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Wersja moda (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Wersja moda DLSS Neural Rendering od danielblnc używana do wygenerowania wag AMD. Potrzebna zarówno dla "danielblnc mod only", jak i "Mod + OptiScaler".</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Wersja wrappera OptiScaler (społeczność, nieoficjalna)</x:String>
@@ -892,6 +940,8 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">Łączy FSR FG dla środkowych klatek z DLSS Enabler dla pozostałych, umożliwiając MFG do x6.</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">Wersja DLSS Enabler</x:String>
     <x:String x:Key="TxtDlssEnablerVersionTooltip">Wybierz wersję DLSS Enabler do użycia lub zaimportuj niestandardową.</x:String>
+    <x:String x:Key="TxtStreamlineVersionLbl">Wersja Streamline</x:String>
+    <x:String x:Key="TxtStreamlineVersionTooltip">Wybierz wersję SDK Streamline do użycia z DLSS-G Frame Generation, lub pozostaw na Latest.</x:String>
     <x:String x:Key="TxtDlssEnablerTabMirror">Mirror</x:String>
     <x:String x:Key="TxtDlssEnablerTabCustom">Niestandardowe</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">Nieoficjalny mirror DLSS Enabler. Potrzebujesz konkretnej wersji? Dodaj ją z karty Niestandardowe.</x:String>
@@ -902,6 +952,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">Nie wybrano wersji DLSS Enabler. Najpierw skonfiguruj generowanie klatek dla tej gry.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Upscaler wyjściowy</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">Zastępuje backend upscalera używany przez OptiScaler dla tej gry, na wierzchu wybranego profilu. "Domyślny" pozostawia wybór profilu bez zmian.</x:String>
+    <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Domyślny tryb "Setup NR" wstępnie wybierany dla każdej nigdy nieskonfigurowanej gry oraz instalowany automatycznie przy Szybkiej instalacji / Instalacji masowej. Widoczny tylko wtedy, gdy domyślna GPU powyżej to AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Domyślny</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Nie udało się zastosować konfiguracji upscalera wyjściowego:</x:String>
 </ResourceDictionary>

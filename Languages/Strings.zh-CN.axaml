@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
@@ -70,6 +70,7 @@
     <x:String x:Key="TxtCustomVersions">自定义 OptiScaler 版本</x:String>
     <x:String x:Key="TxtImportArchive">导入归档</x:String>
     <x:String x:Key="TxtNoCustomVersions">尚未导入自定义版本</x:String>
+    <x:String x:Key="TxtNoModdedVersions">没有缓存的 modded 版本。</x:String>
     <x:String x:Key="TxtCustomVersionWarning">⚠ 请将自定义 OptiScaler 构建导入为 7z、zip 或 rar 归档文件。如果归档包含应用无法跟踪的文件，安装/卸载可能失败。请仅包含 OptiScaler 发布文件。</x:String>
     <x:String x:Key="TxtImporting">正在导入...</x:String>
     <x:String x:Key="TxtConfirmDelMsg">确定要删除此版本吗？</x:String>
@@ -142,9 +143,9 @@
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手动交换 DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ 还原原始 DLL</x:String>
     <x:String x:Key="TxtErrNoOptiOrExtrasTitle">没有可安装的内容</x:String>
-    <x:String x:Key="TxtErrNoOptiOrExtrasText">安装前请选择一个 OptiScaler 版本或 FSR4 INT8 版本。</x:String>
+    <x:String x:Key="TxtErrNoOptiOrExtrasText">安装前请选择一个 OptiScaler 版本或 FSR 4 Swap 版本。</x:String>
     <x:String x:Key="TxtSwapDllOutsideGameFolder">所选文件必须位于游戏文件夹内。</x:String>
-    <x:String x:Key="TxtSwapDllNoRdna2Companion">此 FSR4 INT8 版本不包含 amdxc64.dll 的替换文件。请选择其他版本或目标文件。</x:String>
+    <x:String x:Key="TxtSwapDllNoRdna2Companion">此 FSR 4 Swap 版本不包含 amdxc64.dll 的替换文件。请选择其他版本或目标文件。</x:String>
     <x:String x:Key="TxtSwapDllSuccessFormat">已将 FSR4 v{0} 交换到 {1}。</x:String>
     <x:String x:Key="TxtFsr4SwapSelectTitle">选择要交换的文件</x:String>
     <x:String x:Key="TxtFsr4SwapSelectDesc">此 FSR4 软件包包含多个文件。请选择要在游戏文件夹中复制或替换的文件。</x:String>
@@ -161,7 +162,7 @@
     <x:String x:Key="TxtFsr4SwapDefaultsCountFormat">已选择 {0}/{1} 个文件</x:String>
     <x:String x:Key="TxtFsr4SwapNoDefaultsConfigured">FSR 4 交换选项(设置)中未选择任何文件。请至少勾选一个,或改回"每次都询问我"。</x:String>
     <x:String x:Key="TxtConfirmRestoreDllTitle">确认还原</x:String>
-    <x:String x:Key="TxtConfirmRestoreDllMsg">确定要还原原始 DLL 吗？&#x0a;已交换的 FSR4 INT8 DLL 将替换回备份的原始文件。</x:String>
+    <x:String x:Key="TxtConfirmRestoreDllMsg">确定要还原原始 DLL 吗？&#x0a;已交换的 FSR 4 Swap DLL 将替换回备份的原始文件。</x:String>
     <x:String x:Key="TxtRestoreDllSuccess">已成功还原原始 DLL。</x:String>
     <x:String x:Key="TxtFsr4SwappedTip">直接交换，未安装 OptiScaler</x:String>
     <x:String x:Key="TxtRestoreDllResidueTitle">已还原原始 DLL</x:String>
@@ -173,7 +174,7 @@
 
     <x:String x:Key="TxtTooltipOptiScalerVersion">选择要为此游戏安装的特定 OptiScaler 版本。</x:String>
     <x:String x:Key="TxtTooltipInjectionMethod">决定 OptiScaler 的加载方式，常见选择是 dxgi.dll 或 version.dll，具体取决于游戏兼容性。</x:String>
-    <x:String x:Key="TxtTooltipFsr4Int8">注入 FSR 4 INT8 模组 DLL。这允许非 RDNA 4 GPU 使用 FSR 4 功能。如果是 RX 9000 系列 (RDNA 4) GPU，请选择「无」。</x:String>
+    <x:String x:Key="TxtTooltipFsr4Int8">注入 FSR 4 Swap 模组 DLL。这允许非 RDNA 4 GPU 使用 FSR 4 功能。如果是 RX 9000 系列 (RDNA 4) GPU，请选择「无」。</x:String>
 
     <x:String x:Key="TxtOptiInstalled">OptiScaler 已安装</x:String>
     <x:String x:Key="TxtOptiNotInstalled">未安装</x:String>
@@ -189,6 +190,7 @@
 
     <x:String x:Key="TxtOptiUninstallResidueMsg">已卸载 OptiScaler，但出于谨慎保留了 {0} 个可能属于游戏本身的文件:&#x0a;&#x0a;{1}&#x0a;&#x0a;如果确定游戏本身没有这些文件，可以使用“文件夹清理”将其移除。</x:String>
     <x:String x:Key="TxtOptiUninstallFail">卸载失败：{0}</x:String>
+    <x:String x:Key="TxtSetupNrReuseWeightsCacheFailedFormat">无法重复使用已缓存的权重：{0}&#10;&#10;游戏当前正在运行吗？请关闭游戏后重试。</x:String>
     <x:String x:Key="TxtInstallSuccessTitle">安装成功</x:String>
 
     <!-- ManageGameWindow: Recommended Config sidebar (Compatibility List) -->
@@ -358,7 +360,7 @@
     <x:String x:Key="TxtApply">应用</x:String>
     <x:String x:Key="TxtNoImageSelected">未选择图片</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0} 的下载已在进行中</x:String>
-    <x:String x:Key="TxtDownloadingExtrasFormat">正在下载 FSR4 INT8 v{0}... {1}%</x:String>
+    <x:String x:Key="TxtDownloadingExtrasFormat">正在下载 FSR 4 Swap v{0}... {1}%</x:String>
     <x:String x:Key="TxtVersionUnavailable">当前无法安装 OptiScaler v{0}，
 
 此版本不可下载。请检查网络连接并稍后重试。</x:String>
@@ -373,8 +375,8 @@
     <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
     <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 和 NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">请选择 Optiscaler 版本或 FSR 4 DLL（交换）其中之一。</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultTitle">默认 FSR4 INT8</x:String>
-    <x:String x:Key="TxtFsr4Int8DefaultDesc">打开游戏时预选的默认 FSR4 INT8 模组版本。RDNA 4 GPU（RX 9000 系列）会自动使用「无」选项。</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultTitle">默认 FSR 4 Swap</x:String>
+    <x:String x:Key="TxtFsr4Int8DefaultDesc">打开游戏时预选的默认 FSR 4 Swap 模组版本。RDNA 4 GPU（RX 9000 系列）会自动使用「无」选项。</x:String>
     <x:String x:Key="TxtCustomExtrasImportInfo">导入包含 amd_fidelityfx_upscaler_dx12.dll、amdxcffx64.dll 和/或 amdxc64.dll 的 .zip/.7z/.rar 包（或单个 .dll），以测试尚未发布的版本。</x:String>
     <x:String x:Key="TxtDefaultGpuTitle">默认 GPU</x:String>
     <x:String x:Key="TxtDefaultGpuDesc">用于默认值和 GPU 特定建议</x:String>
@@ -397,6 +399,8 @@
     <x:String x:Key="TxtClearAppCacheDesc">删除已扫描的游戏、封面图片和缓存的版本数据。应用将在下次启动时重新扫描并重新获取版本信息。</x:String>
     <x:String x:Key="TxtClearCacheBtn">清除缓存</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">警告：此操作将永久删除所有已扫描的游戏、封面图片和缓存的 OptiScaler 版本数据。&#x0a;&#x0a;清除完成后应用将关闭。下次启动时将重新扫描游戏库并重新获取版本信息。</x:String>
+    <x:String x:Key="TxtClearAppCacheSizeInfo">总大小：{0}</x:String>
+    <x:String x:Key="TxtCacheTotalSizeFormat">总大小：{0}</x:String>
     <x:String x:Key="TxtWarning">警告</x:String>
     <x:String x:Key="TxtNoVersionsFound">没有可安装的 OptiScaler 版本</x:String>
     <!-- Help Window -->
@@ -414,7 +418,7 @@
     <x:String x:Key="TxtHelpPageTroubleshooting">常见问题 &amp; 故障排除</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免责声明 ⚠️</x:String>
     <x:String x:Key="TxtHelpDisclaimerContent">这不是 OptiScaler 的官方项目。我与 OptiScaler 团队没有任何关联。这是一个没有任何商业目的的个人项目。任何人都可以自行承担风险使用此软件。&#x0a;&#x0a;致谢：特别感谢 OptiScaler 团队；本工具的实现完全得益于他们在原版模组上的卓越工作。</x:String>
-    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;根据 GPL-3.0-or-later 授权。这是自由软件：可以在特定条件下修改和重新分发。详情请参阅 LICENSE 文件。&#x0a;&#x0a;第三方组件（OptiScaler、Fakenvapi、NukemFG、FSR4 INT8）受其各自许可证的约束。</x:String>
+    <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;根据 GPL-3.0-or-later 授权。这是自由软件：可以在特定条件下修改和重新分发。详情请参阅 LICENSE 文件。&#x0a;&#x0a;第三方组件（OptiScaler、Fakenvapi、NukemFG、FSR 4 Swap）受其各自许可证的约束。</x:String>
     <x:String x:Key="TxtHelpSystemTitle">系统</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">许可证 &amp; 版权</x:String>
 
@@ -457,7 +461,7 @@
     <x:String x:Key="TxtHelpMWGameListLabel">游戏列表 🎮</x:String>
     <x:String x:Key="TxtHelpMWGameListText">显示所有检测到的游戏，包含封面图片、标题和安装状态。</x:String>
     <x:String x:Key="TxtHelpMWBadgeColorsLabel">徽章颜色 🎨</x:String>
-    <x:String x:Key="TxtHelpMWBadgeColorsText">每个封面会为检测到的每种放大技术（DLSS、FSR、XeSS）显示一个徽章。实心徽章表示该技术是游戏原生的。较暗且带描边的徽章表示它是由 OptiScaler 添加的。对于 FSR，琥珀色徽章表示 FSR4 INT8 DLL 已直接在游戏文件夹中被替换，而未安装 OptiScaler。</x:String>
+    <x:String x:Key="TxtHelpMWBadgeColorsText">每个封面会为检测到的每种放大技术（DLSS、FSR、XeSS）显示一个徽章。实心徽章表示该技术是游戏原生的。较暗且带描边的徽章表示它是由 OptiScaler 添加的。对于 FSR，琥珀色徽章表示 FSR 4 Swap DLL 已直接在游戏文件夹中被替换，而未安装 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWManageBtnLabel">管理按钮 ⚙️</x:String>
     <x:String x:Key="TxtHelpMWManageBtnText">打开选定游戏的管理窗口，可在其中安装、配置和管理 OptiScaler。</x:String>
     <x:String x:Key="TxtHelpMWQuickInstallLabel">快速安装按钮 ✦</x:String>
@@ -507,15 +511,33 @@
     <x:String x:Key="TxtHelpGMOptiPatcherText">可选的 ASI 插件，可在受支持的游戏中不进行欺骗即可公开 DLSS/DLSS-FG 输入。帮助 AMD 和 Intel 用户避免 D3D12 错误，并防止因 DXGI 欺骗导致的开销或崩溃。</x:String>
     <x:String x:Key="TxtHelpGMInjectionLabel">注入方法 🚀</x:String>
     <x:String x:Key="TxtHelpGMInjectionText">选择 OptiScaler 注入游戏进程的方式。大多数情况下默认选项 (dxgi.dll) 即可。</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 INT8 ⚡</x:String>
-    <x:String x:Key="TxtHelpGMFsr4Text">允许为早于 RDNA 3 的 GPU 注入 FSR 4 INT 8 版本的选择器。RDNA 3 和 RDNA 4 GPU 已通过 AMD 官方驱动原生获得 FSR 4 INT8，因此无需为它们使用此选项。</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL 替换（FSR4 INT8）🔁</x:String>
-    <x:String x:Key="TxtHelpGMDllSwapText">将 OptiScaler 版本设为“None”，同时保持选择 FSR4 INT8 版本，即可仅替换游戏文件夹中的 FSR4 INT8 DLL，而不安装 OptiScaler。自动替换 DLL 会自动查找并替换现有的 DLL；手动替换 DLL 则允许你在找不到时自行选择。原始文件会被备份，因此“卸载”按钮会变成“还原原始 DLL”以便还原。DLL 替换与安装 OptiScaler 完全兼容，无论先后顺序如何。也可在批量安装中同时对多个游戏使用此功能。</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Label">FSR 4 Swap ⚡</x:String>
+    <x:String x:Key="TxtHelpGMFsr4Text">允许为早于 RDNA 3 的 GPU 注入 FSR 4 Swap 版本的选择器。RDNA 3 和 RDNA 4 GPU 已通过 AMD 官方驱动原生获得 FSR 4 Swap，因此无需为它们使用此选项。</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapLabel">DLL 替换（FSR 4 Swap）🔁</x:String>
+    <x:String x:Key="TxtHelpGMDllSwapText">将 OptiScaler 版本设为“None”，同时保持选择 FSR 4 Swap 版本，即可仅替换游戏文件夹中的 FSR 4 Swap DLL，而不安装 OptiScaler。自动替换 DLL 会自动查找并替换现有的 DLL；手动替换 DLL 则允许你在找不到时自行选择。原始文件会被备份，因此“卸载”按钮会变成“还原原始 DLL”以便还原。DLL 替换与安装 OptiScaler 完全兼容，无论先后顺序如何。也可在批量安装中同时对多个游戏使用此功能。</x:String>
     <x:String x:Key="TxtHelpGMComponentsLabel">已安装的组件 🧩</x:String>
-    <x:String x:Key="TxtHelpGMComponentsText">列出在游戏文件夹中检测到的放大器。实心徽章表示该放大器是游戏原生的；较暗且带描边的徽章表示它是由 OptiScaler 添加的。琥珀色徽章（仅限 FSR）表示 FSR4 INT8 DLL 已直接被替换，而未安装 OptiScaler。将鼠标悬停在任意条目上查看详情。</x:String>
+    <x:String x:Key="TxtHelpGMComponentsText">列出在游戏文件夹中检测到的放大器。实心徽章表示该放大器是游戏原生的；较暗且带描边的徽章表示它是由 OptiScaler 添加的。琥珀色徽章（仅限 FSR）表示 FSR 4 Swap DLL 已直接被替换，而未安装 OptiScaler。将鼠标悬停在任意条目上查看详情。</x:String>
     <x:String x:Key="TxtHelpGMRenodxLabel">RenoDX（实验性） 🧪</x:String>
     <x:String x:Key="TxtHelpGMRenodxText">运行在 ReShade 之上的可选的逐游戏 HDR/色调映射插件，仅在设置中启用"实验性功能"时显示。"自动"会自动从 RenoDX wiki 中查找并下载适合该游戏的插件；你也可以选择已为该游戏缓存的插件，或通过"管理本地版本"手动添加。需要游戏文件夹中已安装 ReShade——如果与 OptiScaler 自身的注入 DLL 冲突（两者通常都使用 dxgi.dll），应用会自动保留现有的 ReShade 安装，而不是覆盖它。</x:String>
 
+
+    <!-- Help - Experimental -->
+    <x:String x:Key="TxtHelpExpWhatTitle">什么是实验区？</x:String>
+    <x:String x:Key="TxtHelpExpWhatContent">OptiScaler Client 首先是一个 OptiScaler 管理器。实验区是游戏管理内一个明确分离的、需选择加入的区域，用于存放不属于 OptiScaler 本身但社区要求或已经广为人知的附加功能。将它们放在单独的开关和可见的警告边框后面，使我们能够在不模糊 OptiScaler 边界的情况下提供支持。</x:String>
+    <x:String x:Key="TxtHelpExpEnableContent">默认处于关闭状态。在“设置”中启用“显示实验性/附加功能”，以在“游戏管理”和“本地版本管理”中显示它。</x:String>
+    <x:String x:Key="TxtHelpExpContainsTitle">包含内容</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLabel">RenoDX</x:String>
+    <x:String x:Key="TxtHelpExpRenodxText">在 ReShade 之上运行的每游戏 HDR/色调映射附加组件。请注意，由于知识产权原因，我们无法自动下载其基础版本，但可以下载每游戏的附加组件。“自动”功能会直接从 RenoDX wiki 自动解析并下载适合当前游戏的附加组件；要求 ReShade 已经安装在游戏文件夹中。</x:String>
+    <x:String x:Key="TxtHelpExpRenodxLinkLabel">GitHub 上的 RenoDX ↗</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLabel">AMD 上的 DLSS 神经渲染</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">在 AMD GPU 上运行 danielblnc 的非官方 DLSS 神经渲染模组，可选择与非官方社区 OptiScaler 包装器构建（MatheusGViana）结合使用，以便 OptiScaler 和神经渲染可以一起运行——OptiScaler 本身尚未官方支持神经渲染。</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrLinkLabel">GitHub 上的 DLSS-NR-on-AMD ↗</x:String>
+    <x:String x:Key="TxtHelpExpDllTitle">为什么我们不提供 NVIDIA 的 DLL</x:String>
+    <x:String x:Key="TxtHelpExpDllContent">DLSS 神经渲染需要 nvngx_dlssnr.dll，这是 NVIDIA 拥有的文件。我们不被允许重新分发它，因此应用程序永远不会下载或捆绑它。您必须提供自己的合法副本，从任何已经附带 DLSS 5 的游戏中提取。该文件仅需提供一次，会被缓存以供将来安装重用。</x:String>
+    <x:String x:Key="TxtHelpExpSupportTitle">支持级别</x:String>
+    <x:String x:Key="TxtHelpExpSupportContent">这里的所有内容都是在本项目和 OptiScaler 之外维护的第三方模组或社区构建。我们将它们连接起来，缓存其发布版本，并努力保持工作流程顺畅，但我们无法控制它们的发布节奏、错误，或与每个游戏或 GPU 的兼容性。我们将尽最大努力提供支持，但其深度和测试程度不如 OptiScaler 自身的特性。</x:String>
+    <x:String x:Key="TxtHelpExpWarningTitle">非官方构建 ⚠️</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">“Mod + OptiScaler” 包装器构建未经 OptiScaler 项目分发或验证。它直接从其 GitHub 发布页面下载，如果发布包含校验和，则会进行验证，但内容本身未受我们或 OptiScaler 审核。安装风险自负。</x:String>
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
     <x:String x:Key="TxtHelpProfTitle">创建和管理配置文件</x:String>
@@ -534,6 +556,8 @@
     <x:String x:Key="TxtHelpSetProfileText">允许管理不同的配置文件，更多信息请参阅「配置文件」页面。</x:String>
     <x:String x:Key="TxtHelpSetScanLabel">扫描来源</x:String>
     <x:String x:Key="TxtHelpSetScanText">管理点击「扫描」时扫描哪些来源，包括 Steam、Epic 等平台以及自定义文件夹和其他位置。</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsLabel">默认版本与快速安装设置</x:String>
+    <x:String x:Key="TxtHelpSetDefaultVersionsText">允许您管理在使用快速安装（Quick Install）或首次管理游戏时使用的默认版本和设置。您可以选择默认的 OptiScaler 版本、FSR INT8 版本等。</x:String>
     <x:String x:Key="TxtHelpSetFsr4Label">FSR INT8 默认</x:String>
     <x:String x:Key="TxtHelpSetFsr4Text">为注入部分选择默认 FSR INT8 版本，AMD 7000 系列或 9000 系列显卡用户建议设置为「无」。</x:String>
     <x:String x:Key="TxtHelpSetGpuLabel">默认 GPU 选择</x:String>
@@ -582,10 +606,10 @@
     <x:String x:Key="TxtHelpFaqFsr4LinuxStep3">建议使用 GE-Proton，可通过 Proton Plus 或 ProtonUp-Qt 进行管理。</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrLabel">应用无法自动更新 / 提示由包管理器管理</x:String>
     <x:String x:Key="TxtHelpFaqPkgMgrText">如果 OptiScaler Client 是通过包管理器（例如 AUR、Nix）安装的，应用内更新会被禁用以避免冲突。请改用您的包管理器更新应用（例如在 Arch/AUR 上使用 'yay -Syu'）。</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR4 INT8 4.1.1 在 RDNA2 显卡上导致重影、卡顿或黑屏</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">这是一个已知的、目前尚未修复的 AMD 驱动编译器回归问题，专门影响 RDNA2 显卡（Radeon RX 6000 系列以及基于 RDNA2 的 APU/掌机）上基于驱动的 FSR4 INT8 版本（4.1.1 及更新版本）。这不是本应用或 OptiScaler 本身的错误。</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">如果你的显卡是 RDNA2，请使用 FSR4 INT8 4.0.2c 版本而不是 4.1.1——它使用不同的实现，不受此问题影响，可以正常工作。</x:String>
-    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">你可以在 Manage Game 中为每个游戏单独选择 FSR4 INT8 版本，或在 Settings → Local cache &amp; Default version management 中设置默认版本。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Label">FSR 4 Swap 4.1.1 在 RDNA2 显卡上导致重影、卡顿或黑屏</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Text">这是一个已知的、目前尚未修复的 AMD 驱动编译器回归问题，专门影响 RDNA2 显卡（Radeon RX 6000 系列以及基于 RDNA2 的 APU/掌机）上基于驱动的 FSR 4 Swap 版本（4.1.1 及更新版本）。这不是本应用或 OptiScaler 本身的错误。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step1">如果你的显卡是 RDNA2，请使用 FSR 4 Swap 4.0.2c 版本而不是 4.1.1——它使用不同的实现，不受此问题影响，可以正常工作。</x:String>
+    <x:String x:Key="TxtHelpFaqFsr4Rdna2Step2">你可以在 Manage Game 中为每个游戏单独选择 FSR 4 Swap 版本，或在 Settings → Local cache &amp; Default version management 中设置默认版本。</x:String>
     <x:String x:Key="TxtHelpFaqFsr4Rdna2Step3">此问题只能由 AMD 发布更新的驱动来修复；目前客户端没有可用的解决方法。</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchLabel">游戏明明在兼容性列表中，却找不到推荐配置</x:String>
     <x:String x:Key="TxtHelpFaqNoCompatMatchText">这是因为本地游戏名称与 wiki 条目不够接近，自动查找无法匹配到它。请在管理窗口中编辑游戏名称，使其与兼容性列表中显示的名称一致，然后关闭管理窗口并重新打开——查找只会在窗口打开时执行。</x:String>
@@ -697,7 +721,7 @@
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下载 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安装 OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>
-    <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler、OptiPatcher、FSR4 INT8、Fakenvapi 和 NukemFG 的版本可以在设置中的本地缓存和默认版本管理部分进行管理。</x:String>
+    <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler、OptiPatcher、FSR 4 Swap、Fakenvapi 和 NukemFG 的版本可以在设置中的本地缓存和默认版本管理部分进行管理。</x:String>
     <x:String x:Key="TxtSetDefault">设为默认</x:String>
     <x:String x:Key="TxtClearDefault">清除</x:String>
     <x:String x:Key="TxtDefaultBadge">默认</x:String>
@@ -731,7 +755,7 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 修复：FSR4 INT8 可能因内部设置指向客户端实际未提供的文件，而导致游戏在 RDNA2 显卡上无法启动。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 修复：FSR 4 Swap 可能因内部设置指向客户端实际未提供的文件，而导致游戏在 RDNA2 显卡上无法启动。</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew2">• 修复：即使游戏没有原生 DLSS 帧生成，NukemFG（DLSSG-to-FSR3）也会被强制启用，导致 OptiScaler 一直要求"启用帧生成"却无法满足该条件。</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew3">• 新增："帮助"中的"检查更新"按钮，当有新版本可用时会在应用版本号旁显示徽章。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
@@ -772,9 +796,13 @@
     <x:String x:Key="TxtSetupNrNvngxVersionFormat">版本 {0}</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxTitle">删除 nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtSetupNrDeleteNvngxMsg">确定要删除已缓存的 nvngx_dlssnr.dll 吗？已经安装该模组的游戏会保留各自的副本。</x:String>
+    <x:String x:Key="TxtSetupNrWeightsPageLbl">Neural Rendering 模组权重</x:String>
+    <x:String x:Key="TxtSetupNrWeightsCachedStatus">已缓存（{0} MB）— 之后的"Mod + OptiScaler"安装将跳过 danielblnc 的安装程序。</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsTitle">删除已缓存的权重</x:String>
+    <x:String x:Key="TxtSetupNrDeleteWeightsMsg">确定要删除已缓存的权重吗？下一次"Mod + OptiScaler"安装（任何游戏）都会重新运行 danielblnc 的安装程序以重新生成它们。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">仅安装 danielblnc 的模组（不含 OptiScaler）</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">模组 + OptiScaler（非官方 wrapper）</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">此模式使用未经 OptiScaler 项目分发或验证的非官方 OptiScaler 构建（社区 wrapper）。它从 GitHub 下载，如果发行版发布了校验和会进行验证，但内容本身未经审计。安装风险自负。</x:String>
+    <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支持 Neural Rendering，因此需要使用社区打包的版本（MatheusGViana）才能配合使用。安装风险自负。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">用于生成 AMD 权重的 danielblnc DLSS Neural Rendering 模组版本。“danielblnc mod only” 和 “Mod + OptiScaler” 都需要它。</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper 版本（社区，非官方）</x:String>
@@ -903,6 +931,8 @@
     <x:String x:Key="TxtFgNvngxReplacementComboTooltip">结合 FSR FG 生成中间帧与 DLSS Enabler 生成其余帧，实现最高 x6 的 MFG。</x:String>
     <x:String x:Key="TxtDlssEnablerVersionLbl">DLSS Enabler 版本</x:String>
     <x:String x:Key="TxtDlssEnablerVersionTooltip">选择要使用的 DLSS Enabler 版本，或导入自定义版本。</x:String>
+    <x:String x:Key="TxtStreamlineVersionLbl">Streamline 版本</x:String>
+    <x:String x:Key="TxtStreamlineVersionTooltip">选择用于 DLSS-G 帧生成的 Streamline SDK 版本，或保持为 Latest。</x:String>
     <x:String x:Key="TxtDlssEnablerTabMirror">镜像</x:String>
     <x:String x:Key="TxtDlssEnablerTabCustom">自定义</x:String>
     <x:String x:Key="TxtDlssEnablerMirrorInfoTooltip">非官方 DLSS Enabler 镜像。需要特定版本？请从 '自定义' 选项卡添加。</x:String>
@@ -933,6 +963,7 @@
     <x:String x:Key="TxtUpscalingQualityApplyError">无法应用超分辨率质量配置：</x:String>
     <x:String x:Key="TxtOutputUpscaler">输出放大器</x:String>
     <x:String x:Key="TxtOutputUpscalerTooltip">在所选配置文件之上，覆盖此游戏使用的 OptiScaler 放大器后端。"默认"会保留配置文件本身的选择不变。</x:String>
+    <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">为每个从未配置过的游戏预先选择，并通过快速安装/批量安装自动安装的默认"Setup NR"模式。仅在上方的默认 GPU 为 AMD 时显示。</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">默认</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">无法应用输出放大器配置：</x:String>
 </ResourceDictionary>

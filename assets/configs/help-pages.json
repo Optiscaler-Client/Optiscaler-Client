@@ -32,7 +32,7 @@
           "type": "disclaimer",
           "title": "License & Copyright",
           "titleKey": "TxtHelpLicenseTitle",
-          "content": "Copyright 2026 Agustinm28\n\nLicensed under GPL-3.0-or-later. This is free software: you are free to change and redistribute it under certain conditions. See the LICENSE file for details.\n\nThird-party components (OptiScaler, Fakenvapi, NukemFG, FSR4 INT8) are subject to their respective licenses.",
+          "content": "Copyright 2026 Agustinm28\n\nLicensed under GPL-3.0-or-later. This is free software: you are free to change and redistribute it under certain conditions. See the LICENSE file for details.\n\nThird-party components (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) are subject to their respective licenses.",
           "contentKey": "TxtHelpLicenseContent"
         },
         {
@@ -184,7 +184,7 @@
             {
               "label": "Badge Colors 🎨",
               "labelKey": "TxtHelpMWBadgeColorsLabel",
-              "text": "Each cover shows a badge per detected upscaler (DLSS, FSR, XeSS). A solid, filled badge means it's native to the game. A dimmer, outlined badge means it was added by OptiScaler. For FSR, an amber badge means the FSR4 INT8 DLL was swapped directly in the game folder, without installing OptiScaler.",
+              "text": "Each cover shows a badge per detected upscaler (DLSS, FSR, XeSS). A solid, filled badge means it's native to the game. A dimmer, outlined badge means it was added by OptiScaler. For FSR, an amber badge means the FSR 4 Swap DLL was swapped directly in the game folder, without installing OptiScaler.",
               "textKey": "TxtHelpMWBadgeColorsText"
             },
             {
@@ -361,6 +361,13 @@
                   "text": "Shows manual and experimental routes. Leave it off unless you know the game needs a specific route.",
                   "textKey": "TxtHelpGMFgAdvancedText",
                   "type": "bullet-point"
+                },
+                {
+                  "title": "Streamline version",
+                  "titleKey": "TxtHelpGMFgStreamlineTitle",
+                  "text": "Pick a specific NVIDIA Streamline SDK version to use for DLSS-G Frame Generation, or leave it on Latest.",
+                  "textKey": "TxtHelpGMFgStreamlineText",
+                  "type": "bullet-point"
                 }
               ]
             },
@@ -389,21 +396,27 @@
               "textKey": "TxtHelpGMInjectionText"
             },
             {
-              "label": "FSR 4 INT8 ⚡",
+              "label": "Spoofing 🎭",
+              "labelKey": "TxtHelpGMSpoofingLabel",
+              "text": "Overrides OptiScaler's own DXGI GPU spoofing for this game, which fakes being an Nvidia GPU so DLSS-only games work on AMD/Intel. Auto matches OptiScaler's default (enabled on AMD/Intel, disabled on Nvidia); override it per game if a title needs the opposite.",
+              "textKey": "TxtHelpGMSpoofingText"
+            },
+            {
+              "label": "FSR 4 Swap ⚡",
               "labelKey": "TxtHelpFsr4DllLabel",
-              "text": "Selector that allows injecting the INT 8 version of FSR 4 for GPUs older than RDNA 3. RDNA 3 and RDNA 4 GPUs already get FSR 4 INT8 natively from AMD's official driver, so this isn't needed for them.",
+              "text": "Selector that allows injecting the INT 8 version of FSR 4 for GPUs older than RDNA 3. RDNA 3 and RDNA 4 GPUs already get FSR 4 Swap natively from AMD's official driver, so this isn't needed for them.",
               "textKey": "TxtHelpFsr4DllText"
             },
             {
-              "label": "DLL Swap (FSR4 INT8) 🔁",
+              "label": "DLL Swap (FSR 4 Swap) 🔁",
               "labelKey": "TxtHelpFsr4DllSwapLabel",
-              "text": "Set the OptiScaler Version to 'None' while keeping a FSR4 INT8 version selected to swap only the FSR4 INT8 DLL in the game folder, without installing OptiScaler at all. Auto-Swap DLL finds and replaces the existing DLL automatically; Manual-Swap DLL lets you pick it yourself if it isn't found. The original file is backed up, so the Uninstall button becomes 'Restore original DLL' to revert it. Swapping and installing OptiScaler are fully compatible with each other in either order. Also available for multiple games at once from Bulk Install.",
+              "text": "Set the OptiScaler Version to 'None' while keeping a FSR 4 Swap version selected to swap only the FSR 4 Swap DLL in the game folder, without installing OptiScaler at all. Auto-Swap DLL finds and replaces the existing DLL automatically; Manual-Swap DLL lets you pick it yourself if it isn't found. The original file is backed up, so the Uninstall button becomes 'Restore original DLL' to revert it. Swapping and installing OptiScaler are fully compatible with each other in either order. Also available for multiple games at once from Bulk Install.",
               "textKey": "TxtHelpFsr4DllSwapText"
             },
             {
               "label": "Installed Components 🧩",
               "labelKey": "TxtHelpGMComponentsLabel",
-              "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. An amber badge (FSR only) means the FSR4 INT8 DLL was swapped directly, without installing OptiScaler. Hover over any entry for details.",
+              "text": "Lists the upscalers detected in the game folder. A solid badge means the upscaler is native to the game; a dimmer, outlined badge means it was added by OptiScaler instead. An amber badge (FSR only) means the FSR 4 Swap DLL was swapped directly, without installing OptiScaler. Hover over any entry for details.",
               "textKey": "TxtHelpGMComponentsText"
             },
             {
@@ -411,8 +424,111 @@
               "labelKey": "TxtHelpGMRenodxLabel",
               "text": "Optional per-game HDR/tone-mapping addon that runs on top of ReShade, only shown when Experimental Features is enabled in Settings. 'Auto' resolves and downloads the right addon for this game from the RenoDX wiki automatically; you can also pick an addon already cached for this game or add one manually from Manage Local Versions. Requires ReShade to already be installed in the game folder - if it conflicts with OptiScaler's own injection DLL (both commonly use dxgi.dll), the app automatically preserves the existing ReShade install instead of overwriting it.",
               "textKey": "TxtHelpGMRenodxText"
+            },
+            {
+              "label": "DLSS Neural Rendering on AMD (Experimental) 🧪",
+              "labelKey": "TxtHelpGMDlssNrLabel",
+              "text": "Also part of the Experimental Zone (see the 'Experimental' help page). Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally combined with an unofficial community OptiScaler wrapper build, since OptiScaler itself doesn't support Neural Rendering yet.",
+              "textKey": "TxtHelpGMDlssNrText",
+              "items": [
+                {
+                  "title": "Modes",
+                  "titleKey": "TxtHelpGMDlssNrModesTitle",
+                  "text": "'None' disables it. 'danielblnc mod only' installs just the AMD Neural Rendering mod. 'Mod + OptiScaler' also swaps in the unofficial community wrapper build so OptiScaler and Neural Rendering can run together.",
+                  "textKey": "TxtHelpGMDlssNrModesText",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "nvngx_dlssnr.dll",
+                  "titleKey": "TxtHelpGMDlssNrDllTitle",
+                  "text": "The mod needs your own legitimate copy of NVIDIA's nvngx_dlssnr.dll, extracted from any game that ships DLSS 5. We can't provide this file ourselves for legal reasons. It's asked for once and cached for future installs.",
+                  "textKey": "TxtHelpGMDlssNrDllText",
+                  "type": "bullet-point"
+                },
+                {
+                  "title": "Mod version",
+                  "titleKey": "TxtHelpGMDlssNrVersionTitle",
+                  "text": "Pick which release of danielblnc's mod to use, or leave it on the latest available.",
+                  "textKey": "TxtHelpGMDlssNrVersionText",
+                  "type": "bullet-point"
+                }
+              ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "experimental",
+      "title": "Experimental",
+      "titleKey": "TxtHelpPageExperimental",
+      "icon": "\uF1D8",
+      "category": "Guides",
+      "categoryKey": "TxtHelpCategoryGuides",
+      "fontSize": 14,
+      "sections": [
+        {
+          "type": "text",
+          "title": "What is the Experimental Zone?",
+          "titleKey": "TxtHelpExpWhatTitle",
+          "fontSize": 16,
+          "content": "OptiScaler Client is first and foremost an OptiScaler manager. The Experimental Zone is a clearly separated, opt-in area inside Game Management for extras that aren't part of OptiScaler itself, but that the community has asked for or already knows well. Keeping them behind their own toggle and a visible warning border lets us support them without blurring what is and isn't OptiScaler.",
+          "contentKey": "TxtHelpExpWhatContent"
+        },
+        {
+          "type": "text",
+          "content": "It's off by default. Enable 'Show experimental / addon features' in Settings to reveal it in Manage Game and in Manage Local Versions.",
+          "contentKey": "TxtHelpExpEnableContent"
+        },
+        {
+          "type": "list",
+          "title": "What it contains",
+          "titleKey": "TxtHelpExpContainsTitle",
+          "items": [
+            {
+              "label": "RenoDX",
+              "labelKey": "TxtHelpExpRenodxLabel",
+              "text": "A per-game HDR/tone-mapping addon that runs on top of ReShade. 'Auto' resolves and downloads the right addon for the current game straight from the RenoDX wiki; requires ReShade to already be installed in the game folder.",
+              "textKey": "TxtHelpExpRenodxText",
+              "link": "https://github.com/clshortfuse/renodx",
+              "linkLabel": "RenoDX on GitHub ↗",
+              "linkLabelKey": "TxtHelpExpRenodxLinkLabel"
+            },
+            {
+              "label": "DLSS Neural Rendering on AMD",
+              "labelKey": "TxtHelpExpDlssNrLabel",
+              "text": "Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally combined with an unofficial community OptiScaler wrapper build (MatheusGViana) so OptiScaler and Neural Rendering can run together - OptiScaler itself has no official Neural Rendering support yet.",
+              "textKey": "TxtHelpExpDlssNrText",
+              "link": "https://github.com/danielblnc/DLSS-NR-on-AMD",
+              "linkLabel": "DLSS-NR-on-AMD on GitHub ↗",
+              "linkLabelKey": "TxtHelpExpDlssNrLinkLabel"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Why we can't provide NVIDIA's DLL",
+          "titleKey": "TxtHelpExpDllTitle",
+          "fontSize": 16,
+          "content": "DLSS Neural Rendering needs nvngx_dlssnr.dll, a file owned by NVIDIA. We're not allowed to redistribute it, so the app never downloads or bundles it. You provide your own legitimate copy, extracted from any game that already ships DLSS 5. It's asked for once and cached for reuse in future installs.",
+          "contentKey": "TxtHelpExpDllContent"
+        },
+        {
+          "type": "text",
+          "title": "Support level",
+          "titleKey": "TxtHelpExpSupportTitle",
+          "fontSize": 16,
+          "content": "Everything here is a third-party mod or community build maintained outside this project and outside OptiScaler. We wire them in, cache their releases, and try to keep the workflow smooth, but we don't control their release cadence, their bugs, or how well they play with every game or GPU. Support is best-effort and not as deep or as tested as OptiScaler's own features.",
+          "contentKey": "TxtHelpExpSupportContent"
+        },
+        {
+          "type": "disclaimer",
+          "title": "Unofficial builds ⚠️",
+          "titleKey": "TxtHelpExpWarningTitle",
+          "content": "The 'Mod + OptiScaler' wrapper build is not distributed or verified by the OptiScaler project. It's downloaded straight from its GitHub releases and its checksum is verified when the release publishes one, but the content itself isn't audited by us or by OptiScaler. Install it at your own risk.",
+          "contentKey": "TxtHelpExpWarningContent",
+          "backgroundColor": "#FFFBF5",
+          "textColor": "#FF8A65"
         }
       ]
     },
@@ -527,7 +643,7 @@
             {
               "label": "Experimental Features 🧪",
               "labelKey": "TxtHelpSetExperimentalLabel",
-              "text": "Toggle 'Show experimental / addon features' to reveal the RenoDX selector in Manage Game and its dedicated section in Manage Local Versions. Purely a visibility switch - enabling it doesn't install or configure anything by itself.",
+              "text": "Toggle 'Show experimental / addon features' to reveal the Experimental Zone in Manage Game (RenoDX and, on Windows, DLSS Neural Rendering on AMD) plus their dedicated sections in Manage Local Versions. Purely a visibility switch - enabling it doesn't install or configure anything by itself. See the 'Experimental' help page for details.",
               "textKey": "TxtHelpSetExperimentalText"
             },
             {
@@ -543,16 +659,22 @@
               "textKey": "TxtHelpSetScanText"
             },
             {
-              "label": "FSR INT8 Default",
-              "labelKey": "TxtHelpFsr4DllDefaultLabel",
-              "text": "Allows you to select the default FSR INT8 version for the injection section when managing a game or using Quick Install. It is recommended to set this to 'None' for users with AMD 7000-series or 9000-series graphics cards.",
-              "textKey": "TxtHelpFsr4DllDefaultText"
+              "label": "Default versions & quick install settings",
+              "labelKey": "TxtHelpSetDefaultVersionsLabel",
+              "text": "Allows you to manage the default versions and settings used when Quick Installing or managing a game for the first time. You can choose the default OptiScaler version, FSR INT8 version, and more.",
+              "textKey": "TxtHelpSetDefaultVersionsText"
             },
             {
               "label": "Default GPU Selection",
               "labelKey": "TxtHelpSetGpuLabel",
               "text": "Choose which GPU to use when multiple GPUs are detected in your system.",
               "textKey": "TxtHelpSetGpuText"
+            },
+            {
+              "label": "Default AMD DLSS Neural Rendering 🧪",
+              "labelKey": "TxtHelpSetDlssNrDefaultLabel",
+              "text": "Pre-selects the 'Setup NR' mode for every never-configured game and lets Quick Install / Bulk Install install it automatically. Only shown when the default GPU above is AMD and Experimental Features is enabled.",
+              "textKey": "TxtHelpSetDlssNrDefaultText"
             },
             {
               "label": "Auto scan on startup",
@@ -818,22 +940,22 @@
               "textKey": "TxtHelpFaqPkgMgrText"
             },
             {
-              "label": "FSR4 INT8 4.1.1 causes ghosting, stuttering, or a black screen on RDNA2 GPUs",
+              "label": "FSR 4 Swap 4.1.1 causes ghosting, stuttering, or a black screen on RDNA2 GPUs",
               "labelKey": "TxtHelpFaqFsr4Rdna2Label",
-              "text": "This is a known, currently unfixed AMD driver compiler regression affecting the FSR4 INT8 driver-based build (version 4.1.1 and newer) specifically on RDNA2 GPUs (Radeon RX 6000 series and RDNA2-based APUs/handhelds). It is not a bug in this app or in OptiScaler itself.",
+              "text": "This is a known, currently unfixed AMD driver compiler regression affecting the FSR 4 Swap driver-based build (version 4.1.1 and newer) specifically on RDNA2 GPUs (Radeon RX 6000 series and RDNA2-based APUs/handhelds). It is not a bug in this app or in OptiScaler itself.",
               "textKey": "TxtHelpFaqFsr4Rdna2Text",
               "items": [
                 {
                   "title": "",
                   "titleKey": "",
-                  "text": "If your GPU is RDNA2, use FSR4 INT8 version 4.0.2c instead of 4.1.1 — it uses a different implementation that isn't affected and works correctly.",
+                  "text": "If your GPU is RDNA2, use FSR 4 Swap version 4.0.2c instead of 4.1.1 — it uses a different implementation that isn't affected and works correctly.",
                   "textKey": "TxtHelpFaqFsr4Rdna2Step1",
                   "type": "bullet-point"
                 },
                 {
                   "title": "",
                   "titleKey": "",
-                  "text": "You can pick a specific FSR4 INT8 version per game in Manage Game, or set your preferred default in Settings → Local cache & Default version management.",
+                  "text": "You can pick a specific FSR 4 Swap version per game in Manage Game, or set your preferred default in Settings → Local cache & Default version management.",
                   "textKey": "TxtHelpFaqFsr4Rdna2Step2",
                   "type": "bullet-point"
                 },
