@@ -980,4 +980,13 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Modo "Setup NR" por defecto para preseleccionar en cada juego nunca configurado, y para instalar automáticamente con Quick Install / instalación masiva. Solo se muestra cuando la GPU por defecto de arriba es AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Predeterminado</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">No se pudo aplicar la configuración del upscaler de salida:</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} disponible</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">Ver la página wiki de este juego</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Obteniendo información del juego…</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">Entradas de FG</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Método de inyección</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} problema(s) conocido(s) reportado(s) — consulta la página wiki para más detalles.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Corregido: FSR 4 Swap podía fallar al iniciar el juego en GPU RDNA2, causado por un ajuste interno que apuntaba a un archivo que el cliente nunca llegó a proporcionar.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Corregido: NukemFG (DLSSG-to-FSR3) se activaba forzosamente incluso en juegos sin generación de fotogramas DLSS nativa, dejando a OptiScaler pidiendo "activar Frame Generation" sin ninguna forma de satisfacerlo.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nuevo: botón "Buscar actualizaciones" en Ayuda, con una insignia junto a la versión de la app cuando hay una nueva versión disponible.</x:String>
 </ResourceDictionary>

@@ -968,4 +968,23 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Modo "Setup NR" padrão a ser pré-selecionado para cada jogo nunca configurado, e instalado automaticamente com a Instalação Rápida / Instalação em Massa. Exibido apenas quando a GPU padrão acima é AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Padrão</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Não foi possível aplicar a configuração do upscaler de saída:</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} disponível</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">Ver a página wiki deste jogo</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Obtendo informações do jogo…</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">Entradas de FG</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Método de injeção</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} problema(s) conhecido(s) reportado(s) — veja a página wiki para detalhes.</x:String>
+    <x:String x:Key="TxtCustom">Personalizado</x:String>
+    <x:String x:Key="TxtInputResolution">ENTRADA</x:String>
+    <x:String x:Key="TxtOutputResolution">SAÍDA</x:String>
+    <x:String x:Key="TxtQualityGameControlled">Controlado pelo jogo</x:String>
+    <x:String x:Key="TxtResolutionEstimateNote">Estimativa baseada na resolução atual da tela. O jogo pode usar uma resolução de saída diferente.</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">O programa mudou para o modo de renderização por software devido a várias falhas recorrentes.&#x0a;&#x0a;Você pode voltar à renderização por hardware (recomendado) em Configurações.</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Modo de renderização alterado</x:String>
+    <x:String x:Key="TxtUpscalingQualityApplyError">Não foi possível aplicar a configuração de qualidade de upscaling:</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomDescription">Escolha o divisor usado para calcular a resolução interna de entrada a partir da resolução de saída.</x:String>
+    <x:String x:Key="TxtUpscalingQualityCustomTitle">Qualidade de upscaling personalizada</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Corrigido: FSR 4 Swap podia falhar ao iniciar o jogo em GPUs RDNA2, causado por uma configuração interna que apontava para um arquivo que o cliente nunca chegou a fornecer.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Corrigido: NukemFG (DLSSG-to-FSR3) era forçado mesmo em jogos sem geração de quadros DLSS nativa, deixando o OptiScaler travado pedindo para "ativar a Geração de Quadros" sem nenhuma forma de satisfazer isso.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Novo: botão "Verificar atualizações" em Ajuda, com um selo ao lado da versão do app sempre que houver uma nova versão disponível.</x:String>
 </ResourceDictionary>

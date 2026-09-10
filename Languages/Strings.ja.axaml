@@ -967,4 +967,21 @@
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">一度も設定されていないすべてのゲームに事前選択され、クイックインストール／一括インストールで自動的にインストールされるデフォルトの「Setup NR」モードです。上のデフォルトGPUがAMDの場合のみ表示されます。</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">デフォルト</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">出力アップスケーラーの設定を適用できませんでした:</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllText">このMODには、DLSS 5を搭載したゲームから抽出した、あなた自身が正当に入手したNVIDIA製のnvngx_dlssnr.dllが必要です。法的な理由により、このファイル自体を配布することはできません。一度だけ確認され、以降のインストールのためにキャッシュされます。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrLabel">AMD向けDLSS Neural Rendering（実験的）🧪</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">「なし」で無効化します。「danielblncのMODのみ」はAMD Neural RenderingのMODだけをインストールします。「MOD + OptiScaler」は非公式のコミュニティ製ラッパービルドも導入し、OptiScalerとNeural Renderingを同時に動作させます。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesTitle">モード</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">こちらも実験ゾーンの一部です（「実験的機能」ヘルプページを参照）。AMD GPU上でdanielblncの非公式DLSS Neural Rendering MODを実行し、必要に応じて非公式コミュニティ製のOptiScalerラッパービルドと組み合わせます。OptiScaler自体はまだNeural Renderingに対応していないためです。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionText">danielblncのMODのどのリリースを使うか選択します。未指定の場合は常に最新版が使用されます。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionTitle">MODバージョン</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineText">DLSS-GのFrame Generationで使用するNVIDIA Streamline SDKの特定バージョンを選択します。未指定の場合は常に最新版が使用されます。</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamlineバージョン</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingLabel">スプーフィング 🎭</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">このゲームに対するOptiScaler独自のDXGI GPUスプーフィング（NvidiaのGPUであると偽装し、DLSS専用ゲームをAMD/Intelで動作させる機能）を上書きします。「自動」はOptiScalerの既定動作（AMD/Intelで有効、Nvidiaで無効）に従います。タイトルによって逆の設定が必要な場合はゲームごとに上書きしてください。</x:String>
+    <x:String x:Key="TxtHelpPageExperimental">実験的機能</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">AMD DLSS Neural Renderingの既定値 🧪</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultText">まだ設定されていないすべてのゲームに対して「Setup NR」モードを事前選択し、Quick Install / Bulk Installで自動的にインストールできるようにします。上の既定GPUがAMDに設定され、実験的機能が有効な場合にのみ表示されます。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">複数回の連続クラッシュのため、プログラムはソフトウェアレンダリングモードに切り替わりました。&#x0a;&#x0a;設定からハードウェアレンダリング（推奨）に戻すことができます。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">レンダリングモードが変更されました</x:String>
 </ResourceDictionary>

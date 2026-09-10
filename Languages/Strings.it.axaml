@@ -975,4 +975,16 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Modalità "Setup NR" predefinita da preselezionare per ogni gioco mai configurato, e da installare automaticamente con Installazione rapida / Installazione multipla. Mostrata solo se la GPU predefinita sopra è AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Predefinito</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Impossibile applicare la configurazione dell'upscaler di output:</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} disponibile</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">Vedi la pagina wiki di questo gioco</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Recupero informazioni sul gioco…</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">Input FG</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Metodo di injection</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} problema/i noto/i segnalato/i — vedi la pagina wiki per i dettagli.</x:String>
+    <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">Il programma è passato alla modalità di rendering software a causa di più arresti anomali ricorrenti.&#x0a;&#x0a;Puoi tornare al rendering hardware (consigliato) dalle Impostazioni.</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Modalità di rendering modificata</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Risolto: FSR 4 Swap poteva impedire l'avvio del gioco su GPU RDNA2, causato da un'impostazione interna che puntava a un file che il client non aveva mai effettivamente fornito.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Risolto: NukemFG (DLSSG-to-FSR3) veniva forzato anche su giochi senza generazione fotogrammi DLSS nativa, lasciando OptiScaler bloccato a richiedere di "attivare la generazione fotogrammi" senza modo di soddisfarlo.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nuovo: pulsante "Controlla aggiornamenti" in Aiuto, con un badge vicino alla versione dell'app quando è disponibile una nuova release.</x:String>
 </ResourceDictionary>

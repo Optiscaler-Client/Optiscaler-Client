@@ -966,4 +966,21 @@
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">为每个从未配置过的游戏预先选择，并通过快速安装/批量安装自动安装的默认"Setup NR"模式。仅在上方的默认 GPU 为 AMD 时显示。</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">默认</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">无法应用输出放大器配置：</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllText">该模组需要你自己合法获取的 NVIDIA nvngx_dlssnr.dll 文件，可从任意支持 DLSS 5 的游戏中提取。出于法律原因，我们无法自行提供此文件。只会询问一次，并缓存供以后安装使用。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrLabel">AMD 上的 DLSS Neural Rendering（实验性）🧪</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">“无”将其禁用。“仅 danielblnc 模组”只安装 AMD Neural Rendering 模组。“模组 + OptiScaler”还会替换为非官方社区包装版本，让 OptiScaler 和 Neural Rendering 能够同时运行。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesTitle">模式</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">这同样属于实验区域（参见“实验性”帮助页面）。它会在 AMD 显卡上运行 danielblnc 的非官方 DLSS Neural Rendering 模组，由于 OptiScaler 本身尚不支持 Neural Rendering，因此可选择与非官方社区版 OptiScaler 包装版本结合使用。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionText">选择要使用的 danielblnc 模组版本，或保持为最新可用版本。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionTitle">模组版本</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineText">选择用于 DLSS-G 帧生成的特定 NVIDIA Streamline SDK 版本，或保持为最新版本。</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamline 版本</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingLabel">伪装 🎭</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">为此游戏覆盖 OptiScaler 自身的 DXGI GPU 伪装功能（伪装成 Nvidia 显卡，使仅支持 DLSS 的游戏能在 AMD/Intel 上运行）。“自动”与 OptiScaler 的默认行为一致（在 AMD/Intel 上启用，在 Nvidia 上禁用）；如果某个游戏需要相反的设置，可按游戏单独覆盖。</x:String>
+    <x:String x:Key="TxtHelpPageExperimental">实验性</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">默认 AMD DLSS Neural Rendering 🧪</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultText">为每个尚未配置的游戏预先选择“Setup NR”模式，让快速安装/批量安装自动完成安装。仅当上方的默认 GPU 设为 AMD 且已启用实验性功能时才会显示。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">由于多次反复崩溃，程序已切换到软件渲染模式。&#x0a;&#x0a;你可以从设置中切换回硬件渲染（推荐）。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">渲染模式已更改</x:String>
 </ResourceDictionary>

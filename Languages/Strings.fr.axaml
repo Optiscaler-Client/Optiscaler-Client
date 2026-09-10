@@ -975,4 +975,16 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Mode « Setup NR » par défaut à présélectionner pour chaque jeu jamais configuré, et à installer automatiquement avec Installation rapide / Installation en masse. Affiché uniquement si le GPU par défaut ci-dessus est AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Par défaut</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Impossible d'appliquer la configuration de l'upscaler de sortie :</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} disponible</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">Voir la page wiki de ce jeu</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Récupération des informations du jeu…</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">Entrées FG</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Méthode d'injection</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} problème(s) connu(s) signalé(s) — voir la page wiki pour les détails.</x:String>
+    <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">Le programme est passé en mode de rendu logiciel en raison de plusieurs plantages récurrents.&#x0a;&#x0a;Vous pouvez revenir au rendu matériel (recommandé) depuis les paramètres.</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Mode de rendu modifié</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Corrigé : FSR 4 Swap pouvait empêcher le lancement du jeu sur les GPU RDNA2, causé par un paramètre interne pointant vers un fichier que le client n'avait en fait jamais fourni.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Corrigé : NukemFG (DLSSG-to-FSR3) était forcé même sur les jeux sans génération d'images DLSS native, ce qui bloquait OptiScaler qui demandait d'"activer la génération d'images" sans possibilité de le satisfaire.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Nouveau : bouton "Rechercher des mises à jour" dans l'aide, avec un badge près de la version de l'application lorsqu'une nouvelle version est disponible.</x:String>
 </ResourceDictionary>

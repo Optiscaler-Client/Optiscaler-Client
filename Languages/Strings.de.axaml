@@ -975,4 +975,16 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Standard-„Setup NR"-Modus, der für jedes noch nie konfigurierte Spiel vorausgewählt und bei Schnellinstallation / Masseninstallation automatisch installiert wird. Wird nur angezeigt, wenn die oben festgelegte Standard-GPU AMD ist.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Standard</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Die Konfiguration des Ausgabe-Upscalers konnte nicht angewendet werden:</x:String>
+    <x:String x:Key="TxtAppUpdateAvailBadge">v{0} verfügbar</x:String>
+    <x:String x:Key="TxtCompatSidebarViewGamePage">Wiki-Seite dieses Spiels ansehen</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFetching">Spielinformationen werden abgerufen…</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFgInputs">FG-Eingaben</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiFilename">Injection-Methode</x:String>
+    <x:String x:Key="TxtCompatSidebarWikiKnownIssues">⚠ {0} bekannte(s) Problem(e) gemeldet — Details auf der Wiki-Seite.</x:String>
+    <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">Das Programm wurde aufgrund mehrfacher wiederkehrender Abstürze in den Software-Rendering-Modus versetzt.&#x0a;&#x0a;Du kannst in den Einstellungen zum Hardware-Rendering (empfohlen) zurückkehren.</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Render-Modus geändert</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Behoben: FSR 4 Swap konnte das Spiel auf RDNA2-GPUs nicht starten, verursacht durch eine interne Einstellung, die auf eine Datei verwies, die der Client nie tatsächlich bereitgestellt hatte.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Behoben: NukemFG (DLSSG-to-FSR3) wurde selbst bei Spielen ohne native DLSS-Frame-Generierung zwangsweise aktiviert, wodurch OptiScaler weiterhin zur Aktivierung von Frame Generation aufforderte, ohne dass dies erfüllt werden konnte.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Neu: Schaltfläche "Nach Updates suchen" in der Hilfe, mit einem Badge neben der App-Version, sobald eine neue Version verfügbar ist.</x:String>
 </ResourceDictionary>

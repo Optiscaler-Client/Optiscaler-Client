@@ -967,4 +967,21 @@
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">為每個從未設定過的遊戲預先選取，並透過快速安裝／批次安裝自動安裝的預設「Setup NR」模式。僅在上方的預設 GPU 為 AMD 時顯示。</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">預設</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">無法套用輸出放大器設定：</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllText">此模組需要你自行合法取得的 NVIDIA nvngx_dlssnr.dll 檔案，可從任何支援 DLSS 5 的遊戲中提取。基於法律原因，我們無法自行提供此檔案。僅會詢問一次，並會快取供未來安裝使用。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrLabel">AMD 上的 DLSS Neural Rendering（實驗性）🧪</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">「無」會停用此功能。「僅 danielblnc 模組」只會安裝 AMD Neural Rendering 模組。「模組 + OptiScaler」還會替換為非官方社群包裝版本，讓 OptiScaler 與 Neural Rendering 能同時運作。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesTitle">模式</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">這同樣屬於實驗區域的一部分（參見「實驗性」說明頁面）。它會在 AMD 顯示卡上執行 danielblnc 的非官方 DLSS Neural Rendering 模組，由於 OptiScaler 本身尚未支援 Neural Rendering，因此可選擇搭配非官方社群版 OptiScaler 包裝版本使用。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionText">選擇要使用的 danielblnc 模組版本，或保持為最新可用版本。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrVersionTitle">模組版本</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineText">選擇用於 DLSS-G 幀生成的特定 NVIDIA Streamline SDK 版本，或保持為最新版本。</x:String>
+    <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamline 版本</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingLabel">偽裝 🎭</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">為此遊戲覆寫 OptiScaler 自身的 DXGI GPU 偽裝功能（偽裝成 Nvidia 顯示卡，讓僅支援 DLSS 的遊戲能在 AMD/Intel 上執行）。「自動」與 OptiScaler 的預設行為一致（在 AMD/Intel 上啟用，在 Nvidia 上停用）；若某遊戲需要相反設定，可依遊戲個別覆寫。</x:String>
+    <x:String x:Key="TxtHelpPageExperimental">實驗性</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">預設 AMD DLSS Neural Rendering 🧪</x:String>
+    <x:String x:Key="TxtHelpSetDlssNrDefaultText">為每個尚未設定的遊戲預先選擇「Setup NR」模式，讓快速安裝/批量安裝自動完成安裝。僅當上方的預設 GPU 設為 AMD 且已啟用實驗性功能時才會顯示。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeMessage">由於多次反覆當機，程式已切換為軟體渲染模式。&#x0a;&#x0a;你可以在設定中切換回硬體渲染（建議）。</x:String>
+    <x:String x:Key="TxtSoftwareRenderingNoticeTitle">渲染模式已變更</x:String>
 </ResourceDictionary>
