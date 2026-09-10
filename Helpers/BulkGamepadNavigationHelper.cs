@@ -85,7 +85,7 @@ public class BulkGamepadNavigationHelper : GamepadHelperBase, IDisposable
                         }
                     }
                     
-                    if (focused?.Name == "BtnOptiStable" || focused?.Name == "BtnOptiBeta" || focused?.Name == "BtnOptiCustom")
+                    if (focused?.Name == "BtnOptiStable" || focused?.Name == "BtnOptiBeta" || focused?.Name == "BtnOptiNightly" || focused?.Name == "BtnOptiCustom")
                     {
                         var cmb = _window.FindControl<ComboBox>("CmbOptiVersion");
                         cmb?.Focus(NavigationMethod.Directional);
@@ -144,13 +144,27 @@ public class BulkGamepadNavigationHelper : GamepadHelperBase, IDisposable
                     {
                         _window.FindControl<Control>("BtnOptiStable")?.Focus(NavigationMethod.Directional);
                     }
-                    else if (focused?.Name == "BtnOptiCustom")
+                    else if (focused?.Name == "BtnOptiNightly")
                     {
                         var btnBeta = _window.FindControl<Control>("BtnOptiBeta");
                         if (btnBeta != null && btnBeta.IsVisible)
                             btnBeta.Focus(NavigationMethod.Directional);
                         else
                             _window.FindControl<Control>("BtnOptiStable")?.Focus(NavigationMethod.Directional);
+                    }
+                    else if (focused?.Name == "BtnOptiCustom")
+                    {
+                        var btnNightly = _window.FindControl<Control>("BtnOptiNightly");
+                        if (btnNightly != null && btnNightly.IsVisible)
+                            btnNightly.Focus(NavigationMethod.Directional);
+                        else
+                        {
+                            var btnBeta = _window.FindControl<Control>("BtnOptiBeta");
+                            if (btnBeta != null && btnBeta.IsVisible)
+                                btnBeta.Focus(NavigationMethod.Directional);
+                            else
+                                _window.FindControl<Control>("BtnOptiStable")?.Focus(NavigationMethod.Directional);
+                        }
                     }
                     else
                     {
@@ -173,6 +187,29 @@ public class BulkGamepadNavigationHelper : GamepadHelperBase, IDisposable
                                 btnBeta.Focus(NavigationMethod.Directional);
                             else
                             {
+                                var btnNightly = _window.FindControl<Control>("BtnOptiNightly");
+                                if (btnNightly != null && btnNightly.IsVisible)
+                                    btnNightly.Focus(NavigationMethod.Directional);
+                                else
+                                {
+                                    var btnCustom = _window.FindControl<Control>("BtnOptiCustom");
+                                    if (btnCustom != null && btnCustom.IsVisible)
+                                        btnCustom.Focus(NavigationMethod.Directional);
+                                    else
+                                    {
+                                        _lastSidebarFocus = focused;
+                                        FocusFirstGame();
+                                    }
+                                }
+                            }
+                        }
+                        else if (focused?.Name == "BtnOptiBeta")
+                        {
+                            var btnNightly = _window.FindControl<Control>("BtnOptiNightly");
+                            if (btnNightly != null && btnNightly.IsVisible)
+                                btnNightly.Focus(NavigationMethod.Directional);
+                            else
+                            {
                                 var btnCustom = _window.FindControl<Control>("BtnOptiCustom");
                                 if (btnCustom != null && btnCustom.IsVisible)
                                     btnCustom.Focus(NavigationMethod.Directional);
@@ -183,7 +220,7 @@ public class BulkGamepadNavigationHelper : GamepadHelperBase, IDisposable
                                 }
                             }
                         }
-                        else if (focused?.Name == "BtnOptiBeta")
+                        else if (focused?.Name == "BtnOptiNightly")
                         {
                             var btnCustom = _window.FindControl<Control>("BtnOptiCustom");
                             if (btnCustom != null && btnCustom.IsVisible)

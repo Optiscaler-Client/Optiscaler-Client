@@ -32,6 +32,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     private bool _isUpdatingProfiles = false;
     private const string NewProfileTag = "__new_profile__";
     private bool _optiShowingBeta;
+    private bool _optiShowingNightly;
     private bool _optiShowingCustom;
     private bool _optiTabInitialized;
     private BulkGamepadNavigationHelper? _gamepadHelper;
@@ -213,18 +214,28 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             if (btnCustom != null) btnCustom.IsVisible = hasCustom;
             if (gridTabs != null)
                 gridTabs.ColumnDefinitions = hasCustom
-                    ? new ColumnDefinitions("*,*,*")
-                    : new ColumnDefinitions("*,*");
+                    ? new ColumnDefinitions("*,*,*,*")
+                    : new ColumnDefinitions("*,*,*");
 
             // Determine initial tab on first load
             if (!_optiTabInitialized)
             {
                 var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
-                _optiShowingBeta = !string.IsNullOrEmpty(configDefault) &&
-                                   _componentService.BetaVersions.Contains(configDefault);
+                _optiShowingNightly = !string.IsNullOrEmpty(configDefault) &&
+                                     (_componentService.IsNightlyVersion(configDefault) || _componentService.NightlyVersions.Contains(configDefault));
+                _optiShowingBeta = !string.IsNullOrEmpty(configDefault) && !_optiShowingNightly &&
+                                   (_componentService.IsBetaVersion(configDefault) || _componentService.BetaVersions.Contains(configDefault));
                 _optiShowingCustom = !string.IsNullOrEmpty(configDefault) &&
                                      customVersions.Contains(configDefault);
-                if (_optiShowingCustom) _optiShowingBeta = false;
+                if (_optiShowingCustom)
+                {
+                    _optiShowingBeta = false;
+                    _optiShowingNightly = false;
+                }
+                else if (_optiShowingNightly)
+                {
+                    _optiShowingBeta = false;
+                }
                 _optiTabInitialized = true;
             }
 
@@ -240,11 +251,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         var allVersions = _componentService.OptiScalerAvailableVersions;
         var betaVersions = _componentService.BetaVersions;
+        var nightlyVersions = _componentService.NightlyVersions;
         var customVersions = _componentService.CustomVersions;
-        var latestStable = _componentService.LatestStableVersion;
-        var latestBeta = _componentService.LatestBetaVersion;
-        string? latestInChannel = _optiShowingCustom ? null : (_optiShowingBeta ? latestBeta : latestStable);
-        string latestBadgeColor = _optiShowingBeta ? "#D4A017" : "#7C3AED";
 
         var cmb = this.FindControl<ComboBox>("CmbOptiVersion");
         if (cmb == null) return;
@@ -264,8 +272,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         System.Collections.Generic.List<string> versionsToShow;
         if (_optiShowingCustom)
             versionsToShow = allVersions.Where(v => customVersions.Contains(v)).ToList();
+        else if (_optiShowingNightly)
+            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) && (_componentService.IsNightlyVersion(v) || nightlyVersions.Contains(v))).ToList();
+        else if (_optiShowingBeta)
+            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) && !_componentService.IsNightlyVersion(v) && !nightlyVersions.Contains(v) && (_componentService.IsBetaVersion(v) || betaVersions.Contains(v))).ToList();
         else
-            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) && betaVersions.Contains(v) == _optiShowingBeta).ToList();
+            versionsToShow = allVersions.Where(v => !customVersions.Contains(v) && !_componentService.IsNightlyVersion(v) && !nightlyVersions.Contains(v) && !_componentService.IsBetaVersion(v) && !betaVersions.Contains(v)).ToList();
+
+        versionsToShow = versionsToShow.Distinct(StringComparer.OrdinalIgnoreCase)
+                                       .OrderByDescending(v => v, VersionComparer.Instance)
+                                       .ToList();
 
         if (versionsToShow.Count == 0)
         {
@@ -275,6 +291,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
             return;
         }
+
+        string? latestInChannel = _optiShowingCustom ? null : versionsToShow.FirstOrDefault();
+        string latestBadgeColor = _optiShowingNightly ? "#0284C7" : (_optiShowingBeta ? "#D4A017" : "#7C3AED");
 
         cmb.IsEnabled = true;
 
@@ -307,7 +326,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         bool defaultInChannel = !string.IsNullOrEmpty(configDefault) &&
             (_optiShowingCustom
                 ? customVersions.Contains(configDefault)
-                : !customVersions.Contains(configDefault) && betaVersions.Contains(configDefault) == _optiShowingBeta);
+                : _optiShowingNightly
+                    ? (_componentService.IsNightlyVersion(configDefault) || nightlyVersions.Contains(configDefault))
+                    : _optiShowingBeta
+                        ? (!customVersions.Contains(configDefault) && !_componentService.IsNightlyVersion(configDefault) && !nightlyVersions.Contains(configDefault) && (_componentService.IsBetaVersion(configDefault) || betaVersions.Contains(configDefault)))
+                        : (!customVersions.Contains(configDefault) && !_componentService.IsNightlyVersion(configDefault) && !nightlyVersions.Contains(configDefault) && !_componentService.IsBetaVersion(configDefault) && !betaVersions.Contains(configDefault)));
         if (defaultInChannel)
         {
             for (int i = 0; i < cmb.Items.Count; i++)
@@ -329,6 +352,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         var btnStable = this.FindControl<Button>("BtnOptiStable");
         var btnBeta = this.FindControl<Button>("BtnOptiBeta");
+        var btnNightly = this.FindControl<Button>("BtnOptiNightly");
         var btnCustom = this.FindControl<Button>("BtnOptiCustom");
         if (btnStable == null || btnBeta == null) return;
 
@@ -339,26 +363,37 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         {
             SetInactive(btnStable);
             SetInactive(btnBeta);
+            if (btnNightly != null) SetInactive(btnNightly);
             if (btnCustom != null) SetActive(btnCustom);
+        }
+        else if (_optiShowingNightly)
+        {
+            SetInactive(btnStable);
+            SetInactive(btnBeta);
+            if (btnNightly != null) SetActive(btnNightly);
+            if (btnCustom != null) SetInactive(btnCustom);
         }
         else if (_optiShowingBeta)
         {
             SetInactive(btnStable);
             SetActive(btnBeta);
+            if (btnNightly != null) SetInactive(btnNightly);
             if (btnCustom != null) SetInactive(btnCustom);
         }
         else
         {
             SetActive(btnStable);
             SetInactive(btnBeta);
+            if (btnNightly != null) SetInactive(btnNightly);
             if (btnCustom != null) SetInactive(btnCustom);
         }
     }
 
     private void BtnOptiStable_Click(object? sender, RoutedEventArgs e)
     {
-        if (!_optiShowingBeta && !_optiShowingCustom) return;
+        if (!_optiShowingBeta && !_optiShowingNightly && !_optiShowingCustom) return;
         _optiShowingBeta = false;
+        _optiShowingNightly = false;
         _optiShowingCustom = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
@@ -368,6 +403,17 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     {
         if (_optiShowingBeta) return;
         _optiShowingBeta = true;
+        _optiShowingNightly = false;
+        _optiShowingCustom = false;
+        UpdateOptiChannelButtons();
+        PopulateOptiVersionCombo();
+    }
+
+    private void BtnOptiNightly_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_optiShowingNightly) return;
+        _optiShowingNightly = true;
+        _optiShowingBeta = false;
         _optiShowingCustom = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
@@ -378,6 +424,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (_optiShowingCustom) return;
         _optiShowingCustom = true;
         _optiShowingBeta = false;
+        _optiShowingNightly = false;
         UpdateOptiChannelButtons();
         PopulateOptiVersionCombo();
     }
@@ -756,10 +803,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmb == null) return;
 
         var selectedTag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        bool isNightly = !string.IsNullOrEmpty(selectedTag) &&
+            (_componentService.IsNightlyVersion(selectedTag) || _componentService.NightlyVersions.Contains(selectedTag));
         bool isBeta = !string.IsNullOrEmpty(selectedTag) && _componentService.BetaVersions.Contains(selectedTag);
 
-        // Disable Fakenvapi/NukemFG for any OptiScaler version >= 0.9 regardless of beta
-        bool includedInPackage = IsVersionGreaterOrEqual(selectedTag, 0, 9);
+        // Disable Fakenvapi/NukemFG for any OptiScaler version >= 0.9 regardless of beta, or for nightly builds
+        bool includedInPackage = isNightly || IsVersionGreaterOrEqual(selectedTag, 0, 9);
 
         var cmbFakenvapi = this.FindControl<ComboBox>("CmbFakenvapiVersion");
         var cmbNukemFG = this.FindControl<ComboBox>("CmbNukemFGVersion");

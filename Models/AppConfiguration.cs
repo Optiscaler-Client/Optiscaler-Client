@@ -90,6 +90,7 @@ namespace OptiscalerClient.Models
         public RepositoryConfig App { get; set; } = new();
         public RepositoryConfig OptiScaler { get; set; } = new();
         public RepositoryConfig OptiScalerBetas { get; set; } = new();
+        public RepositoryConfig OptiScalerNightlies { get; set; } = new();
         public RepositoryConfig OptiScalerExtras { get; set; } = new();
         public RepositoryConfig Fakenvapi { get; set; } = new();
         public RepositoryConfig NukemFG { get; set; } = new();
@@ -222,8 +223,10 @@ namespace OptiscalerClient.Models
         public string Version { get; set; } = string.Empty;
         public string? DownloadUrl { get; set; }
         public bool IsBeta { get; set; }
+        public bool IsNightly { get; set; }
         public bool IsLatestStable { get; set; }
         public bool IsLatestBeta { get; set; }
+        public bool IsLatestNightly { get; set; }
     }
 
     /// <summary>

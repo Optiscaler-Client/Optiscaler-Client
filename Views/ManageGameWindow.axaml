@@ -363,7 +363,7 @@
                                     <TextBlock Text="{DynamicResource TxtVersionLbl}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="{StaticResource FontSizeCaption}"/>
-                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*">
+                                    <Grid Name="GridOptiTabs" ColumnDefinitions="*,*,*">
                                         <Button Name="BtnOptiStable"
                                                 Grid.Column="0"
                                                 Content="Stable"
@@ -382,10 +382,20 @@
                                                 HorizontalContentAlignment="Center"
                                                 FontSize="11"
                                                 Padding="8,5"
-                                                Margin="2,0,0,0"
+                                                Margin="2,0,2,0"
                                                 Click="BtnOptiBeta_Click"/>
-                                        <Button Name="BtnOptiCustom"
+                                        <Button Name="BtnOptiNightly"
                                                 Grid.Column="2"
+                                                Content="Nightly"
+                                                Classes="BtnSecondary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                Margin="2,0,0,0"
+                                                Click="BtnOptiNightly_Click"/>
+                                        <Button Name="BtnOptiCustom"
+                                                Grid.Column="3"
                                                 Content="Custom"
                                                 Classes="BtnSecondary"
                                                 HorizontalAlignment="Stretch"
