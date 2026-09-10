@@ -13,7 +13,6 @@ using Avalonia.Threading;
 using OptiscalerClient.Models;
 using OptiscalerClient.Services;
 using OptiscalerClient.Helpers;
-using System.Text.RegularExpressions;
 
 namespace OptiscalerClient.Views;
 
@@ -45,6 +44,21 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     };
     private GameOutputUpscalerSettings _outputUpscalerSettings = new() { Backend = OutputUpscalerBackend.Default };
     private bool _isUpdatingOutputUpscaler;
+    private GameUpscalingQualitySettings _upscalingQualitySettings = new()
+    {
+        Preset = UpscalingQualityPreset.GameControlled,
+        CustomRatio = 1.5
+    };
+    private bool _isUpdatingUpscalingQuality;
+    private bool _qualityCustomHandledForOpen;
+    private readonly DlssNrOnAmdService _dlssNrService = new();
+    /// <summary>Whether CmbOptiVersion currently lists the "Modded" wrapper releases instead of the
+    /// normal Stable/Beta/Nightly/Custom channels — see SetOptiTabsForModdedMode.</summary>
+    private bool _isDlssNrOnAmdModdedActive;
+    /// <summary>Per-game FG capabilities are a full recursive scan of the game folder, so scanning
+    /// every installable game on each Frame Generation click cost seconds. Computed once (in the
+    /// background right after the window opens) and reused.</summary>
+    private readonly Dictionary<string, FrameGenerationCapabilities> _fgCapabilitiesCache = new();
     private BulkGamepadNavigationHelper? _gamepadHelper;
 
     GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
@@ -170,6 +184,18 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // Populate output upscaler selector
         PopulateOutputUpscalerSelector();
 
+        // Populate upscaling quality selector (seeded from the configured default)
+        PopulateUpscalingQualitySelector();
+
+        // Populate DXGI spoofing selector
+        PopulateSpoofingComboBox();
+
+        // Populate RenoDX selector (experimental, opt-in)
+        PopulateRenodxComboBox();
+
+        // Populate the AMD DLSS Neural Rendering ("Setup NR") selectors (experimental, AMD only)
+        PopulateDlssNrOnAmdSection();
+
         // Seed Frame Generation from the configured default — same clone shape MainWindow Quick
         // Install / ManageGameWindow use. Without this it always started Disabled regardless of what
         // was configured in Manage Default Versions.
@@ -217,6 +243,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 if (Owner is IGamepadInputHost seedHost)
                     _gamepadHelper.SeedGamepadModeActive(seedHost.IsGamepadModeActive);
             }
+
+            // Warm the FG capability cache in the background so the first Frame Generation click
+            // doesn't pay for a recursive scan of every installable game's folder.
+            _ = GetCapabilitiesAsync(
+                _gameItems.Where(item => item.CanInstall).Select(item => item.Game).ToList(),
+                GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId));
         };
 
         this.Closed += (s, e) =>
@@ -241,54 +273,81 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         AvaloniaXamlLoader.Load(this);
     }
 
+    /// <summary>
+    /// Populates the OptiScaler channel tabs/combo and the Extras/OptiPatcher/Fakenvapi/NukemFG
+    /// selectors from whatever ComponentManagementService already has cached (the on-disk cache
+    /// loaded once, statically, when that service was constructed — see
+    /// ComponentManagementService.LoadReleasesCache/RebuildInMemoryCacheFromReleases). Mirrors
+    /// ManageGameWindow.PopulateVersionSelectors, which is deliberately called twice: once
+    /// immediately (this), then again after CheckForUpdatesAsync resolves. Safe to call multiple
+    /// times — every Populate* method here detaches/reattaches its own handlers.
+    /// </summary>
+    private void PopulateAllVersionSelectors()
+    {
+        var customVersions = _componentService.CustomVersions;
+
+        // Show/hide Custom tab
+        var btnCustom = this.FindControl<Button>("BtnOptiCustom");
+        var gridTabs = this.FindControl<Grid>("GridOptiTabs");
+        bool hasCustom = customVersions.Count > 0;
+        if (btnCustom != null) btnCustom.IsVisible = hasCustom && !_isDlssNrOnAmdModdedActive;
+        if (gridTabs != null)
+            gridTabs.ColumnDefinitions = hasCustom
+                ? new ColumnDefinitions("*,*,*,*")
+                : new ColumnDefinitions("*,*,*");
+
+        // Determine initial tab on first load
+        if (!_optiTabInitialized)
+        {
+            var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
+            _optiShowingBeta = !string.IsNullOrEmpty(configDefault) &&
+                               _componentService.BetaVersions.Contains(configDefault);
+            _optiShowingNightly = !string.IsNullOrEmpty(configDefault) &&
+                                  _componentService.NightlyVersions.Contains(configDefault);
+            _optiShowingCustom = !string.IsNullOrEmpty(configDefault) &&
+                                 customVersions.Contains(configDefault);
+            if (_optiShowingCustom || _optiShowingNightly) _optiShowingBeta = false;
+            if (_optiShowingCustom) _optiShowingNightly = false;
+            _optiTabInitialized = true;
+        }
+
+        DebugWindow.Log($"[BulkInstall] PopulateAllVersionSelectors: hasCustom={hasCustom}, " +
+            $"nightlyCount={_componentService.NightlyVersions.Count}, showingNightly={_optiShowingNightly}, " +
+            $"BtnOptiNightly found={this.FindControl<Button>("BtnOptiNightly") != null}.");
+
+        UpdateOptiChannelButtons();
+        PopulateOptiVersionCombo();
+        PopulateExtrasComboBox();
+        PopulateOptiPatcherComboBox();
+        PopulateFakenvapiComboBox();
+        PopulateNukemFGComboBox();
+    }
+
     private async Task LoadVersionsAsync()
     {
+        // Populate immediately from whatever's already cached — same "no ~1s popup delay" fix
+        // ManageGameWindow.LoadDataAsync applies: without this, the window's first frame (and any
+        // interaction before CheckForUpdatesAsync below resolves) saw the 3-column tab row/empty
+        // combo the network refresh was about to replace, instead of the real cached channels.
+        PopulateAllVersionSelectors();
+
         // Always ask the service to refresh. It observes the normal cooldown, except when a
         // newly introduced channel (such as Nightly) is missing from an older local cache.
         try { await _componentService.CheckForUpdatesAsync(); }
-        catch (GitHubRateLimitException) { /* rate limited — populate from cache */ }
-        catch (Exception) { /* network error — populate from cache */ }
+        catch (GitHubRateLimitException) { /* rate limited — keep what's cached */ }
+        catch (Exception) { /* network error — keep what's cached */ }
 
-        Dispatcher.UIThread.Post(() =>
-        {
-            var customVersions = _componentService.CustomVersions;
-
-            // Show/hide Custom tab
-            var btnCustom = this.FindControl<Button>("BtnOptiCustom");
-            var gridTabs = this.FindControl<Grid>("GridOptiTabs");
-            bool hasCustom = customVersions.Count > 0;
-            if (btnCustom != null) btnCustom.IsVisible = hasCustom;
-            if (gridTabs != null)
-                gridTabs.ColumnDefinitions = hasCustom
-                    ? new ColumnDefinitions("*,*,*,*")
-                    : new ColumnDefinitions("*,*,*");
-
-            // Determine initial tab on first load
-            if (!_optiTabInitialized)
-            {
-                var configDefault = _componentService.EffectiveDefaultOptiScalerVersion;
-                _optiShowingBeta = !string.IsNullOrEmpty(configDefault) &&
-                                   _componentService.BetaVersions.Contains(configDefault);
-                _optiShowingNightly = !string.IsNullOrEmpty(configDefault) &&
-                                      _componentService.NightlyVersions.Contains(configDefault);
-                _optiShowingCustom = !string.IsNullOrEmpty(configDefault) &&
-                                     customVersions.Contains(configDefault);
-                if (_optiShowingCustom || _optiShowingNightly) _optiShowingBeta = false;
-                if (_optiShowingCustom) _optiShowingNightly = false;
-                _optiTabInitialized = true;
-            }
-
-            UpdateOptiChannelButtons();
-            PopulateOptiVersionCombo();
-            PopulateExtrasComboBox();
-            PopulateOptiPatcherComboBox();
-            PopulateFakenvapiComboBox();
-            PopulateNukemFGComboBox();
-        });
+        // Re-populate with whatever the check refreshed (or the same cached data if the check was
+        // skipped/failed) — mirrors ManageGameWindow's own second PopulateVersionSelectors call.
+        Dispatcher.UIThread.Post(PopulateAllVersionSelectors);
     }
 
     private void PopulateOptiVersionCombo()
     {
+        // While Setup NR = "Mod + OptiScaler" the combo lists the Modded wrapper releases instead
+        // (see PopulateModdedOptiVersionComboAsync) — never overwrite that with a normal channel.
+        if (_isDlssNrOnAmdModdedActive) return;
+
         var allVersions = _componentService.OptiScalerAvailableVersions;
         var betaVersions = _componentService.BetaVersions;
         var nightlyVersions = _componentService.NightlyVersions;
@@ -540,8 +599,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             var extrasTag = (cmbExtrasVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             bool optiIsNone = string.Equals(optiTag, "none", StringComparison.OrdinalIgnoreCase);
             bool extrasIsNone = string.IsNullOrEmpty(extrasTag) || string.Equals(extrasTag, "none", StringComparison.OrdinalIgnoreCase);
-            bool swapMode = optiIsNone && !extrasIsNone;
-            bool blockedMode = optiIsNone && extrasIsNone;
+            // Setup NR "Mod only" installs danielblnc's standalone mod and locks every other
+            // option, so a stale "None" left in the version combo must not disable the button.
+            bool setupNrOnly = SelectedSetupNrMode == "daniel-only";
+            bool swapMode = !setupNrOnly && optiIsNone && !extrasIsNone;
+            bool blockedMode = !setupNrOnly && optiIsNone && extrasIsNone;
 
             if (swapMode)
             {
@@ -613,7 +675,22 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         if (cmbOptiVersion?.SelectedItem is not ComboBoxItem selectedItem) return;
 
-        string version = selectedItem.Tag?.ToString() ?? "";
+        // ── Setup NR (AMD DLSS Neural Rendering) ────────────────────────────────────
+        // While mode = "daniel-and-opti" the version combo lists MatheusGViana wrapper releases,
+        // not OptiScaler versions — that tag pins the wrapper, and the OptiScaler build to install
+        // is whatever InstallForQuickPathAsync imports for it, per game.
+        var setupNrMode = SelectedSetupNrMode;
+        var selectedDanielVersion = (this.FindControl<ComboBox>("CmbDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        string? selectedWrapperVersion = _isDlssNrOnAmdModdedActive ? selectedItem.Tag?.ToString() : null;
+
+        string version = _isDlssNrOnAmdModdedActive ? "" : selectedItem.Tag?.ToString() ?? "";
+
+        if (_isDlssNrOnAmdModdedActive && string.IsNullOrEmpty(selectedWrapperVersion))
+        {
+            await new ConfirmDialog(this, "Nothing to install",
+                "No modded OptiScaler build is available for the selected Setup NR mode.").ShowDialog<object>(this);
+            return;
+        }
 
         // Fakenvapi: read version from combobox
         var selectedFakenvapiItem = cmbFakenvapiVersion?.SelectedItem as ComboBoxItem;
@@ -645,7 +722,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // NukemFG, OptiPatcher — none of that applies to a bare DLL swap). Mirrors ManageGameWindow's
         // ExecuteDllSwapAsync, just looped per selected game with auto-detection only (no per-game
         // manual file picker in a batch context).
-        if (string.Equals(version, "none", StringComparison.OrdinalIgnoreCase))
+        // Skipped under Setup NR "Mod only": every other option is locked there, including a stale
+        // "None" left in the version combo — that mode installs danielblnc's standalone mod and
+        // nothing else, handled per game inside the loop below.
+        if (setupNrMode != "daniel-only" && string.Equals(version, "none", StringComparison.OrdinalIgnoreCase))
         {
             if (!injectExtras)
             {
@@ -669,6 +749,17 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmbProfile?.SelectedItem is ComboBoxItem profileItem && profileItem.Tag is OptiScalerProfile prof)
             selectedProfile = prof;
 
+        // DXGI Spoofing override, shared by the whole batch — same values ManageGameWindow's
+        // per-game selector produces; "auto" is a real, valid ini value, so it's a no-op there.
+        var cmbSpoofing = this.FindControl<ComboBox>("CmbSpoofing");
+        var selectedSpoofing = (cmbSpoofing?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
+
+        // RenoDX (experimental, opt-in): "auto" resolves a different addon per game below.
+        var cmbRenodx = this.FindControl<ComboBox>("CmbRenodxVersion");
+        var renodxRequested = _componentService.Config.ShowExperimentalFeatures &&
+            string.Equals((cmbRenodx?.SelectedItem as ComboBoxItem)?.Tag?.ToString(), "auto", StringComparison.OrdinalIgnoreCase);
+        var renodxModsService = renodxRequested ? new RenodxModsService() : null;
+
         _isInstalling = true;
 
         var btnInstall = this.FindControl<Button>("BtnInstall");
@@ -685,12 +776,11 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         int totalGames = selectedGames.Count;
         int currentGame = 0;
 
-        // AMD DLSS Neural Rendering ("Setup NR") default — see ManageDefaultVersionsWindow and
-        // DlssNrOnAmdService.InstallForQuickPathAsync. Per-game (each needs its own gameDir/manifest),
-        // but nvngx_dlssnr.dll is a single machine-wide file: if the user declines that one prompt for
+        // AMD DLSS Neural Rendering ("Setup NR") — read from this window's own selector, seeded
+        // from the Settings default. Per-game (each needs its own gameDir/manifest), but
+        // nvngx_dlssnr.dll is a single machine-wide file: if the user declines that one prompt for
         // the first game that needs it, don't keep re-showing it for every other game in this batch.
-        var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
-        var dlssNrService = new DlssNrOnAmdService();
+        var dlssNrService = _dlssNrService;
         var nvngxDeclinedThisBatch = false;
 
         // Same machine for the whole batch, so resolve this once rather than per game.
@@ -806,20 +896,33 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // Apply the shared output-upscaler selection as a per-game copy, same pattern as FG.
                 gameItem.Game.OutputUpscalerSettings = new GameOutputUpscalerSettings { Backend = _outputUpscalerSettings.Backend };
 
+                // Same for the shared upscaling-quality preset. Left null for "Game controlled"
+                // so the installer skips the ratio patch entirely rather than writing a disable
+                // over whatever the selected profile configured — matches MainWindow Quick Install.
+                gameItem.Game.UpscalingQualitySettings = _upscalingQualitySettings.Preset == UpscalingQualityPreset.GameControlled
+                    ? null
+                    : new GameUpscalingQualitySettings
+                    {
+                        Preset = _upscalingQualitySettings.Preset,
+                        CustomRatio = _upscalingQualitySettings.CustomRatio
+                    };
+
                 var versionForGame = version;
                 var injectionMethodForGame = injectionMethod;
                 // ShowExperimentalFeatures is a separate switch from this default's own AMD-only gate
                 // in Settings — re-checked here so turning it off disables the default immediately
                 // rather than only hiding the UI that configured it.
                 if (_componentService.Config.ShowExperimentalFeatures &&
-                    !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none" &&
+                    setupNrMode != "none" &&
                     !gameItem.Game.IsDlssNrOnAmdInstalled &&
                     !(nvngxDeclinedThisBatch && !dlssNrService.IsNvngxDlssNrCached()))
                 {
                     var (dlssNrResult, wrapperVersion) = await dlssNrService
-                        .InstallForQuickPathAsync(this, gameItem.Game, dlssNrDefaultMode, _componentService);
+                        .InstallForQuickPathAsync(this, gameItem.Game, setupNrMode, _componentService,
+                            danielVersionOverride: selectedDanielVersion,
+                            wrapperVersionOverride: selectedWrapperVersion);
 
-                    if (dlssNrDefaultMode == "daniel-only")
+                    if (setupNrMode == "daniel-only")
                     {
                         // Standalone mod, not compatible with OptiScaler — mirrors
                         // ManageGameWindow.ExecuteInstallAsync, which returns right after Mode A
@@ -845,7 +948,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
 
                     if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success &&
-                        dlssNrDefaultMode == "daniel-and-opti" && !string.IsNullOrEmpty(wrapperVersion))
+                        setupNrMode == "daniel-and-opti" && !string.IsNullOrEmpty(wrapperVersion))
                     {
                         // "Mod + OptiScaler": install the matching wrapper build instead of the
                         // batch's normally configured version, dxgi.dll injection (danielblnc's own
@@ -897,6 +1000,68 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 var installStreamlineForGame = fgConfigService.RequiresStreamline(
                     gameItem.Game.FrameGenerationSettings!, fgConfigService.DetectCapabilities(gameItem.Game, preferredGpuForFsr4), version);
 
+                // In Modded mode there is no fallback OptiScaler version to fall back to — the whole
+                // point is the wrapper build the step above resolves. If it didn't, skip this game
+                // instead of installing something the user never picked.
+                if (_isDlssNrOnAmdModdedActive && string.IsNullOrEmpty(versionForGame))
+                {
+                    DebugWindow.Log($"[BulkInstall][SetupNr] No modded wrapper build resolved for {gameItem.Name} — skipped.");
+                    await Task.Delay(100);
+                    continue;
+                }
+
+                // ── RenoDX (experimental, opt-in) ──────────────────────────────────
+                // Per-game addon: resolved from this game's own wiki entry, cache first then a
+                // direct download. Unlike ManageGameWindow — which aborts the install behind a
+                // modal when it can't be resolved or ReShade is missing — a batch just logs and
+                // installs everything else for that game, same precedent as RunBulkDllSwapAsync.
+                string? renodxAddonPath = null;
+                bool installRenodxForGame = false;
+                if (renodxRequested)
+                {
+                    // Same key resolution as ManageGameWindow.ResolveRenodxGameKey: the wiki's own
+                    // game name when there's a match, the local title otherwise.
+                    renodxModsService!.TryGetForGame(gameItem.Game.Name, out var renodxEntry);
+                    var renodxGameKey = renodxEntry?.GameName ?? gameItem.Game.Name;
+
+                    renodxAddonPath = _componentService.GetCachedRenodxAddonPath(renodxGameKey);
+                    if (string.IsNullOrEmpty(renodxAddonPath) && !string.IsNullOrEmpty(renodxEntry?.SnapshotUrl))
+                    {
+                        try
+                        {
+                            if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading RenoDX addon for {gameItem.Name}...";
+                            if (progressBar != null) progressBar.IsIndeterminate = true;
+                            renodxAddonPath = await _componentService.DownloadRenodxAddonAsync(
+                                renodxEntry!.SnapshotUrl!, renodxGameKey, renodxEntry.GameName);
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugWindow.Log($"[BulkInstall][RenoDX] Auto-download failed for {gameItem.Name}: {ex.Message}");
+                            renodxAddonPath = null;
+                        }
+                        finally
+                        {
+                            if (progressBar != null) progressBar.IsIndeterminate = false;
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(renodxAddonPath))
+                    {
+                        DebugWindow.Log($"[BulkInstall][RenoDX] No addon available for {gameItem.Name} — installing without it.");
+                    }
+                    else if (!ManageGameWindow.IsReshadeInstalledForGame(_installService.DetermineInstallDirectory(gameItem.Game)))
+                    {
+                        // RenoDX needs ReShade already present; no per-game "proceed anyway"
+                        // prompt makes sense in a batch, so skip just this component.
+                        DebugWindow.Log($"[BulkInstall][RenoDX] ReShade not detected for {gameItem.Name} — installing without RenoDX.");
+                        renodxAddonPath = null;
+                    }
+                    else
+                    {
+                        installRenodxForGame = true;
+                    }
+                }
+
                 string? resolvedGameDir = null;
                 await Task.Run(() =>
                 {
@@ -916,7 +1081,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         ensureFakenvapiIfMissing: isNightlyChannel,
                         installDlssEnabler: mfgWithEnabler,
                         dlssEnablerCachePath: dlssEnablerCacheDir,
-                        gpu: preferredGpuForFsr4
+                        installRenodx: installRenodxForGame,
+                        renodxAddonCachePath: renodxAddonPath ?? "",
+                        gpu: preferredGpuForFsr4,
+                        dxgiSpoofing: selectedSpoofing
                     );
                 });
 
@@ -930,37 +1098,65 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     });
 
                     string extrasDllPath;
+                    var gameDirForSwap = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+                    List<(string TargetPath, string SourceContentPath)> filesToInject = new();
                     try
                     {
                         var extrasProgress = new Progress<double>(p =>
                             Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.Value = p; }));
 
                         extrasDllPath = await _componentService.DownloadExtrasDllAsync(selectedExtrasVersion, extrasProgress);
+
+                        // Multi-file packages (see ManageGameWindow's install path): every
+                        // recognized file in the package is injected, or the fixed set configured
+                        // in FSR 4 Swap Options (Settings) when the user chose "Choose default
+                        // values". No per-game picker in a batch — same as RunBulkDllSwapAsync.
+                        var packagedFiles = await _componentService.GetExtrasPackagedFileNamesAsync(selectedExtrasVersion, extrasProgress);
+                        if (packagedFiles.Count > 0)
+                        {
+                            var cacheDir = _componentService.GetExtrasDllCachePath(selectedExtrasVersion);
+                            var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDirForSwap, cacheDir, packagedFiles);
+                            if (candidates.Count > 1 && !_componentService.Config.Fsr4SwapAskEveryTime)
+                                candidates = Fsr4Int8DllHelper.FilterCandidatesByDefaultKeys(candidates, _componentService.Config.Fsr4SwapDefaultFileKeys);
+
+                            if (candidates.Count == 0)
+                            {
+                                DebugWindow.Log($"[BulkInstall] No FSR 4 Swap files selected for {gameItem.Name} (check FSR 4 Swap Options), skipping the swap.");
+                                goto SkipExtras;
+                            }
+                            filesToInject = candidates;
+                        }
+                        else
+                        {
+                            filesToInject.Add((System.IO.Path.Combine(gameDirForSwap, System.IO.Path.GetFileName(extrasDllPath)), extrasDllPath));
+                        }
                     }
                     catch (Exception ex)
                     {
                         DebugWindow.Log($"[BulkInstall] Failed to download FSR 4 Swap v{selectedExtrasVersion}: {ex.Message}");
-                        continue; // Skip FSR4 installation but continue with OptiScaler
+                        goto SkipExtras; // Skip FSR4 installation but continue with OptiPatcher
                     }
 
-                    // Copy FSR 4 Swap DLL to game directory
+                    // Copy FSR 4 Swap DLL(s) to game directory
                     await Task.Run(() =>
                     {
-                        var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
-                        var destPath = System.IO.Path.Combine(gameDir, System.IO.Path.GetFileName(extrasDllPath));
-                        _installService.InjectExtrasDll(gameItem.Game, destPath, extrasDllPath);
+                        foreach (var file in filesToInject)
+                        {
+                            _installService.InjectExtrasDll(gameItem.Game, file.TargetPath, file.SourceContentPath);
+                            DebugWindow.Log($"[BulkInstall] Copied FSR 4 Swap DLL to {file.TargetPath} for {gameItem.Name}");
+                        }
                         if (selectedExtrasIsInt8)
                         {
                             var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
                             if (customAmdxc64Path != null)
-                                _installService.InstallCustomAmdxc64(gameDir, customAmdxc64Path);
+                                _installService.InstallCustomAmdxc64(gameDirForSwap, customAmdxc64Path);
                             // The fallback configuration only applies to INT8 packages.
-                            _installService.ConfigureFsr4IntFallback(gameDir, isRdna4ForFsr4, isRdna2ForFsr4);
+                            _installService.ConfigureFsr4IntFallback(gameDirForSwap, isRdna4ForFsr4, isRdna2ForFsr4);
                         }
                         gameItem.Game.Fsr4ExtraVersion = selectedExtrasVersion;
-                        DebugWindow.Log($"[BulkInstall] Copied FSR 4 Swap DLL to {destPath} for {gameItem.Name}");
                     });
                 }
+            SkipExtras:
 
                 // ── OptiPatcher ────────────────────────────────────────────────────
                 if (installOptiPatcher && !string.IsNullOrEmpty(selectedOptiPatcherVersion))
@@ -1159,7 +1355,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     // outside bulk mode.
                     var cacheDir = _componentService.GetExtrasDllCachePath(extrasVersion);
                     var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDir, cacheDir, packagedFiles);
-                    if (!_componentService.Config.Fsr4SwapAskEveryTime)
+                    // Only filtered when there's an actual choice to make, same guard as
+                    // ManageGameWindow — a single-file package must not be filtered away by a
+                    // defaults list that happens not to list it.
+                    if (candidates.Count > 1 && !_componentService.Config.Fsr4SwapAskEveryTime)
                         candidates = Fsr4Int8DllHelper.FilterCandidatesByDefaultKeys(candidates, _componentService.Config.Fsr4SwapDefaultFileKeys);
 
                     if (candidates.Count == 0)
@@ -1250,7 +1449,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // Stable/Beta 0.9+ bundle both components. Nightly resolves Fakenvapi automatically
         // per game when fakenvapi.dll is absent, so its manual selector remains disabled.
         // "None" means no OptiScaler install at all, so neither component applies either.
-        bool includedInPackage = !isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9);
+        // Shared with ManageGameWindow/ManageDefaultVersionsWindow — its regex tolerates the "v"
+        // prefix some tags carry, which the local copy this replaced did not.
+        bool includedInPackage = !isNightly && ManageGameWindow.IsVersionGreaterOrEqual(selectedTag, 0, 9);
         bool disableFakenvapi = isNightly || includedInPackage || isNone;
         bool disableNukemFG = isNightly || includedInPackage || isNone;
 
@@ -1301,28 +1502,20 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var cmbOptiPatcher = this.FindControl<ComboBox>("CmbOptiPatcherVersion");
         var cmbProfile = this.FindControl<ComboBox>("CmbProfile");
         var btnFrameGeneration = this.FindControl<Button>("BtnFrameGeneration");
+        var cmbUpscalingQuality = this.FindControl<ComboBox>("CmbUpscalingQuality");
         var cmbOutputUpscaler = this.FindControl<ComboBox>("CmbOutputUpscaler");
+        var cmbSpoofing = this.FindControl<ComboBox>("CmbSpoofing");
+        var cmbRenodx = this.FindControl<ComboBox>("CmbRenodxVersion");
 
         bool enabled = !isNone;
         if (cmbInjection != null) cmbInjection.IsEnabled = enabled;
         if (cmbOptiPatcher != null) cmbOptiPatcher.IsEnabled = enabled;
         if (cmbProfile != null) cmbProfile.IsEnabled = enabled;
         if (btnFrameGeneration != null) btnFrameGeneration.IsEnabled = enabled;
+        if (cmbUpscalingQuality != null) cmbUpscalingQuality.IsEnabled = enabled;
         if (cmbOutputUpscaler != null) cmbOutputUpscaler.IsEnabled = enabled;
-    }
-
-    private static bool IsVersionGreaterOrEqual(string? ver, int targetMajor, int targetMinor)
-    {
-        if (string.IsNullOrEmpty(ver)) return false;
-
-        var m = Regex.Match(ver, "^\\d+(\\.\\d+)*");
-        if (!m.Success) return false;
-
-        if (!Version.TryParse(m.Value, out var parsed)) return false;
-
-        if (parsed.Major > targetMajor) return true;
-        if (parsed.Major < targetMajor) return false;
-        return parsed.Minor >= targetMinor;
+        if (cmbSpoofing != null) cmbSpoofing.IsEnabled = enabled;
+        if (cmbRenodx != null) cmbRenodx.IsEnabled = enabled;
     }
 
     private void PopulateProfileSelector()
@@ -1413,6 +1606,406 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         _outputUpscalerSettings.Backend = selected;
     }
 
+    /// <summary>
+    /// Batch counterpart to ManageGameWindow's per-game quality selector, seeded from the
+    /// DefaultUpscalingQualityPreset/DefaultUpscalingCustomRatio pair configured in Manage Default
+    /// Versions — the same defaults MainWindow's Quick Install applies. Item list is built with
+    /// ManageGameWindow.AddUpscalingQualityItem so the two stay in sync.
+    /// </summary>
+    private void PopulateUpscalingQualitySelector()
+    {
+        var combo = this.FindControl<ComboBox>("CmbUpscalingQuality");
+        if (combo == null) return;
+
+        _isUpdatingUpscalingQuality = true;
+        try
+        {
+            combo.Items.Clear();
+            ManageGameWindow.AddUpscalingQualityItem(combo, GetResourceString("TxtQualityGameControlled", "Game controlled"), UpscalingQualityPreset.GameControlled, isSentinel: true);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Native AA", UpscalingQualityPreset.NativeAa);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Ultra Quality", UpscalingQualityPreset.UltraQuality);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Quality", UpscalingQualityPreset.Quality);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Balanced", UpscalingQualityPreset.Balanced);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Performance", UpscalingQualityPreset.Performance);
+            ManageGameWindow.AddUpscalingQualityItem(combo, "Ultra Performance", UpscalingQualityPreset.UltraPerformance);
+
+            var fontIcons = this.FindResource("FontIcons") as FontFamily;
+            combo.Items.Add(ComboActionItemHelper.Build(this, GetResourceString("TxtCustom", "Custom"),
+                UpscalingQualityPreset.Custom, glyph: "", glyphFontFamily: fontIcons));
+
+            var selected = _componentService.Config.DefaultUpscalingQualityPreset ?? UpscalingQualityPreset.GameControlled;
+
+            _upscalingQualitySettings.Preset = selected;
+            _upscalingQualitySettings.CustomRatio = _componentService.Config.DefaultUpscalingCustomRatio ?? 1.5;
+
+            for (int i = 0; i < combo.Items.Count; i++)
+            {
+                if (combo.Items[i] is ComboBoxItem item && item.Tag is UpscalingQualityPreset preset && preset == selected)
+                {
+                    combo.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _isUpdatingUpscalingQuality = false;
+        }
+    }
+
+    private void SelectUpscalingQualityPreset(UpscalingQualityPreset selected)
+    {
+        var combo = this.FindControl<ComboBox>("CmbUpscalingQuality");
+        if (combo == null) return;
+
+        _isUpdatingUpscalingQuality = true;
+        try
+        {
+            for (int i = 0; i < combo.Items.Count; i++)
+            {
+                if (combo.Items[i] is ComboBoxItem item && item.Tag is UpscalingQualityPreset preset && preset == selected)
+                {
+                    combo.SelectedIndex = i;
+                    break;
+                }
+            }
+            _upscalingQualitySettings.Preset = selected;
+        }
+        finally
+        {
+            _isUpdatingUpscalingQuality = false;
+        }
+    }
+
+    private async void CmbUpscalingQuality_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdatingUpscalingQuality || sender is not ComboBox combo
+            || combo.SelectedItem is not ComboBoxItem item
+            || item.Tag is not UpscalingQualityPreset selected)
+            return;
+
+        if (selected == UpscalingQualityPreset.Custom)
+        {
+            _qualityCustomHandledForOpen = true;
+            await HandleCustomUpscalingQualitySelectionAsync();
+            return;
+        }
+
+        _upscalingQualitySettings.Preset = selected;
+    }
+
+    private void CmbUpscalingQuality_DropDownOpened(object? sender, EventArgs e)
+        => _qualityCustomHandledForOpen = false;
+
+    private async void CmbUpscalingQuality_DropDownClosed(object? sender, EventArgs e)
+    {
+        if (_isUpdatingUpscalingQuality || _qualityCustomHandledForOpen
+            || sender is not ComboBox combo
+            || combo.SelectedItem is not ComboBoxItem item
+            || item.Tag is not UpscalingQualityPreset.Custom)
+            return;
+
+        _qualityCustomHandledForOpen = true;
+        await HandleCustomUpscalingQualitySelectionAsync();
+    }
+
+    /// <summary>Same custom-ratio dialog ManageGameWindow / ManageDefaultVersionsWindow use.
+    /// Cancelling restores the previous preset instead of leaving "Custom" selected.</summary>
+    private async Task HandleCustomUpscalingQualitySelectionAsync()
+    {
+        var previousPreset = _upscalingQualitySettings.Preset;
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        var outputResolution = screen == null
+            ? new PixelSize(2560, 1440)
+            : new PixelSize(screen.Bounds.Width, screen.Bounds.Height);
+
+        var dialog = new UpscalingQualityCustomWindow(this, _upscalingQualitySettings.CustomRatio, outputResolution);
+        var result = await dialog.ShowDialog<double?>(this);
+        if (result == null)
+        {
+            SelectUpscalingQualityPreset(previousPreset);
+            return;
+        }
+
+        _upscalingQualitySettings.CustomRatio = result.Value;
+        _upscalingQualitySettings.Preset = UpscalingQualityPreset.Custom;
+    }
+
+    /// <summary>Batch counterpart to ManageGameWindow's per-game DXGI Spoofing selector. Nothing
+    /// is installed yet here, so there's no ini to preselect from — "Auto" (OptiScaler's own
+    /// default) is always the starting point.</summary>
+    private void PopulateSpoofingComboBox()
+    {
+        var cmb = this.FindControl<ComboBox>("CmbSpoofing");
+        if (cmb == null) return;
+
+        cmb.Items.Clear();
+        cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
+        cmb.Items.Add(new ComboBoxItem { Content = "Enabled", Tag = "true" });
+        cmb.Items.Add(new ComboBoxItem { Content = "Disabled", Tag = "false" });
+        cmb.SelectedIndex = 0;
+    }
+
+    /// <summary>
+    /// RenoDX (experimental, opt-in), batch flavour: only "None" and "Auto". The per-game cached
+    /// addon list ManageGameWindow offers is meaningless across a batch — each selected game needs
+    /// its own addon, so "Auto" resolves one per game at install time (see BtnInstall_Click).
+    /// </summary>
+    private void PopulateRenodxComboBox()
+    {
+        var panel = this.FindControl<StackPanel>("PanelRenodxVersion");
+        var cmb = this.FindControl<ComboBox>("CmbRenodxVersion");
+        if (panel == null || cmb == null) return;
+
+        panel.IsVisible = _componentService.Config.ShowExperimentalFeatures;
+        if (!panel.IsVisible) return;
+
+        cmb.Items.Clear();
+        cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
+        cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
+
+        // Mirrors ManageGameWindow: a saved default of "auto" preselects Auto, anything else
+        // (a per-game file path) has no batch meaning and falls back to None.
+        var savedRenodx = _componentService.Config.DefaultRenodxVersion;
+        cmb.SelectedIndex = string.Equals(savedRenodx, "auto", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+    }
+
+    // ── AMD DLSS Neural Rendering ("Setup NR") ──────────────────────────────
+
+    private bool IsAmdDefaultGpu()
+    {
+        if (_gpuService == null) return true;
+        var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+        return gpu == null || gpu.Vendor == GpuVendor.AMD;
+    }
+
+    /// <summary>
+    /// Gates the experimental zone (RenoDX + Setup NR) exactly like ManageGameWindow and
+    /// ManageDefaultVersionsWindow do for their own copies of the same Border/Chip pair: hidden
+    /// unless ShowExperimentalFeatures, with the Setup NR panels further locked to AMD hardware,
+    /// which is the only vendor the mod supports. Seeds the mode from Config.DefaultDlssNrOnAmdMode
+    /// — the same default MainWindow's Quick Install applies.
+    /// </summary>
+    private void PopulateDlssNrOnAmdSection()
+    {
+        var showExperimental = _componentService.Config.ShowExperimentalFeatures;
+        var isAmd = IsAmdDefaultGpu();
+        DebugWindow.Log($"[BulkInstall][SetupNr] PopulateDlssNrOnAmdSection: ShowExperimentalFeatures={showExperimental}, isAmd={isAmd}, DefaultDlssNrOnAmdMode='{_componentService.Config.DefaultDlssNrOnAmdMode}'.");
+
+        var zone = this.FindControl<Control>("BorderExperimentalZone");
+        if (zone != null) zone.IsVisible = showExperimental;
+        var chip = this.FindControl<Control>("BorderExperimentalChip");
+        if (chip != null) chip.IsVisible = showExperimental;
+
+        var panelMode = this.FindControl<Control>("PanelDlssNrOnAmd");
+        if (panelMode != null) panelMode.IsVisible = showExperimental && isAmd;
+        var panelDaniel = this.FindControl<Control>("PanelDlssNrDanielVersion");
+        if (panelDaniel != null) panelDaniel.IsVisible = showExperimental && isAmd;
+
+        var cmb = this.FindControl<ComboBox>("CmbSetupNr");
+        if (cmb == null) return;
+
+        cmb.SelectionChanged -= CmbSetupNr_SelectionChanged;
+        var saved = showExperimental && isAmd ? _componentService.Config.DefaultDlssNrOnAmdMode : "none";
+        cmb.SelectedIndex = 0; // "none"
+        for (int i = 0; i < cmb.Items.Count; i++)
+        {
+            if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == saved)
+            {
+                cmb.SelectedIndex = i;
+                break;
+            }
+        }
+        cmb.SelectionChanged += CmbSetupNr_SelectionChanged;
+
+        ApplySetupNrSelection(SelectedSetupNrMode);
+    }
+
+    private string SelectedSetupNrMode =>
+        (this.FindControl<ComboBox>("CmbSetupNr")?.SelectedItem as ComboBoxItem)?.Tag as string ?? "none";
+
+    private void CmbSetupNr_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        var tag = (sender as ComboBox)?.SelectedItem is ComboBoxItem item ? item.Tag as string : null;
+        ApplySetupNrSelection(tag);
+    }
+
+    /// <summary>Every other install option besides the Setup NR pair — mirrors
+    /// ManageDefaultVersionsWindow.DefaultOptionsControlNames: "daniel-only" runs the mod standalone
+    /// with no OptiScaler at all, so none of these apply. Grid parents cover their child tab buttons
+    /// for free (Avalonia disables input on children of a disabled control).</summary>
+    private static readonly string[] SetupNrLockedControlNames =
+    {
+        "GridOptiTabs", "CmbOptiVersion", "GridExtrasTabs", "CmbExtrasVersion",
+        "CmbOptiPatcherVersion", "CmbFakenvapiVersion", "CmbNukemFGVersion",
+        "CmbInjectionMethod", "CmbProfile", "BtnFrameGeneration",
+        "CmbUpscalingQuality", "CmbOutputUpscaler", "CmbSpoofing", "CmbRenodxVersion",
+    };
+
+    private void SetSetupNrOptionsLocked(bool locked)
+    {
+        foreach (var name in SetupNrLockedControlNames)
+        {
+            var control = this.FindControl<Control>(name);
+            if (control != null) control.IsEnabled = !locked;
+        }
+    }
+
+    /// <summary>Mirrors ManageDefaultVersionsWindow.ApplyDlssNrOnAmdModeSelection: the Daniel
+    /// version combo enables/populates, "daniel-only" locks every other option, and
+    /// "daniel-and-opti" switches CmbOptiVersion over to the Modded wrapper releases.</summary>
+    private void ApplySetupNrSelection(string? tag)
+    {
+        var mode = tag ?? "none";
+        DebugWindow.Log($"[BulkInstall][SetupNr] ApplySetupNrSelection mode='{mode}', _isDlssNrOnAmdModdedActive(before)={_isDlssNrOnAmdModdedActive}.");
+        SetSetupNrOptionsLocked(mode == "daniel-only");
+        UpdateSelectionCount();
+
+        var cmbDaniel = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
+        if (mode == "none")
+        {
+            if (cmbDaniel != null) { cmbDaniel.IsEnabled = false; cmbDaniel.Items.Clear(); }
+            SetOptiTabsForModdedMode(false);
+            return;
+        }
+
+        _ = PopulateDlssNrDanielVersionComboAsync();
+
+        if (mode == "daniel-and-opti")
+        {
+            SetOptiTabsForModdedMode(true);
+            _ = PopulateModdedOptiVersionComboAsync();
+        }
+        else
+        {
+            SetOptiTabsForModdedMode(false);
+        }
+    }
+
+    /// <summary>Mirrors ManageGameWindow's SetOptiTabsForModdedMode — hides Stable/Beta/Nightly/
+    /// Custom and shows the plain "Modded" indicator instead, since that's the only "channel"
+    /// available while Setup NR = "Mod + OptiScaler".</summary>
+    private void SetOptiTabsForModdedMode(bool modded)
+    {
+        if (_isDlssNrOnAmdModdedActive == modded)
+        {
+            DebugWindow.Log($"[BulkInstall][SetupNr] SetOptiTabsForModdedMode({modded}) — already in that state, no-op.");
+            return;
+        }
+        _isDlssNrOnAmdModdedActive = modded;
+
+        var btnStable = this.FindControl<Button>("BtnOptiStable");
+        var btnBeta = this.FindControl<Button>("BtnOptiBeta");
+        var btnNightly = this.FindControl<Button>("BtnOptiNightly");
+        var btnCustom = this.FindControl<Button>("BtnOptiCustom");
+        var btnModded = this.FindControl<Button>("BtnOptiModded");
+        DebugWindow.Log($"[BulkInstall][SetupNr] SetOptiTabsForModdedMode({modded}) — found controls: " +
+            $"Stable={btnStable != null}, Beta={btnBeta != null}, Nightly={btnNightly != null}, Custom={btnCustom != null}, Modded={btnModded != null}.");
+        if (btnStable != null) btnStable.IsVisible = !modded;
+        if (btnBeta != null) btnBeta.IsVisible = !modded;
+        if (btnNightly != null) btnNightly.IsVisible = !modded;
+        if (btnCustom != null) btnCustom.IsVisible = !modded && _componentService.CustomVersions.Count > 0;
+        if (btnModded != null) btnModded.IsVisible = modded;
+
+        // Leaving Modded — restore whatever normal channel/version was showing before.
+        if (!modded) PopulateOptiVersionCombo();
+    }
+
+    /// <summary>Populates CmbDlssNrDanielVersion from danielblnc's own releases — same source and
+    /// "pick a specific one, defaulting to latest" shape as ManageDefaultVersionsWindow's
+    /// PopulateDefaultDlssNrDanielVersionComboAsync, seeded from the version pinned there.</summary>
+    private async Task PopulateDlssNrDanielVersionComboAsync()
+    {
+        var cmb = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
+        if (cmb == null) return;
+
+        cmb.Items.Clear();
+        cmb.IsEnabled = false;
+
+        List<DlssNrOnAmdRelease> releases;
+        try
+        {
+            releases = await _dlssNrService.GetReleasesAsync();
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log($"[BulkInstall][SetupNr] Could not list danielblnc releases: {ex.Message}");
+            releases = new List<DlssNrOnAmdRelease>();
+        }
+
+        if (releases.Count == 0)
+        {
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+            cmb.SelectedIndex = 0;
+            return;
+        }
+
+        for (int i = 0; i < releases.Count; i++)
+            cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+        var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+        var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
+        cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+        cmb.IsEnabled = true;
+    }
+
+    /// <summary>Populates CmbOptiVersion with MatheusGViana/dlss-5-amd-project's releases while
+    /// Setup NR = "Mod + OptiScaler". Tags are the raw release version, not a registered custom
+    /// version name: the actual wrapper build is resolved and downloaded per game at install time
+    /// by DlssNrOnAmdService.InstallForQuickPathAsync — this combo only pins which release.</summary>
+    private async Task PopulateModdedOptiVersionComboAsync()
+    {
+        var cmb = this.FindControl<ComboBox>("CmbOptiVersion");
+        DebugWindow.Log($"[BulkInstall][SetupNr] PopulateModdedOptiVersionComboAsync entered, cmb found={cmb != null}, _isDlssNrOnAmdModdedActive={_isDlssNrOnAmdModdedActive}.");
+        if (cmb == null || !_isDlssNrOnAmdModdedActive) return;
+
+        cmb.SelectionChanged -= CmbOptiVersion_SelectionChanged;
+        cmb.Items.Clear();
+        cmb.IsEnabled = false;
+
+        List<DlssNrOnAmdRelease> releases;
+        try
+        {
+            releases = await _componentService.GetAmdWrapperReleasesAsync();
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log($"[BulkInstall][SetupNr] Could not list MatheusGViana wrapper releases: {ex.Message}");
+            releases = new List<DlssNrOnAmdRelease>();
+        }
+
+        DebugWindow.Log($"[BulkInstall][SetupNr] Fetched {releases.Count} MatheusGViana wrapper release(s); " +
+            $"_isDlssNrOnAmdModdedActive is now {_isDlssNrOnAmdModdedActive}.");
+
+        // Re-check after the await: the user may have switched Setup NR back to "none" (or another
+        // mode) while this fetch was in flight — CmbOptiVersion has since been repopulated with the
+        // normal channel by that path, so don't clobber it with a now-stale wrapper release list.
+        if (!_isDlssNrOnAmdModdedActive)
+        {
+            cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+            return;
+        }
+
+        if (releases.Count == 0)
+        {
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+            cmb.SelectedIndex = 0;
+        }
+        else
+        {
+            for (int i = 0; i < releases.Count; i++)
+                cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+            var saved = _componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
+            var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
+            cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+            cmb.IsEnabled = true;
+        }
+
+        cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+        UpdateSelectionCount();
+    }
+
     private string GetResourceString(string key, string fallback)
     {
         return Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
@@ -1464,14 +2057,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             if (targetGames.Count == 0) return;
 
             var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-            var sharedCapabilities = await Task.Run(() =>
-            {
-                var service = new FrameGenerationConfigurationService();
-                var capabilities = targetGames
-                    .Select(game => service.DetectCapabilities(game, gpu))
-                    .ToList();
-                return BuildSharedFrameGenerationCapabilities(capabilities);
-            });
+            var capabilities = await GetCapabilitiesAsync(targetGames, gpu);
+            var sharedCapabilities = BuildSharedFrameGenerationCapabilities(capabilities);
 
             var dialog = new FrameGenerationSettingsWindow(this, sharedCapabilities, _frameGenerationSettings, gpu);
             var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
@@ -1485,6 +2072,28 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             await new ConfirmDialog(this, "Frame Generation",
                 $"Could not configure frame generation:\n{ex.Message}").ShowDialog<object>(this);
         }
+    }
+
+    /// <summary>
+    /// Detects FG capabilities for every given game, reusing anything already cached and scanning
+    /// only the rest off the UI thread. DetectCapabilities walks the whole game folder recursively,
+    /// so without this the Frame Generation dialog re-scanned every installable game on every open.
+    /// </summary>
+    private async Task<List<FrameGenerationCapabilities>> GetCapabilitiesAsync(List<Game> games, GpuInfo? gpu)
+    {
+        var missing = games.Where(game => !_fgCapabilitiesCache.ContainsKey(game.InstallPath)).ToList();
+        if (missing.Count > 0)
+        {
+            var detected = await Task.Run(() =>
+            {
+                var service = new FrameGenerationConfigurationService();
+                return missing.Select(game => (game.InstallPath, Caps: service.DetectCapabilities(game, gpu))).ToList();
+            });
+            foreach (var (path, caps) in detected)
+                _fgCapabilitiesCache[path] = caps;
+        }
+
+        return games.Select(game => _fgCapabilitiesCache[game.InstallPath]).ToList();
     }
 
     private static FrameGenerationCapabilities BuildSharedFrameGenerationCapabilities(

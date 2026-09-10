@@ -1056,8 +1056,13 @@ namespace OptiscalerClient.Services
         /// registered wrapper OptiScaler version name to install when <paramref name="mode"/> is
         /// "daniel-and-opti" (the caller must install that build, with dxgi.dll injection, instead of
         /// its own normally-configured OptiScaler version).</summary>
+        /// <param name="danielVersionOverride">Release picked in the calling window (Bulk Install's
+        /// own Setup NR selector) instead of the one pinned in Settings. Null falls back to the
+        /// pinned default, then to latest.</param>
+        /// <param name="wrapperVersionOverride">Same, for the Mode B wrapper build.</param>
         public async Task<(QuickPathResult Result, string? WrapperVersionName)> InstallForQuickPathAsync(
-            Window owner, Game game, string mode, ComponentManagementService componentService)
+            Window owner, Game game, string mode, ComponentManagementService componentService,
+            string? danielVersionOverride = null, string? wrapperVersionOverride = null)
         {
             if (mode != "daniel-only" && mode != "daniel-and-opti") return (QuickPathResult.NotApplicable, null);
             if (game.IsDlssNrOnAmdInstalled) return (QuickPathResult.NotApplicable, null);
@@ -1081,7 +1086,7 @@ namespace OptiscalerClient.Services
             // combos) over "whatever's newest right now" — falls back to latest when unset, or when
             // the pinned one no longer exists in the current release list.
             var releases = await GetReleasesAsync();
-            var pinnedDaniel = componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+            var pinnedDaniel = danielVersionOverride ?? componentService.Config.DefaultDlssNrOnAmdDanielVersion;
             var danielVersion = (!string.IsNullOrEmpty(pinnedDaniel) &&
                     releases.Any(r => string.Equals(r.Version, pinnedDaniel, StringComparison.OrdinalIgnoreCase)))
                 ? pinnedDaniel
@@ -1096,7 +1101,7 @@ namespace OptiscalerClient.Services
             if (isModeB)
             {
                 var wrapperReleases = await componentService.GetAmdWrapperReleasesAsync();
-                var pinnedWrapper = componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
+                var pinnedWrapper = wrapperVersionOverride ?? componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
                 var wrapperRawVersion = (!string.IsNullOrEmpty(pinnedWrapper) &&
                         wrapperReleases.Any(r => string.Equals(r.Version, pinnedWrapper, StringComparison.OrdinalIgnoreCase)))
                     ? pinnedWrapper

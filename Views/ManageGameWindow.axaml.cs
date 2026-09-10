@@ -297,7 +297,7 @@ namespace OptiscalerClient.Views
         /// ReShade's config/shaders in a separate location entirely (~/.reshade by default,
         /// overridable via the MAIN_PATH env var it also reads), not inside the game folder — so the
         /// Windows-style check alone always misses a correctly-installed Linux/Proton setup.</summary>
-        private static bool IsReshadeInstalledForGame(string? gameDir)
+        internal static bool IsReshadeInstalledForGame(string? gameDir)
         {
             if (!string.IsNullOrWhiteSpace(gameDir) &&
                 (File.Exists(System.IO.Path.Combine(gameDir, "ReShade.ini")) ||

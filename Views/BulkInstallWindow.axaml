@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         x:Class="OptiscalerClient.Views.BulkInstallWindow"
         Title="{DynamicResource TxtBulkInstallWindow}"
-        Height="820" Width="900"
+        Height="820" Width="1140"
         SystemDecorations="None"
         TransparencyLevelHint="Transparent"
         Background="Transparent"
@@ -172,7 +172,7 @@
                      ════════════════════════════════════════════════════════ -->
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="270"/>  <!-- Left Sidebar -->
+                        <ColumnDefinition Width="440"/>  <!-- Left Sidebar -->
                         <ColumnDefinition Width="*"/>    <!-- Games List -->
                     </Grid.ColumnDefinitions>
 
@@ -196,14 +196,20 @@
                             <ScrollViewer Grid.Row="0"
                                           VerticalScrollBarVisibility="Auto"
                                           HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Margin="16,20,16,4" Spacing="14">
-                                <TextBlock Text="{DynamicResource TxtInstallationSettings}"
+                            <Grid Margin="16,20,16,4"
+                                  ColumnDefinitions="*,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                                  ColumnSpacing="12"
+                                  RowSpacing="14">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                           Text="{DynamicResource TxtInstallationSettings}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource BrTextPrimary}"/>
 
-                                <!-- Version -->
-                                <StackPanel Spacing="5">
+                                <!-- Version — full width: room for up to 4 channel tabs
+                                     (Stable/Beta/Nightly/Custom) without compacting them. -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="{DynamicResource TxtVersion}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -263,6 +269,19 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiCustom_Click"/>
+                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while
+                                             Setup NR = "Mod + OptiScaler" — the only "channel" available
+                                             in that state, so it's an indicator rather than a real tab. -->
+                                        <Button Name="BtnOptiModded"
+                                                Grid.Column="0" Grid.ColumnSpan="4"
+                                                Content="Modded"
+                                                Classes="BtnPrimary"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                FontSize="11"
+                                                Padding="8,5"
+                                                IsVisible="False"
+                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbOptiVersion"
                                               HorizontalAlignment="Stretch"
@@ -273,7 +292,7 @@
                                 </StackPanel>
 
                                 <!-- Injection Method -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="2" Grid.Column="0" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="{DynamicResource TxtInjectionLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -308,7 +327,7 @@
                                 </StackPanel>
 
                                 <!-- FSR 4 DLL swap -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="{DynamicResource TxtFsr4SwapLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -358,7 +377,7 @@
                                 </StackPanel>
 
                                 <!-- OptiPatcher -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="3" Grid.Column="0" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="{DynamicResource TxtOptiPatcherLbl}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -385,7 +404,7 @@
                                 </StackPanel>
 
                                 <!-- Profile -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="5">
                                     <TextBlock Text="Profile"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="12"/>
@@ -398,7 +417,7 @@
                                 </StackPanel>
 
                                 <!-- Frame Generation -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="4" Grid.Column="0" Spacing="5">
                                     <TextBlock Text="{DynamicResource TxtFrameGeneration}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="12"/>
@@ -433,8 +452,39 @@
                                     </Button>
                                 </StackPanel>
 
+                                <!-- Upscaling Quality -->
+                                <StackPanel Grid.Row="4" Grid.Column="1" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource TxtUpscalingQuality}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="14" Height="14"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtUpscalingQualityTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbUpscalingQuality"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              Background="{StaticResource BrBgBase}"
+                                              VerticalContentAlignment="Center"
+                                              MaxDropDownHeight="420"
+                                              DropDownOpened="CmbUpscalingQuality_DropDownOpened"
+                                              DropDownClosed="CmbUpscalingQuality_DropDownClosed"
+                                              SelectionChanged="CmbUpscalingQuality_SelectionChanged"/>
+                                </StackPanel>
+
                                 <!-- Output Upscaler -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="5" Grid.Column="0" Spacing="5">
                                     <TextBlock Text="{DynamicResource TxtOutputUpscaler}"
                                                Foreground="{StaticResource BrTextSecondary}"
                                                FontSize="12"/>
@@ -447,11 +497,163 @@
                                               SelectionChanged="CmbOutputUpscaler_SelectionChanged"/>
                                 </StackPanel>
 
+                                <!-- DXGI Spoofing -->
+                                <StackPanel Grid.Row="5" Grid.Column="1" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource TxtSpoofingLbl}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="14" Height="14"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtSpoofingTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbSpoofing"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="BtnSelector"
+                                              HorizontalContentAlignment="Left"
+                                              Background="{StaticResource BrBgBase}"
+                                              VerticalContentAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Experimental zone (RenoDX + AMD DLSS Neural Rendering "Setup NR"),
+                                     mirroring ManageGameWindow/ManageDefaultVersionsWindow's own
+                                     BorderExperimentalZone/BorderExperimentalChip pair. Hidden unless
+                                     Config.ShowExperimentalFeatures; the NR panels inside are further
+                                     gated on the configured default GPU being AMD. Full width (spans
+                                     both sidebar columns) with its own internal 2-column split:
+                                     RenoDX | Setup NR mode, then the Daniel version pin full-width
+                                     below since it's only relevant once a Setup NR mode is picked. -->
+                                <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                    <Border Name="BorderExperimentalZone"
+                                            BorderBrush="{StaticResource BrExperimental}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusMedium}"
+                                            Padding="12,16,12,12"
+                                            IsVisible="False">
+                                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+                                            <StackPanel Name="PanelRenodxVersion" Grid.Row="0" Grid.Column="0" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <TextBlock Text="{DynamicResource TxtRenodxLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="14" Height="14"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtRenodxTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="9" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbRenodxVersion"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          HorizontalContentAlignment="Left"
+                                                          Background="{StaticResource BrBgBase}"
+                                                          VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <StackPanel Name="PanelDlssNrOnAmd" Grid.Row="0" Grid.Column="1" Spacing="5">
+                                                <!-- "DLSS Neural Rendering (For AMD)" is long enough to overflow
+                                                     this half-width column at a fixed horizontal layout — wrap it
+                                                     instead, with the help icon pinned to the top-right. -->
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{DynamicResource TxtDlssNrOnAmdTitle}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1"
+                                                            Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="14" Height="14"
+                                                            Margin="6,1,0,0"
+                                                            VerticalAlignment="Top"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtDefaultDlssNrOnAmdDesc}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="9" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </Grid>
+                                                <ComboBox Name="CmbSetupNr"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          Background="{StaticResource BrBgBase}"
+                                                          VerticalContentAlignment="Center"
+                                                          SelectionChanged="CmbSetupNr_SelectionChanged">
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeNone}" Tag="none"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielOnlyShort}" Tag="daniel-only"/>
+                                                    <ComboBoxItem Content="{DynamicResource TxtSetupNrModeDanielAndOptiShort}" Tag="daniel-and-opti"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <StackPanel Name="PanelDlssNrDanielVersion" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="14" Height="14"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtSetupNrDanielVersionTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="9" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDlssNrDanielVersion"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          Background="{StaticResource BrBgBase}"
+                                                          VerticalContentAlignment="Center"
+                                                          IsEnabled="False"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <Border Name="BorderExperimentalChip"
+                                            Background="{StaticResource BrBgSurface}"
+                                            Padding="6,0"
+                                            Margin="14,-7,0,0"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            IsVisible="False">
+                                        <TextBlock Text="{DynamicResource TxtExperimentalZoneLbl}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   Foreground="{StaticResource BrExperimental}"/>
+                                    </Border>
+                                </Grid>
+
                                 <!-- Divider -->
-                                <Border Height="1" Background="{StaticResource BrBorderSubtle}" Margin="0,2"/>
+                                <Border Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+                                        Height="1" Background="{StaticResource BrBorderSubtle}" Margin="0,2"/>
 
                                 <!-- Fakenvapi -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="8" Grid.Column="0" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="Fakenvapi:"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -479,7 +681,7 @@
                                 </StackPanel>
 
                                 <!-- NukemFG -->
-                                <StackPanel Spacing="5">
+                                <StackPanel Grid.Row="8" Grid.Column="1" Spacing="5">
                                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                         <TextBlock Text="NukemFG:"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -506,7 +708,7 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                            </StackPanel>
+                            </Grid>
                             </ScrollViewer>
 
                             <!-- Progress Bar -->
