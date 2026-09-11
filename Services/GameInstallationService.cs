@@ -1053,10 +1053,12 @@ namespace OptiscalerClient.Services
         /// <summary>
         /// Applies the GPU spoofing override as a narrow patch over the existing INI — same
         /// "no DLLs touched, no re-download" shape as ApplyProfileSettings/ApplyUpscalingQualitySettings
-        /// above. Drives all three spoofing channels OptiScaler exposes together — Dxgi,
-        /// StreamlineSpoofing and VulkanExtensionSpoofing — since games like No Man's Sky are still
-        /// detected as Nvidia through Streamline/Vulkan even with Dxgi spoofing off; a selector that
-        /// only touched Dxgi left those two channels on.
+        /// above. Drives all four spoofing channels OptiScaler exposes together — Dxgi,
+        /// StreamlineSpoofing, Vulkan and VulkanExtensionSpoofing — since games like No Man's Sky are
+        /// still detected as Nvidia through Streamline/Vulkan even with Dxgi spoofing off; a selector
+        /// that only touched Dxgi left the other channels on. Vulkan (the vendor spoof) and
+        /// VulkanExtensionSpoofing (the Nvidia extension spoof) are separate OptiScaler keys and both
+        /// need to move together with this selector.
         /// </summary>
         public void ApplySpoofingSettings(Game game, string spoofingValue, string? resolvedGameDir = null)
         {
@@ -1066,6 +1068,7 @@ namespace OptiscalerClient.Services
 
             ModifyOptiScalerIni(gameDir, "Dxgi", spoofingValue, "Spoofing");
             ModifyOptiScalerIni(gameDir, "StreamlineSpoofing", spoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "Vulkan", spoofingValue, "Spoofing");
             ModifyOptiScalerIni(gameDir, "VulkanExtensionSpoofing", spoofingValue, "Spoofing");
         }
 
