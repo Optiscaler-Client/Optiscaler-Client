@@ -527,6 +527,39 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
+                                <!-- Row 3, Col 2 : Spoofing (same Dxgi/StreamlineSpoofing/
+                                     VulkanExtensionSpoofing override as ManageGameWindow's CmbSpoofing,
+                                     pinned as the starting point for Quick Install). -->
+                                <StackPanel Grid.Row="3" Grid.Column="2" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtSpoofingLbl}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="14"
+                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtSpoofingTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <ComboBox Name="CmbDefaultSpoofing"
+                                              Classes="BtnSelector"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalContentAlignment="Center"
+                                              Margin="0,4,0,0">
+                                        <ComboBoxItem Content="Auto" Tag="auto" Classes="SentinelOption"/>
+                                        <ComboBoxItem Content="Enabled" Tag="true"/>
+                                        <ComboBoxItem Content="Disabled" Tag="false"/>
+                                    </ComboBox>
+                                </StackPanel>
+
                                 <!-- Row 4, all columns : Experimental zone (AMD DLSS Neural Rendering
                                      "Setup NR" defaults) — bordered strip so experimental controls read
                                      as visually distinct, mirroring ManageGameWindow's own

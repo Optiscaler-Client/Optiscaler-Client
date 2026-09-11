@@ -5735,7 +5735,8 @@ namespace OptiscalerClient.Views
                                 ensureFakenvapiIfMissing: isNightlyChannel,
                                 installDlssEnabler: mfgWithEnabler,
                                 dlssEnablerCachePath: quickInstallDlssEnablerCacheDir,
-                                gpu: preferredGpuForFsr4
+                                gpu: preferredGpuForFsr4,
+                                dxgiSpoofing: _componentService.Config.DefaultDxgiSpoofing ?? "auto"
                             );
                         });
 

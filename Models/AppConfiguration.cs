@@ -177,6 +177,14 @@ namespace OptiscalerClient.Models
         /// </summary>
         public string? DefaultInjectionMethod { get; set; } = null;
         /// <summary>
+        /// Default GPU spoofing override ("true"/"false"), applied to OptiScaler's Dxgi,
+        /// StreamlineSpoofing and VulkanExtensionSpoofing keys together — see
+        /// GameInstallationService.InstallOptiScaler's dxgiSpoofing parameter. Null/"auto" means
+        /// OptiScaler's own per-vendor default, used by Quick Install when the user hasn't pinned one
+        /// in "Default Versions &amp; Quick Install Settings".
+        /// </summary>
+        public string? DefaultDxgiSpoofing { get; set; } = null;
+        /// <summary>
         /// Default AMD DLSS Neural Rendering ("Setup NR") mode: "none" (default), "daniel-only", or
         /// "daniel-and-opti". Pre-selects ManageGameWindow's Setup NR combo for a never-touched game,
         /// and drives whether Quick Install / Bulk Install install the mod automatically — see

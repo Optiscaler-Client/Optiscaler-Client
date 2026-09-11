@@ -133,6 +133,7 @@ namespace OptiscalerClient.Views
             PopulateDefaultNukemFGCombo();
             UpdateFakenvapiNukemFGLockState();
             PopulateDefaultInjectionMethodCombo();
+            PopulateDefaultSpoofingCombo();
             PopulateDefaultProfileCombo();
             PopulateDefaultUpscalingQualityCombo();
             PopulateDefaultOutputUpscalerCombo();
@@ -613,6 +614,28 @@ namespace OptiscalerClient.Views
             }
         }
 
+        // ── Spoofing (Dxgi + StreamlineSpoofing + VulkanExtensionSpoofing) ────
+
+        private void PopulateDefaultSpoofingCombo()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDefaultSpoofing");
+            if (cmb == null) return;
+
+            var saved = _componentService.Config.DefaultDxgiSpoofing;
+            cmb.SelectedIndex = 0; // Auto
+            if (!string.IsNullOrEmpty(saved))
+            {
+                for (int i = 0; i < cmb.Items.Count; i++)
+                {
+                    if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == saved)
+                    {
+                        cmb.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
         // ── AMD DLSS Neural Rendering mod default ────────────────────────────
 
         /// <summary>Same permissive-when-unknown check as ManageGameWindow.IsSetupNrGpuAllowed —
@@ -670,6 +693,7 @@ namespace OptiscalerClient.Views
             "CmbDefaultOptiPatcherVersion", "CmbDefaultFakenvapiVersion", "CmbDefaultNukemFGVersion",
             "CmbDefaultInjectionMethod", "CmbDefaultProfile", "BtnDefaultFrameGeneration",
             "CmbDefaultUpscalingQuality", "CmbDefaultOutputUpscaler", "BtnFsr4SwapOptions",
+            "CmbDefaultSpoofing",
         };
 
         private void SetDefaultOptionsLocked(bool locked)
@@ -1157,6 +1181,15 @@ namespace OptiscalerClient.Views
                 var method = injectionItem.Tag?.ToString();
                 _componentService.Config.DefaultInjectionMethod =
                     string.IsNullOrEmpty(method) || method.Equals("auto", StringComparison.OrdinalIgnoreCase) ? null : method;
+            }
+
+            // Save Spoofing override (Dxgi + StreamlineSpoofing + VulkanExtensionSpoofing)
+            var cmbSpoofing = this.FindControl<ComboBox>("CmbDefaultSpoofing");
+            if (cmbSpoofing?.SelectedItem is ComboBoxItem spoofingItem)
+            {
+                var value = spoofingItem.Tag?.ToString();
+                _componentService.Config.DefaultDxgiSpoofing =
+                    string.IsNullOrEmpty(value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase) ? null : value;
             }
 
             // Save AMD DLSS Neural Rendering mod default (only ever offered when experimental

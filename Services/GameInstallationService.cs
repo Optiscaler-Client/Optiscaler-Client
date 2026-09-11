@@ -600,12 +600,11 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Re-applied FSR 4 Swap forcing keys after profile write (Current extras DLL already present)");
             }
 
-            // DXGI Spoofing override (Manage Game's per-game selector, next to Profile). Same narrow
-            // single-key patch as LoadReshade below, applied unconditionally (not gated behind any
-            // feature toggle) — "auto" is a real, valid value for this key already, matching what a
-            // freshly generated ini would otherwise leave in place, so this is a harmless no-op when
-            // the user hasn't touched the selector.
-            ModifyOptiScalerIni(gameDir, "Dxgi", dxgiSpoofing, "Spoofing");
+            // Spoofing override (Manage Game's per-game selector, next to Profile). Applied
+            // unconditionally (not gated behind any feature toggle) — "auto" is a real, valid value
+            // for these keys already, matching what a freshly generated ini would otherwise leave in
+            // place, so this is a harmless no-op when the user hasn't touched the selector.
+            ApplySpoofingSettings(game, dxgiSpoofing, gameDir);
 
             // Step 2.6: RenoDX (experimental, opt-in) and/or re-enabling a ReShade install that Step 1
             // preserved as ReShade64.dll. Runs AFTER Step 2.5 deliberately: LoadReshade is force-set
@@ -1049,6 +1048,25 @@ namespace OptiscalerClient.Services
             }
 
             DebugWindow.Log($"[Profile] Applied profile '{profile.Name}' without reinstalling for {game.Name}; restart required.");
+        }
+
+        /// <summary>
+        /// Applies the GPU spoofing override as a narrow patch over the existing INI — same
+        /// "no DLLs touched, no re-download" shape as ApplyProfileSettings/ApplyUpscalingQualitySettings
+        /// above. Drives all three spoofing channels OptiScaler exposes together — Dxgi,
+        /// StreamlineSpoofing and VulkanExtensionSpoofing — since games like No Man's Sky are still
+        /// detected as Nvidia through Streamline/Vulkan even with Dxgi spoofing off; a selector that
+        /// only touched Dxgi left those two channels on.
+        /// </summary>
+        public void ApplySpoofingSettings(Game game, string spoofingValue, string? resolvedGameDir = null)
+        {
+            var gameDir = resolvedGameDir ?? DetermineInstallDirectory(game);
+            if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
+                throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
+
+            ModifyOptiScalerIni(gameDir, "Dxgi", spoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "StreamlineSpoofing", spoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "VulkanExtensionSpoofing", spoofingValue, "Spoofing");
         }
 
         /// <summary>

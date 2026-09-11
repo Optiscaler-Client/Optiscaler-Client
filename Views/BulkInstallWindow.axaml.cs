@@ -1731,9 +1731,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         _upscalingQualitySettings.Preset = UpscalingQualityPreset.Custom;
     }
 
-    /// <summary>Batch counterpart to ManageGameWindow's per-game DXGI Spoofing selector. Nothing
-    /// is installed yet here, so there's no ini to preselect from — "Auto" (OptiScaler's own
-    /// default) is always the starting point.</summary>
+    /// <summary>Batch counterpart to ManageGameWindow's per-game Spoofing selector. Nothing is
+    /// installed yet here, so there's no ini to preselect from — pre-selects the configured default
+    /// (Config.DefaultDxgiSpoofing) instead, same "Auto"/unset -> index 0 fallback as the injection
+    /// method selector above.</summary>
     private void PopulateSpoofingComboBox()
     {
         var cmb = this.FindControl<ComboBox>("CmbSpoofing");
@@ -1743,7 +1744,20 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
         cmb.Items.Add(new ComboBoxItem { Content = "Enabled", Tag = "true" });
         cmb.Items.Add(new ComboBoxItem { Content = "Disabled", Tag = "false" });
+
         cmb.SelectedIndex = 0;
+        var defaultSpoofing = _componentService.Config.DefaultDxgiSpoofing;
+        if (!string.IsNullOrEmpty(defaultSpoofing))
+        {
+            for (int i = 0; i < cmb.Items.Count; i++)
+            {
+                if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == defaultSpoofing)
+                {
+                    cmb.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     /// <summary>
