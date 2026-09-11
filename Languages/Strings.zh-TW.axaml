@@ -723,6 +723,10 @@
     <x:String x:Key="TxtViewIniSearchWatermark">搜尋鍵或值...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">放大文字</x:String>
     <x:String x:Key="TxtViewIniZoomOutTooltip">縮小文字</x:String>
+    <x:String x:Key="TxtViewIniSearchByTerm">依關鍵字</x:String>
+    <x:String x:Key="TxtViewIniSearchBySection">依區段</x:String>
+    <x:String x:Key="TxtViewIniNotFound">找不到此遊戲的 OptiScaler.ini。</x:String>
+    <x:String x:Key="TxtViewIniOpenError">無法開啟 ini 檢視器：</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下載 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安裝 OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>

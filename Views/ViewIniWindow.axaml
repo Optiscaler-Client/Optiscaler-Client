@@ -56,14 +56,20 @@
                         </Border>
 
                         <!-- Search + Zoom -->
-                        <Grid Grid.Row="1" Margin="24,16,24,0" ColumnDefinitions="*, Auto">
+                        <Grid Grid.Row="1" Margin="24,16,24,0" ColumnDefinitions="*, Auto, Auto">
                             <TextBox Grid.Column="0"
                                      Name="TxtSearch"
                                      Watermark="{DynamicResource TxtViewIniSearchWatermark}"
                                      Background="{StaticResource BrBgDeep}"
                                      BorderBrush="{StaticResource BrBorderSubtle}"
                                      TextChanged="TxtSearch_TextChanged"/>
-                            <StackPanel Grid.Column="1"
+                            <ComboBox Grid.Column="1"
+                                      Name="CmbSearchMode"
+                                      Classes="BtnSelector"
+                                      Margin="8,0,0,0"
+                                      MinWidth="120"
+                                      VerticalContentAlignment="Center"/>
+                            <StackPanel Grid.Column="2"
                                         Orientation="Horizontal"
                                         Spacing="6"
                                         Margin="10,0,0,0"

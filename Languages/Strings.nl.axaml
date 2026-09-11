@@ -735,6 +735,10 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtViewIniSearchWatermark">Zoek naar sleutels of waarden...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">Tekstgrootte vergroten</x:String>
     <x:String x:Key="TxtViewIniZoomOutTooltip">Tekstgrootte verkleinen</x:String>
+    <x:String x:Key="TxtViewIniSearchByTerm">Op term</x:String>
+    <x:String x:Key="TxtViewIniSearchBySection">Op sectie</x:String>
+    <x:String x:Key="TxtViewIniNotFound">Geen OptiScaler.ini gevonden voor dit spel.</x:String>
+    <x:String x:Key="TxtViewIniOpenError">Kon de ini-viewer niet openen:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher downloaden...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher installeren...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Versiebeheer</x:String>

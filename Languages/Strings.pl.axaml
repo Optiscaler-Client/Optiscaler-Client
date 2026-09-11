@@ -735,6 +735,10 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtViewIniSearchWatermark">Szukaj kluczy lub wartości...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">Zwiększ rozmiar tekstu</x:String>
     <x:String x:Key="TxtViewIniZoomOutTooltip">Zmniejsz rozmiar tekstu</x:String>
+    <x:String x:Key="TxtViewIniSearchByTerm">Wg frazy</x:String>
+    <x:String x:Key="TxtViewIniSearchBySection">Wg sekcji</x:String>
+    <x:String x:Key="TxtViewIniNotFound">Nie znaleziono pliku OptiScaler.ini dla tej gry.</x:String>
+    <x:String x:Key="TxtViewIniOpenError">Nie można otworzyć podglądu ini:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Pobieranie OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Instalowanie OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Zarządzanie wersjami</x:String>

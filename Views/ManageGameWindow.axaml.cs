@@ -259,23 +259,35 @@ namespace OptiscalerClient.Views
         /// <summary>Opens the read-only ini viewer for this game's installed OptiScaler.ini. Only
         /// wired to a button that's already hidden unless _game.IsOptiscalerInstalled (see
         /// UpdateStatus), but re-checks the file directly anyway since install state can go stale
-        /// between paints.</summary>
-        private void BtnViewIni_Click(object? sender, RoutedEventArgs e)
+        /// between paints. Surfaces failures via a dialog instead of only DebugWindow.Log — that log
+        /// is a no-op whenever the Debug Logs window isn't open, which made every prior failure here
+        /// completely silent (button click did nothing, nothing recorded anywhere).</summary>
+        private async void BtnViewIni_Click(object? sender, RoutedEventArgs e)
         {
             try
             {
                 var installService = new GameInstallationService();
                 var gameDir = installService.DetermineInstallDirectory(_game);
-                if (string.IsNullOrWhiteSpace(gameDir)) return;
+                var iniPath = string.IsNullOrWhiteSpace(gameDir) ? null : System.IO.Path.Combine(gameDir, "OptiScaler.ini");
 
-                var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
-                if (!System.IO.File.Exists(iniPath)) return;
+                if (iniPath == null || !System.IO.File.Exists(iniPath))
+                {
+                    DebugWindow.Log($"[ViewIni] OptiScaler.ini not found (gameDir='{gameDir}')");
+                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                        GetResourceString("TxtViewIniNotFound", "OptiScaler.ini not found for this game."))
+                        .ShowDialog<object>(this);
+                    return;
+                }
 
-                new ViewIniWindow(iniPath, _game.Name).ShowDialog(this);
+                await new ViewIniWindow(iniPath, _game.Name).ShowDialog(this);
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[ViewIni] Failed to open ini viewer: {ex.Message}");
+                DebugWindow.Log($"[ViewIni] Failed to open ini viewer: {ex}");
+                var topFrame = ex.StackTrace?.Split('\n').FirstOrDefault()?.Trim();
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    $"{GetResourceString("TxtViewIniOpenError", "Could not open the ini viewer:")}\n{ex.GetType().Name}: {ex.Message}\n{topFrame}")
+                    .ShowDialog<object>(this);
             }
         }
 

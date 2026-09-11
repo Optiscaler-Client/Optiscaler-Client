@@ -714,6 +714,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtViewIniSearchWatermark">Anahtar veya değer ara...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">Metin boyutunu büyüt</x:String>
     <x:String x:Key="TxtViewIniZoomOutTooltip">Metin boyutunu küçült</x:String>
+    <x:String x:Key="TxtViewIniSearchByTerm">Terime göre</x:String>
+    <x:String x:Key="TxtViewIniSearchBySection">Bölüme göre</x:String>
+    <x:String x:Key="TxtViewIniNotFound">Bu oyun için OptiScaler.ini bulunamadı.</x:String>
+    <x:String x:Key="TxtViewIniOpenError">ini görüntüleyici açılamadı:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>

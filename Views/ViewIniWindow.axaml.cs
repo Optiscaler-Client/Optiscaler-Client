@@ -17,7 +17,7 @@ namespace OptiscalerClient.Views
     public partial class ViewIniWindow : Window
     {
         private sealed record IniRow(Border RowBorder, TextBlock KeyBlock, TextBlock ValueBlock, string Key, string Value);
-        private sealed record IniSectionUi(Border Card, TextBlock Header, List<IniRow> Rows);
+        private sealed record IniSectionUi(Border Card, TextBlock Header, string SectionName, List<IniRow> Rows);
 
         private const double BaseFontSize = 14; // slightly larger than the app's usual 12px body text, at 100% zoom
         private const int MinZoomPercent = 50;
@@ -28,6 +28,7 @@ namespace OptiscalerClient.Views
         private TextBlock? _plainDumpBlock;
         private int _zoomPercent = 100;
         private double _fontSize = BaseFontSize;
+        private string _searchMode = "term";
 
         private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
@@ -39,6 +40,7 @@ namespace OptiscalerClient.Views
             DialogDimHelper.Register(this);
             WindowScreenFitHelper.FitToScreen(this);
             SetupWindow(gameName);
+            PopulateSearchModeCombo();
             BuildContent(iniPath);
         }
 
@@ -68,6 +70,24 @@ namespace OptiscalerClient.Views
 
         private static IBrush ResBrush(string key, IBrush fallback)
             => Application.Current?.FindResource(key) as IBrush ?? fallback;
+
+        private static string GetResourceString(string key, string fallback)
+            => Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
+
+        /// <summary>Built in code, like CmbSpoofing elsewhere in this app, instead of declaring
+        /// &lt;ComboBoxItem&gt; children directly in XAML — the declarative form threw "Could not find
+        /// parent name scope" here at runtime (XAML compiled fine; only failed when the window was
+        /// actually opened).</summary>
+        private void PopulateSearchModeCombo()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbSearchMode");
+            if (cmb == null) return;
+
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtViewIniSearchByTerm", "By term"), Tag = "term" });
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtViewIniSearchBySection", "By section"), Tag = "section" });
+            cmb.SelectedIndex = 0;
+            cmb.SelectionChanged += CmbSearchMode_SelectionChanged;
+        }
 
         /// <summary>Parses the ini into [Section] cards of "Key  Value" rows. Unknown format (can't
         /// even find one "key=value" line) falls back to a plain monospace dump instead of an empty
@@ -199,7 +219,7 @@ namespace OptiscalerClient.Views
                 Child = new StackPanel { Children = { header, rowsPanel } }
             };
 
-            return new IniSectionUi(card, header, rowsUi);
+            return new IniSectionUi(card, header, section, rowsUi);
         }
 
         private void BtnZoomIn_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -231,10 +251,32 @@ namespace OptiscalerClient.Views
         }
 
         private void TxtSearch_TextChanged(object? sender, Avalonia.Controls.TextChangedEventArgs e)
+            => ApplyFilter((sender as TextBox)?.Text?.Trim() ?? "");
+
+        private void CmbSearchMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            var query = (sender as TextBox)?.Text?.Trim() ?? "";
+            if ((sender as ComboBox)?.SelectedItem is not ComboBoxItem item) return;
+            _searchMode = item.Tag as string ?? "term";
+            ApplyFilter(this.FindControl<TextBox>("TxtSearch")?.Text?.Trim() ?? "");
+        }
+
+        /// <summary>"term" (default) filters individual rows by key/value, same as before. "section"
+        /// instead matches the query against [Section] titles and shows/hides whole sections — e.g.
+        /// searching "spoofing" shows the entire [Spoofing] section with all its keys, rather than only
+        /// rows whose key/value happen to contain "spoofing".</summary>
+        private void ApplyFilter(string query)
+        {
             foreach (var section in _sections)
             {
+                if (_searchMode == "section")
+                {
+                    var sectionMatch = query.Length == 0
+                        || section.SectionName.Contains(query, StringComparison.OrdinalIgnoreCase);
+                    foreach (var row in section.Rows) row.RowBorder.IsVisible = true;
+                    section.Card.IsVisible = sectionMatch;
+                    continue;
+                }
+
                 bool anyVisible = false;
                 foreach (var row in section.Rows)
                 {
