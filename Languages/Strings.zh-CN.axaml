@@ -717,7 +717,11 @@
     <x:String x:Key="TxtProfileLbl">配置文件 (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">配置文件是已保存的 OptiScaler .ini 配置。选择一个配置文件，可在为此游戏安装 OptiScaler 时重复使用一组特定的设置。</x:String>
     <x:String x:Key="TxtSpoofingLbl">伪装</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">覆盖 OptiScaler 的 DXGI GPU 伪装（伪装成 Nvidia GPU，使仅支持 DLSS 的游戏可在 AMD/Intel 上运行）。"自动"与 OptiScaler 自身的默认行为一致：AMD/Intel 上启用，Nvidia 上禁用。</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">一并覆盖 OptiScaler 的 DXGI、Streamline 与 Vulkan GPU 伪装（伪装成 Nvidia GPU，使仅支持 DLSS 的游戏可在 AMD/Intel 上运行）。"自动"与 OptiScaler 自身的默认行为一致：AMD/Intel 上启用，Nvidia 上禁用。</x:String>
+    <x:String x:Key="TxtViewIniTooltip">查看已安装的 OptiScaler.ini（只读）</x:String>
+    <x:String x:Key="TxtViewIniSearchWatermark">搜索键或值...</x:String>
+    <x:String x:Key="TxtViewIniZoomInTooltip">放大文字</x:String>
+    <x:String x:Key="TxtViewIniZoomOutTooltip">缩小文字</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下载 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安装 OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>
@@ -980,7 +984,7 @@
     <x:String x:Key="TxtHelpGMFgStreamlineText">选择用于 DLSS-G 帧生成的特定 NVIDIA Streamline SDK 版本，或保持为最新版本。</x:String>
     <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamline 版本</x:String>
     <x:String x:Key="TxtHelpGMSpoofingLabel">伪装 🎭</x:String>
-    <x:String x:Key="TxtHelpGMSpoofingText">为此游戏覆盖 OptiScaler 自身的 DXGI GPU 伪装功能（伪装成 Nvidia 显卡，使仅支持 DLSS 的游戏能在 AMD/Intel 上运行）。“自动”与 OptiScaler 的默认行为一致（在 AMD/Intel 上启用，在 Nvidia 上禁用）；如果某个游戏需要相反的设置，可按游戏单独覆盖。</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">为此游戏一并覆盖 OptiScaler 自身的 GPU 伪装功能——DXGI、Streamline 与 Vulkan——（伪装成 Nvidia 显卡，使仅支持 DLSS 的游戏能在 AMD/Intel 上运行）。"自动"与 OptiScaler 的默认行为一致（在 AMD/Intel 上启用，在 Nvidia 上禁用）；如果某个游戏需要相反的设置，可按游戏单独覆盖。</x:String>
     <x:String x:Key="TxtHelpPageExperimental">实验性</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">默认 AMD DLSS Neural Rendering 🧪</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">为每个尚未配置的游戏预先选择“Setup NR”模式，让快速安装/批量安装自动完成安装。仅当上方的默认 GPU 设为 AMD 且已启用实验性功能时才会显示。</x:String>

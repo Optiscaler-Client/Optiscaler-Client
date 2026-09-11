@@ -718,7 +718,11 @@
     <x:String x:Key="TxtProfileLbl">プロファイル (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">プロファイルは保存されたOptiScalerの.ini設定です。このゲームにOptiScalerをインストールする際に、特定の設定セットを再利用するために選択してください。</x:String>
     <x:String x:Key="TxtSpoofingLbl">スプーフィング</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">OptiScalerのDXGI GPUスプーフィング（AMD/IntelでDLSS専用ゲームを動かすためにNvidia GPUを装う機能）を上書きします。「自動」はOptiScaler本来のデフォルト（AMD/Intelで有効、Nvidiaで無効）と同じです。</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">OptiScalerのDXGI・Streamline・VulkanのGPUスプーフィング（AMD/IntelでDLSS専用ゲームを動かすためにNvidia GPUを装う機能）をまとめて上書きします。「自動」はOptiScaler本来のデフォルト（AMD/Intelで有効、Nvidiaで無効）と同じです。</x:String>
+    <x:String x:Key="TxtViewIniTooltip">インストール済みのOptiScaler.iniを表示します（読み取り専用）</x:String>
+    <x:String x:Key="TxtViewIniSearchWatermark">キーまたは値を検索...</x:String>
+    <x:String x:Key="TxtViewIniZoomInTooltip">文字を大きくする</x:String>
+    <x:String x:Key="TxtViewIniZoomOutTooltip">文字を小さくする</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcherをダウンロード中...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcherをインストール中...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">バージョン管理</x:String>
@@ -981,7 +985,7 @@
     <x:String x:Key="TxtHelpGMFgStreamlineText">DLSS-GのFrame Generationで使用するNVIDIA Streamline SDKの特定バージョンを選択します。未指定の場合は常に最新版が使用されます。</x:String>
     <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamlineバージョン</x:String>
     <x:String x:Key="TxtHelpGMSpoofingLabel">スプーフィング 🎭</x:String>
-    <x:String x:Key="TxtHelpGMSpoofingText">このゲームに対するOptiScaler独自のDXGI GPUスプーフィング（NvidiaのGPUであると偽装し、DLSS専用ゲームをAMD/Intelで動作させる機能）を上書きします。「自動」はOptiScalerの既定動作（AMD/Intelで有効、Nvidiaで無効）に従います。タイトルによって逆の設定が必要な場合はゲームごとに上書きしてください。</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">このゲームに対するOptiScaler独自のGPUスプーフィング——DXGI・Streamline・Vulkanをまとめて——（NvidiaのGPUであると偽装し、DLSS専用ゲームをAMD/Intelで動作させる機能）を上書きします。「自動」はOptiScalerの既定動作（AMD/Intelで有効、Nvidiaで無効）に従います。タイトルによって逆の設定が必要な場合はゲームごとに上書きしてください。</x:String>
     <x:String x:Key="TxtHelpPageExperimental">実験的機能</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">AMD DLSS Neural Renderingの既定値 🧪</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">まだ設定されていないすべてのゲームに対して「Setup NR」モードを事前選択し、Quick Install / Bulk Installで自動的にインストールできるようにします。上の既定GPUがAMDに設定され、実験的機能が有効な場合にのみ表示されます。</x:String>

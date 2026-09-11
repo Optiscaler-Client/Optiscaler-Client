@@ -217,18 +217,20 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
-        /// Populates CmbSpoofing (DXGI Spoofing, sitting next to Profile) with Auto/Enabled/Disabled,
+        /// Populates CmbSpoofing (Spoofing, sitting next to Profile) with Auto/Enabled/Disabled,
         /// preselecting whatever this game's OptiScaler.ini already has set — unlike RenoDX/other
         /// combos, there's no "last choice" to remember here: the ini itself is the source of truth,
         /// so reopening Manage Game always reflects the game's actual current state instead of a
-        /// separately-tracked preference. No SelectionChanged handler is needed either, since nothing
-        /// needs to persist on change — ExecuteInstallAsync reads the combo directly at install time.
+        /// separately-tracked preference. Still needs a SelectionChanged hook (like Profile/Upscaling
+        /// Quality/Output Upscaler) so changing it alone offers "Update config only" instead of forcing
+        /// a full reinstall — see RefreshInstallActionAvailability.
         /// </summary>
         private void PopulateSpoofingComboBox()
         {
             var cmb = this.FindControl<ComboBox>("CmbSpoofing");
             if (cmb == null) return;
 
+            cmb.SelectionChanged -= CmbSpoofing_SelectionChanged;
             cmb.Items.Clear();
             cmb.Items.Add(new ComboBoxItem { Content = "Auto", Tag = "auto", Classes = { "SentinelOption" } });
             cmb.Items.Add(new ComboBoxItem { Content = "Enabled", Tag = "true" });
@@ -248,6 +250,33 @@ namespace OptiscalerClient.Views
                 }
             }
             cmb.SelectedIndex = targetIndex;
+            cmb.SelectionChanged += CmbSpoofing_SelectionChanged;
+        }
+
+        private void CmbSpoofing_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+            => RefreshInstallActionAvailability();
+
+        /// <summary>Opens the read-only ini viewer for this game's installed OptiScaler.ini. Only
+        /// wired to a button that's already hidden unless _game.IsOptiscalerInstalled (see
+        /// UpdateStatus), but re-checks the file directly anyway since install state can go stale
+        /// between paints.</summary>
+        private void BtnViewIni_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var installService = new GameInstallationService();
+                var gameDir = installService.DetermineInstallDirectory(_game);
+                if (string.IsNullOrWhiteSpace(gameDir)) return;
+
+                var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
+                if (!System.IO.File.Exists(iniPath)) return;
+
+                new ViewIniWindow(iniPath, _game.Name).ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ViewIni] Failed to open ini viewer: {ex.Message}");
+            }
         }
 
         /// <summary>Reads the "Dxgi" key from OptiScaler.ini's [Spoofing] section for this game, if
@@ -5975,6 +6004,11 @@ namespace OptiscalerClient.Views
             // Folder Cleanup is always available regardless of install state.
             if (btnFolderCleanup != null) { btnFolderCleanup.IsVisible = true; btnFolderCleanup.IsEnabled = true; }
 
+            // View Ini (next to Profile's "?") only makes sense once there's an OptiScaler.ini on
+            // disk to show.
+            var btnViewIni = this.FindControl<Button>("BtnViewIni");
+            if (btnViewIni != null) btnViewIni.IsVisible = _game.IsOptiscalerInstalled;
+
             if (_game.IsOptiscalerInstalled)
             {
                 if (txtStatus != null) txtStatus.Text = GetResourceString("TxtOptiInstalled", "OptiScaler Installed");
@@ -6550,21 +6584,25 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
-        /// The four config-only-patchable fields, plus the two real components a Frame Generation
-        /// change can newly require (Streamline, DLSS Enabler — both need actual files on disk, not
-        /// just an INI patch). Compared against a session baseline (_installedSoftSelectionBaseline),
+        /// The five config-only-patchable fields (Profile, Upscaling Quality, Output Upscaler, Frame
+        /// Generation, Spoofing), plus the two real components a Frame Generation change can newly
+        /// require (Streamline, DLSS Enabler — both need actual files on disk, not just an INI patch).
+        /// Compared against a session baseline (_installedSoftSelectionBaseline),
         /// NOT the manifest — see CanApplyConfigOnly's remarks for why: AppliedAtUtc on these settings
         /// isn't persisted across app restarts, so on a fresh window open they can get silently reset to
         /// config defaults by Setup*Selector, which would almost never match the manifest's real values.
         /// </summary>
         private sealed record SoftInstallSelection(string? ProfileName, string? UpscalingQualityPreset,
             double? UpscalingQualityRatio, string? OutputUpscalerBackend, string? FrameGenRoute,
-            string? FrameGenOutput, string? FrameGenMfgMode, bool InstallStreamline, bool InstallDlssEnabler);
+            string? FrameGenOutput, string? FrameGenMfgMode, bool InstallStreamline, bool InstallDlssEnabler,
+            string SpoofingValue);
 
         private SoftInstallSelection ReadCurrentSoftInstallSelection(string optiscalerVersion)
         {
             var profileName = (this.FindControl<ComboBox>("CmbProfile")?.SelectedItem as ComboBoxItem)?.Tag is OptiScalerProfile profile
                 ? profile.Name : null;
+
+            var spoofingValue = (this.FindControl<ComboBox>("CmbSpoofing")?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
 
             var qualitySettings = _game.UpscalingQualitySettings;
             var qualityEnabled = qualitySettings != null && qualitySettings.Preset != UpscalingQualityPreset.GameControlled;
@@ -6586,19 +6624,20 @@ namespace OptiscalerClient.Views
                 _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
 
             return new SoftInstallSelection(profileName, upscalingQualityPreset, upscalingQualityRatio,
-                outputUpscalerBackend, frameGenRoute, frameGenOutput, frameGenMfgMode, installStreamline, installDlssEnabler);
+                outputUpscalerBackend, frameGenRoute, frameGenOutput, frameGenMfgMode, installStreamline, installDlssEnabler,
+                spoofingValue);
         }
 
         /// <summary>Session baseline for SoftInstallSelection — see CaptureConfigOnlyBaseline.</summary>
         private SoftInstallSelection? _installedSoftSelectionBaseline;
 
         /// <summary>
-        /// True when Profile/Upscaling Quality/Output Upscaler/Frame Generation actually changed since
-        /// the session baseline, and nothing else did — so a full reinstall would just redo work
-        /// already on disk. Three things must hold: the six HardInstallSelection combos still match
-        /// _installedHardSelectionBaseline; the Streamline/DLSS Enabler requirements (real components,
-        /// not narrow INI patches) still match what the baseline had, so a Frame Generation change that
-        /// newly needs one of them forces a full reinstall instead; and at least one of the four
+        /// True when Profile/Upscaling Quality/Output Upscaler/Frame Generation/Spoofing actually
+        /// changed since the session baseline, and nothing else did — so a full reinstall would just
+        /// redo work already on disk. Three things must hold: the six HardInstallSelection combos still
+        /// match _installedHardSelectionBaseline; the Streamline/DLSS Enabler requirements (real
+        /// components, not narrow INI patches) still match what the baseline had, so a Frame Generation
+        /// change that newly needs one of them forces a full reinstall instead; and at least one of the five
         /// config-only fields actually differs from _installedSoftSelectionBaseline — if nothing changed
         /// at all, there's nothing to offer, and the button must behave like a normal Install/Reinstall.
         /// </summary>
@@ -6623,7 +6662,8 @@ namespace OptiscalerClient.Views
                 || !string.Equals(currentSoft.OutputUpscalerBackend, baseline.OutputUpscalerBackend, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(currentSoft.FrameGenRoute, baseline.FrameGenRoute, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(currentSoft.FrameGenOutput, baseline.FrameGenOutput, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(currentSoft.FrameGenMfgMode, baseline.FrameGenMfgMode, StringComparison.OrdinalIgnoreCase);
+                || !string.Equals(currentSoft.FrameGenMfgMode, baseline.FrameGenMfgMode, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(currentSoft.SpoofingValue, baseline.SpoofingValue, StringComparison.OrdinalIgnoreCase);
 
             if (!anythingChanged) return false;
 
@@ -6662,8 +6702,8 @@ namespace OptiscalerClient.Views
         /// <summary>
         /// Swaps BtnInstall/BtnInstallManual for CmbInstallAction/CmbInstallActionManual (and back)
         /// depending on eligibility. Called after every Profile/Upscaling Quality/Output
-        /// Upscaler/Frame Generation staging change, plus the OptiScaler-version and Extras combos (the
-        /// two "hard" selectors that already had a SelectionChanged hook). The combo handlers recheck
+        /// Upscaler/Frame Generation/Spoofing staging change, plus the OptiScaler-version and Extras
+        /// combos (the two "hard" selectors that already had a SelectionChanged hook). The combo handlers recheck
         /// eligibility themselves before applying anything, so this being stale (e.g. from touching
         /// Fakenvapi/NukemFG/OptiPatcher/Injection Method, which aren't hooked here) can never cause a
         /// wrong partial update — worst case it shows an error and points at Reinstall instead.
@@ -6767,6 +6807,9 @@ namespace OptiscalerClient.Views
                     await Task.Run(() => installService.ApplyUpscalingQualitySettings(_game));
                 if (_game.OutputUpscalerSettings != null)
                     await Task.Run(() => installService.ApplyOutputUpscalerSettings(_game));
+
+                var spoofingValue = (this.FindControl<ComboBox>("CmbSpoofing")?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
+                await Task.Run(() => installService.ApplySpoofingSettings(_game, spoofingValue));
 
                 NeedsScan = true;
                 UpdateStatus();

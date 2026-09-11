@@ -710,7 +710,11 @@
     <x:String x:Key="TxtProfileLbl">Профиль (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Профиль — это сохранённая .ini-конфигурация OptiScaler. Выберите его, чтобы повторно использовать определённый набор настроек при установке OptiScaler для этой игры.</x:String>
     <x:String x:Key="TxtSpoofingLbl">Спуфинг</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">Переопределяет спуфинг GPU DXGI в OptiScaler (выдаёт себя за GPU Nvidia, чтобы игры только с DLSS работали на AMD/Intel). «Авто» соответствует поведению OptiScaler по умолчанию: включено на AMD/Intel, отключено на Nvidia.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Переопределяет спуфинг GPU в OptiScaler сразу для DXGI, Streamline и Vulkan (выдаёт себя за GPU Nvidia, чтобы игры только с DLSS работали на AMD/Intel). «Авто» соответствует поведению OptiScaler по умолчанию: включено на AMD/Intel, отключено на Nvidia.</x:String>
+    <x:String x:Key="TxtViewIniTooltip">Показывает установленный OptiScaler.ini (только просмотр)</x:String>
+    <x:String x:Key="TxtViewIniSearchWatermark">Поиск по ключам или значениям...</x:String>
+    <x:String x:Key="TxtViewIniZoomInTooltip">Увеличить размер текста</x:String>
+    <x:String x:Key="TxtViewIniZoomOutTooltip">Уменьшить размер текста</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Загрузка OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Установка OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Управление версиями</x:String>
@@ -966,7 +970,7 @@
     <x:String x:Key="TxtHelpGMFgStreamlineText">Выберите конкретную версию NVIDIA Streamline SDK для генерации кадров DLSS-G, либо оставьте на последней версии.</x:String>
     <x:String x:Key="TxtHelpGMFgStreamlineTitle">Версия Streamline</x:String>
     <x:String x:Key="TxtHelpGMSpoofingLabel">Спуфинг 🎭</x:String>
-    <x:String x:Key="TxtHelpGMSpoofingText">Переопределяет собственный DXGI-спуфинг GPU OptiScaler для этой игры, который выдаёт видеокарту за Nvidia, чтобы игры, требующие только DLSS, работали на AMD/Intel. «Авто» соответствует стандартному поведению OptiScaler (включено на AMD/Intel, отключено на Nvidia); переопределите для игры, если нужен противоположный результат.</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">Переопределяет собственный спуфинг GPU OptiScaler для этой игры — сразу DXGI, Streamline и Vulkan —, который выдаёт видеокарту за Nvidia, чтобы игры, требующие только DLSS, работали на AMD/Intel. «Авто» соответствует стандартному поведению OptiScaler (включено на AMD/Intel, отключено на Nvidia); переопределите для игры, если нужен противоположный результат.</x:String>
     <x:String x:Key="TxtHelpPageExperimental">Экспериментальное</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">AMD DLSS Neural Rendering по умолчанию 🧪</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">Заранее выбирает режим «Setup NR» для каждой ещё не настроенной игры и позволяет Быстрой установке / Массовой установке устанавливать его автоматически. Отображается только если выбранный выше GPU по умолчанию — AMD и включены экспериментальные функции.</x:String>

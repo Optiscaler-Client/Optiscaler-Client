@@ -517,7 +517,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
 
     <!-- Help - Gestione giochi (Spoofing / DLSS NR / Streamline) -->
     <x:String x:Key="TxtHelpGMSpoofingLabel">Spoofing 🎭</x:String>
-    <x:String x:Key="TxtHelpGMSpoofingText">Sostituisce lo spoofing GPU DXGI proprio di OptiScaler per questo gioco, che finge di essere una GPU Nvidia in modo che i giochi solo DLSS funzionino su AMD/Intel. Auto segue il comportamento predefinito di OptiScaler (attivo su AMD/Intel, disattivo su Nvidia); sostituiscilo per singolo gioco se un titolo richiede il contrario.</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">Sostituisce lo spoofing GPU proprio di OptiScaler per questo gioco — DXGI, Streamline e Vulkan insieme —, che finge di essere una GPU Nvidia in modo che i giochi solo DLSS funzionino su AMD/Intel. Auto segue il comportamento predefinito di OptiScaler (attivo su AMD/Intel, disattivo su Nvidia); sostituiscilo per singolo gioco se un titolo richiede il contrario.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrLabel">DLSS Neural Rendering su AMD (Sperimentale) 🧪</x:String>
     <x:String x:Key="TxtHelpGMDlssNrText">Fa parte anche della Zona sperimentale (vedi la pagina di aiuto 'Sperimentale'). Esegue la mod non ufficiale DLSS Neural Rendering di danielblnc su GPU AMD, opzionalmente combinata con una build wrapper di OptiScaler non ufficiale della community, poiché OptiScaler stesso non supporta ancora il Neural Rendering.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrModesTitle">Modalità</x:String>
@@ -730,7 +730,11 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtProfileLbl">Profilo (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Un profilo è una configurazione .ini di OptiScaler salvata. Selezionane uno per riutilizzare un insieme specifico di impostazioni durante l'installazione di OptiScaler per questo gioco.</x:String>
     <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">Sovrascrive lo spoofing GPU DXGI di OptiScaler (finge di essere una GPU Nvidia così i giochi solo DLSS funzionano su AMD/Intel). Auto corrisponde al comportamento predefinito di OptiScaler: attivo su AMD/Intel, disattivato su Nvidia.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Sovrascrive lo spoofing GPU di OptiScaler per DXGI, Streamline e Vulkan insieme (finge di essere una GPU Nvidia così i giochi solo DLSS funzionano su AMD/Intel). Auto corrisponde al comportamento predefinito di OptiScaler: attivo su AMD/Intel, disattivato su Nvidia.</x:String>
+    <x:String x:Key="TxtViewIniTooltip">Mostra il file OptiScaler.ini installato (solo lettura)</x:String>
+    <x:String x:Key="TxtViewIniSearchWatermark">Cerca chiavi o valori...</x:String>
+    <x:String x:Key="TxtViewIniZoomInTooltip">Aumenta dimensione testo</x:String>
+    <x:String x:Key="TxtViewIniZoomOutTooltip">Riduci dimensione testo</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Download di OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Installazione di OptiPatcher...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestione delle versioni</x:String>

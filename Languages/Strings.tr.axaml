@@ -709,7 +709,11 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtProfileLbl">Profil (.ini)</x:String>
     <x:String x:Key="TxtProfileTooltip">Profil, kaydedilmiş bir OptiScaler .ini yapılandırmasıdır. Bu oyun için OptiScaler kurulurken belirli bir ayar grubunu yeniden kullanmak için birini seçin.</x:String>
     <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">OptiScaler'ın DXGI GPU spoofing'ini (yalnızca DLSS destekleyen oyunların AMD/Intel'de çalışması için Nvidia GPU'ymuş gibi davranma) geçersiz kılar. 'Otomatik', OptiScaler'ın kendi varsayılan davranışıyla eşleşir: AMD/Intel'de etkin, Nvidia'da devre dışı.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">OptiScaler'ın DXGI, Streamline ve Vulkan GPU spoofing'ini birlikte (yalnızca DLSS destekleyen oyunların AMD/Intel'de çalışması için Nvidia GPU'ymuş gibi davranma) geçersiz kılar. 'Otomatik', OptiScaler'ın kendi varsayılan davranışıyla eşleşir: AMD/Intel'de etkin, Nvidia'da devre dışı.</x:String>
+    <x:String x:Key="TxtViewIniTooltip">Kurulu OptiScaler.ini dosyasını görüntüler (salt okunur)</x:String>
+    <x:String x:Key="TxtViewIniSearchWatermark">Anahtar veya değer ara...</x:String>
+    <x:String x:Key="TxtViewIniZoomInTooltip">Metin boyutunu büyüt</x:String>
+    <x:String x:Key="TxtViewIniZoomOutTooltip">Metin boyutunu küçült</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>
@@ -965,7 +969,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpGMFgStreamlineText">DLSS-G Kare Oluşturma için kullanılacak belirli bir NVIDIA Streamline SDK sürümü seçin, ya da En Son sürümde bırakın.</x:String>
     <x:String x:Key="TxtHelpGMFgStreamlineTitle">Streamline sürümü</x:String>
     <x:String x:Key="TxtHelpGMSpoofingLabel">Spoofing 🎭</x:String>
-    <x:String x:Key="TxtHelpGMSpoofingText">Bu oyun için OptiScaler'ın kendi DXGI GPU spoofing özelliğini geçersiz kılar; bu özellik bir Nvidia GPU'suymuş gibi davranarak yalnızca DLSS destekleyen oyunların AMD/Intel'de çalışmasını sağlar. Otomatik, OptiScaler'ın varsayılanıyla eşleşir (AMD/Intel'de etkin, Nvidia'da devre dışı); bir oyun tam tersini gerektiriyorsa oyun başına geçersiz kılın.</x:String>
+    <x:String x:Key="TxtHelpGMSpoofingText">Bu oyun için OptiScaler'ın kendi GPU spoofing özelliğini — DXGI, Streamline ve Vulkan birlikte — geçersiz kılar; bu özellik bir Nvidia GPU'suymuş gibi davranarak yalnızca DLSS destekleyen oyunların AMD/Intel'de çalışmasını sağlar. Otomatik, OptiScaler'ın varsayılanıyla eşleşir (AMD/Intel'de etkin, Nvidia'da devre dışı); bir oyun tam tersini gerektiriyorsa oyun başına geçersiz kılın.</x:String>
     <x:String x:Key="TxtHelpPageExperimental">Deneysel</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultLabel">Varsayılan AMD DLSS Neural Rendering 🧪</x:String>
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">Henüz yapılandırılmamış her oyun için 'Setup NR' modunu önceden seçer ve Hızlı Kurulum / Toplu Kurulum'un bunu otomatik olarak kurmasını sağlar. Sadece yukarıdaki varsayılan GPU AMD olduğunda ve Deneysel Özellikler etkinken gösterilir.</x:String>
