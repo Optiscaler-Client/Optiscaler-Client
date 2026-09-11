@@ -1,0 +1,118 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.ViewIniWindow"
+        Title="OptiScaler.ini"
+        Width="640" Height="680"
+        MinWidth="480" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        CanResize="True"
+        ShowInTaskbar="False">
+
+    <Panel Margin="16" Name="RootPanel" Opacity="0">
+        <Border CornerRadius="12"
+                Background="{StaticResource BrBgBase}"
+                BoxShadow="0 10 30 0 #A0000000">
+
+            <Grid>
+                <Border CornerRadius="12"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="1"
+                        ZIndex="10"
+                        IsHitTestVisible="False"/>
+
+                <Border CornerRadius="12" Background="Transparent" ClipToBounds="True">
+                    <Grid RowDefinitions="Auto, Auto, *">
+
+                        <!-- Title Bar (Draggable) -->
+                        <Border Grid.Row="0"
+                                Name="TitleBar"
+                                Background="{StaticResource BrBgDeep}"
+                                Padding="24,18"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Name="TxtTitle"
+                                               Text="OptiScaler.ini"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource BrTextPrimary}"/>
+                                    <TextBlock Name="TxtSubtitle"
+                                               FontSize="11"
+                                               Foreground="{StaticResource BrTextSecondary}"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Content="✕"
+                                        Classes="BtnSecondary"
+                                        Padding="8,4"
+                                        MinWidth="32"
+                                        FontSize="14"
+                                        Click="BtnClose_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Search + Zoom -->
+                        <Grid Grid.Row="1" Margin="24,16,24,0" ColumnDefinitions="*, Auto">
+                            <TextBox Grid.Column="0"
+                                     Name="TxtSearch"
+                                     Watermark="{DynamicResource TxtViewIniSearchWatermark}"
+                                     Background="{StaticResource BrBgDeep}"
+                                     BorderBrush="{StaticResource BrBorderSubtle}"
+                                     TextChanged="TxtSearch_TextChanged"/>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        Margin="10,0,0,0"
+                                        VerticalAlignment="Center">
+                                <Button Name="BtnZoomOut"
+                                        Content="－"
+                                        Classes="IconGhost"
+                                        Background="{StaticResource BrBgElevated}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Width="26" Height="26"
+                                        Padding="0"
+                                        FontSize="13"
+                                        Cursor="Hand"
+                                        ToolTip.ShowDelay="100"
+                                        ToolTip.Tip="{DynamicResource TxtViewIniZoomOutTooltip}"
+                                        Click="BtnZoomOut_Click"/>
+                                <TextBlock Name="TxtZoomLevel"
+                                           Text="100%"
+                                           FontSize="11"
+                                           MinWidth="34"
+                                           TextAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource BrTextSecondary}"/>
+                                <Button Name="BtnZoomIn"
+                                        Content="＋"
+                                        Classes="IconGhost"
+                                        Background="{StaticResource BrBgElevated}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Width="26" Height="26"
+                                        Padding="0"
+                                        FontSize="13"
+                                        Cursor="Hand"
+                                        ToolTip.ShowDelay="100"
+                                        ToolTip.Tip="{DynamicResource TxtViewIniZoomInTooltip}"
+                                        Click="BtnZoomIn_Click"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Sections (built in code from the ini's actual contents) -->
+                        <ScrollViewer Grid.Row="2"
+                                      Margin="24,16,24,20"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Name="PanelSections" Spacing="14"/>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

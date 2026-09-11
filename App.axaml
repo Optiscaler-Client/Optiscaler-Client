@@ -423,6 +423,14 @@
             <Setter Property="BorderThickness" Value="2"/>
         </Style>
 
+        <!-- IconGhost: tiny circular icon buttons (eye/zoom toggles) — the 2px accent ring above
+             reads as a rendering glitch on a 16-26px circle instead of a visible-focus outline, so
+             these opt out of it. Everything else keeps the ring (gamepad navigation relies on it to
+             show the focused control). -->
+        <Style Selector="Button.IconGhost:focus /template/ ContentPresenter">
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
         <!-- ListBoxItem: background lift + accent border ring -->
         <Style Selector="ListBoxItem:focus /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
