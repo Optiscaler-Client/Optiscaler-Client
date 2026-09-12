@@ -44,6 +44,15 @@ public class GameAnalyzerService
     };
     private static readonly string[] _xessNames = new[] { "libxess.dll" };
 
+    // OptiScaler's own proxy DLL is one of these, chosen at install time (see CmbInjectionMethod
+    // in ManageGameWindow.axaml.cs). Used as a last-resort version source (Priority 3.5) when no
+    // manifest/log is available — e.g. installed from a different OS on a shared game disk, where
+    // the AppData-based backup store manifest (Priority 0) doesn't travel with the game folder.
+    private static readonly string[] _optiscalerInjectionNames = new[]
+    {
+        "dxgi.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll", "version.dll", "wininet.dll", "winhttp.dll"
+    };
+
     // "Setup NR" experimental feature (danielblnc's standalone AMD DLSS Neural Rendering mod) —
     // no PE version resource to read, so unlike the arrays above this is a plain presence marker,
     // not fed through FindBestVersionFromCollected. See Game.IsDlssNrOnAmdInstalled.
@@ -65,6 +74,7 @@ public class GameAnalyzerService
         foreach (var n in _dlssFrameGenNames) _allTargetFileNames.Add(n);
         foreach (var n in _fsrNames) _allTargetFileNames.Add(n);
         foreach (var n in _xessNames) _allTargetFileNames.Add(n);
+        foreach (var n in _optiscalerInjectionNames) _allTargetFileNames.Add(n);
         _allTargetFileNames.Add(_dlssNrOnAmdMarkerName);
     }
 
@@ -314,12 +324,41 @@ public class GameAnalyzerService
                     }
                 }
 
-                // ── Priority 3: OptiScaler.ini presence (no version — last resort) ──
+                // ── Priority 3: OptiScaler.ini presence (last resort for install status) ──
                 if (!blockHeuristicFallbackDetection && !game.IsOptiscalerInstalled)
                 {
                     var iniFiles = collectedFiles.TryGetValue("OptiScaler.ini", out var inf) ? inf.ToArray() : Array.Empty<string>();
                     if (iniFiles.Length > 0)
                         game.IsOptiscalerInstalled = true;
+                }
+
+                // ── Priority 3.5: read version from OptiScaler's proxy DLL (co-located with the
+                // ini) when no manifest/log yielded one — e.g. installed from another OS on a
+                // shared game disk, so the AppData backup-store manifest isn't reachable here. ──
+                if (game.IsOptiscalerInstalled && string.IsNullOrEmpty(game.OptiscalerVersion))
+                {
+                    var iniFiles = collectedFiles.TryGetValue("OptiScaler.ini", out var inf2) ? inf2.ToArray() : Array.Empty<string>();
+                    if (iniFiles.Length > 0)
+                    {
+                        var iniDir = Path.GetDirectoryName(iniFiles[0]);
+                        if (!string.IsNullOrEmpty(iniDir))
+                        {
+                            foreach (var dllName in _optiscalerInjectionNames)
+                            {
+                                if (!collectedFiles.TryGetValue(dllName, out var dllFiles)) continue;
+                                var dllPath = dllFiles.FirstOrDefault(f => string.Equals(Path.GetDirectoryName(f), iniDir, StringComparison.OrdinalIgnoreCase));
+                                if (dllPath == null) continue;
+
+                                var verStr = ExtractOptiscalerVersionFromBinary(dllPath);
+                                if (!string.IsNullOrEmpty(verStr))
+                                {
+                                    game.OptiscalerVersion = verStr;
+                                    DebugWindow.Log($"[Analyzer] Priority 3.5 (proxy DLL '{dllName}') detected OptiScaler {verStr} for '{game.Name}'");
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -525,7 +564,56 @@ public class GameAnalyzerService
         }
     }
 
-    private static string GetFileVersion(string filePath)
+    /// <summary>
+    /// OptiScaler's official builds don't populate the PE VERSIONINFO resource, so the version
+    /// isn't readable via <see cref="GetFileVersion"/> — but the same literal string the app logs
+    /// on startup (e.g. "OptiScaler v0.9.4-final (7534ad0)") is embedded as plain ASCII in the DLL,
+    /// so search for it directly instead.
+    /// </summary>
+    private static string? ExtractOptiscalerVersionFromBinary(string filePath)
+    {
+        try
+        {
+            var bytes = File.ReadAllBytes(filePath);
+            var marker = System.Text.Encoding.ASCII.GetBytes("OptiScaler v");
+
+            for (int i = 0; i <= bytes.Length - marker.Length; i++)
+            {
+                var isMatch = true;
+                for (int j = 0; j < marker.Length; j++)
+                {
+                    if (bytes[i + j] != marker[j]) { isMatch = false; break; }
+                }
+                if (!isMatch) continue;
+
+                var start = i + marker.Length;
+                var end = start;
+                while (end < bytes.Length && bytes[end] > 0x20 && bytes[end] < 0x7F)
+                    end++;
+
+                if (end > start)
+                {
+                    var ver = System.Text.Encoding.ASCII.GetString(bytes, start, end - start);
+                    // Strip pre-release/build suffixes like "-final" or "-rc1" — only the numeric version is wanted.
+                    var dashIdx = ver.IndexOf('-');
+                    if (dashIdx != -1) ver = ver.Substring(0, dashIdx);
+                    if (!string.IsNullOrEmpty(ver))
+                        return ver;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log($"[Analyzer] Error reading OptiScaler version from binary '{filePath}': {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>Reads a Windows PE file's version — internal (not just private) so
+    /// DlssNrOnAmdService.GetCachedNvngxVersion can reuse it for nvngx_dlssnr.dll on Linux, where
+    /// FileVersionInfo alone can't read PE version resources (see ReadPeFileVersion below).</summary>
+    internal static string GetFileVersion(string filePath)
     {
         try
         {
@@ -616,31 +704,56 @@ public class GameAnalyzerService
 
             if (rsrcFileOffset == 0) return "0.0.0.0";
 
-            // Read resource section (cap at 4 MB — version resources are tiny)
-            fs.Seek(rsrcFileOffset, SeekOrigin.Begin);
-            var rsrcData = reader.ReadBytes((int)Math.Min(rsrcSize, 4 * 1024 * 1024));
-
-            // Search for VS_FIXEDFILEINFO magic: FEEF04BD
-            for (int i = 0; i <= rsrcData.Length - 20; i++)
+            // Scan the resource section for VS_FIXEDFILEINFO in bounded windows rather than reading it
+            // all into memory at once: version info is normally within the first few KB, but at least
+            // one real-world file (nvngx_dlssnr.dll, whose .rsrc section embeds ~140 MB of neural
+            // network weights as a resource) has it sitting right before the very end of a section far
+            // larger than any reasonable single-buffer cap — confirmed by hand against that exact file.
+            // 4 KB of overlap between windows means a signature straddling a window boundary is never
+            // missed. Capped at 256 MB total scanned so a corrupt/adversarial rsrcSize can't force an
+            // unbounded read.
+            const int windowSize = 4 * 1024 * 1024;
+            const int overlap = 4 * 1024;
+            var totalToScan = (int)Math.Min(rsrcSize, 256L * 1024 * 1024);
+            for (var scanned = 0; scanned < totalToScan; scanned += windowSize - overlap)
             {
-                if (rsrcData[i] != 0xBD || rsrcData[i + 1] != 0x04 ||
-                    rsrcData[i + 2] != 0xEF || rsrcData[i + 3] != 0xFE) continue;
-
-                // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
-                var structVer = BitConverter.ToUInt32(rsrcData, i + 4);
-                if (structVer != 0x00010000) continue;
-
-                var ms = BitConverter.ToUInt32(rsrcData, i + 8);  // dwFileVersionMS
-                var ls = BitConverter.ToUInt32(rsrcData, i + 12); // dwFileVersionLS
-
-                if (ms == 0 && ls == 0) continue;
-
-                return $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
+                var toRead = Math.Min(windowSize, totalToScan - scanned);
+                fs.Seek(rsrcFileOffset + scanned, SeekOrigin.Begin);
+                var rsrcData = reader.ReadBytes(toRead);
+                if (TryFindFixedFileInfo(rsrcData, out var version)) return version!;
+                if (toRead < windowSize) break; // reached the end of the section
             }
+
+            return "0.0.0.0";
         }
         catch { }
 
         return "0.0.0.0";
+    }
+
+    /// <summary>Searches one buffer for a VS_FIXEDFILEINFO struct (magic FEEF04BD) and, if found,
+    /// returns its dwFileVersionMS/LS as a dotted version string via <paramref name="version"/>.</summary>
+    private static bool TryFindFixedFileInfo(byte[] rsrcData, out string? version)
+    {
+        version = null;
+        for (int i = 0; i <= rsrcData.Length - 20; i++)
+        {
+            if (rsrcData[i] != 0xBD || rsrcData[i + 1] != 0x04 ||
+                rsrcData[i + 2] != 0xEF || rsrcData[i + 3] != 0xFE) continue;
+
+            // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
+            var structVer = BitConverter.ToUInt32(rsrcData, i + 4);
+            if (structVer != 0x00010000) continue;
+
+            var ms = BitConverter.ToUInt32(rsrcData, i + 8);  // dwFileVersionMS
+            var ls = BitConverter.ToUInt32(rsrcData, i + 12); // dwFileVersionLS
+
+            if (ms == 0 && ls == 0) continue;
+
+            version = $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
+            return true;
+        }
+        return false;
     }
 
     private sealed class AnalysisCacheEntry
