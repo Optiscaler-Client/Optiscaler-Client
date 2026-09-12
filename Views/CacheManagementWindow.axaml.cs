@@ -24,6 +24,7 @@ namespace OptiscalerClient.Views
         private static readonly FontFamily IconFont = new("avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular");
         private readonly ComponentManagementService _componentService;
         private readonly DlssNrOnAmdService _dlssNrService = new();
+        private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
         private bool _isAnimatingClose;
         private string _currentSection = "opti";
         private string _currentOptiTab = "opti-stable";
@@ -249,8 +250,11 @@ namespace OptiscalerClient.Views
                     Application.Current?.FindResource("TxtRenodxLbl") as string ?? "RenoDX", "\uE712"));
             }
 
-            // \u2500\u2500 "Setup NR" / danielblnc's AMD mod downloads (experimental, opt-in, Windows-only) \u2500\u2500
-            if (_componentService.Config.ShowExperimentalFeatures && OperatingSystem.IsWindows())
+            // \u2500\u2500 "Setup NR" / danielblnc's AMD mod downloads (experimental, opt-in) \u2500\u2500
+            // No longer Windows-only \u2014 ManageGameWindow now offers a manual/Wine install path on
+            // Linux too (see UpdateStatus's Auto Install hide + DlssNrOnAmdWizardWindow's Linux
+            // instructions), so these cached downloads need to be manageable there as well.
+            if (_componentService.Config.ShowExperimentalFeatures)
             {
                 sidebar.Children.Add(CreateTopButton("dlssnronamd",
                     Application.Current?.FindResource("TxtSetupNr") as string ?? "Setup NR", "\uE8B0"));
@@ -260,6 +264,16 @@ namespace OptiscalerClient.Views
                 // page so it can be added/updated/removed without going through Setup NR again.
                 sidebar.Children.Add(CreateTopButton("nvngxdlssnr",
                     Application.Current?.FindResource("TxtSetupNrNvngxPageLbl") as string ?? "nvngx_dlssnr.dll", "\uF4D3"));
+
+                // guentra/DLSS-NR-on-AMD-Linux downloads \u2014 Linux-only (see DlssNrLinuxWrapperService):
+                // on Linux, Setup NR runs this unofficial fork instead of danielblnc's own installer
+                // directly, so its cached tar.gz versions get their own page here, same shape as
+                // "dlssnronamd" above.
+                if (!OperatingSystem.IsWindows())
+                {
+                    sidebar.Children.Add(CreateTopButton("dlssnrlinuxwrapper",
+                        Application.Current?.FindResource("TxtSetupNrLinuxWrapperCacheSection") as string ?? "Linux Wrapper (guentra)", "\uF4D3"));
+                }
             }
 
             // Section rendering/selection is the caller's responsibility (each constructor calls
@@ -358,6 +372,7 @@ namespace OptiscalerClient.Views
                 case "renodx":      RenderRenodx(content); break;
                 case "dlssnronamd": RenderDlssNrOnAmd(content); break;
                 case "nvngxdlssnr": RenderNvngxDlssNr(content); break;
+                case "dlssnrlinuxwrapper": RenderDlssNrLinuxWrapper(content); break;
             }
         }
 
@@ -1020,6 +1035,28 @@ namespace OptiscalerClient.Views
         }
 
         /// <summary>
+        /// guentra/DLSS-NR-on-AMD-Linux downloads — Linux-only, part of "Setup NR". Same shape as
+        /// RenderDlssNrOnAmd above (versions land here automatically as they're selected in the Setup
+        /// NR version combo — see ManageGameWindow.ApplyDlssNrDanielVersionSelection's Linux branch —
+        /// this page is list + delete only, no manual add).
+        /// </summary>
+        private void RenderDlssNrLinuxWrapper(StackPanel content)
+        {
+            var versions = _dlssNrLinuxWrapperService.GetDownloadedVersions();
+            var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrLinuxWrapperService.GetCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
+
+            if (versions.Count == 0)
+            {
+                content.Children.Add(MakeEmptyLabel("No guentra/DLSS-NR-on-AMD-Linux versions cached."));
+                return;
+            }
+
+            foreach (var ver in versions)
+                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrLinuxWrapper: true, sizeBytes: sizes[ver]));
+        }
+
+        /// <summary>
         /// Unlike every other section here, this isn't a list of versions of one component — it's a
         /// list of RenoDX addons, one per game (see ComponentManagementService.GetRenodxCachePath).
         /// Search box + Add button up top, filtered list below. The search box is built once and
@@ -1375,7 +1412,7 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, long? sizeBytes = null)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, bool isDlssNrLinuxWrapper = false, long? sizeBytes = null)
         {
             var grid = new Grid
             {
@@ -1424,7 +1461,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd, IsDlssNrLinuxWrapper = isDlssNrLinuxWrapper }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -1505,6 +1542,7 @@ namespace OptiscalerClient.Views
             public bool IsDlssEnablerMirror { get; set; }
             public bool IsRenodx { get; set; }
             public bool IsDlssNrOnAmd { get; set; }
+            public bool IsDlssNrLinuxWrapper { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -1552,6 +1590,11 @@ namespace OptiscalerClient.Views
                     title = "Delete danielblnc/DLSS-NR-on-AMD Version";
                     msg = $"Are you sure you want to delete danielblnc's mod '{info.Version}' from cache?";
                 }
+                else if (info.IsDlssNrLinuxWrapper)
+                {
+                    title = "Delete guentra/DLSS-NR-on-AMD-Linux Version";
+                    msg = $"Are you sure you want to delete the Linux fork '{info.Version}' from cache?";
+                }
                 else
                 {
                     title = "Delete OptiScaler Version";
@@ -1583,6 +1626,8 @@ namespace OptiscalerClient.Views
                             _componentService.DeleteRenodxCache(info.Version);
                         else if (info.IsDlssNrOnAmd)
                             _dlssNrService.DeleteCache(info.Version);
+                        else if (info.IsDlssNrLinuxWrapper)
+                            _dlssNrLinuxWrapperService.DeleteCache(info.Version);
                         else
                             _componentService.DeleteOptiScalerCache(info.Version);
 

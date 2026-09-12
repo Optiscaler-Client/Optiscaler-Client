@@ -121,6 +121,41 @@
                                TextAlignment="Center"
                                Cursor="Hand"
                                PointerPressed="TxtLink_PointerPressed"/>
+
+                    <!-- Optional copyable snippet (e.g. a WINEDLLOVERRIDES line) — a plain TxtMessage
+                         TextBlock can't be selected/copied by the user, so callers that need to hand
+                         over an exact string to paste elsewhere pass copyableText instead of (or in
+                         addition to) burying it in the message. Hidden unless provided, so every
+                         existing caller is unaffected. -->
+                    <Border Name="PnlCopyable"
+                            IsVisible="False"
+                            Background="{StaticResource BrBgElevated}"
+                            BorderBrush="{StaticResource BrBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10,8"
+                            MaxWidth="380"
+                            HorizontalAlignment="Stretch">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <SelectableTextBlock Name="TxtCopyable"
+                                                  Grid.Column="0"
+                                                  FontFamily="Consolas,Monospace"
+                                                  FontSize="12"
+                                                  TextWrapping="Wrap"
+                                                  Foreground="{StaticResource BrTextPrimary}"
+                                                  VerticalAlignment="Center"/>
+                            <Button Name="BtnCopy"
+                                    Grid.Column="1"
+                                    Classes="BtnSecondary"
+                                    Padding="8,4"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip.Tip="{DynamicResource TxtCopy}"
+                                    Click="BtnCopy_Click">
+                                <TextBlock Name="TxtCopyIcon" Text="⧉" FontSize="14"/>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- Action Buttons -->

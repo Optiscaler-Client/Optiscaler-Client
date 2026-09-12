@@ -104,6 +104,17 @@ public class Game
     public string? PendingDlssNrOnAmdMode { get; set; }
     public string? PendingDlssNrOnAmdVersion { get; set; }
 
+    // Linux only (see DlssNrLinuxWrapperService) — guentra/DLSS-NR-on-AMD-Linux's installer needs a
+    // Wine/Proton runner folder, which it can only auto-resolve when the machine has exactly one
+    // installed; otherwise the user is asked once and the choice is cached here per game so later
+    // installs/updates never ask again.
+    public string? DlssNrLinuxWrapperRunnerPath { get; set; }
+
+    // The Steam launch options / Lutris command prefix guentra's installer printed on the last
+    // successful run, so it can be shown again later (e.g. a "view command" button) without
+    // re-running the installer just to see it.
+    public string? DlssNrLinuxWrapperLaunchCommand { get; set; }
+
     // Drives the game-card badge (MainWindow.axaml) — "mod only" is the case worth calling out there,
     // since it means OptiScaler itself isn't installed even though DLSS upscaling is active via the
     // mod. "daniel-and-opti" already shows as a normal OptiScaler install everywhere else.

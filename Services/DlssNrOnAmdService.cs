@@ -167,11 +167,13 @@ namespace OptiscalerClient.Services
             if (!IsNvngxDlssNrCached()) return null;
             try
             {
-                // FileVersion sometimes comes back comma-separated (e.g. "310,8,0,0") depending on how
-                // the file's version resource was authored — normalize to the dotted form everyone
-                // actually expects, same as GameAnalyzerService.GetFileVersion does elsewhere.
-                var version = System.Diagnostics.FileVersionInfo.GetVersionInfo(CachedNvngxDlssNrPath).FileVersion?.Replace(',', '.');
-                return string.IsNullOrWhiteSpace(version) ? null : version;
+                // GameAnalyzerService.GetFileVersion already handles the normalization (comma vs dot,
+                // ProductVersion vs FileVersion preference) and, on Linux, falls back to manually
+                // parsing the PE resource section — .NET's FileVersionInfo alone can't read Windows PE
+                // version resources there (same issue this project hit for OptiScaler's own version
+                // badge), so relying on it directly here just showed "?" instead of a real version.
+                var version = GameAnalyzerService.GetFileVersion(CachedNvngxDlssNrPath);
+                return string.IsNullOrWhiteSpace(version) || version == "0.0.0.0" ? null : version;
             }
             catch (Exception ex)
             {
@@ -197,6 +199,14 @@ namespace OptiscalerClient.Services
         // of caching from it is purely to let a *later* Mode B install on another game skip its run.
 
         public bool IsModeBOutputCached() => File.Exists(Path.Combine(_modeBOutputCacheDir, WeightsMarkerFileName));
+
+        /// <summary>Path to the cached, already-converted dlssnr_on_amd_weights.bin (only meaningful
+        /// when IsModeBOutputCached() is true) — lets a caller hand pre-converted weights straight to
+        /// guentra's Linux fork (its --weights flag) instead of the raw nvngx_dlssnr.dll (--nvidia-dll),
+        /// which re-derives them via a conversion step that also hash-checks the DLL against one known
+        /// "standard" release and rejects any other legitimate distribution of the same version (see
+        /// DlssNrLinuxWrapperService.RunAutoInstallAsync's own notes on this).</summary>
+        public string CachedModeBWeightsPath => Path.Combine(_modeBOutputCacheDir, WeightsMarkerFileName);
 
         /// <summary>Total size of the cached Mode B output, for display in Manage Local Versions.</summary>
         public long GetModeBOutputCacheSize()
@@ -1013,6 +1023,19 @@ namespace OptiscalerClient.Services
 
             // Not manifest-tracked (see RuntimeArtifactFileNames/RuntimePassFileGlob) — only ever this
             // mod's, so always safe to sweep directly regardless of what the manifest recorded.
+            SweepRuntimeArtifacts(gameDir);
+
+            _backupStore.DeleteBackup(storeKey);
+        }
+
+        /// <summary>Deletes the mod's own runtime-only log/pass-shader artifacts from a game folder.
+        /// Never tracked by any install manifest — this app's own for danielblnc's Windows installer,
+        /// or guentra's Linux fork's own transactional journal (see DlssNrLinuxWrapperService.
+        /// RunUninstallAsync) — since they're only ever created later, once the game actually runs
+        /// with the mod loaded, well after either install finishes. Safe to call after any uninstall
+        /// path, regardless of which one produced them; a no-op if none exist.</summary>
+        public static void SweepRuntimeArtifacts(string gameDir)
+        {
             foreach (var name in RuntimeArtifactFileNames)
             {
                 try
@@ -1031,8 +1054,6 @@ namespace OptiscalerClient.Services
                 }
             }
             catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not sweep '{RuntimePassFileGlob}': {ex.Message}"); }
-
-            _backupStore.DeleteBackup(storeKey);
         }
 
         // ── Quick Install / Bulk Install headless orchestration ─────────────────────────

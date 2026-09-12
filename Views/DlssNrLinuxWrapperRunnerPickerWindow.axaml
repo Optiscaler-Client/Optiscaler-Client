@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.DlssNrLinuxWrapperRunnerPickerWindow"
+        Width="560" SizeToContent="Height" MinHeight="200"
+        WindowStartupLocation="CenterOwner" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent" CanResize="False" ShowInTaskbar="False">
+    <Panel Margin="20">
+        <Border CornerRadius="12" Background="{StaticResource BrBgBase}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1" BoxShadow="0 8 32 0 #80000000">
+            <Grid RowDefinitions="Auto,*">
+                <Border Name="TitleBar" Grid.Row="0" Background="{StaticResource BrBgDeep}" Padding="20,15" CornerRadius="12,12,0,0" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{DynamicResource TxtSetupNrLinuxWrapperRunnerPickerTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}"/>
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Classes="BtnSecondary"
+                                Padding="8,4"
+                                MinWidth="32"
+                                FontSize="14"
+                                Click="BtnClose_Click"
+                                VerticalAlignment="Top"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTip.Tip="{DynamicResource TxtClose}"/>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="22,18" Spacing="12">
+                    <TextBlock Text="{DynamicResource TxtSetupNrLinuxWrapperRunnerPickerHint}" TextWrapping="Wrap" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeBody}"/>
+
+                    <ListBox Name="LstRunners" MaxHeight="220" Background="{StaticResource BrBgDeep}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1" CornerRadius="6"/>
+
+                    <TextBlock Name="TxtError" TextWrapping="Wrap" Foreground="{StaticResource BrError}" FontSize="{StaticResource FontSizeCaption}" IsVisible="False"/>
+
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <Button Grid.Column="1" Name="BtnBrowse" Content="{DynamicResource TxtSetupNrLinuxWrapperRunnerBrowseBtn}" Classes="BtnSecondary" Margin="0,0,8,0" Click="BtnBrowse_Click"/>
+                        <Button Grid.Column="2" Name="BtnUseSelected" Content="{DynamicResource TxtSetupNrLinuxWrapperRunnerUseBtn}" Classes="BtnPrimary" Click="BtnUseSelected_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

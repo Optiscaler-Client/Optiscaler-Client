@@ -82,10 +82,12 @@ public partial class DlssNrOnAmdWizardWindow : Window
         // nvngx_dlssnr.dll when it isn't cached yet, which would let danielblnc's installer run
         // without it (no real weights generated). ManageGameWindow's Auto Install avoids ever hitting
         // this by getting it via the nvngxPickerOnly mode above before staging at all.
-        var nvngxCached = _dlssNrService.IsNvngxDlssNrCached();
-        this.FindControl<StackPanel>("PanelNvngxPicker")!.IsVisible = !nvngxCached;
-        this.FindControl<StackPanel>("PanelWizard")!.IsVisible = nvngxCached;
+        //
+        ShowNextSetupStep();
 
+        // Windows only now — on Linux, ExecuteInstallAsync never opens this window outside
+        // nvngxPickerOnly mode at all (see ExecuteLinuxWrapperInstallAsync), since danielblnc's own
+        // installer can't pass its HIP-based GPU check under Wine regardless of how it's run.
         this.FindControl<TextBlock>("TxtWizardInstructions")!.Text = isModeB
             ? GetResourceString("TxtSetupNrInstructionsModeB",
                 "danielblnc's mod was downloaded successfully, but it needs a manual install:\n" +
@@ -119,6 +121,26 @@ public partial class DlssNrOnAmdWizardWindow : Window
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+    /// <summary>Shows the nvngx picker (if not cached yet) or the wizard panel otherwise. Called at
+    /// construction and again after the picker succeeds, instead of separate ad-hoc visibility
+    /// toggles per step.</summary>
+    private void ShowNextSetupStep()
+    {
+        var panelNvngx = this.FindControl<StackPanel>("PanelNvngxPicker")!;
+        var panelWizard = this.FindControl<StackPanel>("PanelWizard")!;
+
+        if (!_dlssNrService.IsNvngxDlssNrCached())
+        {
+            panelNvngx.IsVisible = true;
+            panelWizard.IsVisible = false;
+        }
+        else
+        {
+            panelNvngx.IsVisible = false;
+            panelWizard.IsVisible = true;
+        }
+    }
 
     /// <summary>Same folder-resolution OptiScaler's own install uses (GameInstallationService.
     /// DetermineInstallDirectory — handles Unreal's Binaries/Win64 and Phoenix layouts, not just
@@ -183,8 +205,7 @@ public partial class DlssNrOnAmdWizardWindow : Window
             var gameDir = ResolveGameDir();
             if (gameDir != null) _dlssNrService.Stage(_danielVersion, gameDir);
 
-            this.FindControl<StackPanel>("PanelNvngxPicker")!.IsVisible = false;
-            this.FindControl<StackPanel>("PanelWizard")!.IsVisible = true;
+            ShowNextSetupStep();
             ShowError(null);
         }
         catch (Exception ex)

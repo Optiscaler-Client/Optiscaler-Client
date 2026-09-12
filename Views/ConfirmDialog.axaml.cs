@@ -17,6 +17,7 @@ namespace OptiscalerClient.Views
     {
         private GamepadDialogNavigationHelper? _gamepadHelper;
         private string? _linkUrl;
+        private string? _copyableText;
 
         public ConfirmDialog()
         {
@@ -37,7 +38,7 @@ namespace OptiscalerClient.Views
         /// Confirm (e.g. "Continue" for "I already handled this myself") — hidden when left null.
         /// Closes with a false result like Cancel; check <see cref="ThirdButtonClicked"/> to tell them
         /// apart.</param>
-        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null, string? thirdButtonText = null, string? badgeText = null)
+        public ConfirmDialog(Window? owner, string title, string message, bool isAlert = false, string? iconOverride = null, string? confirmText = null, string? linkUrl = null, string? linkText = null, string? thirdButtonText = null, string? badgeText = null, string? copyableText = null)
         {
             InitializeComponent();
             DialogDimHelper.Register(this);
@@ -84,6 +85,15 @@ namespace OptiscalerClient.Views
             {
                 txtBadge.Text = badgeText;
                 badgeInfo.IsVisible = true;
+            }
+
+            _copyableText = copyableText;
+            var pnlCopyable = this.FindControl<Border>("PnlCopyable");
+            var txtCopyable = this.FindControl<SelectableTextBlock>("TxtCopyable");
+            if (pnlCopyable != null && txtCopyable != null && !string.IsNullOrEmpty(copyableText))
+            {
+                txtCopyable.Text = copyableText;
+                pnlCopyable.IsVisible = true;
             }
 
             // Manual Dragging implementation for BorderOnly windows
@@ -201,6 +211,29 @@ namespace OptiscalerClient.Views
         }
 
         private bool _isAnimatingClose = false;
+
+        private async void BtnCopy_Click(object? sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_copyableText)) return;
+            try
+            {
+                var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+                if (clipboard == null) return;
+                await clipboard.SetTextAsync(_copyableText);
+
+                // Brief "copied" feedback instead of a toast — this dialog is modal, so a checkmark
+                // on the button itself is seen immediately without competing for attention.
+                var icon = this.FindControl<TextBlock>("TxtCopyIcon");
+                if (icon != null)
+                {
+                    var original = icon.Text;
+                    icon.Text = "✓";
+                    await Task.Delay(1200);
+                    if (icon.Text == "✓") icon.Text = original;
+                }
+            }
+            catch (Exception ex) { DebugWindow.Log($"[ConfirmDialog] Clipboard copy failed: {ex.Message}"); }
+        }
 
         private void TxtLink_PointerPressed(object? sender, PointerPressedEventArgs e)
         {

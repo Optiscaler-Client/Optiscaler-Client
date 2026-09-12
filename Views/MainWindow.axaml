@@ -284,35 +284,45 @@
                          Background="{StaticResource BrBgDeep}"
                          BorderBrush="{StaticResource BrBorderSubtle}"
                          BorderThickness="0,0,0,1"
-                         Padding="24,16">
-                     <Grid>
+                         Padding="24,16,24,8">
+                     <Grid Name="GamesHeaderGrid">
                          <Grid.ColumnDefinitions>
                              <ColumnDefinition Width="Auto"/>
                              <ColumnDefinition Width="*"/>
                              <ColumnDefinition Width="Auto"/>
                          </Grid.ColumnDefinitions>
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="Auto"/>
+                         </Grid.RowDefinitions>
 
-                         <!-- Left: Title + action buttons -->
-                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                             <!-- Action buttons -->
+                         <!-- Left: Title + action buttons. Row/Column/Margin are reassigned live by
+                              UpdateGamesHeaderLayout as the header width crosses tiers (wide: inline
+                              with search; medium: own row, left half; narrow: own row, full width).
+                              WrapPanel (not StackPanel) is still a safety net so it wraps onto a
+                              second line if even its tier's allotted width isn't enough. -->
+                         <WrapPanel Name="PnlHeaderActions" Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Top">
+                             <!-- Action buttons. Bottom margin (in addition to the existing right
+                                  margin) gives wrapped lines breathing room instead of touching. -->
                              <Button Name="BtnScan"
                                      Content="{DynamicResource TxtBtnScan}"
                                      Classes="BtnBase"
                                      Padding="14,7"
-                                     Margin="0,0,10,0"
+                                     Margin="0,0,10,8"
                                      Click="BtnScan_Click"/>
 
                              <Button Name="BtnAddManual"
                                      Content="{DynamicResource TxtBtnAddManual}"
                                      Classes="BtnBase"
                                      Padding="14,7"
-                                     Margin="0,0,10,0"
+                                     Margin="0,0,10,8"
                                      Click="BtnAddManual_Click"/>
 
                              <Button Name="BtnBulkInstall"
                                      Classes="BtnBase"
                                      Padding="14,7"
-                                     Margin="0,0,10,0"
+                                     Margin="0,0,10,8"
                                      Click="BtnBulkInstall_Click">
                                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <Path Data="M13 0 L5 9 H11 L9 16 L17 7 H11 Z"
@@ -329,7 +339,8 @@
 
                              <Button Name="BtnFilters"
                                      Classes="BtnBase"
-                                     Padding="14,7">
+                                     Padding="14,7"
+                                     Margin="0,0,0,8">
                                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                      <Path Data="M0 0 L16 0 L10 7 L10 14 L6 14 L6 7 Z"
                                            Fill="{StaticResource BrTextPrimary}"
@@ -356,10 +367,10 @@
                                      </Flyout>
                                  </Button.Flyout>
                              </Button>
-                         </StackPanel>
+                         </WrapPanel>
 
-                         <!-- Middle: Search Bar -->
-                         <Grid Grid.Column="1" Margin="32,0" MaxWidth="400" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                         <!-- Middle: Search Bar. Row/Column/Margin reassigned live (see PnlHeaderActions comment above). -->
+                         <Grid Name="GamesSearchGrid" Grid.Row="0" Grid.Column="1" Margin="32,0" MinWidth="140" MaxWidth="400" HorizontalAlignment="Stretch" VerticalAlignment="Top">
                              <TextBox Name="TxtSearch"
                                       Padding="32,7,12,7"
                                       Background="{StaticResource BrBgSurface}"
@@ -394,15 +405,16 @@
                                         Margin="34,0,0,0"/>
                          </Grid>
 
-                         <!-- Right: GPU chip + Gamepad + View Modes -->
-                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                             
+                         <!-- Right: GPU chip + Gamepad + View Modes. Row/Column/Margin reassigned
+                              live (see PnlHeaderActions comment above). -->
+                         <WrapPanel Name="PnlHeaderBadges" Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right">
+
                              <Border Background="{StaticResource BrBgSurface}"
                                      BorderBrush="{StaticResource BrBorderSubtle}"
                                      BorderThickness="1"
                                      CornerRadius="{StaticResource RadiusMedium}"
                                      Padding="12,5"
-                                     Margin="0,0,10,0">
+                                     Margin="0,0,10,8">
                                  <Path Name="TxtGamepadIcon"
                                        Data="M21.58,9.39C21.32,7.63 19.86,6.34 18.06,6.34H5.94C4.14,6.34 2.68,7.63 2.42,9.39L1.08,18.08C0.84,19.64 2.05,21 3.63,21C4.42,21 5.16,20.65 5.66,20.04L8.35,16.85H15.65L18.34,20.04C18.84,20.65 19.58,21 20.37,21C21.95,21 23.16,19.64 22.92,18.08L21.58,9.39M8.5,13.5H6.5V15.5H5V13.5H3V12H5V10H6.5V12H8.5V13.5M16,14C15.17,14 14.5,13.33 14.5,12.5C14.5,11.67 15.17,11 16,11C16.83,11 17.5,11.67 17.5,12.5C17.5,13.33 16.83,14 16,14M19,11C18.17,11 17.5,10.33 17.5,9.5C17.5,8.67 18.17,8 19,8C19.83,8 20.5,8.67 20.5,9.5C20.5,10.33 19.83,11 19,11Z"
                                        Fill="{StaticResource BrTextSecondary}"
@@ -419,7 +431,7 @@
                                      BorderThickness="1"
                                      CornerRadius="{StaticResource RadiusMedium}"
                                      Padding="4"
-                                     Margin="0,0,10,0">
+                                     Margin="0,0,10,8">
                                  <StackPanel Orientation="Horizontal" Spacing="4">
                                      <Button Name="BtnViewList"
                                              Width="32"
@@ -482,13 +494,13 @@
                                      BorderBrush="{StaticResource BrBorderSubtle}"
                                      BorderThickness="1"
                                      CornerRadius="{StaticResource RadiusMedium}"
-                                     Padding="12,5" Margin="0,0,10,0">
+                                     Padding="12,5" Margin="0,0,0,8">
                                  <TextBlock Name="TxtGpuInfo"
                                             FontSize="{StaticResource FontSizeCaption}"
                                             Foreground="{StaticResource BrTextSecondary}"
                                             VerticalAlignment="Center"/>
                              </Border>
-                         </StackPanel>
+                         </WrapPanel>
                      </Grid>
                  </Border>
 

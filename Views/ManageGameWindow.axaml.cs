@@ -71,6 +71,7 @@ namespace OptiscalerClient.Views
         private bool _extrasTabInitialized;
         private ComponentManagementService? _cachedComponentService;
         private readonly DlssNrOnAmdService _dlssNrService = new();
+        private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
 
         // Setup NR — Matheus wrapper ("Modded" channel) background download, started as soon as a
         // version is picked in CmbOptiVersion so it's likely already on disk by the time Install runs.
@@ -1195,7 +1196,7 @@ namespace OptiscalerClient.Views
             // Foreground must be explicit: this TextBlock is built in code with no XAML ancestor to
             // inherit from, so it falls back to the framework's default (black) — invisible against
             // the popup's dark background. Reused everywhere BuildVersionItem is called (main
-            // OptiScaler/Extras/OptiPatcher selectors, Setup NR's danielblnc/wrapper selectors, Bulk
+            // OptiScaler/Extras/OptiPatcher selectors, Setup NR's danielblnc/fork selectors, Bulk
             // Install, Manage Default Versions), so the fix applies uniformly.
             var textFg = Application.Current?.TryFindResource("BrTextPrimary", out var fgRes) == true && fgRes is IBrush fgBrush
                 ? fgBrush
@@ -1353,11 +1354,16 @@ namespace OptiscalerClient.Views
             if (showExperimental)
                 PopulateRenodxComboBox(componentService);
 
-            // "Setup NR" — Windows-only, danielblnc's mod only targets DXGI/D3D12.
+            // "Setup NR" — on Linux this runs guentra/DLSS-NR-on-AMD-Linux (an unofficial third-party
+            // fork) instead of danielblnc's own installer directly, since the mod's HIP-based GPU
+            // check can't pass under Wine (see ExecuteLinuxWrapperInstallAsync). Stays visible there
+            // too (not Windows-only) — only the warning banner below is Linux-specific.
             var dlssNrPanel = this.FindControl<Control>("PanelDlssNrOnAmd");
-            if (dlssNrPanel != null) dlssNrPanel.IsVisible = showExperimental && OperatingSystem.IsWindows();
+            if (dlssNrPanel != null) dlssNrPanel.IsVisible = showExperimental;
             var dlssNrDanielPanel = this.FindControl<Control>("PanelDlssNrDanielVersion");
-            if (dlssNrDanielPanel != null) dlssNrDanielPanel.IsVisible = showExperimental && OperatingSystem.IsWindows();
+            if (dlssNrDanielPanel != null) dlssNrDanielPanel.IsVisible = showExperimental;
+            var dlssNrLinuxWarning = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
+            if (dlssNrLinuxWarning != null) dlssNrLinuxWarning.IsVisible = showExperimental && !OperatingSystem.IsWindows();
 
             // The mod itself only targets AMD GPUs — stays visible (rather than hidden) so an already
             // pending/installed selection isn't yanked out from under the user (e.g. after swapping to
@@ -3976,6 +3982,134 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>Linux counterpart to RunDanielModAutoInstallAsync above — danielblnc's own
+        /// installer never runs here at all (its HIP-based GPU check can't pass under Wine, see
+        /// context/dlssnr-on-amd-linux-setup.md); guentra/DLSS-NR-on-AMD-Linux's unofficial fork is
+        /// downloaded, extracted into the game folder and run instead, fully headlessly (guentra's own
+        /// --json flag makes its installer never prompt at all, unlike danielblnc's interactive exe —
+        /// see DlssNrLinuxWrapperService.RunAutoInstallAsync). Only ever asks the user for two things,
+        /// each cached afterwards: nvngx_dlssnr.dll (existing machine-wide cache, same as Windows) and,
+        /// if ambiguous, a Wine/Proton runner (cached per game on Game.DlssNrLinuxWrapperRunnerPath).</summary>
+        private async Task<bool> ExecuteLinuxWrapperInstallAsync(bool isModeB)
+        {
+            var version = _game.PendingDlssNrOnAmdVersion ?? "";
+
+            if (!_dlssNrService.IsNvngxDlssNrCached())
+            {
+                var picker = new DlssNrOnAmdWizardWindow(this, _game, version, isModeB, nvngxPickerOnly: true);
+                await picker.ShowDialog<bool>(this);
+                if (!picker.Succeeded) return false;
+            }
+
+            // Game.ExecutablePath is only populated by the Lutris/generic scanners (Steam-scanned
+            // games leave it blank) — DetermineInstallDirectory is the reliable resolver every other
+            // Setup NR path already uses (see ResolveDanielModGameDir). guentra's own installer finds
+            // the actual exe inside it via real PE parsing (see RunAutoInstallAsync's own notes), so
+            // there's no need to also know the exact exe path on this side.
+            var gameDir = ResolveDanielModGameDir();
+            if (gameDir == null)
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    GetResourceString("TxtSetupNrCannotResolveDir", "Could not resolve the game folder."),
+                    isAlert: true).ShowDialog<object>(this);
+                return false;
+            }
+
+            ShowLinuxWrapperInstallingStatus();
+            try
+            {
+                string extractedDir;
+                try
+                {
+                    await _dlssNrLinuxWrapperService.DownloadAsync(version);
+                    extractedDir = _dlssNrLinuxWrapperService.ExtractToGameDir(version, gameDir);
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[SetupNr] Could not download/extract guentra's Linux fork: {ex.Message}");
+                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                        string.Format(GetResourceString("TxtSetupNrLinuxWrapperDownloadFailedFormat",
+                            "Could not download the Linux fork: {0}"), ex.Message),
+                        isAlert: true).ShowDialog<object>(this);
+                    return false;
+                }
+
+                // Ask-once-per-game runner resolution — cached on Game so later installs/updates on
+                // this same game never ask again (same "ask once" spirit as nvngx_dlssnr.dll above,
+                // just scoped per game since different games can use different Proton versions).
+                var runnerPath = _game.DlssNrLinuxWrapperRunnerPath;
+                if (string.IsNullOrEmpty(runnerPath) || !Directory.Exists(runnerPath))
+                {
+                    var runners = await _dlssNrLinuxWrapperService.ListRunnersAsync(extractedDir);
+                    var compatible = runners.Where(r => r.Compatible).ToList();
+                    if (compatible.Count == 1)
+                    {
+                        runnerPath = compatible[0].Path;
+                    }
+                    else
+                    {
+                        var runnerPicker = new DlssNrLinuxWrapperRunnerPickerWindow(this, runners);
+                        var picked = await runnerPicker.ShowDialog<bool>(this);
+                        if (!picked || string.IsNullOrEmpty(runnerPicker.SelectedPath)) return false;
+                        runnerPath = runnerPicker.SelectedPath;
+                    }
+                    _game.DlssNrLinuxWrapperRunnerPath = runnerPath;
+                }
+
+                // Prefer already-converted weights (from an earlier successful conversion, any OS/mode
+                // — weights only depend on the nvngx_dlssnr.dll content, not the game) over handing
+                // guentra's fork the raw DLL: its own conversion path hash-checks that DLL against one
+                // specific known-good release and rejects any other legitimate distribution of the same
+                // version (see RunAutoInstallAsync's own notes on this).
+                var cachedWeights = _dlssNrService.IsModeBOutputCached() ? _dlssNrService.CachedModeBWeightsPath : null;
+                var result = await _dlssNrLinuxWrapperService.RunAutoInstallAsync(
+                    extractedDir, gameDir,
+                    weightsPath: cachedWeights,
+                    nvidiaDllPath: cachedWeights == null ? _dlssNrService.CachedNvngxDlssNrPath : null,
+                    runnerPath: runnerPath);
+                if (!result.Success)
+                {
+                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                        string.Format(GetResourceString("TxtSetupNrLinuxWrapperFailedFormat",
+                            "The Linux fork installer failed: {0}"), result.RawError ?? "unknown error"),
+                        isAlert: true).ShowDialog<object>(this);
+                    return false;
+                }
+
+                _game.PendingDlssNrOnAmdMode = null;
+                _game.PendingDlssNrOnAmdVersion = null;
+                _game.IsDlssNrOnAmdInstalled = true;
+                _game.DlssNrOnAmdVersion = version;
+                _game.InstalledDlssNrOnAmdMode = isModeB ? "daniel-and-opti" : "daniel-only";
+                // Already the full, correctly-quoted Steam launch-options string (e.g.
+                // "'/path/launch.sh' %command%") — see DlssNrLinuxWrapperService.RunAutoInstallAsync.
+                _game.DlssNrLinuxWrapperLaunchCommand = result.LaunchOptions;
+
+                return true;
+            }
+            finally
+            {
+                UpdateStatus();
+            }
+        }
+
+        /// <summary>Visual-only "installing..." state while guentra's Linux fork installer runs in
+        /// the background — same reasoning as ShowDanielModAutoInstallingStatus below (there's no
+        /// window/console for the user to look at, so without this the click looks like it did
+        /// nothing). A first-ever run on the machine can take a while (downloads ROCm, ~3 GiB); every
+        /// later run reuses that cache and finishes in seconds.</summary>
+        private void ShowLinuxWrapperInstallingStatus()
+        {
+            var txtStatus = this.FindControl<TextBlock>("TxtStatus");
+            var statusIndicator = this.FindControl<Ellipse>("StatusIndicator");
+            var btnInstall = this.FindControl<Button>("BtnInstall");
+            var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
+            if (txtStatus != null) txtStatus.Text = GetResourceString("TxtSetupNrLinuxWrapperInstalling", "Installing (Linux fork)...");
+            if (statusIndicator != null) statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
+            if (btnInstall != null) btnInstall.IsEnabled = false;
+            if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
+        }
+
         /// <summary>Visual-only "installing..." state for the status area while Auto Install's headless
         /// process runs in the background — there's no window/console for the user to look at
         /// otherwise, so without this the click looks like it did nothing until it finishes or fails.
@@ -3993,18 +4127,74 @@ namespace OptiscalerClient.Views
             if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
         }
 
-        /// <summary>Deletes whatever the original daniel-only install created and restores whatever it
-        /// overwrote, straight from the manifest saved during that install (see
+        /// <summary>Reverses whatever the daniel-mod install did to this game's folder. On Windows,
+        /// deletes/restores straight from the manifest saved during that install (see
         /// DlssNrOnAmdService.TryFinishInstall/SaveDanielModManifest — shared by both the manual wizard
-        /// and Auto Install) — same pattern GameInstallationService uses for OptiScaler's own uninstall.
-        /// No re-download/re-run of danielblnc's installer needed:
-        /// everything it touched is already tracked. Shared by CmbSetupNr's "none" case and the
-        /// dedicated "Uninstall mod" button (see BtnUninstall_Click), which just re-selects that tag to
-        /// reach the same case rather than duplicating this.</summary>
-        private void UninstallDanielModOnly()
+        /// and Auto Install) — same pattern GameInstallationService uses for OptiScaler's own uninstall,
+        /// no re-download/re-run of danielblnc's installer needed since everything it touched is
+        /// already tracked. On Linux, delegates to guentra's fork instead (see
+        /// UninstallLinuxForkAsync) — this app never tracks a manifest for that install itself (see
+        /// ExecuteLinuxWrapperInstallAsync), since the fork keeps its own transactional journal in the
+        /// game folder and running its own uninstall is the only reliable way to reverse it. Shared by
+        /// CmbSetupNr's "none" case and the dedicated "Uninstall mod" button (see BtnUninstall_Click),
+        /// which just re-selects that tag to reach the same case rather than duplicating this.</summary>
+        private async Task UninstallDanielModOnly()
         {
             var gameDir = ResolveDanielModGameDir();
-            if (gameDir != null) _dlssNrService.RestoreFromManifest(gameDir);
+            if (gameDir == null) return;
+
+            if (!OperatingSystem.IsWindows())
+            {
+                await UninstallLinuxForkAsync(gameDir);
+                return;
+            }
+
+            _dlssNrService.RestoreFromManifest(gameDir);
+        }
+
+        /// <summary>Runs guentra's own uninstall against <paramref name="gameDir"/> (see
+        /// DlssNrLinuxWrapperService.RunUninstallAsync for why this — not our own manifest — is
+        /// authoritative for what to restore), then removes this app's own extracted
+        /// "dlssnr-linux-portable" installer folder, which guentra has no reason to know about. Re-
+        /// extracts the cached tar.gz first if that folder isn't there anymore (e.g. the user deleted it
+        /// by hand) — installer.py itself has to be present somewhere to run "uninstall" at all. Best-
+        /// effort: logs and gives up quietly if even that fails (e.g. nothing was ever actually
+        /// installed), since there's nothing more specific to tell the user beyond what UpdateStatus
+        /// already shows.</summary>
+        private async Task UninstallLinuxForkAsync(string gameDir)
+        {
+            var extractedDir = System.IO.Path.Combine(gameDir, DlssNrLinuxWrapperService.ExtractedFolderName);
+            try
+            {
+                if (!Directory.Exists(extractedDir))
+                {
+                    var version = _game.DlssNrOnAmdVersion;
+                    if (string.IsNullOrEmpty(version) || !_dlssNrLinuxWrapperService.IsCached(version))
+                    {
+                        DebugWindow.Log("[SetupNr] Linux fork uninstall: no extracted installer and no cached version to re-extract — nothing to do.");
+                        return;
+                    }
+                    extractedDir = _dlssNrLinuxWrapperService.ExtractToGameDir(version, gameDir);
+                }
+
+                var (success, rawError) = await _dlssNrLinuxWrapperService.RunUninstallAsync(extractedDir, gameDir);
+                if (!success)
+                    DebugWindow.Log($"[SetupNr] guentra fork uninstall reported an issue (files may need manual review): {rawError}");
+
+                // Same runtime-only log/pass-shader sweep as the Windows path (RestoreFromManifest) —
+                // guentra's own journal never tracks these since they're only ever written later, once
+                // the game actually runs with the mod loaded.
+                DlssNrOnAmdService.SweepRuntimeArtifacts(gameDir);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] Linux fork uninstall failed: {ex.Message}");
+            }
+            finally
+            {
+                try { if (Directory.Exists(extractedDir)) Directory.Delete(extractedDir, recursive: true); }
+                catch (Exception ex) { DebugWindow.Log($"[SetupNr] Could not remove '{extractedDir}': {ex.Message}"); }
+            }
         }
 
         private async Task ExecuteInstallAsync(bool isManualMode)
@@ -4019,12 +4209,16 @@ namespace OptiscalerClient.Views
             bool danielFreshThisRun = false;
             string? danielFreshGameDir = null;
             bool moddedInstallSucceeded = false;
-            void RollbackFreshDanielModIfNeeded()
+
+            async Task RollbackFreshDanielModIfNeeded()
             {
                 if (!danielFreshThisRun || moddedInstallSucceeded || danielFreshGameDir == null) return;
                 try
                 {
-                    _dlssNrService.RestoreFromManifest(danielFreshGameDir);
+                    if (OperatingSystem.IsWindows())
+                        _dlssNrService.RestoreFromManifest(danielFreshGameDir);
+                    else
+                        await UninstallLinuxForkAsync(danielFreshGameDir);
                     _game.IsDlssNrOnAmdInstalled = false;
                     _game.DlssNrOnAmdVersion = null;
                     _game.InstalledDlssNrOnAmdMode = null;
@@ -4046,8 +4240,11 @@ namespace OptiscalerClient.Views
                 // Weights (+ whatever else Mode B's installer produces) are machine-invariant once
                 // generated once — see DlssNrOnAmdService's Mode B output cache notes. Skip staging and
                 // running danielblnc's installer altogether when we already have that output cached.
+                // Windows only: guentra's Linux fork (see ExecuteLinuxWrapperInstallAsync) has to
+                // run per-game every time regardless — it generates a per-game launch.sh script, so
+                // there is nothing game-invariant to reuse the way there is for danielblnc's own exe.
                 var cachedModeBGameDir = isModeB ? ResolveDanielModGameDir() : null;
-                if (isModeB && cachedModeBGameDir != null && _dlssNrService.IsModeBOutputCached())
+                if (OperatingSystem.IsWindows() && isModeB && cachedModeBGameDir != null && _dlssNrService.IsModeBOutputCached())
                 {
                     // Outside this method's own try/catch (that one only wraps the shared OptiScaler
                     // install further below) — a locked target file (e.g. the game is currently
@@ -4066,6 +4263,13 @@ namespace OptiscalerClient.Views
                             isAlert: true).ShowDialog<object>(this);
                         danielSucceeded = false;
                     }
+                }
+                else if (!OperatingSystem.IsWindows())
+                {
+                    // danielblnc's own installer is a native Windows .exe whose HIP-based GPU check
+                    // can never pass under Wine (see context/dlssnr-on-amd-linux-setup.md) — on Linux,
+                    // guentra/DLSS-NR-on-AMD-Linux's unofficial fork is run instead, fully headless.
+                    danielSucceeded = await ExecuteLinuxWrapperInstallAsync(isModeB);
                 }
                 else if (isManualMode)
                 {
@@ -4094,7 +4298,23 @@ namespace OptiscalerClient.Views
                 if (!isModeB)
                 {
                     UpdateStatus();
-                    await ShowToastAsync(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
+                    // Fire-and-forget, same reasoning as the OptiScaler success toast further below:
+                    // ShowToastAsync's fade animation would otherwise delay the launch-command dialog.
+                    _ = ShowToastAsync(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
+
+                    // Mode A on Linux has no further OptiScaler step to fall through to (unlike Mode
+                    // B below), so this is the one place to hand the user guentra's launch command —
+                    // it needs no WINEDLLOVERRIDES of its own (the fork's own launch.sh already
+                    // sets everything its DLLs need internally).
+                    if (!OperatingSystem.IsWindows() && !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand))
+                    {
+                        await new ConfirmDialog(this, GetResourceString("TxtSetupNrLinuxWrapperLaunchCommandTitle", "Paste this into Steam"),
+                            GetResourceString("TxtSetupNrLinuxWrapperLaunchCommandBody",
+                                "The mod runs through a small launch script generated by the Linux fork. If you're using Steam, paste this into this game's launch options (Properties → General → Launch Options):"),
+                            isAlert: true,
+                            copyableText: _game.DlssNrLinuxWrapperLaunchCommand
+                        ).ShowDialog<object>(this);
+                    }
                     return;
                 }
 
@@ -4126,7 +4346,7 @@ namespace OptiscalerClient.Views
                     {
                         DebugWindow.Log($"[SetupNr] Modded wrapper download failed: {ex.Message}");
                         await new ConfirmDialog(this, "Error", $"Could not download the OptiScaler wrapper build: {ex.Message}").ShowDialog<object>(this);
-                        RollbackFreshDanielModIfNeeded();
+                        await RollbackFreshDanielModIfNeeded();
                         return;
                     }
                 }
@@ -4991,7 +5211,38 @@ namespace OptiscalerClient.Views
                 });
 
                 var successFormat = GetResourceString("TxtInstallSuccessFormat", "{0} installed successfully!");
-                await ShowToastAsync(string.Format(successFormat, installedComponents));
+                // Fire-and-forget: ShowToastAsync runs its own multi-second fade loop before returning,
+                // and awaiting it here would delay the Wine-override reminder dialog right below until
+                // the toast finished animating, instead of both appearing together.
+                _ = ShowToastAsync(string.Format(successFormat, installedComponents));
+
+                // On Linux/Proton, dropping a renamed OptiScaler DLL next to the game exe isn't
+                // enough by itself the way it is on real Windows — Wine may keep resolving that
+                // filename (dxgi.dll, winmm.dll, etc.) to its own builtin implementation instead of
+                // the one just installed, unless a Wine DLL override says otherwise. Upstream
+                // OptiScaler's own setup_linux.sh prints this exact reminder after every install;
+                // we automate the install so the user never sees that script, but the underlying
+                // Wine requirement is identical, so replicate the reminder here instead of leaving
+                // the user to discover it only when the mod silently doesn't do anything.
+                if (!OperatingSystem.IsWindows())
+                {
+                    // When Setup NR's "Mod + OptiScaler" (Mode B) just ran through guentra's Linux
+                    // fork, the launch command the user must actually use is that fork's own
+                    // launch.sh, not a bare %command% — it already sets everything the mod's own DLLs
+                    // need internally, so OptiScaler's proxy DLL override just gets prepended to it,
+                    // same as it would to a plain %command% for a normal (non-Setup-NR) Linux install.
+                    var baseCommand = !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand)
+                        ? _game.DlssNrLinuxWrapperLaunchCommand
+                        : "%command%";
+                    var wineMessage = string.Format(GetResourceString("TxtWineOverrideReminderFormat",
+                        "On Linux/Proton you may need a Wine DLL override for {0} to actually take effect — Wine can otherwise keep using its own builtin version of that filename instead of the one just installed. If you're using Steam, add this to the game's launch options:"),
+                        injectionMethod);
+                    var wineCopyable = $"WINEDLLOVERRIDES=\"{injectionMethod}=n,b\" {baseCommand}";
+
+                    await new ConfirmDialog(this, GetResourceString("TxtWineOverrideTitle", "Wine DLL override needed"),
+                        wineMessage, isAlert: true, copyableText: wineCopyable
+                    ).ShowDialog<object>(this);
+                }
             }
             catch (Exception ex)
             {
@@ -5011,7 +5262,7 @@ namespace OptiscalerClient.Views
                 // picker cancelled, corrupt-artifact prompt cancelled, "no version selected", etc.) as
                 // well as any exception already handled by the catch — one guard instead of patching
                 // each exit point by hand.
-                RollbackFreshDanielModIfNeeded();
+                await RollbackFreshDanielModIfNeeded();
             }
         }
 
@@ -5040,7 +5291,7 @@ namespace OptiscalerClient.Views
                     bool wasInstalled = _game.IsDlssNrOnAmdInstalled;
                     if (wasInstalled)
                     {
-                        UninstallDanielModOnly();
+                        await UninstallDanielModOnly();
                         _game.IsDlssNrOnAmdInstalled = false;
                         _game.DlssNrOnAmdVersion = null;
                         _game.InstalledDlssNrOnAmdMode = null;
@@ -5260,14 +5511,18 @@ namespace OptiscalerClient.Views
             cmb.Items.Clear();
             cmb.IsEnabled = false;
 
+            // On Linux, danielblnc's own Windows installer can never pass its HIP-based GPU check
+            // under Wine (see context/dlssnr-on-amd-linux-setup.md) — guentra/DLSS-NR-on-AMD-Linux's
+            // unofficial fork is used instead, so this combo lists ITS releases there.
+            var isLinux = !OperatingSystem.IsWindows();
             List<DlssNrOnAmdRelease> releases;
             try
             {
-                releases = await _dlssNrService.GetReleasesAsync();
+                releases = isLinux ? await _dlssNrLinuxWrapperService.GetReleasesAsync() : await _dlssNrService.GetReleasesAsync();
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[SetupNr] Could not list danielblnc releases: {ex.Message}");
+                DebugWindow.Log($"[SetupNr] Could not list {(isLinux ? "guentra/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
                 releases = new List<DlssNrOnAmdRelease>();
             }
 
@@ -5303,7 +5558,12 @@ namespace OptiscalerClient.Views
             // re-applied here rather than relying on a one-time check elsewhere.
             var danielVersionGpuOk = IsSetupNrGpuAllowed();
             cmb.IsEnabled = danielVersionGpuOk;
-            ToolTip.SetTip(cmb, danielVersionGpuOk ? null : GetResourceString("TxtSetupNrRequiresAmdTooltip", "danielblnc's mod requires an AMD GPU."));
+            ToolTip.SetTip(cmb, !danielVersionGpuOk
+                ? GetResourceString("TxtSetupNrRequiresAmdTooltip", "danielblnc's mod requires an AMD GPU.")
+                : isLinux
+                    ? GetResourceString("TxtSetupNrLinuxWrapperTooltip",
+                        "On Linux this uses guentra's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and guentra/DLSS-NR-on-AMD-Linux (the fork).")
+                    : null);
             cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
         }
 
@@ -5328,6 +5588,15 @@ namespace OptiscalerClient.Views
         private void ApplyDlssNrDanielVersionSelection(string version)
         {
             _game.PendingDlssNrOnAmdVersion = version;
+            if (!OperatingSystem.IsWindows())
+            {
+                _ = _dlssNrLinuxWrapperService.DownloadAsync(version).ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                        DebugWindow.Log($"[SetupNr] Background download of guentra's Linux fork v{version} failed: {t.Exception?.GetBaseException().Message}");
+                }, TaskScheduler.Default);
+                return;
+            }
             _ = _dlssNrService.DownloadAsync(version).ContinueWith(t =>
             {
                 if (t.IsFaulted)
@@ -5900,8 +6169,7 @@ namespace OptiscalerClient.Views
                 // behind and IsDlssNrOnAmdInstalled never clears.
                 if (_game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
                 {
-                    var danielGameDir = ResolveDanielModGameDir();
-                    if (danielGameDir != null) _dlssNrService.RestoreFromManifest(danielGameDir);
+                    await UninstallDanielModOnly();
                     _game.IsDlssNrOnAmdInstalled = false;
                     _game.DlssNrOnAmdVersion = null;
                     _game.InstalledDlssNrOnAmdMode = null;
@@ -6153,6 +6421,7 @@ namespace OptiscalerClient.Views
                     btnUninstall.Content = GetResourceString("TxtSetupNrUninstallModBtn", "Uninstall mod");
                 }
             }
+
         }
 
         private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);

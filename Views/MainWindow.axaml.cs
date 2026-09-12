@@ -87,6 +87,11 @@ namespace OptiscalerClient.Views
         private TextBox? _txtSearch;
         private TextBlock? _txtSearchPlaceholder;
         private TextBlock? _txtGpuInfo;
+        private Grid? _gamesHeaderGrid;
+        private WrapPanel? _pnlHeaderActions;
+        private WrapPanel? _pnlHeaderBadges;
+        private Grid? _gamesSearchGrid;
+        private int _gamesHeaderTier = -1;
         private Avalonia.Controls.Shapes.Path? _txtGamepadIcon;
         private Border? _pnlNoUpscalersFound;
         private CheckBox? _chkHideNoUpscaler;
@@ -371,10 +376,15 @@ namespace OptiscalerClient.Views
                 _txtSearchPlaceholder = this.FindControl<TextBlock>("TxtSearchPlaceholder");
                 _txtGpuInfo = this.FindControl<TextBlock>("TxtGpuInfo");
                 _txtGamepadIcon = this.FindControl<Avalonia.Controls.Shapes.Path>("TxtGamepadIcon");
+                _gamesHeaderGrid = this.FindControl<Grid>("GamesHeaderGrid");
+                _pnlHeaderActions = this.FindControl<WrapPanel>("PnlHeaderActions");
+                _pnlHeaderBadges = this.FindControl<WrapPanel>("PnlHeaderBadges");
+                _gamesSearchGrid = this.FindControl<Grid>("GamesSearchGrid");
                 _pnlNoUpscalersFound = this.FindControl<Border>("PnlNoUpscalersFound");
                 _chkHideNoUpscaler = this.FindControl<CheckBox>("ChkHideNoUpscaler");
                 _chkOnlyInstalled = this.FindControl<CheckBox>("ChkOnlyInstalled");
                 _chkOnlyFavorites = this.FindControl<CheckBox>("ChkOnlyFavorites");
+                UpdateGamesHeaderLayout();
 
                 if (_chkHideNoUpscaler != null) _chkHideNoUpscaler.IsChecked = _componentService.Config.HideGamesWithoutUpscaler;
                 if (_chkOnlyInstalled != null) _chkOnlyInstalled.IsChecked = _componentService.Config.ShowOnlyInstalled;
@@ -555,6 +565,104 @@ namespace OptiscalerClient.Views
         {
             UpdateSettingsLayout();
             UpdateEditorWrapLayout();
+            UpdateGamesHeaderLayout();
+        }
+
+        /// <summary>
+        /// Keeps the Games header from overflowing/overlapping as the window shrinks, by moving
+        /// between three explicit layout tiers instead of relying on Grid's Auto columns (which
+        /// Avalonia measures against effectively unbounded width, so they never shrink on their
+        /// own and just spill past the window edge once combined natural width exceeds it):
+        ///   Wide:   one row — actions | search | badges, side by side (today's desktop layout).
+        ///   Medium: two rows — row 0 splits actions (left) and badges (right); row 1 is the search bar.
+        ///   Narrow: three rows — actions, then badges, then the search bar, each full width.
+        /// The thresholds aren't fixed pixel values: they're derived from the actions/badges groups'
+        /// own measured natural (unwrapped) widths, so the breakpoints automatically track content
+        /// changes (localized button text, added/removed buttons) instead of being hand-tuned for
+        /// one specific window size.
+        /// </summary>
+        private void UpdateGamesHeaderLayout()
+        {
+            if (_gamesHeaderGrid == null || _pnlHeaderActions == null || _pnlHeaderBadges == null || _gamesSearchGrid == null)
+                return;
+
+            var totalWidth = _gamesHeaderGrid.Bounds.Width;
+            if (totalWidth <= 0)
+                return;
+
+            // Un-cap before measuring, otherwise a MaxWidth we set on a previous pass would clamp
+            // DesiredSize and we'd be measuring our own prior output instead of the natural size.
+            _pnlHeaderActions.MaxWidth = double.PositiveInfinity;
+            _pnlHeaderBadges.MaxWidth = double.PositiveInfinity;
+            _pnlHeaderActions.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            _pnlHeaderBadges.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var naturalActionsWidth = _pnlHeaderActions.DesiredSize.Width;
+            var naturalBadgesWidth = _pnlHeaderBadges.DesiredSize.Width;
+
+            const double comfortableSearchWidth = 260;
+            const double searchMinWidth = 140;
+            const double interGroupGap = 32;
+
+            var wideNeeded = naturalActionsWidth + naturalBadgesWidth + comfortableSearchWidth + interGroupGap * 2;
+            var mediumNeeded = naturalActionsWidth + naturalBadgesWidth + interGroupGap;
+
+            var tier = totalWidth >= wideNeeded ? 0
+                     : totalWidth >= mediumNeeded ? 1
+                     : 2;
+
+            if (tier != _gamesHeaderTier)
+            {
+                _gamesHeaderTier = tier;
+                switch (tier)
+                {
+                    case 0: // Wide: one row, side by side
+                        Grid.SetRow(_pnlHeaderActions, 0); Grid.SetColumn(_pnlHeaderActions, 0); Grid.SetColumnSpan(_pnlHeaderActions, 1);
+                        Grid.SetRow(_gamesSearchGrid, 0); Grid.SetColumn(_gamesSearchGrid, 1); Grid.SetColumnSpan(_gamesSearchGrid, 1);
+                        Grid.SetRow(_pnlHeaderBadges, 0); Grid.SetColumn(_pnlHeaderBadges, 2); Grid.SetColumnSpan(_pnlHeaderBadges, 1);
+                        _pnlHeaderActions.Margin = new Thickness(0);
+                        _pnlHeaderActions.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+                        _pnlHeaderBadges.Margin = new Thickness(0);
+                        _pnlHeaderBadges.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+                        _gamesSearchGrid.Margin = new Thickness(32, 0);
+                        break;
+
+                    case 1: // Medium: row 0 = actions | badges, row 1 = search
+                        Grid.SetRow(_pnlHeaderActions, 0); Grid.SetColumn(_pnlHeaderActions, 0); Grid.SetColumnSpan(_pnlHeaderActions, 1);
+                        Grid.SetRow(_pnlHeaderBadges, 0); Grid.SetColumn(_pnlHeaderBadges, 2); Grid.SetColumnSpan(_pnlHeaderBadges, 1);
+                        Grid.SetRow(_gamesSearchGrid, 1); Grid.SetColumn(_gamesSearchGrid, 0); Grid.SetColumnSpan(_gamesSearchGrid, 3);
+                        _pnlHeaderActions.Margin = new Thickness(0);
+                        _pnlHeaderActions.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+                        _pnlHeaderBadges.Margin = new Thickness(0);
+                        _pnlHeaderBadges.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+                        _gamesSearchGrid.Margin = new Thickness(0, 12, 0, 0);
+                        break;
+
+                    default: // Narrow: actions, badges, search — each their own full-width row, all centered
+                        Grid.SetRow(_pnlHeaderActions, 0); Grid.SetColumn(_pnlHeaderActions, 0); Grid.SetColumnSpan(_pnlHeaderActions, 3);
+                        Grid.SetRow(_pnlHeaderBadges, 1); Grid.SetColumn(_pnlHeaderBadges, 0); Grid.SetColumnSpan(_pnlHeaderBadges, 3);
+                        Grid.SetRow(_gamesSearchGrid, 2); Grid.SetColumn(_gamesSearchGrid, 0); Grid.SetColumnSpan(_gamesSearchGrid, 3);
+                        _pnlHeaderActions.Margin = new Thickness(0);
+                        _pnlHeaderActions.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+                        _pnlHeaderBadges.Margin = new Thickness(0, 12, 0, 0);
+                        _pnlHeaderBadges.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+                        _gamesSearchGrid.Margin = new Thickness(0, 12, 0, 0);
+                        break;
+                }
+            }
+
+            // Safety net within whichever row(s) each group now occupies: cap it to what that row
+            // actually has, so if even a full/half row is too tight, the WrapPanel still wraps
+            // internally instead of overflowing.
+            double maxSide = tier switch
+            {
+                0 => Math.Max(90, totalWidth - naturalBadgesWidth - searchMinWidth - interGroupGap * 2), // rough, badges get the symmetric equivalent below
+                1 => Math.Max(90, (totalWidth - interGroupGap) / 2),
+                _ => totalWidth
+            };
+            _pnlHeaderActions.MaxWidth = maxSide;
+            _pnlHeaderBadges.MaxWidth = tier == 0
+                ? Math.Max(90, totalWidth - naturalActionsWidth - searchMinWidth - interGroupGap * 2)
+                : maxSide;
         }
 
         private void UpdateSettingsLayout()
@@ -6023,7 +6131,12 @@ namespace OptiscalerClient.Views
                                 icon = "🔵"; color = new SolidColorBrush(Color.FromRgb(0, 113, 197)); break;
                         }
 
-                        _txtGpuInfo!.Text = $"{icon} {gpu.Name}";
+                        const int maxGpuNameLength = 40;
+                        var displayName = gpu.Name.Length > maxGpuNameLength
+                            ? gpu.Name.Substring(0, maxGpuNameLength).TrimEnd() + "…"
+                            : gpu.Name;
+
+                        _txtGpuInfo!.Text = $"{icon} {displayName}";
                         _txtGpuInfo.Foreground = color;
                         ToolTip.SetTip(_txtGpuInfo, $"{gpu.Name}\nVendor: {gpu.Vendor}\nVRAM: {gpu.VideoMemoryGB}\nDriver: {gpu.DriverVersion}");
                     }
