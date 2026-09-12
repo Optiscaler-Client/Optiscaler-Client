@@ -560,15 +560,16 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!-- Row 4, all columns : Experimental zone (AMD DLSS Neural Rendering
-                                     "Setup NR" defaults) — bordered strip so experimental controls read
-                                     as visually distinct, mirroring ManageGameWindow's own
-                                     BorderExperimentalZone/BorderExperimentalChip exactly. Hidden
-                                     entirely unless Config.ShowExperimentalFeatures is on AND the
-                                     configured default GPU is AMD (see
+                                <!-- Row 4, all columns : Experimental zone (RenoDX + AMD DLSS Neural
+                                     Rendering "Setup NR" defaults) — bordered strip so experimental
+                                     controls read as visually distinct, mirroring ManageGameWindow's own
+                                     BorderExperimentalZone/BorderExperimentalChip exactly. The zone
+                                     itself is hidden unless Config.ShowExperimentalFeatures is on
+                                     (matches ManageGameWindow/BulkInstallWindow); RenoDX has no GPU
+                                     restriction, so only GridDlssNrOnAmd (the Setup NR half) is
+                                     additionally hidden when the configured default GPU isn't AMD (see
                                      ManageDefaultVersionsWindow.axaml.cs's
-                                     PopulateDefaultDlssNrOnAmdModeCombo, which toggles both children
-                                     below the same way PopulateVersionSelectors does there). -->
+                                     PopulateDefaultDlssNrOnAmdModeCombo). -->
                                 <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
                                     <Border Name="BorderExperimentalZone"
                                             BorderBrush="{StaticResource BrExperimental}"
@@ -577,8 +578,42 @@
                                             Padding="12,16,12,12"
                                             IsVisible="False">
                                       <StackPanel Spacing="10">
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                                            <StackPanel Name="PanelDefaultDlssNrOnAmd" Grid.Column="0">
+                                        <!-- RenoDX shares this row with Setup NR mode/version — RenoDX
+                                             itself has no GPU restriction, so PanelDefaultRenodxVersion
+                                             stays visible even when the other two columns are hidden for
+                                             a non-AMD default GPU (see PopulateDefaultDlssNrOnAmdModeCombo). -->
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                            <StackPanel Name="PanelDefaultRenodxVersion" Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtRenodxLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtRenodxTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDefaultRenodxVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center">
+                                                    <ComboBoxItem Content="None" Tag="none" Classes="SentinelOption"/>
+                                                    <ComboBoxItem Content="Auto" Tag="auto" Classes="SentinelOption"/>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <StackPanel Name="PanelDefaultDlssNrOnAmd" Grid.Column="1">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                                     <TextBlock Text="{DynamicResource TxtDlssNrOnAmdTitle}"
                                                                Foreground="{StaticResource BrTextSecondary}"
@@ -613,7 +648,7 @@
                                             <!-- Version of danielblnc's mod itself, pinned for Quick/Bulk
                                                  Install the same way ManageGameWindow's CmbDlssNrDanielVersion
                                                  pins it for a single game. Disabled while mode = none. -->
-                                            <StackPanel Name="PanelDefaultDlssNrDanielVersion" Grid.Column="1">
+                                            <StackPanel Name="PanelDefaultDlssNrDanielVersion" Grid.Column="2">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                                     <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
                                                                Foreground="{StaticResource BrTextSecondary}"

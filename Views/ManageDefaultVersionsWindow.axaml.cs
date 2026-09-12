@@ -138,6 +138,7 @@ namespace OptiscalerClient.Views
             PopulateDefaultProfileCombo();
             PopulateDefaultUpscalingQualityCombo();
             PopulateDefaultOutputUpscalerCombo();
+            PopulateDefaultRenodxCombo();
             PopulateDefaultDlssNrOnAmdModeCombo();
 
             _defaultFrameGenerationSettings = _componentService.Config.DefaultFrameGenerationSettings;
@@ -637,6 +638,25 @@ namespace OptiscalerClient.Views
             }
         }
 
+        // ── RenoDX default ───────────────────────────────────────────────────
+
+        /// <summary>
+        /// RenoDX (experimental, opt-in), global-default flavour: only "None" and "Auto" — same shape
+        /// as BulkInstallWindow.PopulateRenodxComboBox, since there's no specific game here to offer a
+        /// per-game cached addon for. "Auto" resolves and downloads the right addon per game at install
+        /// time (see ManageGameWindow/BulkInstallWindow); this just pins which of the two is
+        /// pre-selected everywhere that reads Config.DefaultRenodxVersion. No GPU restriction, unlike
+        /// the DLSS NR section below — visible whenever ShowExperimentalFeatures is on.
+        /// </summary>
+        private void PopulateDefaultRenodxCombo()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDefaultRenodxVersion");
+            if (cmb == null) return;
+
+            var saved = _componentService.Config.DefaultRenodxVersion;
+            cmb.SelectedIndex = string.Equals(saved, "auto", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        }
+
         // ── AMD DLSS Neural Rendering mod default ────────────────────────────
 
         /// <summary>Same permissive-when-unknown check as ManageGameWindow.IsSetupNrGpuAllowed —
@@ -656,11 +676,20 @@ namespace OptiscalerClient.Views
         /// the only GPU vendor the mod itself supports.</summary>
         private void PopulateDefaultDlssNrOnAmdModeCombo()
         {
-            var showExperimental = _componentService.Config.ShowExperimentalFeatures && IsAmdDefaultGpu();
+            // Zone-level visibility matches ManageGameWindow/BulkInstallWindow (ShowExperimentalFeatures
+            // alone) since RenoDX, which shares this row, has no GPU restriction. Only the two Setup NR
+            // columns are further gated to AMD hardware — the only vendor that mod supports — so RenoDX
+            // stays visible/usable even when they're hidden.
+            var showExperimental = _componentService.Config.ShowExperimentalFeatures;
+            var showDlssNr = showExperimental && IsAmdDefaultGpu();
             var zone = this.FindControl<Control>("BorderExperimentalZone");
             if (zone != null) zone.IsVisible = showExperimental;
             var chip = this.FindControl<Control>("BorderExperimentalChip");
             if (chip != null) chip.IsVisible = showExperimental;
+            var dlssNrModePanel = this.FindControl<Control>("PanelDefaultDlssNrOnAmd");
+            if (dlssNrModePanel != null) dlssNrModePanel.IsVisible = showDlssNr;
+            var dlssNrVersionPanel = this.FindControl<Control>("PanelDefaultDlssNrDanielVersion");
+            if (dlssNrVersionPanel != null) dlssNrVersionPanel.IsVisible = showDlssNr;
 
             var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
             if (cmb == null) return;
@@ -700,14 +729,14 @@ namespace OptiscalerClient.Views
             }
             cmb.SelectionChanged += CmbDefaultDlssNrOnAmdMode_SelectionChanged;
 
-            // While Experimental Features is off, this combo is unreachable — hidden along with the
-            // rest of BorderExperimentalZone — so its stored value must not go on locking every other
-            // default option with no visible control left to undo it (same bug, and same fix
+            // While Experimental Features is off (or the GPU isn't AMD), this combo is unreachable —
+            // hidden along with GridDlssNrOnAmd — so its stored value must not go on locking every
+            // other default option with no visible control left to undo it (same bug, and same fix
             // principle, as ManageGameWindow.PopulateVersionSelectors' targetSetupNrTag gate).
             // SelectedItem above still reflects the real stored value (untouched) so BtnSave_Click
             // doesn't silently overwrite it back to "none" just because the zone was hidden when
             // saved — only the visible side effects (locking, the Modded tab swap) are suppressed.
-            if (showExperimental)
+            if (showDlssNr)
                 ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
             else
             {
@@ -730,7 +759,7 @@ namespace OptiscalerClient.Views
             "CmbDefaultOptiPatcherVersion", "CmbDefaultFakenvapiVersion", "CmbDefaultNukemFGVersion",
             "CmbDefaultInjectionMethod", "CmbDefaultProfile", "BtnDefaultFrameGeneration",
             "CmbDefaultUpscalingQuality", "CmbDefaultOutputUpscaler", "BtnFsr4SwapOptions",
-            "CmbDefaultSpoofing",
+            "CmbDefaultSpoofing", "CmbDefaultRenodxVersion",
         };
 
         private void SetDefaultOptionsLocked(bool locked)
@@ -1240,6 +1269,16 @@ namespace OptiscalerClient.Views
                 var value = spoofingItem.Tag?.ToString();
                 _componentService.Config.DefaultDxgiSpoofing =
                     string.IsNullOrEmpty(value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase) ? null : value;
+            }
+
+            // Save RenoDX default (only ever offered when experimental features are on — see
+            // PopulateDefaultRenodxCombo's BorderExperimentalZone gate). Stored as the raw "none"/
+            // "auto" tag, matching how ManageGameWindow/BulkInstallWindow both read and write this
+            // same Config field.
+            var cmbRenodx = this.FindControl<ComboBox>("CmbDefaultRenodxVersion");
+            if (cmbRenodx?.SelectedItem is ComboBoxItem renodxItem)
+            {
+                _componentService.Config.DefaultRenodxVersion = renodxItem.Tag?.ToString() ?? "none";
             }
 
             // Save AMD DLSS Neural Rendering mod default (only ever offered when experimental
