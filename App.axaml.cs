@@ -45,6 +45,17 @@ namespace OptiscalerClient
                     // Last-resort handler — nothing we can do if writing fails
                 }
             };
+
+            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, args) =>
+            {
+                try
+                {
+                    args.SetObserved();
+                    var crashLogPath = System.IO.Path.Combine(Services.AppPaths.GetAppDataRoot(), "crash_background.log");
+                    System.IO.File.AppendAllText(crashLogPath, $"{DateTime.Now}: {args.Exception}\n");
+                }
+                catch { /* fallback */ }
+            };
         }
 
         public override void OnFrameworkInitializationCompleted()
