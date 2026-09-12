@@ -77,13 +77,15 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             {
                 var parts = Regex.Matches(lspciOutput, "\"([^\"]*)\"");
                 if (parts.Count >= 3)
-                    return $"{parts[1].Groups[1].Value} {parts[2].Groups[1].Value}".Trim();
+                    return BuildCleanGpuName(vendor, parts[2].Groups[1].Value);
             }
 
             // 2. Fallback: parse pci.ids directly (works without lspci installed)
-            var name = LookupPciIds(shortVendor, shortDevice);
-            if (!string.IsNullOrEmpty(name))
-                return name;
+            var (idsVendorName, idsDeviceName) = LookupPciIds(shortVendor, shortDevice);
+            if (!string.IsNullOrEmpty(idsDeviceName))
+                return BuildCleanGpuName(vendor, idsDeviceName);
+            if (!string.IsNullOrEmpty(idsVendorName))
+                return idsVendorName;
         }
         catch { }
 
@@ -94,6 +96,33 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             GpuVendor.Intel => "Intel GPU",
             _ => "Unknown GPU"
         };
+    }
+
+    /// <summary>
+    /// pci.ids / lspci -mm device fields carry the chip codename plus the marketing name in a
+    /// trailing bracket, e.g. "Navi 48 [Radeon RX 9070/9070 XT/9070 GRE]". Keep only that bracketed
+    /// marketing name and prefix a short vendor label, instead of the raw codename + full legal
+    /// vendor string (e.g. "Advanced Micro Devices, Inc. [AMD/ATI] Navi 48 [Radeon RX ...]"), which
+    /// is what fastfetch/neofetch-style tools show and what fits in a UI badge.
+    /// </summary>
+    private static string BuildCleanGpuName(GpuVendor vendor, string deviceField)
+    {
+        var marketingName = ExtractBracketedMarketingName(deviceField);
+        var vendorLabel = vendor switch
+        {
+            GpuVendor.NVIDIA => "NVIDIA",
+            GpuVendor.AMD => "AMD",
+            GpuVendor.Intel => "Intel",
+            _ => ""
+        };
+
+        return string.IsNullOrEmpty(vendorLabel) ? marketingName : $"{vendorLabel} {marketingName}".Trim();
+    }
+
+    private static string ExtractBracketedMarketingName(string deviceField)
+    {
+        var match = Regex.Match(deviceField, @"\[([^\[\]]+)\]\s*$");
+        return match.Success ? match.Groups[1].Value.Trim() : deviceField.Trim();
     }
 
     private static readonly string[] _pciIdsPaths =
@@ -109,12 +138,12 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     ///   vendorid  Vendor Name
     ///   \tdeviceid  Device Name
     /// </summary>
-    private static string? LookupPciIds(string vendorId, string deviceId)
+    private static (string? VendorName, string? DeviceName) LookupPciIds(string vendorId, string deviceId)
     {
         try
         {
             var idsFile = _pciIdsPaths.FirstOrDefault(File.Exists);
-            if (idsFile == null) return null;
+            if (idsFile == null) return (null, null);
 
             string? vendorName = null;
             string? deviceName = null;
@@ -146,14 +175,11 @@ public class LinuxGpuDetectionService : IGpuDetectionService
                 }
             }
 
-            if (deviceName != null)
-                return deviceName;
-            if (vendorName != null)
-                return vendorName;
+            return (vendorName, deviceName);
         }
         catch { }
 
-        return null;
+        return (null, null);
     }
 
     private ulong GetVram(string devicePath, GpuVendor vendor)
