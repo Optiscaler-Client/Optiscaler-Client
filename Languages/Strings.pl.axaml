@@ -795,11 +795,15 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">np. DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
     <x:String x:Key="TxtSetupNr">Konfiguruj NR</x:String>
-    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">Mod danielblnc wymaga karty graficznej AMD.</x:String>
+    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">Mod danielblnc wymaga karty graficznej AMD RDNA 3 lub RDNA 4.</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTitle">DLSS Neural Rendering (dla AMD)</x:String>
     <x:String x:Key="TxtSetupNrModeNone">Brak</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlyShort">Tylko mod danielblnc</x:String>
+
+    <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">Tylko mod danielblnc (fork)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">Mod + OptiScaler</x:String>
+
+    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">Obecnie niedostępne na Linuksie.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (tylko mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">Pozwala uruchomić DLSS Neural Rendering na kartach AMD za pomocą nieoficjalnego moda danielblnc, opcjonalnie w połączeniu z nieoficjalną wersją OptiScaler. Eksperymentalne, bez oficjalnego wsparcia i niezwiązane z własnymi upscalerami OptiScaler — używasz na własne ryzyko.</x:String>
@@ -824,9 +828,13 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler obecnie nie ma oficjalnego wsparcia dla Neural Rendering, dlatego do jego użycia razem wymagana jest wersja opakowana przez społeczność (MatheusGViana). Instalujesz na własne ryzyko.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Wersja moda (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Wersja moda DLSS Neural Rendering od danielblnc używana do wygenerowania wag AMD. Potrzebna zarówno dla "danielblnc mod only", jak i "Mod + OptiScaler".</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Korzysta z nieoficjalnego forka firm trzecich (guentra/DLSS-NR-on-AMD-Linux), aby uruchomić moda DLSS Neural Rendering autorstwa danielblnc na Linuksie za pomocą prawdziwego mostka ROCm — niezwiązanego z żadnym z tych projektów, eksperymentalnego i bez oficjalnej licencji na redystrybucję.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Korzysta z nieoficjalnego forka firm trzecich (guentra/DLSS-NR-on-AMD-Linux), aby uruchomić moda DLSS Neural Rendering autorstwa danielblnc na Linuksie za pomocą prawdziwego mostka ROCm</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">W systemie Linux używany jest nieoficjalny fork guentry, DLSS-NR-on-AMD-Linux (a nie bezpośrednio instalator danielblnc), który łączy moda z prawdziwym środowiskiem uruchomieniowym ROCm, dzięki czemu sprawdzenie GPU może faktycznie przejść pod Wine/Proton. Podziękowania: danielblnc/DLSS-NR-on-AMD (mod) oraz guentra/DLSS-NR-on-AMD-Linux (fork).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Instalowanie (fork Linux)...</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Pobieranie forka Linux...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperExtracting">Rozpakowywanie forka do folderu gry...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDetectingRunner">Wykrywanie Twojego runnera Proton/Wine...</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Wybierz runner Wine/Proton</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">Znaleziono kilka runnerów Wine/Proton i nie jest jasne, którego używa ta gra. Wybierz ten skonfigurowany w launcherze gry (Właściwości Steam → Zgodność) albo wskaż go ręcznie.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">Przeglądaj folder...</x:String>
@@ -837,6 +845,10 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Instalator forka dla Linuksa nie powiódł się: {0}</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">Wklej to w Steam</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">Mod działa za pośrednictwem małego skryptu uruchomieniowego wygenerowanego przez fork dla Linuksa. Jeśli używasz Steam, wklej to w opcjach uruchamiania tej gry (Właściwości → Ogólne → Opcje uruchamiania):</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">Wyczyść opcje uruchamiania gry</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">Mod został odinstalowany. Usuń opcje uruchamiania, które dla niego wkleiłeś (Steam: Właściwości → Ogólne → Opcje uruchamiania) — nadal wskazują na właśnie usunięty skrypt uruchamiający, a gra nie wystartuje, dopóki ich nie usuniesz.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Fork Linux (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Wersja wrappera OptiScaler (społeczność, nieoficjalna)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Uruchom instalator</x:String>

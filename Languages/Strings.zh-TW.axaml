@@ -789,11 +789,15 @@
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">例如 DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
     <x:String x:Key="TxtSetupNr">設定 NR</x:String>
-    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">danielblnc 的模組需要 AMD 顯示卡。</x:String>
+    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">danielblnc 的模組需要 AMD RDNA 3 或 RDNA 4 顯示卡。</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTitle">DLSS Neural Rendering（適用於 AMD）</x:String>
     <x:String x:Key="TxtSetupNrModeNone">無</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlyShort">僅 danielblnc 模組</x:String>
+
+    <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">僅 danielblnc 模組(分支)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">模組 + OptiScaler</x:String>
+
+    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">目前在 Linux 上不可用。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(僅模組)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">透過 danielblnc 的非官方模組在 AMD GPU 上使用 DLSS Neural Rendering，可選擇與非官方 OptiScaler 建置版本結合使用。此功能為實驗性，不受官方支持，且與 OptiScaler 本身的放大器無關——使用風險自負。</x:String>
@@ -818,9 +822,13 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支援 Neural Rendering，因此需要使用社群打包的版本（MatheusGViana）才能搭配使用。安裝風險請自行承擔。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模組版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">用於產生 AMD 權重的 danielblnc DLSS Neural Rendering 模組版本。「danielblnc mod only」和「Mod + OptiScaler」都需要它。</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">透過一個非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux),經由真正的 ROCm 橋接,在 Linux 上執行 danielblnc 的 DLSS Neural Rendering 模組 —— 與這兩個專案均無關聯,屬於實驗性質,且沒有官方的再散布授權。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">透過一個非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux),經由真正的 ROCm 橋接,在 Linux 上執行 danielblnc 的 DLSS Neural Rendering 模組</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">在 Linux 上,這會使用 guentra 的非官方分支 DLSS-NR-on-AMD-Linux(而非直接使用 danielblnc 的安裝程式),它會將模組橋接到真正的 ROCm 執行環境,使其 GPU 檢測能在 Wine/Proton 下通過。感謝:danielblnc/DLSS-NR-on-AMD(模組本體)與 guentra/DLSS-NR-on-AMD-Linux(分支)。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">正在安裝(Linux 分支)...</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">正在下載 Linux 分支...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperExtracting">正在將分支解壓縮到遊戲資料夾...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDetectingRunner">正在偵測您的 Proton/Wine 執行環境...</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">選擇 Wine/Proton 執行器</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">發現了多個 Wine/Proton 執行器,無法確定此遊戲使用的是哪一個。請選擇該遊戲啟動器中設定的那個(Steam 內容 → 相容性),或手動瀏覽選擇。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">瀏覽資料夾...</x:String>
@@ -831,6 +839,10 @@
     <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linux 分支安裝程式失敗:{0}</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">將此貼上到 Steam 中</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">此模組會透過 Linux 分支產生的一個小型啟動指令碼執行。如果你使用 Steam,請將此貼到該遊戲的啟動選項中(內容 → 一般 → 啟動選項):</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">請清除遊戲的啟動選項</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">模組已解除安裝。請刪除你為它貼上的啟動選項(Steam:內容 → 一般 → 啟動選項)——它們仍然指向剛剛被刪除的啟動腳本,在清除之前遊戲無法啟動。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 分支(guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper 版本（社群，非官方）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">執行安裝程式</x:String>

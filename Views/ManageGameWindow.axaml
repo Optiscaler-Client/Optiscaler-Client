@@ -509,6 +509,40 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Shown instead of BetaInfoPanel/PanelModdedWarning while danielblnc's
+                                 mod-only Setup NR mode is pending/installed on Linux — there, "Setup NR"
+                                 doesn't run danielblnc's own installer at all, it runs
+                                 guentra/DLSS-NR-on-AMD-Linux, an unofficial third-party fork (not
+                                 affiliated with either project) that bridges the mod to a real ROCm
+                                 runtime so its GPU check can pass under Wine/Proton. See code-behind's
+                                 CmbSetupNr_SelectionChanged and ExecuteLinuxWrapperInstallAsync. -->
+                            <Border Name="PanelDlssNrLinuxWrapperWarning"
+                                    Background="#2E2410"
+                                    BorderBrush="{StaticResource BrWarning}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="{StaticResource BrWarning}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtSetupNrLinuxWrapperWarning}"
+                                               Foreground="{StaticResource BrWarning}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Info panel - shown when neither an OptiScaler version nor a FSR4 INT8
                                  version is selected, so there's nothing for Install/Swap to do
                                  (see UpdateInstallButtonsForSwapState, which also greys out the
@@ -962,8 +996,8 @@
                                                  for other vendors — see IsSetupNrGpuAllowed). On Linux
                                                  this runs via guentra/DLSS-NR-on-AMD-Linux instead of
                                                  danielblnc's own installer directly — see
-                                                 PanelDlssNrLinuxWrapperWarning below and code-behind's
-                                                 ExecuteLinuxWrapperInstallAsync. -->
+                                                 PanelDlssNrLinuxWrapperWarning (near PanelModdedWarning
+                                                 above) and code-behind's ExecuteLinuxWrapperInstallAsync. -->
                                             <StackPanel Name="PanelDlssNrOnAmd" Grid.Column="1">
                                                 <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
                                                     <TextBlock Text="{DynamicResource TxtDlssNrOnAmdTitle}"
@@ -1027,39 +1061,6 @@
                                                           SelectionChanged="CmbDlssNrDanielVersion_SelectionChanged"/>
                                             </StackPanel>
                                         </Grid>
-
-                                        <!-- On Linux, "Setup NR" above doesn't run danielblnc's own
-                                             installer at all — it runs guentra/DLSS-NR-on-AMD-Linux,
-                                             an unofficial third-party fork (not affiliated with
-                                             either project) that bridges the mod to a real ROCm
-                                             runtime so its GPU check can pass under Wine/Proton (see
-                                             context/dlssnr-on-amd-linux-setup.md). Shown only there —
-                                             see code-behind's OperatingSystem.IsWindows() check. -->
-                                        <Border Name="PanelDlssNrLinuxWrapperWarning"
-                                                Background="#2E2410"
-                                                BorderBrush="{StaticResource BrWarning}"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
-                                                Padding="10,6"
-                                                IsVisible="False">
-                                            <Grid ColumnDefinitions="Auto,*">
-                                                <TextBlock Grid.Column="0"
-                                                           Text="&#xF4A4;"
-                                                           FontFamily="{StaticResource FontIcons}"
-                                                           Foreground="{StaticResource BrWarning}"
-                                                           FontSize="16"
-                                                           FontWeight="Bold"
-                                                           VerticalAlignment="Top"
-                                                           Margin="0,0,8,0"/>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{DynamicResource TxtSetupNrLinuxWrapperWarning}"
-                                                           Foreground="{StaticResource BrWarning}"
-                                                           FontSize="12"
-                                                           FontWeight="Medium"
-                                                           VerticalAlignment="Center"
-                                                           TextWrapping="Wrap"/>
-                                            </Grid>
-                                        </Border>
                                       </StackPanel>
                                     </Border>
                                     <Border Name="BorderExperimentalChip"

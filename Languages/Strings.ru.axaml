@@ -775,11 +775,15 @@
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">например, DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
     <x:String x:Key="TxtSetupNr">Настройка NR</x:String>
-    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">Мод danielblnc требует видеокарту AMD.</x:String>
+    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">Мод danielblnc требует видеокарту AMD RDNA 3 или RDNA 4.</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTitle">DLSS Neural Rendering (для AMD)</x:String>
     <x:String x:Key="TxtSetupNrModeNone">Нет</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlyShort">Только мод danielblnc</x:String>
+
+    <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">Только мод danielblnc (форк)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">Мод + OptiScaler</x:String>
+
+    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">Пока недоступно в Linux.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (только мод)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">Позволяет использовать DLSS Neural Rendering на видеокартах AMD с помощью неофициального мода danielblnc, при желании в сочетании с неофициальной сборкой OptiScaler. Экспериментально, без официальной поддержки и не связано с собственными апскейлерами OptiScaler — используйте на свой риск.</x:String>
@@ -804,9 +808,13 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">На данный момент OptiScaler не имеет официальной поддержки Neural Rendering, поэтому для совместного использования требуется сборка сообщества (MatheusGViana). Устанавливайте на свой страх и риск.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Версия мода (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Версия мода DLSS Neural Rendering от danielblnc, используемая для генерации весов AMD. Нужна как для "danielblnc mod only", так и для "Mod + OptiScaler".</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Использует неофициальный сторонний форк (guentra/DLSS-NR-on-AMD-Linux) для запуска мода DLSS Neural Rendering от danielblnc в Linux через настоящий мост к ROCm — не связан ни с одним из этих проектов, экспериментален и не имеет официальной лицензии на распространение.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Использует неофициальный сторонний форк (guentra/DLSS-NR-on-AMD-Linux) для запуска мода DLSS Neural Rendering от danielblnc в Linux через настоящий мост к ROCm</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">В Linux используется неофициальный форк guentra — DLSS-NR-on-AMD-Linux (а не установщик danielblnc напрямую), который связывает мод с настоящей средой выполнения ROCm, чтобы проверка GPU могла пройти под Wine/Proton. Благодарности: danielblnc/DLSS-NR-on-AMD (мод) и guentra/DLSS-NR-on-AMD-Linux (форк).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Установка (форк для Linux)...</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Загрузка форка для Linux...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperExtracting">Распаковка форка в папку игры...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDetectingRunner">Определение вашего Proton/Wine-раннера...</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Выберите среду выполнения Wine/Proton</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">Найдено несколько сред выполнения Wine/Proton, и непонятно, какую использует эта игра. Выберите ту, что настроена в лаунчере игры (Свойства Steam → Совместимость), либо укажите вручную.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">Обзор папки...</x:String>
@@ -817,6 +825,10 @@
     <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Установщик форка для Linux завершился с ошибкой: {0}</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">Вставьте это в Steam</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">Мод запускается через небольшой скрипт запуска, созданный форком для Linux. Если вы используете Steam, вставьте это в параметры запуска этой игры (Свойства → Общие → Параметры запуска):</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">Очистите параметры запуска игры</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">Мод удалён. Уберите параметры запуска, которые вы для него вставляли (Steam: Свойства → Общие → Параметры запуска) — они по-прежнему указывают на только что удалённый скрипт запуска, и игра не запустится, пока вы их не уберёте.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Форк для Linux (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Версия обёртки OptiScaler (сообщество, неофициально)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Запустить установщик</x:String>

@@ -30,6 +30,7 @@ namespace OptiscalerClient.Views
         private List<string> _fsr4SwapDefaultFileKeys = new();
         private GamepadDialogNavigationHelper? _gamepadHelper;
         private readonly DlssNrOnAmdService _dlssNrService = new();
+        private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
         /// <summary>Whether CmbDefaultOptiScalerVersion currently shows the "Modded" wrapper releases
         /// (Setup NR default mode = "daniel-and-opti") instead of the normal Stable/Beta/Nightly/
         /// Custom channels — see SetOptiDefaultTabsForModdedMode.</summary>
@@ -639,13 +640,14 @@ namespace OptiscalerClient.Views
         // ── AMD DLSS Neural Rendering mod default ────────────────────────────
 
         /// <summary>Same permissive-when-unknown check as ManageGameWindow.IsSetupNrGpuAllowed —
-        /// only a GPU we're sure isn't AMD hides this section, so the default can never end up
-        /// configured for hardware that can't use it.</summary>
+        /// only a GPU we're sure isn't AMD RDNA 3/4 hides this section, so the default can never end
+        /// up configured for hardware that can't use it. Narrowed from "any AMD GPU" to RDNA 3/4
+        /// specifically — see GpuSelectionHelper.IsRdna3OrRdna4 for why.</summary>
         private bool IsAmdDefaultGpu()
         {
             if (_gpuService == null) return true;
             var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-            return gpu == null || gpu.Vendor == GpuVendor.AMD;
+            return gpu == null || GpuSelectionHelper.IsRdna3OrRdna4(gpu);
         }
 
         /// <summary>Gates the whole "Experimental" zone exactly like ManageGameWindow's
@@ -663,6 +665,28 @@ namespace OptiscalerClient.Views
             var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
             if (cmb == null) return;
 
+            // On Linux, "daniel-only" runs guentra/DLSS-NR-on-AMD-Linux's fork instead of danielblnc's
+            // own installer — labeled explicitly, same as ManageGameWindow's CmbSetupNr.
+            var danielOnlyItem = cmb.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-only");
+            if (danielOnlyItem != null)
+            {
+                danielOnlyItem.Content = OperatingSystem.IsWindows()
+                    ? GetResourceString("TxtSetupNrModeDanielOnlyShort", "danielblnc mod only")
+                    : GetResourceString("TxtSetupNrModeDanielOnlyShortLinux", "danielblnc mod only (fork)");
+            }
+
+            // Locked on Linux — see ManageGameWindow.CmbSetupNr's identical lock for the full reasoning:
+            // confirmed directly that the mod produces zero effect there once OptiScaler is also loaded
+            // (device/hook conflict between the two, not fixable via any ini setting).
+            var danielAndOptiItem = cmb.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-and-opti");
+            if (danielAndOptiItem != null)
+            {
+                danielAndOptiItem.IsEnabled = OperatingSystem.IsWindows();
+                ToolTip.SetTip(danielAndOptiItem, OperatingSystem.IsWindows() ? null : GetResourceString(
+                    "TxtSetupNrDanielAndOptiLinuxBrokenTooltip",
+                    "Not available on Linux at the moment."));
+            }
+
             cmb.SelectionChanged -= CmbDefaultDlssNrOnAmdMode_SelectionChanged;
             var saved = _componentService.Config.DefaultDlssNrOnAmdMode;
             cmb.SelectedIndex = 0; // "none"
@@ -676,7 +700,20 @@ namespace OptiscalerClient.Views
             }
             cmb.SelectionChanged += CmbDefaultDlssNrOnAmdMode_SelectionChanged;
 
-            ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
+            // While Experimental Features is off, this combo is unreachable — hidden along with the
+            // rest of BorderExperimentalZone — so its stored value must not go on locking every other
+            // default option with no visible control left to undo it (same bug, and same fix
+            // principle, as ManageGameWindow.PopulateVersionSelectors' targetSetupNrTag gate).
+            // SelectedItem above still reflects the real stored value (untouched) so BtnSave_Click
+            // doesn't silently overwrite it back to "none" just because the zone was hidden when
+            // saved — only the visible side effects (locking, the Modded tab swap) are suppressed.
+            if (showExperimental)
+                ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
+            else
+            {
+                SetDefaultOptionsLocked(false);
+                SetOptiDefaultTabsForModdedMode(false);
+            }
         }
 
         private void CmbDefaultDlssNrOnAmdMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -716,6 +753,9 @@ namespace OptiscalerClient.Views
             var mode = tag ?? "none";
             SetDefaultOptionsLocked(mode == "daniel-only");
 
+            var warningPanel = this.FindControl<Control>("PanelDefaultDlssNrLinuxWrapperWarning");
+            if (warningPanel != null) warningPanel.IsVisible = mode == "daniel-only" && !OperatingSystem.IsWindows();
+
             var cmbDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
             if (mode == "none")
             {
@@ -748,16 +788,26 @@ namespace OptiscalerClient.Views
             cmb.Items.Clear();
             cmb.IsEnabled = false;
 
+            // On Linux, danielblnc's own Windows installer can never pass its HIP-based GPU check
+            // under Wine — guentra/DLSS-NR-on-AMD-Linux's unofficial fork is used instead, so this
+            // combo lists ITS releases there (mirrors ManageGameWindow's own
+            // PopulateDlssNrDanielVersionComboAsync).
+            var isLinux = !OperatingSystem.IsWindows();
             List<DlssNrOnAmdRelease> releases;
             try
             {
-                releases = await _dlssNrService.GetReleasesAsync();
+                releases = isLinux ? await _dlssNrLinuxWrapperService.GetReleasesAsync() : await _dlssNrService.GetReleasesAsync();
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[DefaultVersions] Could not list danielblnc releases: {ex.Message}");
+                DebugWindow.Log($"[DefaultVersions] Could not list {(isLinux ? "guentra/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
                 releases = new List<DlssNrOnAmdRelease>();
             }
+
+            ToolTip.SetTip(cmb, isLinux
+                ? GetResourceString("TxtSetupNrLinuxWrapperTooltip",
+                    "On Linux this uses guentra's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and guentra/DLSS-NR-on-AMD-Linux (the fork).")
+                : null);
 
             if (releases.Count == 0)
             {

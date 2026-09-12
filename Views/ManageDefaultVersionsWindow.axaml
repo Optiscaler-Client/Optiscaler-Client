@@ -576,6 +576,7 @@
                                             CornerRadius="{StaticResource RadiusMedium}"
                                             Padding="12,16,12,12"
                                             IsVisible="False">
+                                      <StackPanel Spacing="10">
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                                             <StackPanel Name="PanelDefaultDlssNrOnAmd" Grid.Column="0">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
@@ -639,6 +640,37 @@
                                                           IsEnabled="False"/>
                                             </StackPanel>
                                         </Grid>
+
+                                        <!-- Same fork disclosure as ManageGameWindow's
+                                             PanelDlssNrLinuxWrapperWarning — visible only while
+                                             "daniel-only" is selected on Linux (see
+                                             ApplyDlssNrOnAmdModeSelection). -->
+                                        <Border Name="PanelDefaultDlssNrLinuxWrapperWarning"
+                                                Background="#2E2410"
+                                                BorderBrush="{StaticResource BrWarning}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="10,6"
+                                                IsVisible="False">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="&#xF4A4;"
+                                                           FontFamily="{StaticResource FontIcons}"
+                                                           Foreground="{StaticResource BrWarning}"
+                                                           FontSize="16"
+                                                           FontWeight="Bold"
+                                                           VerticalAlignment="Top"
+                                                           Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{DynamicResource TxtSetupNrLinuxWrapperWarning}"
+                                                           Foreground="{StaticResource BrWarning}"
+                                                           FontSize="12"
+                                                           FontWeight="Medium"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="Wrap"/>
+                                            </Grid>
+                                        </Border>
+                                      </StackPanel>
                                     </Border>
                                     <Border Name="BorderExperimentalChip"
                                             Background="{StaticResource BrBgDeep}"

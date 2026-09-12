@@ -789,11 +789,15 @@
     <x:String x:Key="TxtDlssEnablerNamePlaceholder">例: DLSS Enabler 3.1</x:String>
     <x:String x:Key="TxtRenodxLbl">RenoDX</x:String>
     <x:String x:Key="TxtSetupNr">NRセットアップ</x:String>
-    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">danielblncのMODにはAMD GPUが必要です。</x:String>
+    <x:String x:Key="TxtSetupNrRequiresAmdTooltip">danielblnc の MOD には AMD RDNA 3 または RDNA 4 の GPU が必要です。</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTitle">DLSS Neural Rendering（AMD 向け）</x:String>
     <x:String x:Key="TxtSetupNrModeNone">なし</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlyShort">danielblnc の MOD のみ</x:String>
+
+    <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">danielblnc の MOD のみ (フォーク)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">MOD + OptiScaler</x:String>
+
+    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">現在Linuxでは利用できません。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(modのみ)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc の非公式 MOD を使って AMD GPU で DLSS Neural Rendering を実行できます（任意で非公式の OptiScaler ビルドと組み合わせ可能）。実験的機能であり公式サポート対象外、OptiScaler 本来のアップスケーラーとは無関係です — 自己責任でご利用ください。</x:String>
@@ -818,9 +822,13 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">現時点でOptiScalerはNeural Renderingを公式にサポートしていないため、併用するにはコミュニティによるラップ版ビルド（MatheusGViana）が必要です。自己責任でインストールしてください。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">モッドのバージョン（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMDのweightsを生成するために使用するdanielblncのDLSS Neural Renderingモッドのバージョンです。「danielblnc mod only」と「Mod + OptiScaler」の両方で必要です。</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">非公式のサードパーティ製フォーク(guentra/DLSS-NR-on-AMD-Linux)を使い、実際のROCmブリッジ経由でdanielblncのDLSS Neural RenderingモッドをLinuxで動かします — どちらのプロジェクトとも提携しておらず、実験的で、再配布の公式ライセンスもありません。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">非公式のサードパーティ製フォーク(guentra/DLSS-NR-on-AMD-Linux)を使い、実際のROCmブリッジ経由でdanielblncのDLSS Neural RenderingモッドをLinuxで動かします</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linuxではdanielblncのインストーラーを直接使うのではなく、guentraの非公式フォークDLSS-NR-on-AMD-Linuxを使用します。これはModを実際のROCmランタイムに橋渡しし、Wine/Proton下でもGPUチェックを通過できるようにします。クレジット: danielblnc/DLSS-NR-on-AMD(Mod本体)、guentra/DLSS-NR-on-AMD-Linux(フォーク)。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">インストール中(Linuxフォーク)...</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Linuxフォークをダウンロード中...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperExtracting">フォークをゲームフォルダーに展開中...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDetectingRunner">Proton/Wineランナーを検出中...</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Wine/Protonランナーを選択</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">複数のWine/Protonランナーが見つかりましたが、このゲームがどれを使用しているか不明です。ゲームのランチャーで設定されているもの(Steamのプロパティ→互換性)を選ぶか、手動で参照してください。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">フォルダーを参照...</x:String>
@@ -831,6 +839,10 @@
     <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linuxフォークのインストーラーが失敗しました: {0}</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">これをSteamに貼り付けてください</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">このModはLinuxフォークが生成する小さな起動スクリプトを通じて実行されます。Steamを使用している場合は、このゲームの起動オプション(プロパティ→全般→起動オプション)にこれを貼り付けてください:</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">ゲームの起動オプションを消してください</x:String>
+
+    <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">MODはアンインストールされました。そのために貼り付けた起動オプションを削除してください(Steam: プロパティ → 一般 → 起動オプション)。今削除された起動スクリプトをまだ参照しているため、消すまでゲームは起動しません。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linuxフォーク (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScalerラッパーのバージョン（コミュニティ、非公式）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">インストーラーを実行</x:String>

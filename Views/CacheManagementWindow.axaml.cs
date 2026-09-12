@@ -265,15 +265,9 @@ namespace OptiscalerClient.Views
                 sidebar.Children.Add(CreateTopButton("nvngxdlssnr",
                     Application.Current?.FindResource("TxtSetupNrNvngxPageLbl") as string ?? "nvngx_dlssnr.dll", "\uF4D3"));
 
-                // guentra/DLSS-NR-on-AMD-Linux downloads \u2014 Linux-only (see DlssNrLinuxWrapperService):
-                // on Linux, Setup NR runs this unofficial fork instead of danielblnc's own installer
-                // directly, so its cached tar.gz versions get their own page here, same shape as
-                // "dlssnronamd" above.
-                if (!OperatingSystem.IsWindows())
-                {
-                    sidebar.Children.Add(CreateTopButton("dlssnrlinuxwrapper",
-                        Application.Current?.FindResource("TxtSetupNrLinuxWrapperCacheSection") as string ?? "Linux Wrapper (guentra)", "\uF4D3"));
-                }
+                // guentra/DLSS-NR-on-AMD-Linux's cached tar.gz downloads (Linux-only) are listed
+                // inside "dlssnronamd" itself, under their own divider \u2014 see RenderDlssNrOnAmd \u2014
+                // instead of getting a separate sidebar page.
             }
 
             // Section rendering/selection is the caller's responsibility (each constructor calls
@@ -372,7 +366,6 @@ namespace OptiscalerClient.Views
                 case "renodx":      RenderRenodx(content); break;
                 case "dlssnronamd": RenderDlssNrOnAmd(content); break;
                 case "nvngxdlssnr": RenderNvngxDlssNr(content); break;
-                case "dlssnrlinuxwrapper": RenderDlssNrLinuxWrapper(content); break;
             }
         }
 
@@ -806,7 +799,10 @@ namespace OptiscalerClient.Views
         /// <summary>
         /// danielblnc/DLSS-NR-on-AMD downloads, part of "Setup NR". Versions land here automatically
         /// (Setup NR's Save button backgrounds the download — see DlssNrOnAmdService), but this tab
-        /// also lets the user fetch an extra version ahead of time or free up space.
+        /// also lets the user fetch an extra version ahead of time or free up space. On Linux, also
+        /// lists guentra/DLSS-NR-on-AMD-Linux's cached tar.gz downloads underneath a divider — that
+        /// fork is what Setup NR actually runs there instead of danielblnc's own installer (see
+        /// ManageGameWindow.ExecuteLinuxWrapperInstallAsync) — rather than giving it a separate page.
         /// </summary>
         private void RenderDlssNrOnAmd(StackPanel content)
         {
@@ -814,16 +810,34 @@ namespace OptiscalerClient.Views
             // backgrounds the download, see DlssNrOnAmdService); this page is list + delete only.
             var versions = _dlssNrService.GetDownloadedVersions();
             var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrService.GetCachePath(v)));
-            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
 
-            if (versions.Count == 0)
+            var isLinux = !OperatingSystem.IsWindows();
+            var linuxVersions = isLinux ? _dlssNrLinuxWrapperService.GetDownloadedVersions() : new List<string>();
+            var linuxSizes = linuxVersions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrLinuxWrapperService.GetCachePath(v)));
+
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum() + linuxSizes.Values.Sum()));
+
+            if (versions.Count == 0 && linuxVersions.Count == 0)
             {
                 content.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
                 return;
             }
 
+            if (isLinux) content.Children.Add(MakeSectionDivider("danielblnc/DLSS-NR-on-AMD"));
+            if (versions.Count == 0 && isLinux)
+                content.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
             foreach (var ver in versions)
                 content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrOnAmd: true, sizeBytes: sizes[ver]));
+
+            if (isLinux)
+            {
+                content.Children.Add(MakeSectionDivider(
+                    Application.Current?.FindResource("TxtSetupNrLinuxWrapperCacheSection") as string ?? "Linux Fork (guentra)"));
+                if (linuxVersions.Count == 0)
+                    content.Children.Add(MakeEmptyLabel("No guentra/DLSS-NR-on-AMD-Linux versions cached."));
+                foreach (var ver in linuxVersions)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrLinuxWrapper: true, sizeBytes: linuxSizes[ver]));
+            }
         }
 
         /// <summary>
@@ -1032,28 +1046,6 @@ namespace OptiscalerClient.Views
                 _dlssNrService.DeleteModeBOutputCache();
                 RefreshWeightsCard();
             };
-        }
-
-        /// <summary>
-        /// guentra/DLSS-NR-on-AMD-Linux downloads — Linux-only, part of "Setup NR". Same shape as
-        /// RenderDlssNrOnAmd above (versions land here automatically as they're selected in the Setup
-        /// NR version combo — see ManageGameWindow.ApplyDlssNrDanielVersionSelection's Linux branch —
-        /// this page is list + delete only, no manual add).
-        /// </summary>
-        private void RenderDlssNrLinuxWrapper(StackPanel content)
-        {
-            var versions = _dlssNrLinuxWrapperService.GetDownloadedVersions();
-            var sizes = versions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrLinuxWrapperService.GetCachePath(v)));
-            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum()));
-
-            if (versions.Count == 0)
-            {
-                content.Children.Add(MakeEmptyLabel("No guentra/DLSS-NR-on-AMD-Linux versions cached."));
-                return;
-            }
-
-            foreach (var ver in versions)
-                content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrLinuxWrapper: true, sizeBytes: sizes[ver]));
         }
 
         /// <summary>
@@ -1507,6 +1499,28 @@ namespace OptiscalerClient.Views
             Foreground = this.FindResource("BrTextSecondary") as IBrush,
             Margin = new Thickness(0, 8, 0, 0)
         };
+
+        /// <summary>Separates two groups of version cards within the same page (e.g. danielblnc's
+        /// releases from guentra's fork releases in RenderDlssNrOnAmd) — a thin rule plus a caption
+        /// label, rather than a whole separate sidebar page for what both amount to "Setup NR".</summary>
+        private StackPanel MakeSectionDivider(string label)
+        {
+            var panel = new StackPanel { Margin = new Thickness(0, 16, 0, 8) };
+            panel.Children.Add(new Border
+            {
+                Height = 1,
+                Background = this.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+            panel.Children.Add(new TextBlock
+            {
+                Text = label,
+                FontSize = 12,
+                FontWeight = FontWeight.Bold,
+                Foreground = this.FindResource("BrTextSecondary") as IBrush
+            });
+            return panel;
+        }
 
         private void UpdateCacheInfo()
         {
