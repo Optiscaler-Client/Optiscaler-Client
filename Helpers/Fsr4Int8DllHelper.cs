@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using OptiscalerClient.Services;
 
 namespace OptiscalerClient.Helpers
 {
@@ -134,7 +135,10 @@ namespace OptiscalerClient.Helpers
         /// <summary>
         /// Attempts to find a file in the game directory that corresponds to the given standard FSR DLL name,
         /// even if it was renamed by the developers (e.g., Hogwarts Legacy renames the loader).
-        /// It checks the OriginalFilename and FileDescription metadata.
+        /// It checks the OriginalFilename and FileDescription metadata via
+        /// GameAnalyzerService.GetOriginalFilenameAndDescription — not FileVersionInfo directly, which
+        /// silently returns nothing for both fields on Linux (it can't parse PE version resources
+        /// there), so this whole renamed-file lookup used to just never match on Linux at all.
         /// </summary>
         public static string? FindRenamedTarget(string gameDir, string standardName)
         {
@@ -157,13 +161,13 @@ namespace OptiscalerClient.Helpers
 
                 foreach (var file in possibleFiles)
                 {
-                    var vi = System.Diagnostics.FileVersionInfo.GetVersionInfo(file);
-                    
-                    if (string.Equals(vi.OriginalFilename, standardName, System.StringComparison.OrdinalIgnoreCase))
+                    var (originalFilename, fileDescription) = GameAnalyzerService.GetOriginalFilenameAndDescription(file);
+
+                    if (string.Equals(originalFilename, standardName, System.StringComparison.OrdinalIgnoreCase))
                         return file;
 
-                    if (!string.IsNullOrEmpty(searchWord) && 
-                        (vi.FileDescription?.Contains(searchWord, System.StringComparison.OrdinalIgnoreCase) == true))
+                    if (!string.IsNullOrEmpty(searchWord) &&
+                        (fileDescription?.Contains(searchWord, System.StringComparison.OrdinalIgnoreCase) == true))
                     {
                         return file;
                     }

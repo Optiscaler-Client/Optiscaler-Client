@@ -652,57 +652,8 @@ public class GameAnalyzerService
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var reader = new BinaryReader(fs);
 
-            // DOS header: MZ signature + e_lfanew at offset 0x3C
-            if (reader.ReadUInt16() != 0x5A4D) return "0.0.0.0";
-            fs.Seek(0x3C, SeekOrigin.Begin);
-            var peOffset = reader.ReadUInt32();
-
-            // PE signature
-            fs.Seek(peOffset, SeekOrigin.Begin);
-            if (reader.ReadUInt32() != 0x00004550) return "0.0.0.0";
-
-            // COFF header
-            reader.ReadUInt16(); // Machine
-            var numSections = reader.ReadUInt16();
-            reader.ReadBytes(12); // TimeDateStamp, PointerToSymbolTable, NumberOfSymbols
-            var optHeaderSize = reader.ReadUInt16();
-            reader.ReadUInt16(); // Characteristics
-
-            // Optional header
-            var optHeaderStart = fs.Position;
-            var magic = reader.ReadUInt16();
-            bool is64 = magic == 0x20B; // PE32+ vs PE32
-
-            // DataDirectory[2] = Resource Table
-            // PE32:  DataDirectory starts at offset 96 → resource at 96 + 2*8 = 112
-            // PE32+: DataDirectory starts at offset 112 → resource at 112 + 2*8 = 128
-            var resourceDirOffset = (is64 ? 112 : 96) + 16;
-            fs.Seek(optHeaderStart + resourceDirOffset, SeekOrigin.Begin);
-            var rsrcRVA = reader.ReadUInt32();
-            var rsrcSize = reader.ReadUInt32();
-
-            if (rsrcRVA == 0 || rsrcSize == 0) return "0.0.0.0";
-
-            // Section headers: find the section containing the resource RVA
-            fs.Seek(optHeaderStart + optHeaderSize, SeekOrigin.Begin);
-            uint rsrcFileOffset = 0;
-            for (int i = 0; i < numSections; i++)
-            {
-                reader.ReadBytes(8); // Name
-                reader.ReadUInt32(); // VirtualSize
-                var va = reader.ReadUInt32(); // VirtualAddress
-                var rawSize = reader.ReadUInt32();
-                var rawOffset = reader.ReadUInt32();
-                reader.ReadBytes(16); // Rest of section header
-
-                if (va <= rsrcRVA && rsrcRVA < va + rawSize)
-                {
-                    rsrcFileOffset = rawOffset + (rsrcRVA - va);
-                    break;
-                }
-            }
-
-            if (rsrcFileOffset == 0) return "0.0.0.0";
+            if (!TryLocateResourceSection(reader, fs, out var rsrcFileOffset, out var rsrcSize))
+                return "0.0.0.0";
 
             // Scan the resource section for VS_FIXEDFILEINFO in bounded windows rather than reading it
             // all into memory at once: version info is normally within the first few KB, but at least
@@ -729,6 +680,177 @@ public class GameAnalyzerService
         catch { }
 
         return "0.0.0.0";
+    }
+
+    /// <summary>Locates a PE file's .rsrc section (DOS/PE headers → DataDirectory[2] → matching
+    /// section header), shared by ReadPeFileVersion (VS_FIXEDFILEINFO) and ReadPeVersionStrings
+    /// (StringFileInfo entries like OriginalFilename/FileDescription) so the header-walking logic
+    /// exists in exactly one place.</summary>
+    private static bool TryLocateResourceSection(BinaryReader reader, FileStream fs, out long rsrcFileOffset, out uint rsrcSize)
+    {
+        rsrcFileOffset = 0;
+        rsrcSize = 0;
+
+        // DOS header: MZ signature + e_lfanew at offset 0x3C
+        if (reader.ReadUInt16() != 0x5A4D) return false;
+        fs.Seek(0x3C, SeekOrigin.Begin);
+        var peOffset = reader.ReadUInt32();
+
+        // PE signature
+        fs.Seek(peOffset, SeekOrigin.Begin);
+        if (reader.ReadUInt32() != 0x00004550) return false;
+
+        // COFF header
+        reader.ReadUInt16(); // Machine
+        var numSections = reader.ReadUInt16();
+        reader.ReadBytes(12); // TimeDateStamp, PointerToSymbolTable, NumberOfSymbols
+        var optHeaderSize = reader.ReadUInt16();
+        reader.ReadUInt16(); // Characteristics
+
+        // Optional header
+        var optHeaderStart = fs.Position;
+        var magic = reader.ReadUInt16();
+        bool is64 = magic == 0x20B; // PE32+ vs PE32
+
+        // DataDirectory[2] = Resource Table
+        // PE32:  DataDirectory starts at offset 96 → resource at 96 + 2*8 = 112
+        // PE32+: DataDirectory starts at offset 112 → resource at 112 + 2*8 = 128
+        var resourceDirOffset = (is64 ? 112 : 96) + 16;
+        fs.Seek(optHeaderStart + resourceDirOffset, SeekOrigin.Begin);
+        var rsrcRVA = reader.ReadUInt32();
+        rsrcSize = reader.ReadUInt32();
+
+        if (rsrcRVA == 0 || rsrcSize == 0) return false;
+
+        // Section headers: find the section containing the resource RVA
+        fs.Seek(optHeaderStart + optHeaderSize, SeekOrigin.Begin);
+        for (int i = 0; i < numSections; i++)
+        {
+            reader.ReadBytes(8); // Name
+            reader.ReadUInt32(); // VirtualSize
+            var va = reader.ReadUInt32(); // VirtualAddress
+            var rawSize = reader.ReadUInt32();
+            var rawOffset = reader.ReadUInt32();
+            reader.ReadBytes(16); // Rest of section header
+
+            if (va <= rsrcRVA && rsrcRVA < va + rawSize)
+            {
+                rsrcFileOffset = rawOffset + (rsrcRVA - va);
+                break;
+            }
+        }
+
+        return rsrcFileOffset != 0;
+    }
+
+    /// <summary>Cross-platform equivalent of FileVersionInfo's OriginalFilename/FileDescription —
+    /// used by Fsr4Int8DllHelper.FindRenamedTarget to recognize an FSR4 file the developer renamed
+    /// (e.g. Hogwarts Legacy ships the loader as amd_fidelityfx_dx12.dll instead of the standard
+    /// amd_fidelityfx_loader_dx12.dll) by its version-resource metadata instead of its filename.
+    /// FileVersionInfo reads these directly on Windows; on Linux it returns nothing for either field
+    /// (the same PE-resource limitation GetFileVersion works around above), which silently broke that
+    /// renamed-file detection there — confirmed directly, this is exactly why. Falls back to the same
+    /// kind of manual .rsrc scan, just searching for StringFileInfo's "OriginalFilename"/
+    /// "FileDescription" string entries instead of the VS_FIXEDFILEINFO struct.</summary>
+    internal static (string? OriginalFilename, string? FileDescription) GetOriginalFilenameAndDescription(string filePath)
+    {
+        try
+        {
+            var info = FileVersionInfo.GetVersionInfo(filePath);
+            if (!string.IsNullOrEmpty(info.OriginalFilename) || !string.IsNullOrEmpty(info.FileDescription))
+                return (info.OriginalFilename, info.FileDescription);
+        }
+        catch { }
+
+        if (OperatingSystem.IsWindows()) return (null, null);
+        return ReadPeVersionStrings(filePath);
+    }
+
+    /// <summary>Manual .rsrc scan for the StringFileInfo table's OriginalFilename/FileDescription
+    /// values — see GetOriginalFilenameAndDescription. Same windowed-scan shape as ReadPeFileVersion
+    /// (bounded per-window reads, overlap so a match straddling a window boundary isn't missed), just
+    /// searching for two string keys instead of one binary signature.</summary>
+    private static (string? OriginalFilename, string? FileDescription) ReadPeVersionStrings(string filePath)
+    {
+        try
+        {
+            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var reader = new BinaryReader(fs);
+
+            if (!TryLocateResourceSection(reader, fs, out var rsrcFileOffset, out var rsrcSize))
+                return (null, null);
+
+            const int windowSize = 4 * 1024 * 1024;
+            const int overlap = 4 * 1024;
+            var totalToScan = (int)Math.Min(rsrcSize, 256L * 1024 * 1024);
+            string? originalFilename = null, fileDescription = null;
+            for (var scanned = 0; scanned < totalToScan; scanned += windowSize - overlap)
+            {
+                var toRead = Math.Min(windowSize, totalToScan - scanned);
+                fs.Seek(rsrcFileOffset + scanned, SeekOrigin.Begin);
+                var rsrcData = reader.ReadBytes(toRead);
+
+                if (originalFilename == null && TryFindVersionStringValue(rsrcData, "OriginalFilename", out var of))
+                    originalFilename = of;
+                if (fileDescription == null && TryFindVersionStringValue(rsrcData, "FileDescription", out var fd))
+                    fileDescription = fd;
+
+                if (originalFilename != null && fileDescription != null) break;
+                if (toRead < windowSize) break; // reached the end of the section
+            }
+
+            return (originalFilename, fileDescription);
+        }
+        catch { }
+
+        return (null, null);
+    }
+
+    /// <summary>Finds a VS_VERSIONINFO StringFileInfo entry by key (e.g. "OriginalFilename") via a
+    /// direct byte scan rather than a structural parse: looks for the key's UTF-16LE bytes followed by
+    /// a null terminator (proving it's a real string, not a coincidental byte match), skips the
+    /// standard 32-bit alignment padding, then reads the value that follows up to its own null
+    /// terminator. Good enough for this file's one real use — recognizing a handful of known
+    /// AMD/FidelityFX metadata strings — without needing a full VS_VERSIONINFO/StringTable parser.</summary>
+    private static bool TryFindVersionStringValue(byte[] data, string key, out string? value)
+    {
+        value = null;
+        var keyBytes = System.Text.Encoding.Unicode.GetBytes(key);
+        for (int i = 0; i <= data.Length - keyBytes.Length - 2; i++)
+        {
+            bool match = true;
+            for (int k = 0; k < keyBytes.Length; k++)
+            {
+                if (data[i + k] != keyBytes[k]) { match = false; break; }
+            }
+            if (!match) continue;
+
+            var afterKey = i + keyBytes.Length;
+            if (afterKey + 1 >= data.Length || data[afterKey] != 0 || data[afterKey + 1] != 0) continue;
+
+            var valueStart = afterKey + 2;
+            // VS_VERSIONINFO members are DWORD-aligned relative to the structure they're nested in;
+            // this approximates that alignment from the raw offset, which holds in practice for the
+            // standard MSVC-generated layout this targets.
+            if (valueStart % 4 != 0) valueStart += 2;
+            if (valueStart >= data.Length) continue;
+
+            var maxLen = Math.Min(520, data.Length - valueStart); // 260 WCHARs, generous (MAX_PATH)
+            var end = valueStart;
+            while (end + 1 < valueStart + maxLen)
+            {
+                if (data[end] == 0 && data[end + 1] == 0) break;
+                end += 2;
+            }
+            if (end <= valueStart) continue; // empty value — keep looking, might be a stray key match
+
+            var str = System.Text.Encoding.Unicode.GetString(data, valueStart, end - valueStart).Trim();
+            if (string.IsNullOrEmpty(str)) continue;
+
+            value = str;
+            return true;
+        }
+        return false;
     }
 
     /// <summary>Searches one buffer for a VS_FIXEDFILEINFO struct (magic FEEF04BD) and, if found,
