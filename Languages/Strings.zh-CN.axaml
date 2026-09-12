@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">更改用户界面语言</x:String>
     <x:String x:Key="TxtClose">关闭</x:String>
     <x:String x:Key="TxtGotIt">确定</x:String>
+    <x:String x:Key="TxtCopy">复制</x:String>
     <x:String x:Key="TxtAppRepoTitle">应用仓库</x:String>
     <x:String x:Key="TxtAppRepoDesc">用于更新和反馈的目标 GitHub 仓库（所有者/仓库名）。</x:String>
     <!-- Guide Window -->
@@ -816,6 +817,20 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支持 Neural Rendering，因此需要使用社区打包的版本（MatheusGViana）才能配合使用。安装风险自负。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">用于生成 AMD 权重的 danielblnc DLSS Neural Rendering 模组版本。“danielblnc mod only” 和 “Mod + OptiScaler” 都需要它。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组 —— 与这两个项目均无关联,处于实验阶段,且没有官方的再分发许可。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">在 Linux 上,这会使用 guentra 的非官方分支 DLSS-NR-on-AMD-Linux(而非直接使用 danielblnc 的安装程序),它将模组桥接到真正的 ROCm 运行时,使其 GPU 检测能在 Wine/Proton 下通过。鸣谢:danielblnc/DLSS-NR-on-AMD(模组本体)与 guentra/DLSS-NR-on-AMD-Linux(分支)。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">正在安装(Linux 分支)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">选择 Wine/Proton 运行器</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">发现了多个 Wine/Proton 运行器,无法确定此游戏使用的是哪一个。请选择该游戏启动器中配置的那个(Steam 属性 → 兼容性),或手动浏览选择。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">浏览文件夹...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">使用所选项</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">请先选择一个运行器,或使用&quot;浏览文件夹&quot;。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">选择 Wine/Proton 运行器所在文件夹</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">无法下载 Linux 分支:{0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linux 分支安装程序失败:{0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">将此粘贴到 Steam 中</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">该模组通过 Linux 分支生成的一个小型启动脚本运行。如果你使用 Steam,请将其粘贴到该游戏的启动选项中(属性 → 常规 → 启动选项):</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 分支(guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper 版本（社区，非官方）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">运行安装程序</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">下载并准备</x:String>
@@ -834,6 +849,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">下载出错：{0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc 的模组已成功下载,但需要手动安装:&#10;1) 点击"运行安装程序"。&#10;2) 按照终端中显示的步骤操作。重要:当询问使用哪个代理 DLL 时,选择一个与 dxgi.dll 不同的(例如 dbghelp.dll)——之后 OptiScaler 会作为 dxgi.dll 安装,两者需要各自独立的位置。&#10;&#10;检测到安装程序结束后,此窗口会自动关闭并安装 OptiScaler wrapper。</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc 的模组已成功下载,但需要手动安装:&#10;1) 点击"运行安装程序"。&#10;2) 按照终端中显示的步骤操作(它提供的任何代理 DLL 都可以)。&#10;&#10;检测到安装程序结束后,此窗口会自动关闭。</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">需要 Wine DLL 覆盖</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">在 Linux/Proton 上,可能需要设置 Wine DLL 覆盖 {0} 才能真正生效 — 否则 Wine 可能会继续使用该文件名的内置版本,而不是刚安装的版本。如果你使用 Steam,请将此内容添加到游戏的启动选项:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">无法确定游戏文件夹。</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">无法启动安装程序：{0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defender 阻止了此文件</x:String>

@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">사용자 인터페이스 언어를 변경합니다.</x:String>
     <x:String x:Key="TxtClose">닫기</x:String>
     <x:String x:Key="TxtGotIt">알겠습니다</x:String>
+    <x:String x:Key="TxtCopy">복사</x:String>
     <x:String x:Key="TxtAppRepoTitle">응용 프로그램 저장소</x:String>
     <x:String x:Key="TxtAppRepoDesc">업데이트 및 피드백을 위한 대상 GitHub 저장소 (소유자/저장소 이름).</x:String>
     <!-- Guide Window -->
@@ -804,6 +805,20 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">현재 OptiScaler는 Neural Rendering을 공식적으로 지원하지 않으므로, 함께 사용하려면 커뮤니티에서 래핑한 빌드(MatheusGViana)가 필요합니다. 본인 책임하에 설치하세요.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">모드 버전 (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD 웨이트를 생성하는 데 사용되는 danielblnc의 DLSS Neural Rendering 모드 버전입니다. "danielblnc mod only"와 "Mod + OptiScaler" 모두에 필요합니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">비공식 서드파티 포크(guentra/DLSS-NR-on-AMD-Linux)를 사용해 실제 ROCm 브리지를 통해 danielblnc의 DLSS Neural Rendering 모드를 Linux에서 실행합니다 — 두 프로젝트 어디와도 제휴 관계가 없으며, 실험적이고, 공식 재배포 라이선스가 없습니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linux에서는 danielblnc의 설치 프로그램을 직접 사용하는 대신 guentra의 비공식 포크인 DLSS-NR-on-AMD-Linux를 사용합니다. 이 포크는 모드를 실제 ROCm 런타임에 연결해 Wine/Proton에서도 GPU 검사를 통과할 수 있게 해줍니다. 크레딧: danielblnc/DLSS-NR-on-AMD(모드), guentra/DLSS-NR-on-AMD-Linux(포크).</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">설치 중(Linux 포크)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Wine/Proton 러너 선택</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">여러 개의 Wine/Proton 러너가 발견되어 이 게임이 어떤 것을 사용하는지 명확하지 않습니다. 게임 런처(Steam 속성 → 호환성)에 설정된 것을 선택하거나 직접 찾아보세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">폴더 찾아보기...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">선택한 항목 사용</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">먼저 러너를 선택하거나 &quot;폴더 찾아보기&quot;를 사용하세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">Wine/Proton 러너 폴더 선택</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">Linux 포크를 다운로드할 수 없습니다: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linux 포크 설치 프로그램이 실패했습니다: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">이것을 Steam에 붙여넣으세요</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">이 모드는 Linux 포크가 생성한 작은 실행 스크립트를 통해 실행됩니다. Steam을 사용 중이라면 이 게임의 실행 옵션(속성 → 일반 → 실행 옵션)에 이것을 붙여넣으세요:</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 포크 (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler 래퍼 버전 (커뮤니티, 비공식)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">설치 파일 실행</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">다운로드 및 준비</x:String>
@@ -822,6 +837,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">다운로드 오류: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc의 모드가 성공적으로 다운로드되었지만 수동 설치가 필요합니다:&#10;1) "설치 파일 실행"을 클릭하세요.&#10;2) 터미널에 표시되는 단계를 따르세요. 중요: 사용할 프록시 DLL을 물어보면 dxgi.dll이 아닌 다른 것(예: dbghelp.dll)을 선택하세요 — 이후 OptiScaler가 dxgi.dll로 설치되므로 별도의 슬롯이 필요합니다.&#10;&#10;설치 프로그램이 끝난 것을 감지하면 이 창이 자동으로 닫히고 OptiScaler 래퍼를 설치합니다.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc의 모드가 성공적으로 다운로드되었지만 수동 설치가 필요합니다:&#10;1) "설치 파일 실행"을 클릭하세요.&#10;2) 터미널에 표시되는 단계를 따르세요 (제공되는 프록시 DLL은 어떤 것이든 괜찮습니다).&#10;&#10;설치 프로그램이 끝난 것을 감지하면 이 창이 자동으로 닫힙니다.</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">Wine DLL 재정의가 필요합니다</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton에서는 {0}이(가) 실제로 작동하려면 Wine DLL 재정의가 필요할 수 있습니다 — 그렇지 않으면 Wine이 방금 설치한 파일 대신 해당 이름의 자체 내장 버전을 계속 사용할 수 있습니다. Steam을 사용 중이라면 게임의 실행 옵션에 다음을 추가하세요:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">게임 폴더를 확인할 수 없습니다.</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">설치 프로그램을 실행할 수 없습니다: {0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defender가 이 파일을 차단했습니다</x:String>

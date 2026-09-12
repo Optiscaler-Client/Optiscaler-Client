@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">ユーザーインターフェースの言語を変更します。</x:String>
     <x:String x:Key="TxtClose">閉じる</x:String>
     <x:String x:Key="TxtGotIt">了解</x:String>
+    <x:String x:Key="TxtCopy">コピー</x:String>
     <x:String x:Key="TxtAppRepoTitle">アプリリポジトリ</x:String>
     <x:String x:Key="TxtAppRepoDesc">更新とフィードバックのためのターゲットGitHubリポジトリ（所有者/リポジトリ名）。</x:String>
     <!-- Guide Window -->
@@ -817,6 +818,20 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">現時点でOptiScalerはNeural Renderingを公式にサポートしていないため、併用するにはコミュニティによるラップ版ビルド（MatheusGViana）が必要です。自己責任でインストールしてください。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">モッドのバージョン（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMDのweightsを生成するために使用するdanielblncのDLSS Neural Renderingモッドのバージョンです。「danielblnc mod only」と「Mod + OptiScaler」の両方で必要です。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">非公式のサードパーティ製フォーク(guentra/DLSS-NR-on-AMD-Linux)を使い、実際のROCmブリッジ経由でdanielblncのDLSS Neural RenderingモッドをLinuxで動かします — どちらのプロジェクトとも提携しておらず、実験的で、再配布の公式ライセンスもありません。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linuxではdanielblncのインストーラーを直接使うのではなく、guentraの非公式フォークDLSS-NR-on-AMD-Linuxを使用します。これはModを実際のROCmランタイムに橋渡しし、Wine/Proton下でもGPUチェックを通過できるようにします。クレジット: danielblnc/DLSS-NR-on-AMD(Mod本体)、guentra/DLSS-NR-on-AMD-Linux(フォーク)。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">インストール中(Linuxフォーク)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Wine/Protonランナーを選択</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">複数のWine/Protonランナーが見つかりましたが、このゲームがどれを使用しているか不明です。ゲームのランチャーで設定されているもの(Steamのプロパティ→互換性)を選ぶか、手動で参照してください。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">フォルダーを参照...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">選択したものを使用</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">先にランナーを選択するか、「フォルダーを参照」を使用してください。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">Wine/Protonランナーのフォルダーを選択</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">Linuxフォークをダウンロードできませんでした: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linuxフォークのインストーラーが失敗しました: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">これをSteamに貼り付けてください</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">このModはLinuxフォークが生成する小さな起動スクリプトを通じて実行されます。Steamを使用している場合は、このゲームの起動オプション(プロパティ→全般→起動オプション)にこれを貼り付けてください:</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linuxフォーク (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScalerラッパーのバージョン（コミュニティ、非公式）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">インストーラーを実行</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">ダウンロードして準備</x:String>
@@ -835,6 +850,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">ダウンロードエラー: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblncのmodのダウンロードに成功しましたが、手動インストールが必要です。&#10;1) 「インストーラーを実行」をクリックします。&#10;2) ターミナルに表示される手順に従ってください。重要: 使用するproxy DLLを聞かれたら、dxgi.dll以外のもの(例: dbghelp.dll)を選んでください — 後でOptiScalerがdxgi.dllとしてインストールされるため、別々のスロットが必要です。&#10;&#10;インストーラーの終了を検出すると、このウィンドウは自動的に閉じ、OptiScalerのラッパーをインストールします。</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblncのmodのダウンロードに成功しましたが、手動インストールが必要です。&#10;1) 「インストーラーを実行」をクリックします。&#10;2) ターミナルに表示される手順に従ってください(提示されるどのproxy DLLでも構いません)。&#10;&#10;インストーラーの終了を検出すると、このウィンドウは自動的に閉じます。</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">Wine の DLL オーバーライドが必要です</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton では、{0} を実際に機能させるために Wine の DLL オーバーライドが必要な場合があります — そうしないと、Wine はインストールしたばかりのファイルではなく、その名前の組み込みバージョンを使い続けることがあります。Steam を使用している場合は、ゲームの起動オプションに次を追加してください:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">ゲームフォルダを特定できませんでした。</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">インストーラーを起動できませんでした: {0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defenderがこのファイルをブロックしました</x:String>

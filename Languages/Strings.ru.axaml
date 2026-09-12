@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">Изменить язык пользовательского интерфейса.</x:String>
     <x:String x:Key="TxtClose">Закрыть</x:String>
     <x:String x:Key="TxtGotIt">Понятно</x:String>
+    <x:String x:Key="TxtCopy">Копировать</x:String>
     <x:String x:Key="TxtAppRepoTitle">Репозиторий приложения</x:String>
     <x:String x:Key="TxtAppRepoDesc">Целевой репозиторий GitHub для обновлений и обратной связи (Владелец/ИмяРепозитория).</x:String>
     <!-- Guide Window -->
@@ -803,6 +804,20 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">На данный момент OptiScaler не имеет официальной поддержки Neural Rendering, поэтому для совместного использования требуется сборка сообщества (MatheusGViana). Устанавливайте на свой страх и риск.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Версия мода (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Версия мода DLSS Neural Rendering от danielblnc, используемая для генерации весов AMD. Нужна как для "danielblnc mod only", так и для "Mod + OptiScaler".</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Использует неофициальный сторонний форк (guentra/DLSS-NR-on-AMD-Linux) для запуска мода DLSS Neural Rendering от danielblnc в Linux через настоящий мост к ROCm — не связан ни с одним из этих проектов, экспериментален и не имеет официальной лицензии на распространение.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">В Linux используется неофициальный форк guentra — DLSS-NR-on-AMD-Linux (а не установщик danielblnc напрямую), который связывает мод с настоящей средой выполнения ROCm, чтобы проверка GPU могла пройти под Wine/Proton. Благодарности: danielblnc/DLSS-NR-on-AMD (мод) и guentra/DLSS-NR-on-AMD-Linux (форк).</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Установка (форк для Linux)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Выберите среду выполнения Wine/Proton</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">Найдено несколько сред выполнения Wine/Proton, и непонятно, какую использует эта игра. Выберите ту, что настроена в лаунчере игры (Свойства Steam → Совместимость), либо укажите вручную.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">Обзор папки...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">Использовать выбранное</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">Сначала выберите среду выполнения либо используйте «Обзор папки».</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">Выберите папку среды выполнения Wine/Proton</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">Не удалось загрузить форк для Linux: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Установщик форка для Linux завершился с ошибкой: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">Вставьте это в Steam</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">Мод запускается через небольшой скрипт запуска, созданный форком для Linux. Если вы используете Steam, вставьте это в параметры запуска этой игры (Свойства → Общие → Параметры запуска):</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Форк для Linux (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Версия обёртки OptiScaler (сообщество, неофициально)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Запустить установщик</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Скачать и подготовить</x:String>
@@ -821,6 +836,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">Ошибка загрузки: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">Мод danielblnc успешно скачан, но требует ручной установки:&#10;1) Нажмите "Запустить установщик".&#10;2) Следуйте шагам в терминале. ВАЖНО: когда он спросит, какую proxy DLL использовать, выберите ЛЮБУЮ, ОТЛИЧНУЮ от dxgi.dll (например dbghelp.dll) — OptiScaler будет установлен как dxgi.dll позже, и им нужны разные слоты.&#10;&#10;Это окно закроется автоматически и установит обёртку OptiScaler, как только обнаружит, что установщик завершил работу.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">Мод danielblnc успешно скачан, но требует ручной установки:&#10;1) Нажмите "Запустить установщик".&#10;2) Следуйте шагам в терминале (подойдёт любая предложенная proxy DLL).&#10;&#10;Это окно закроется автоматически, как только обнаружит, что установщик завершил работу.</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">Требуется override DLL в Wine</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">В Linux/Proton может понадобиться override DLL в Wine, чтобы {0} действительно заработал — иначе Wine может продолжать использовать свою встроенную версию этого имени файла вместо только что установленной. Если вы используете Steam, добавьте это в параметры запуска игры:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Не удалось определить папку игры.</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">Не удалось запустить установщик: {0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defender заблокировал этот файл</x:String>

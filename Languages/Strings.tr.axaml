@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">Kullanıcı arayüzü dilini değiştir.</x:String>
     <x:String x:Key="TxtClose">Kapat</x:String>
     <x:String x:Key="TxtGotIt">Anladım</x:String>
+    <x:String x:Key="TxtCopy">Kopyala</x:String>
     <x:String x:Key="TxtAppRepoTitle">Uygulama Deposu</x:String>
     <x:String x:Key="TxtAppRepoDesc">Güncellemeler ve geri bildirim için hedef GitHub deposu (Sahip/DepoAdı).</x:String>
     <!-- Guide Window -->
@@ -802,6 +803,20 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrWrapperWarning">Şu anda OptiScaler'ın Neural Rendering için resmi desteği bulunmuyor, bu nedenle birlikte kullanabilmek için topluluk tarafından sarmalanmış bir sürüm (MatheusGViana) gereklidir. Kendi sorumluluğunuzda kurun.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Mod sürümü (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD weights'lerini oluşturmak için kullanılan danielblnc'nin DLSS Neural Rendering mod sürümü. Hem "danielblnc mod only" hem de "Mod + OptiScaler" için gereklidir.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">danielblnc'in DLSS Neural Rendering modunu Linux'ta gerçek bir ROCm köprüsü üzerinden çalıştırmak için resmi olmayan üçüncü taraf bir fork (guentra/DLSS-NR-on-AMD-Linux) kullanır — her iki projeyle de bağlantılı değildir, deneyseldir ve resmi bir yeniden dağıtım lisansı yoktur.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linux'ta danielblnc'in yükleyicisi doğrudan değil, guentra'nın resmi olmayan DLSS-NR-on-AMD-Linux fork'u kullanılır; bu fork modu gerçek bir ROCm çalışma zamanına bağlayarak GPU kontrolünün Wine/Proton altında geçebilmesini sağlar. Emeği geçenler: danielblnc/DLSS-NR-on-AMD (mod) ve guentra/DLSS-NR-on-AMD-Linux (fork).</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Yükleniyor (Linux fork)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Wine/Proton çalıştırıcısını seçin</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">Birden fazla Wine/Proton çalıştırıcısı bulundu ve bu oyunun hangisini kullandığı belli değil. Oyunun başlatıcısında (Steam Özellikleri → Uyumluluk) yapılandırılmış olanı seçin veya elle gözatın.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">Klasöre gözat...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">Seçileni kullan</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">Önce bir çalıştırıcı seçin veya &quot;Klasöre gözat&quot; seçeneğini kullanın.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">Wine/Proton çalıştırıcı klasörünü seçin</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">Linux fork'u indirilemedi: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">Linux fork yükleyicisi başarısız oldu: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">Bunu Steam'e yapıştırın</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">Mod, Linux fork'u tarafından oluşturulan küçük bir başlatma betiği aracılığıyla çalışır. Steam kullanıyorsanız bunu bu oyunun başlatma seçeneklerine yapıştırın (Özellikler → Genel → Başlatma Seçenekleri):</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux Fork (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper sürümü (topluluk, resmi olmayan)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Yükleyiciyi çalıştır</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">İndir ve hazırla</x:String>
@@ -820,6 +835,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrDownloadError">İndirme hatası: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc'nin modu başarıyla indirildi, ancak manuel kurulum gerektiriyor:&#10;1) "Yükleyiciyi çalıştır"a tıklayın.&#10;2) Terminalde gösterilen adımları izleyin. ÖNEMLİ: hangi proxy DLL'in kullanılacağı sorulduğunda dxgi.dll'DEN FARKLI birini seçin (ör. dbghelp.dll) — OptiScaler daha sonra dxgi.dll olarak kurulacak ve ayrı slotlara ihtiyaçları var.&#10;&#10;Yükleyicinin bittiğini algıladığında bu pencere otomatik olarak kapanır ve OptiScaler wrapper'ını kurar.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc'nin modu başarıyla indirildi, ancak manuel kurulum gerektiriyor:&#10;1) "Yükleyiciyi çalıştır"a tıklayın.&#10;2) Terminalde gösterilen adımları izleyin (sunulan herhangi bir proxy DLL işe yarar).&#10;&#10;Yükleyicinin bittiğini algıladığında bu pencere otomatik olarak kapanır.</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">Wine DLL geçersiz kılma gerekiyor</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton'da {0}'in gerçekten etkili olması için bir Wine DLL geçersiz kılmasına ihtiyacınız olabilir — aksi takdirde Wine, az önce yüklenen yerine bu dosya adının kendi yerleşik sürümünü kullanmaya devam edebilir. Steam kullanıyorsanız, bunu oyunun başlatma seçeneklerine ekleyin:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Oyun klasörü belirlenemedi.</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">Yükleyici başlatılamadı: {0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defender bu dosyayı engelledi</x:String>

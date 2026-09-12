@@ -14,6 +14,7 @@
     <x:String x:Key="TxtLanguageDesc">Cambia la lingua dell'interfaccia utente.</x:String>
     <x:String x:Key="TxtClose">Chiudi</x:String>
     <x:String x:Key="TxtGotIt">Capito</x:String>
+    <x:String x:Key="TxtCopy">Copia</x:String>
     <x:String x:Key="TxtAppRepoTitle">Repository app</x:String>
     <x:String x:Key="TxtAppRepoDesc">Repository GitHub di destinazione per aggiornamenti e feedback (Proprietario/NomeRepo).</x:String>
     <!-- Guide Window -->
@@ -823,6 +824,20 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrWrapperWarning">Al momento OptiScaler non offre supporto ufficiale per il Neural Rendering, quindi è necessaria una build wrapped della community (MatheusGViana) per usarlo insieme. Installala a tuo rischio.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Versione del mod (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versione della mod DLSS Neural Rendering di danielblnc usata per generare i weights AMD. Necessaria sia per "danielblnc mod only" sia per "Mod + OptiScaler".</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Usa un fork di terze parti non ufficiale (guentra/DLSS-NR-on-AMD-Linux) per eseguire la mod DLSS Neural Rendering di danielblnc su Linux tramite un vero bridge ROCm — non affiliato a nessuno dei due progetti, sperimentale e senza licenza ufficiale di redistribuzione.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Su Linux viene usato il fork non ufficiale di guentra, DLSS-NR-on-AMD-Linux (non direttamente l'installer di danielblnc), che collega la mod a un runtime ROCm reale così che il suo controllo GPU possa superare Wine/Proton. Crediti: danielblnc/DLSS-NR-on-AMD (la mod) e guentra/DLSS-NR-on-AMD-Linux (il fork).</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Installazione in corso (fork Linux)...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerTitle">Seleziona il runner Wine/Proton</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerPickerHint">Sono stati trovati più runner Wine/Proton e non è chiaro quale usi questo gioco. Scegli quello configurato nel launcher del gioco (Proprietà di Steam → Compatibilità), oppure sfoglia manualmente.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseBtn">Sfoglia cartella...</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerUseBtn">Usa selezionato</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerNoneSelected">Seleziona prima un runner, oppure usa &quot;Sfoglia cartella&quot;.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperRunnerBrowseTitle">Seleziona la cartella del runner Wine/Proton</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperDownloadFailedFormat">Impossibile scaricare il fork Linux: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperFailedFormat">L'installer del fork Linux non è riuscito: {0}</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandTitle">Incolla questo in Steam</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperLaunchCommandBody">La mod viene eseguita tramite un piccolo script di avvio generato dal fork Linux. Se usi Steam, incolla questo nelle opzioni di avvio di questo gioco (Proprietà → Generale → Opzioni di avvio):</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Fork Linux (guentra)</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Versione del wrapper OptiScaler (community, non ufficiale)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Esegui installer</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Scarica e prepara</x:String>
@@ -841,6 +856,8 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrDownloadError">Errore di download: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">La mod di danielblnc è stata scaricata con successo, ma richiede un'installazione manuale:&#10;1) Clicca su "Esegui installer".&#10;2) Segui i passaggi mostrati nel terminale. IMPORTANTE: quando chiede quale DLL proxy usare, scegline una DIVERSA da dxgi.dll (es. dbghelp.dll) — OptiScaler verrà installato come dxgi.dll in seguito ed è necessario uno slot separato.&#10;&#10;Questa finestra si chiude automaticamente e installa il wrapper di OptiScaler non appena rileva che l'installer ha terminato.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">La mod di danielblnc è stata scaricata con successo, ma richiede un'installazione manuale:&#10;1) Clicca su "Esegui installer".&#10;2) Segui i passaggi mostrati nel terminale (qualsiasi DLL proxy proposta va bene).&#10;&#10;Questa finestra si chiude automaticamente non appena rileva che l'installer ha terminato.</x:String>
+    <x:String x:Key="TxtWineOverrideTitle">Override DLL di Wine necessario</x:String>
+    <x:String x:Key="TxtWineOverrideReminderFormat">Su Linux/Proton potrebbe essere necessario un override DLL di Wine affinché {0} abbia effettivamente effetto — altrimenti Wine potrebbe continuare a usare la propria versione builtin di quel nome file invece di quella appena installata. Se usi Steam, aggiungi questo alle opzioni di avvio del gioco:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Impossibile determinare la cartella del gioco.</x:String>
     <x:String x:Key="TxtSetupNrLaunchError">Impossibile avviare l'installer: {0}</x:String>
     <x:String x:Key="TxtSetupNrSmartScreenBlockedTitle">Windows Defender ha bloccato questo file</x:String>
