@@ -63,6 +63,15 @@ namespace OptiscalerClient.Helpers
                    gpu.Name.Contains("680M", StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>"Setup NR" (AMD DLSS Neural Rendering — danielblnc's mod, and guentra's Linux fork
+        /// that runs it there) is gated to RDNA 3/4 specifically, not just "any AMD GPU": that's the
+        /// same gfx1100/1101/1102 (RDNA3) and gfx1200/1201 (RDNA4) target range guentra's fork's
+        /// bundled ROCm actually supports on Linux (see its README's Requirements section), and on
+        /// Windows it's the hardware generation actually fast enough for the mod's extra render passes
+        /// to be worthwhile. Older AMD GPUs (RDNA1/2, Vega, ...) are excluded even though they're
+        /// still AMD.</summary>
+        public static bool IsRdna3OrRdna4(GpuInfo? gpu) => IsRdna3(gpu) || IsRdna4(gpu);
+
         /// <summary>Nvidia Blackwell (GeForce RTX 50 series) is the only Nvidia generation with native
         /// Dynamic Multi Frame Generation support (OptiScaler's ForceDMFG/OverrideForceDMFG). Matches
         /// RTX 5050/5060/5070/5080/5090 (with optional Ti/Laptop suffixes) but not the RTX 5000 Ada

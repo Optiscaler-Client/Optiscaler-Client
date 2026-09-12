@@ -1786,11 +1786,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
     // ── AMD DLSS Neural Rendering ("Setup NR") ──────────────────────────────
 
+    // Narrowed from "any AMD GPU" to RDNA 3/4 specifically — see GpuSelectionHelper.IsRdna3OrRdna4
+    // for why (same gate as ManageGameWindow/ManageDefaultVersionsWindow).
     private bool IsAmdDefaultGpu()
     {
         if (_gpuService == null) return true;
         var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-        return gpu == null || gpu.Vendor == GpuVendor.AMD;
+        return gpu == null || GpuSelectionHelper.IsRdna3OrRdna4(gpu);
     }
 
     /// <summary>
