@@ -675,12 +675,7 @@
               "labelKey": "TxtHelpSetDlssNrDefaultLabel",
               "text": "Pre-selects the 'Setup NR' mode for every never-configured game and lets Quick Install / Bulk Install install it automatically. Only shown when the default GPU above is AMD and Experimental Features is enabled.",
               "textKey": "TxtHelpSetDlssNrDefaultText"
-            },
-            {
-              "label": "Auto scan on startup",
-              "labelKey": "TxtHelpSetAutoscanLabel",
-              "text": "Automatically scan for games when the application starts.",
-              "textKey": "TxtHelpSetAutoscanText"
+
             },
             {
               "label": "Enable animations",

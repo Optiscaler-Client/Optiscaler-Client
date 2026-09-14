@@ -1927,36 +1927,6 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Auto Scan -->
-                            <Border Classes="InteractiveOption CardOption"
-                                    CornerRadius="{StaticResource RadiusLarge}"
-                                    Padding="20,16"
-                                    Margin="0,0,16,16"
-                                    HorizontalAlignment="Left">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <TextBlock Text="{DynamicResource TxtAutoScan}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource BrTextPrimary}"/>
-                                        <TextBlock Text="{DynamicResource TxtAutoScanDesc}"
-                                                   Foreground="{StaticResource BrTextSecondary}"
-                                                   TextWrapping="Wrap"
-                                                   Margin="0,4,16,0"
-                                                   FontSize="{StaticResource FontSizeCaption}"/>
-                                    </StackPanel>
-                                    <ToggleSwitch Name="TglAutoScan"
-                                                  Grid.Column="1"
-                                                  VerticalAlignment="Center"
-                                                  OnContent="" OffContent=""
-                                                  IsChecked="True"
-                                                  Focusable="False"
-                                                  IsCheckedChanged="TglAutoScan_IsCheckedChanged"/>
-                                </Grid>
-                            </Border>
 
                             <!-- Animations -->
                             <Border Classes="InteractiveOption CardOption"
@@ -2061,7 +2031,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Clear Application Cache -->
+                            <!-- Application Cache -->
                             <Border Background="{StaticResource BrBgCard}"
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
@@ -2084,13 +2054,21 @@
                                                    Margin="0,4,16,0"
                                                    FontSize="{StaticResource FontSizeCaption}"/>
                                     </StackPanel>
-                                    <Button Name="BtnClearAppCache"
-                                            Grid.Column="1"
-                                            Content="{DynamicResource TxtClearCacheBtn}"
-                                            Classes="BtnBase"
-                                            Padding="16,8"
-                                            VerticalAlignment="Center"
-                                            Click="BtnClearAppCache_Click"/>
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="8"
+                                                VerticalAlignment="Center">
+                                        <Button Name="BtnOpenAppCacheFolder"
+                                                Content="{DynamicResource TxtOpenFolderBtn}"
+                                                Classes="BtnBase"
+                                                Padding="16,8"
+                                                Click="BtnOpenAppCacheFolder_Click"/>
+                                        <Button Name="BtnClearAppCache"
+                                                Content="{DynamicResource TxtClearCacheBtn}"
+                                                Classes="BtnBase"
+                                                Padding="16,8"
+                                                Click="BtnClearAppCache_Click"/>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
 
@@ -2122,12 +2100,18 @@
                                                  Width="300"
                                                  Watermark="{DynamicResource TxtSteamGridApiKeyPlaceholder}"
                                                  LostFocus="TxtSteamGridApiKey_LostFocus"/>
-                                        <Button Name="BtnSteamGridApiGuide"
-                                                Content="{DynamicResource TxtSteamGridGetApiKey}"
-                                                Classes="BtnBase"
-                                                HorizontalAlignment="Right"
-                                                Padding="12,6"
-                                                Click="BtnSteamGridApiGuide_Click"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                            <Button Name="BtnSaveSteamGridApiKey"
+                                                    Content="{DynamicResource TxtSave}"
+                                                    Classes="BtnPrimary"
+                                                    Padding="12,6"
+                                                    Click="BtnSaveSteamGridApiKey_Click"/>
+                                            <Button Name="BtnSteamGridApiGuide"
+                                                    Content="{DynamicResource TxtSteamGridGetApiKey}"
+                                                    Classes="BtnBase"
+                                                    Padding="12,6"
+                                                    Click="BtnSteamGridApiGuide_Click"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>

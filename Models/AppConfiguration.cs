@@ -101,7 +101,6 @@ namespace OptiscalerClient.Models
         public string Language { get; set; } = "en";
         public bool Debug { get; set; } = false;
         public string DefaultProfileName { get; set; } = OptiScalerProfile.BuiltInDefaultName;
-        public bool AutoScan { get; set; } = true;
         public bool AnimationsEnabled { get; set; } = true;
         public bool PreferGridView { get; set; } = true;
 
@@ -228,6 +227,7 @@ namespace OptiscalerClient.Models
         public List<string> Fsr4SwapDefaultFileKeys { get; set; } = new();
         public ScanSourcesConfig ScanSources { get; set; } = new();
         public string SteamGridDBApiKey { get; set; } = string.Empty;
+        public string LastCoverSearchApiKey { get; set; } = string.Empty;
         public List<ScanExclusion> ScanExclusions { get; set; } = new();
         /// <summary>
         /// Names/labels of custom OptiScaler versions imported by the user.

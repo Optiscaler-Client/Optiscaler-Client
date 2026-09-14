@@ -63,6 +63,10 @@ namespace OptiscalerClient.Views
         private readonly Dictionary<Button, double> _quickInstallDotPhases = new();
         private readonly Dictionary<Button, double> _quickInstallOriginalMinWidths = new();
         private readonly CancellationTokenSource _windowLifetimeCts = new();
+        // Started as soon as the window loads so it runs alongside the very first scan; awaited
+        // after that scan finishes (see the first-run branch below) so the game list's compatibility
+        // badges are available immediately instead of racing an unawaited background refresh.
+        private Task? _compatibilityRefreshTask;
 
         private readonly GameAnalyzerService _analyzerService = new();
         private GameMetadataService _metadataService = null!;
@@ -97,6 +101,12 @@ namespace OptiscalerClient.Views
         private CheckBox? _chkHideNoUpscaler;
         private CheckBox? _chkOnlyInstalled;
         private CheckBox? _chkOnlyFavorites;
+        private Border? _bdToast;
+        private ProgressBar? _prgToast;
+        private TextBlock? _txtToastMessage;
+        private TextBlock? _txtToastIcon;
+        private Border? _bdToastSecondary;
+        private TextBlock? _txtToastSecondaryMessage;
         private bool _hasScanned = false;
         private bool _isEditMode = false;
         private Game? _draggedGame;
@@ -311,6 +321,8 @@ namespace OptiscalerClient.Views
             }
 
             _componentService.OnStatusChanged += ComponentStatusChanged;
+            CompatibilityListService.RefreshStarted += CompatibilityListService_RefreshStarted;
+            CompatibilityListService.RefreshCompleted += CompatibilityListService_RefreshCompleted;
             this.Loaded += MainWindow_Loaded;
             this.Closed += MainWindow_Closed;
 
@@ -334,6 +346,9 @@ namespace OptiscalerClient.Views
         {
             // Save final window state before closing
             SaveWindowState();
+
+            CompatibilityListService.RefreshStarted -= CompatibilityListService_RefreshStarted;
+            CompatibilityListService.RefreshCompleted -= CompatibilityListService_RefreshCompleted;
 
             this.RemoveHandler(InputElement.PointerMovedEvent, MainWindow_PointerMoved);
 
@@ -396,8 +411,20 @@ namespace OptiscalerClient.Views
                 _isGridView = _componentService.Config.PreferGridView;
                 ApplyGameViewMode();
 
+                _bdToast = this.FindControl<Border>("BdToast");
+                _prgToast = this.FindControl<ProgressBar>("PrgToast");
+                _txtToastMessage = this.FindControl<TextBlock>("TxtToastMessage");
+                _txtToastIcon = this.FindControl<TextBlock>("TxtToastIcon");
+                _bdToastSecondary = this.FindControl<Border>("BdToastSecondary");
+                _txtToastSecondaryMessage = this.FindControl<TextBlock>("TxtToastSecondaryMessage");
+
                 bool hadSavedGames = LoadSavedGames(_windowLifetimeCts.Token);
                 _ = LoadGpuInfoAsync();
+                _compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
+                if (CompatibilityListService.IsRefreshInProgress)
+                {
+                    CompatibilityListService_RefreshStarted(null, EventArgs.Empty);
+                }
                 _ = ScheduleStartupUpdatesAsync(_windowLifetimeCts.Token);
 
                 var linuxNotice = this.FindControl<Border>("LinuxNotice");
@@ -448,6 +475,11 @@ namespace OptiscalerClient.Views
                         _componentService.Config.HasCompletedInitialScan = true;
                         _componentService.SaveConfiguration();
                         await RunScanAsync(options.UpscalerFilter);
+
+                        // Make sure the Compatibility List has finished loading once the very
+                        // first scan completes, so the freshly-listed games get their compatibility
+                        // badges right away instead of waiting on the unrelated background refresh.
+                        if (_compatibilityRefreshTask != null) await _compatibilityRefreshTask;
                     }
 
                     // Never auto-scan on startup when there are no cached games.
@@ -1967,11 +1999,6 @@ namespace OptiscalerClient.Views
                         }
                     }
                 }
-                var tglAutoScan = this.FindControl<ToggleSwitch>("TglAutoScan");
-                if (tglAutoScan != null)
-                {
-                    tglAutoScan.IsChecked = _componentService.Config.AutoScan;
-                }
                 var tglAnimations = this.FindControl<ToggleSwitch>("TglAnimations");
                 if (tglAnimations != null)
                 {
@@ -2046,6 +2073,19 @@ namespace OptiscalerClient.Views
                 await cacheWindow.ShowDialog<object>(this);
             }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Cache management dialog failed: {ex.Message}"); }
+        }
+
+        private void BtnOpenAppCacheFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var baseDir = AppPaths.GetAppDataRoot();
+                PlatformServiceFactory.CreateShellService().OpenFolder(baseDir);
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[MainWindow] Failed to open app data folder: {ex.Message}");
+            }
         }
 
         private async void BtnClearAppCache_Click(object sender, RoutedEventArgs e)
@@ -3137,16 +3177,6 @@ namespace OptiscalerClient.Views
 
         // ─────────────────────────────────────────────────────────────────────────
 
-        private void TglAutoScan_IsCheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializingLanguage) return;
-            if (sender is ToggleSwitch tgl)
-            {
-                _componentService.Config.AutoScan = tgl.IsChecked ?? true;
-                _componentService.SaveConfiguration();
-            }
-        }
-
         private void TglAnimations_IsCheckedChanged(object sender, RoutedEventArgs e)
         {
             if (_isInitializingLanguage) return;
@@ -3257,8 +3287,43 @@ namespace OptiscalerClient.Views
         {
             if (sender is not TextBox textBox) return;
 
-            _componentService.Config.SteamGridDBApiKey = (textBox.Text ?? string.Empty).Trim();
+            var newKey = (textBox.Text ?? string.Empty).Trim();
+            if (!string.Equals(_componentService.Config.SteamGridDBApiKey, newKey, StringComparison.Ordinal))
+            {
+                _componentService.Config.SteamGridDBApiKey = newKey;
+                _componentService.SaveConfiguration();
+            }
+        }
+
+        private async void BtnSaveSteamGridApiKey_Click(object sender, RoutedEventArgs e)
+        {
+            var txtSteamGridApiKey = this.FindControl<TextBox>("TxtSteamGridApiKey");
+            var key = txtSteamGridApiKey?.Text?.Trim();
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                ShowToast(GetResourceString("TxtInvalidSteamGridApiKeyToast", "Please enter a valid SteamGridDB API key."));
+                _ = HideToastAfterAsync(3500);
+                return;
+            }
+
+            var lastSearchKey = _componentService.Config.LastCoverSearchApiKey?.Trim();
+            bool keyChanged = !string.Equals(lastSearchKey, key, StringComparison.Ordinal);
+
+            if (txtSteamGridApiKey != null) txtSteamGridApiKey.Text = key;
+            _componentService.Config.SteamGridDBApiKey = key;
             _componentService.SaveConfiguration();
+
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+            try
+            {
+                await RunRefreshCoversAsync(forceRetrySentinels: keyChanged);
+            }
+            finally
+            {
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
 
         private async void BtnManageProxy_Click(object sender, RoutedEventArgs e)
@@ -3349,10 +3414,11 @@ namespace OptiscalerClient.Views
 
         private async Task ScheduleStartupUpdatesAsync(CancellationToken cancellationToken)
         {
-            // Compatibility information is independent from component-version checks. Start its
-            // refresh immediately so Manage Game can show a short loading state instead of a
-            // misleading "not found" result while a new cache is being built.
-            var compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
+            // Compatibility information is independent from component-version checks. Already
+            // started in MainWindow_Loaded (so Manage Game can show a short loading state instead
+            // of a misleading "not found" result while a new cache is being built, and so the
+            // first-run scan path can await the same task) - just await it here too.
+            var compatibilityRefreshTask = _compatibilityRefreshTask ??= RefreshCompatibilityListOnStartupAsync();
             // RenoDX (experimental, opt-in) shares the same startup-refresh shape — independent of
             // component-version checks, never blocks startup. Only meaningfully used once the
             // switch is on, but refreshing it unconditionally keeps the cache warm for whenever the
@@ -3428,6 +3494,24 @@ namespace OptiscalerClient.Views
         {
             try { await new CompatibilityListService().CheckForUpdatesAsync(); }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] CompatibilityListService refresh failed: {ex.Message}"); }
+        }
+
+        private void CompatibilityListService_RefreshStarted(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_windowLifetimeCts.IsCancellationRequested) return;
+                ShowToast(GetResourceString("TxtFetchingResourcesToast", "Fetching resources…"), showProgress: true, progressPercent: null);
+            });
+        }
+
+        private void CompatibilityListService_RefreshCompleted(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_windowLifetimeCts.IsCancellationRequested) return;
+                _ = HideToastAfterAsync(1200);
+            });
         }
 
         private static async Task RefreshRenodxModsOnStartupAsync()
@@ -4149,8 +4233,6 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                LogToFile("[RenderSystemInfo] Starting...");
-
                 var title = new TextBlock
                 {
                     Text = string.IsNullOrEmpty(section.TitleKey)
@@ -4161,7 +4243,6 @@ namespace OptiscalerClient.Views
                     Margin = new Thickness(0, 0, 0, 12),
                     Foreground = this.FindResource("BrTextPrimary") as IBrush
                 };
-                LogToFile("[RenderSystemInfo] Title created");
 
                 var border = new Border
                 {
@@ -4172,37 +4253,24 @@ namespace OptiscalerClient.Views
                     BorderBrush = this.FindResource("BrBorderSubtle") as IBrush,
                     CornerRadius = (CornerRadius)(this.FindResource("RadiusMedium") ?? new CornerRadius(8))
                 };
-                LogToFile("[RenderSystemInfo] Border created");
 
                 var stack = new StackPanel();
-                LogToFile("[RenderSystemInfo] StackPanel created");
 
-                LogToFile("[RenderSystemInfo] Getting OS name...");
                 var osName = GetFriendlyOperatingSystemName();
-                LogToFile($"[RenderSystemInfo] OS name: {osName}");
                 stack.Children.Add(CreateResourceRow("Operating System", osName, false, false));
-
-                LogToFile("[RenderSystemInfo] Adding Architecture...");
                 stack.Children.Add(CreateResourceRow("Architecture", RuntimeInformation.OSArchitecture.ToString(), false, false));
-
-                LogToFile("[RenderSystemInfo] Adding Machine name...");
                 stack.Children.Add(CreateResourceRow("Machine", Environment.MachineName, false, false));
 
-                LogToFile("[RenderSystemInfo] Getting GPU info...");
                 var gpuInfo = GetHelpGpuInfo();
-                LogToFile($"[RenderSystemInfo] GPU info: {gpuInfo.DisplayName}");
                 stack.Children.Add(CreateResourceRow("GPU", gpuInfo.DisplayName, false, true));
 
                 border.Child = stack;
                 container.Children.Add(title);
                 container.Children.Add(border);
-                LogToFile("[RenderSystemInfo] Completed successfully");
             }
             catch (Exception ex)
             {
-                LogToFile($"[RenderSystemInfo] CRASH: {ex.GetType().Name}: {ex.Message}");
-                LogToFile($"[RenderSystemInfo] StackTrace: {ex.StackTrace}");
-                throw;
+                DebugWindow.Log($"[Help] RenderSystemInfo failed: {ex.Message}");
             }
         }
 
@@ -4210,66 +4278,42 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                LogToFile("[GetHelpGpuInfo] Starting...");
-
-                if (_gpuService == null)
-                {
-                    LogToFile("[GetHelpGpuInfo] _gpuService is null");
+                if (_gpuService == null || _componentService == null)
                     return ("Not available", true);
-                }
-
-                if (_componentService == null)
-                {
-                    LogToFile("[GetHelpGpuInfo] _componentService is null");
-                    return ("Not available", true);
-                }
 
                 GpuInfo? gpu = _lastDetectedGpu;
-                LogToFile($"[GetHelpGpuInfo] _lastDetectedGpu: {(gpu == null ? "null" : gpu.Name)}");
 
                 if (gpu == null)
                 {
                     try
                     {
-                        LogToFile("[GetHelpGpuInfo] Detecting GPUs...");
                         var allGpus = _gpuService.DetectGPUs();
-                        LogToFile($"[GetHelpGpuInfo] Detected {(allGpus?.Length ?? 0)} GPUs");
 
                         if (allGpus != null && allGpus.Length > 0)
                         {
                             var defaultGpuId = _componentService.Config?.DefaultGpuId;
-                            LogToFile($"[GetHelpGpuInfo] DefaultGpuId: {defaultGpuId ?? "null"}");
-
-
                             gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, defaultGpuId)
                                   ?? allGpus.FirstOrDefault();
-                            LogToFile($"[GetHelpGpuInfo] Selected GPU: {gpu?.Name ?? "null"}");
                         }
                     }
                     catch (Exception innerEx)
                     {
-                        LogToFile($"[GetHelpGpuInfo] GPU detection failed: {innerEx.Message}");
+                        DebugWindow.Log($"[Help] GPU detection failed: {innerEx.Message}");
                     }
 
                     _lastDetectedGpu = gpu;
                 }
 
                 if (gpu == null)
-                {
-                    LogToFile("[GetHelpGpuInfo] Final GPU is null, returning Not detected");
                     return ("Not detected", true);
-                }
 
                 var gpuName = string.IsNullOrWhiteSpace(gpu.Name) ? "Unknown GPU" : gpu.Name;
                 var vram = string.IsNullOrWhiteSpace(gpu.VideoMemoryGB) ? string.Empty : $" ({gpu.VideoMemoryGB} VRAM)";
-                var result = $"{gpuName}{vram}";
-                LogToFile($"[GetHelpGpuInfo] Returning: {result}");
-                return (result, true);
+                return ($"{gpuName}{vram}", true);
             }
             catch (Exception ex)
             {
-                LogToFile($"[GetHelpGpuInfo] CRASH: {ex.GetType().Name}: {ex.Message}");
-                LogToFile($"[GetHelpGpuInfo] StackTrace: {ex.StackTrace}");
+                DebugWindow.Log($"[Help] GetHelpGpuInfo failed: {ex.Message}");
                 return ("Detection failed", true);
             }
         }
@@ -4278,21 +4322,12 @@ namespace OptiscalerClient.Views
         {
             try
             {
-                LogToFile("[GetFriendlyOperatingSystemName] Starting...");
-
                 if (!OperatingSystem.IsWindows())
-                {
-                    LogToFile("[GetFriendlyOperatingSystemName] Not Windows");
                     return RuntimeInformation.OSDescription;
-                }
 
-                LogToFile("[GetFriendlyOperatingSystemName] Opening registry...");
                 using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
                 if (key == null)
-                {
-                    LogToFile("[GetFriendlyOperatingSystemName] Registry key is null");
                     return RuntimeInformation.OSDescription;
-                }
 
                 var productName = key.GetValue("ProductName")?.ToString();
                 var displayVersion = key.GetValue("DisplayVersion")?.ToString();
@@ -4300,10 +4335,6 @@ namespace OptiscalerClient.Views
                 var currentBuild = key.GetValue("CurrentBuild")?.ToString()
                                   ?? key.GetValue("CurrentBuildNumber")?.ToString();
                 var ubrValue = key.GetValue("UBR")?.ToString();
-
-                LogToFile($"[GetFriendlyOperatingSystemName] ProductName: {productName}");
-                LogToFile($"[GetFriendlyOperatingSystemName] DisplayVersion: {displayVersion}");
-                LogToFile($"[GetFriendlyOperatingSystemName] CurrentBuild: {currentBuild}");
 
                 var versionPart = !string.IsNullOrWhiteSpace(displayVersion)
                     ? displayVersion
@@ -4318,25 +4349,18 @@ namespace OptiscalerClient.Views
                 }
 
                 var name = NormalizeWindowsProductName(productName, currentBuild);
-                LogToFile($"[GetFriendlyOperatingSystemName] Normalized name: {name}");
 
-                string result;
                 if (!string.IsNullOrWhiteSpace(versionPart) && !string.IsNullOrWhiteSpace(buildPart))
-                    result = $"{name} {versionPart} ({buildPart})";
-                else if (!string.IsNullOrWhiteSpace(versionPart))
-                    result = $"{name} {versionPart}";
-                else if (!string.IsNullOrWhiteSpace(buildPart))
-                    result = $"{name} ({buildPart})";
-                else
-                    result = name;
-
-                LogToFile($"[GetFriendlyOperatingSystemName] Returning: {result}");
-                return result;
+                    return $"{name} {versionPart} ({buildPart})";
+                if (!string.IsNullOrWhiteSpace(versionPart))
+                    return $"{name} {versionPart}";
+                if (!string.IsNullOrWhiteSpace(buildPart))
+                    return $"{name} ({buildPart})";
+                return name;
             }
             catch (Exception ex)
             {
-                LogToFile($"[GetFriendlyOperatingSystemName] CRASH: {ex.GetType().Name}: {ex.Message}");
-                LogToFile($"[GetFriendlyOperatingSystemName] StackTrace: {ex.StackTrace}");
+                DebugWindow.Log($"[Help] GetFriendlyOperatingSystemName failed: {ex.Message}");
                 return RuntimeInformation.OSDescription;
             }
         }
@@ -4889,6 +4913,31 @@ namespace OptiscalerClient.Views
             // Normalise DisplayOrder so it's 0-based and gapless
             for (int i = 0; i < _allGames.Count; i++) _allGames[i].DisplayOrder = i;
 
+            // Check if Covers folder exists and whether it contains any cover images
+            var coversDir = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
+            bool hasCoversFolder = Directory.Exists(coversDir);
+            bool coversFolderMissingOrEmpty = !hasCoversFolder ||
+                !Directory.EnumerateFiles(coversDir).Any(f =>
+                    f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                    f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                    f.EndsWith(".webp", StringComparison.OrdinalIgnoreCase));
+
+            if (coversFolderMissingOrEmpty && _allGames.Count > 0)
+            {
+                DebugWindow.Log($"[MainWindow] Covers folder is missing or empty (folder exists: {hasCoversFolder}). Scanned games will be checked for missing covers.");
+            }
+
+            // Clear broken cover paths pointing to non-existent local files
+            foreach (var game in _allGames)
+            {
+                if (!string.IsNullOrEmpty(game.CoverImageUrl) &&
+                    !game.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                    !File.Exists(game.CoverImageUrl))
+                {
+                    game.CoverImageUrl = null;
+                }
+            }
+
             // Migrate legacy in-folder backups to external store (idempotent, guarded by version check)
             try
             {
@@ -4906,65 +4955,148 @@ namespace OptiscalerClient.Views
             {
                 _ = Task.Run(async () =>
                 {
-                    GameAnalyzerService.LoadCacheFromDisk();
-                    using var coverSemaphore = new SemaphoreSlim(6, 6);
-                    var coverTasks = new List<Task>();
-                    var analyzedCount = 0;
-
-                    foreach (var game in savedGames)
-                    {
-                        if (cancellationToken.IsCancellationRequested) return;
-
-                        try { _analyzerService.AnalyzeGame(game); }
-                        catch (Exception ex) { DebugWindow.Log($"[MainWindow] AnalyzeGame failed for {game.Name}: {ex.Message}"); }
-
-                        if (string.IsNullOrEmpty(game.CoverImageUrl) || game.CoverImageUrl.StartsWith("http"))
-                        {
-                            var appIdKey = !string.IsNullOrEmpty(game.AppId) ? game.AppId :
-                                         !string.IsNullOrEmpty(game.Name) ? game.Name : Guid.NewGuid().ToString();
-
-                            await coverSemaphore.WaitAsync(cancellationToken);
-                            coverTasks.Add(Task.Run(async () =>
-                            {
-                                try
-                                {
-                                    game.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey);
-                                }
-                                catch
-                                {
-                                }
-                                finally
-                                {
-                                    coverSemaphore.Release();
-                                }
-                            }, cancellationToken));
-                        }
-
-                        analyzedCount++;
-                        if (analyzedCount % 4 == 0)
-                        {
-                            await Task.Delay(1, cancellationToken);
-                        }
-                    }
-
                     try
                     {
-                        await Task.WhenAll(coverTasks);
+                        GameAnalyzerService.LoadCacheFromDisk();
+                        using var coverSemaphore = new SemaphoreSlim(6, 6);
+                        var coverTasks = new List<Task>();
+                        var analyzedCount = 0;
+
+                        var gamesNeedingCovers = savedGames.Where(game =>
+                        {
+                            var needsCover = string.IsNullOrEmpty(game.CoverImageUrl) ||
+                                            game.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                                            !File.Exists(game.CoverImageUrl);
+
+                            if (!needsCover) return false;
+
+                            // If user wiped the Covers folder, retry all games needing covers
+                            if (coversFolderMissingOrEmpty) return true;
+
+                            // On normal startup, skip games that already failed previously and have a sentinel
+                            var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
+                            if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key))
+                            {
+                                return false;
+                            }
+
+                            return true;
+                        }).Select(g => g.InstallPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                        int totalCovers = gamesNeedingCovers.Count;
+                        int completedCovers = 0;
+                        string fetchingCoversFormat = GetResourceString("TxtFetchingCoversFormat", "Fetching covers: {0}/{1}...");
+
+                        DebugWindow.Log($"[MainWindow] Startup cover check: {totalCovers} game(s) need covers.");
+
+                        if (totalCovers > 0)
+                        {
+                            ShowToast(string.Format(fetchingCoversFormat, 0, totalCovers),
+                                      showProgress: true, progressPercent: 0);
+                        }
+
+                        foreach (var game in savedGames)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                if (totalCovers > 0) Dispatcher.UIThread.Post(HideToast);
+                                return;
+                            }
+
+                            try { _analyzerService.AnalyzeGame(game); }
+                            catch (Exception ex) { DebugWindow.Log($"[MainWindow] AnalyzeGame failed for {game.Name}: {ex.Message}"); }
+
+                            if (gamesNeedingCovers.Contains(game.InstallPath))
+                            {
+                                var appIdKey = !string.IsNullOrEmpty(game.AppId) ? game.AppId :
+                                             !string.IsNullOrEmpty(game.Name) ? game.Name : Guid.NewGuid().ToString();
+
+                                // Only delete sentinel if the whole covers folder was wiped or missing
+                                if (coversFolderMissingOrEmpty)
+                                {
+                                    _metadataService.DeleteSentinel(appIdKey);
+                                }
+
+                                await coverSemaphore.WaitAsync(cancellationToken);
+                                coverTasks.Add(Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
+                                            ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
+                                            : null;
+                                        var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName);
+                                        if (!string.IsNullOrEmpty(newCover))
+                                        {
+                                            game.CoverImageUrl = newCover;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        DebugWindow.Log($"[MainWindow] Cover fetch failed for {game.Name}: {ex.Message}");
+                                    }
+                                    finally
+                                    {
+                                        coverSemaphore.Release();
+                                        var done = System.Threading.Interlocked.Increment(ref completedCovers);
+                                        var pct = (double)done / totalCovers * 100.0;
+                                        var msg = string.Format(fetchingCoversFormat, done, totalCovers);
+                                        Dispatcher.UIThread.Post(() =>
+                                        {
+                                            UpdateToastProgress(msg, pct);
+                                        });
+                                    }
+                                }, cancellationToken));
+                            }
+
+                            analyzedCount++;
+                            if (analyzedCount % 4 == 0)
+                            {
+                                await Task.Delay(1, cancellationToken);
+                            }
+                        }
+
+                        try
+                        {
+                            await Task.WhenAll(coverTasks);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            if (totalCovers > 0) Dispatcher.UIThread.Post(HideToast);
+                            return;
+                        }
+
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            if (totalCovers > 0) Dispatcher.UIThread.Post(HideToast);
+                            return;
+                        }
+
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (cancellationToken.IsCancellationRequested) return;
+
+                            if (totalCovers > 0)
+                            {
+                                HideToast();
+                            }
+                            RefreshGameLists();
+                            _persistenceService.SaveGames(savedGames);
+
+                            bool hasApiKey = !string.IsNullOrWhiteSpace(_componentService.Config.SteamGridDBApiKey);
+                            var stillMissing = savedGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+
+                            if (totalCovers > 0 && !hasApiKey && stillMissing > 0)
+                            {
+                                ShowToast(GetResourceString("TxtMissingCoversConfigureApiKeyToast", "Missing covers: configure a SteamGridDB API key in Settings."));
+                                _ = HideToastAfterAsync(6500);
+                            }
+                        });
                     }
-                    catch (OperationCanceledException)
+                    catch (Exception ex)
                     {
-                        return;
+                        DebugWindow.Log($"[MainWindow] Startup cover task error: {ex}");
                     }
-
-                    if (cancellationToken.IsCancellationRequested) return;
-
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        if (cancellationToken.IsCancellationRequested) return;
-
-                        RefreshGameLists();
-                        _persistenceService.SaveGames(savedGames);
-                    });
                 }, cancellationToken);
             }
 
@@ -4982,7 +5114,7 @@ namespace OptiscalerClient.Views
 
                 if (options.RefreshCoversOnly)
                 {
-                    await RunRefreshCoversAsync();
+                    await RunRefreshCoversAsync(forceRetrySentinels: false);
                     return;
                 }
 
@@ -4996,28 +5128,105 @@ namespace OptiscalerClient.Views
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Scan failed: {ex.Message}"); }
         }
 
-        private async Task RunRefreshCoversAsync()
+        private async Task RunRefreshCoversAsync(bool forceRetrySentinels = false)
         {
             if (_btnScan != null) _btnScan.IsEnabled = false;
 
             try
             {
-                var missing = _games
-                    .Where(g => string.IsNullOrEmpty(g.CoverImageUrl))
-                    .ToList();
+                var targetGames = (_allGames != null && _allGames.Count > 0) ? _allGames : _games.ToList();
 
-                if (missing.Count == 0)
+                if (targetGames.Count == 0)
                 {
+                    ShowToast(GetResourceString("TxtNoGamesFound", "No games found to update."));
+                    _ = HideToastAfterAsync(3000);
                     return;
                 }
 
-                // Delete sentinels so FetchAndCacheCoverImageAsync tries again
-                foreach (var game in missing)
+                // Clear broken paths pointing to non-existent local files
+                foreach (var game in targetGames)
                 {
-                    var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
-                    _metadataService.DeleteSentinel(key);
+                    if (!string.IsNullOrEmpty(game.CoverImageUrl) &&
+                        !game.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                        !File.Exists(game.CoverImageUrl))
+                    {
+                        game.CoverImageUrl = null;
+                    }
                 }
 
+                // Sync API key from the UI text box only if it has a value —
+                // if the control isn't visible/initialized its Text is empty and we must NOT
+                // overwrite the already-persisted key with an empty string.
+                var txtSteamGridApiKey = this.FindControl<TextBox>("TxtSteamGridApiKey");
+                if (txtSteamGridApiKey != null)
+                {
+                    var uiKey = (txtSteamGridApiKey.Text ?? string.Empty).Trim();
+                    if (!string.IsNullOrEmpty(uiKey) &&
+                        !string.Equals(uiKey, _componentService.Config.SteamGridDBApiKey, StringComparison.Ordinal))
+                    {
+                        _componentService.Config.SteamGridDBApiKey = uiKey;
+                        _componentService.SaveConfiguration();
+                    }
+                }
+
+                var currentApiKey = _componentService.Config.SteamGridDBApiKey?.Trim() ?? string.Empty;
+                var lastApiKey = _componentService.Config.LastCoverSearchApiKey?.Trim() ?? string.Empty;
+                bool apiKeyChanged = !string.Equals(currentApiKey, lastApiKey, StringComparison.Ordinal);
+
+                // If the user configured/changed an API key since the last cover search, or forced retry,
+                // clear all stale sentinels so covers can be retried with the new key!
+                if (apiKeyChanged || forceRetrySentinels)
+                {
+                    _metadataService.DeleteAllSentinels();
+                    _componentService.Config.LastCoverSearchApiKey = currentApiKey;
+                    _componentService.SaveConfiguration();
+                    forceRetrySentinels = true;
+                }
+
+                bool hasApiKey = !string.IsNullOrWhiteSpace(currentApiKey);
+
+                var gamesWithoutCovers = targetGames
+                    .Where(g => string.IsNullOrEmpty(g.CoverImageUrl) ||
+                                g.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                                !File.Exists(g.CoverImageUrl))
+                    .ToList();
+
+                if (gamesWithoutCovers.Count == 0)
+                {
+                    ShowToast(GetResourceString("TxtAllCoversAvailableToast", "All game covers are already available."));
+                    _ = HideToastAfterAsync(3500);
+                    return;
+                }
+
+                // If no API key is configured and all missing games already have a sentinel (already tried with Steam and failed),
+                // prompt the user to configure an API key in Settings rather than stating all covers are available.
+                if (!hasApiKey && gamesWithoutCovers.All(g =>
+                {
+                    var key = !string.IsNullOrEmpty(g.AppId) ? g.AppId : g.Name;
+                    return !string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key);
+                }))
+                {
+                    ShowToast(GetResourceString("TxtMissingCoversConfigureApiKeyToast", "Missing covers: configure a SteamGridDB API key in Settings."));
+                    _ = HideToastAfterAsync(6500);
+                    return;
+                }
+
+                // Always delete sentinels for games without covers so they get a fresh retry.
+                // (Sentinels exist to avoid hammering APIs on startup, not to permanently block manual refresh.)
+                foreach (var game in gamesWithoutCovers)
+                {
+                    var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
+                    if (!string.IsNullOrEmpty(key))
+                        _metadataService.DeleteSentinel(key);
+                }
+
+                var missing = gamesWithoutCovers.ToList();
+
+                var fetchingCoversFormat = GetResourceString("TxtFetchingCoversFormat", "Fetching covers: {0}/{1}...");
+                ShowToast(string.Format(fetchingCoversFormat, 0, missing.Count), showProgress: true, progressPercent: 0);
+
+                var completed = 0;
+                var total = missing.Count;
                 using var sem = new SemaphoreSlim(6, 6);
                 var tasks = missing.Select(game =>
                 {
@@ -5025,19 +5234,49 @@ namespace OptiscalerClient.Views
                     return Task.Run(async () =>
                     {
                         await sem.WaitAsync();
-                        try { game.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, key); }
-                        finally { sem.Release(); }
+                        try
+                        {
+                            var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
+                                ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
+                                : null;
+                            var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, key, fallbackName: folderName);
+                            if (!string.IsNullOrEmpty(newCover))
+                            {
+                                game.CoverImageUrl = newCover;
+                            }
+                        }
+                        finally
+                        {
+                            sem.Release();
+                            var done = Interlocked.Increment(ref completed);
+                            var pct = (double)done / total * 100.0;
+                            var msg = string.Format(fetchingCoversFormat, done, total);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                UpdateToastProgress(msg, pct);
+                            });
+                        }
                     });
                 }).ToList();
 
                 await Task.WhenAll(tasks);
 
-                _persistenceService.SaveGames(_games);
+                _persistenceService.SaveGames(targetGames);
                 ApplyFilter(_txtSearch?.Text);
 
                 var found = missing.Count(g => !string.IsNullOrEmpty(g.CoverImageUrl));
-                ShowToast(string.Format(GetResourceString("TxtCoverRefreshToastFmt", "Cover refresh complete — {0}/{1} covers found."), found, missing.Count));
-                _ = HideToastAfterAsync(3500);
+                var stillMissing = targetGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+
+                if (!hasApiKey && stillMissing > 0)
+                {
+                    ShowToast(GetResourceString("TxtMissingCoversConfigureApiKeyToast", "Missing covers: configure a SteamGridDB API key in Settings."));
+                    _ = HideToastAfterAsync(6500);
+                }
+                else
+                {
+                    ShowToast(string.Format(GetResourceString("TxtCoverRefreshToastFmt", "Cover refresh complete — {0}/{1} covers found."), found, missing.Count));
+                    _ = HideToastAfterAsync(3500);
+                }
             }
             catch (Exception ex)
             {
@@ -5072,10 +5311,14 @@ namespace OptiscalerClient.Views
 
                 var manualGames = _games.Where(g => g.Platform == GamePlatform.Manual).ToList();
 
-                var existingGames = _games.ToDictionary(
-                    g => g.InstallPath,
-                    g => g,
-                    StringComparer.OrdinalIgnoreCase);
+                var existingGames = new Dictionary<string, Game>(StringComparer.OrdinalIgnoreCase);
+                foreach (var g in _games)
+                {
+                    if (!string.IsNullOrEmpty(g.InstallPath) && !existingGames.ContainsKey(g.InstallPath))
+                    {
+                        existingGames[g.InstallPath] = g;
+                    }
+                }
 
                 _games.Clear();
 
@@ -5095,11 +5338,19 @@ namespace OptiscalerClient.Views
                         if (upscalerFilter == UpscalerFilterMode.SkipWithoutUpscaler && lacksUpscaler)
                             continue;
 
-                        if (existingGames.TryGetValue(scannedGame.InstallPath, out var existing) &&
-                            !string.IsNullOrEmpty(existing.CoverImageUrl) &&
-                            !existing.CoverImageUrl.StartsWith("http"))
+                        if (existingGames.TryGetValue(scannedGame.InstallPath, out var existing))
                         {
-                            scannedGame.CoverImageUrl = existing.CoverImageUrl;
+                            if (!string.IsNullOrWhiteSpace(existing.Name))
+                            {
+                                scannedGame.Name = existing.Name;
+                            }
+
+                            if (!string.IsNullOrEmpty(existing.CoverImageUrl) &&
+                                !existing.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                                File.Exists(existing.CoverImageUrl))
+                            {
+                                scannedGame.CoverImageUrl = existing.CoverImageUrl;
+                            }
                         }
 
                         // HideWithoutUpscaler: add the game but mark it hidden
@@ -5118,11 +5369,34 @@ namespace OptiscalerClient.Views
                 if (_btnScan != null) _btnScan.IsEnabled = true;
 
                 var gamesNeedingCovers = _games
-                    .Where(g => string.IsNullOrEmpty(g.CoverImageUrl) || g.CoverImageUrl.StartsWith("http"))
+                    .Where(g =>
+                    {
+                        var needsCover = string.IsNullOrEmpty(g.CoverImageUrl) ||
+                                        g.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+                                        !File.Exists(g.CoverImageUrl);
+
+                        if (!needsCover) return false;
+
+                        var key = !string.IsNullOrEmpty(g.AppId) ? g.AppId : g.Name;
+                        if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key))
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    })
                     .ToList();
 
                 if (gamesNeedingCovers.Count > 0)
                 {
+                    foreach (var g in gamesNeedingCovers)
+                    {
+                        if (!string.IsNullOrEmpty(g.CoverImageUrl) && !File.Exists(g.CoverImageUrl))
+                        {
+                            g.CoverImageUrl = null;
+                        }
+                    }
+
                     var fetchingCoversFormat = GetResourceString("TxtFetchingCoversFormat", "Fetching covers: {0}/{1}...");
                     ShowToast(string.Format(fetchingCoversFormat, 0, gamesNeedingCovers.Count),
                               showProgress: true, progressPercent: 0);
@@ -5138,7 +5412,14 @@ namespace OptiscalerClient.Views
                             await coverSemaphore.WaitAsync();
                             try
                             {
-                                game.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey);
+                                var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
+                                    ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
+                                    : null;
+                                var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName);
+                                if (!string.IsNullOrEmpty(newCover))
+                                {
+                                    game.CoverImageUrl = newCover;
+                                }
                             }
                             finally
                             {
@@ -5162,6 +5443,15 @@ namespace OptiscalerClient.Views
                     {
                         HideToast();
                         RefreshGameLists();
+
+                        bool hasApiKey = !string.IsNullOrWhiteSpace(_componentService.Config.SteamGridDBApiKey);
+                        var stillMissing = _games.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+
+                        if (!hasApiKey && stillMissing > 0)
+                        {
+                            ShowToast(GetResourceString("TxtMissingCoversConfigureApiKeyToast", "Missing covers: configure a SteamGridDB API key in Settings."));
+                            _ = HideToastAfterAsync(6500);
+                        }
                     });
                 }
                 else
@@ -5215,6 +5505,10 @@ namespace OptiscalerClient.Views
 
                     _analyzerService.AnalyzeGame(newGame);
                     newGame.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(newGame.Name, newGame.AppId);
+                    var folderName = !string.IsNullOrWhiteSpace(newGame.InstallPath)
+                        ? System.IO.Path.GetFileName(newGame.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
+                        : null;
+                    newGame.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(newGame.Name, newGame.AppId, fallbackName: folderName);
 
                     _games.Insert(0, newGame);
                     _allGames = _games.ToList();
@@ -6176,13 +6470,15 @@ namespace OptiscalerClient.Views
 
         private void ShowToast(string message, bool showProgress = false, double? progressPercent = null)
         {
-            var txtToastMessage = this.FindControl<TextBlock>("TxtToastMessage");
-            var bdToast = this.FindControl<Border>("BdToast");
-            var prgToast = this.FindControl<ProgressBar>("PrgToast");
-
             Dispatcher.UIThread.Post(() =>
             {
+                var txtToastMessage = _txtToastMessage ?? this.FindControl<TextBlock>("TxtToastMessage");
+                var bdToast = _bdToast ?? this.FindControl<Border>("BdToast");
+                var prgToast = _prgToast ?? this.FindControl<ProgressBar>("PrgToast");
+                var txtToastIcon = _txtToastIcon ?? this.FindControl<TextBlock>("TxtToastIcon");
+
                 if (txtToastMessage != null) txtToastMessage.Text = message;
+                if (txtToastIcon != null && showProgress) txtToastIcon.Text = "...";
                 if (bdToast != null) bdToast.IsVisible = true;
                 if (prgToast != null)
                 {
@@ -6200,11 +6496,11 @@ namespace OptiscalerClient.Views
 
         private void HideToast()
         {
-            var bdToast = this.FindControl<Border>("BdToast");
-            var prgToast = this.FindControl<ProgressBar>("PrgToast");
-
             Dispatcher.UIThread.Post(() =>
             {
+                var bdToast = _bdToast ?? this.FindControl<Border>("BdToast");
+                var prgToast = _prgToast ?? this.FindControl<ProgressBar>("PrgToast");
+
                 if (bdToast != null) bdToast.IsVisible = false;
                 if (prgToast != null) prgToast.IsVisible = false;
             });
@@ -6218,11 +6514,11 @@ namespace OptiscalerClient.Views
 
         private void ShowSecondaryToast(string message)
         {
-            var txtToast = this.FindControl<TextBlock>("TxtToastSecondaryMessage");
-            var bdToast = this.FindControl<Border>("BdToastSecondary");
-
             Dispatcher.UIThread.Post(() =>
             {
+                var txtToast = _txtToastSecondaryMessage ?? this.FindControl<TextBlock>("TxtToastSecondaryMessage");
+                var bdToast = _bdToastSecondary ?? this.FindControl<Border>("BdToastSecondary");
+
                 if (txtToast != null) txtToast.Text = message;
                 if (bdToast != null) bdToast.IsVisible = true;
             });
@@ -6233,9 +6529,9 @@ namespace OptiscalerClient.Views
         private async Task HideSecondaryToastAfterAsync(int delayMs)
         {
             await Task.Delay(delayMs);
-            var bdToast = this.FindControl<Border>("BdToastSecondary");
             Dispatcher.UIThread.Post(() =>
             {
+                var bdToast = _bdToastSecondary ?? this.FindControl<Border>("BdToastSecondary");
                 if (bdToast != null) bdToast.IsVisible = false;
             });
         }
@@ -6315,21 +6611,6 @@ namespace OptiscalerClient.Views
         }
 
         #endregion
-
-        private void LogToFile(string message)
-        {
-            try
-            {
-                var logPath = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "crash.log");
-
-                var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                System.IO.File.AppendAllText(logPath, $"[{timestamp}] {message}\n");
-            }
-            catch
-            {
-                // Si falla el logging, no hacer nada para evitar crash adicional
-            }
-        }
 
         private string GetResourceString(string key, string fallback)
         {
