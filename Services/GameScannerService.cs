@@ -176,8 +176,9 @@ public class GameScannerService
 
                     foreach (var exePath in exeFiles)
                     {
-                        // Use the game folder name as the game name
-                        var gameName = Path.GetFileName(gameFolder);
+                        // Use the cleaned game folder name as the display name
+                        var rawFolderName = Path.GetFileName(gameFolder);
+                        var gameName = CleanFolderName(rawFolderName);
 
                         // Skip common non-game executables
                         var exeName = Path.GetFileNameWithoutExtension(exePath).ToLower();
@@ -194,7 +195,8 @@ public class GameScannerService
                             ExecutablePath = exePath,
                             InstallPath = gameFolder,
                             Platform = GamePlatform.Custom,
-                            AppId = "Custom_" + Path.GetFileName(gameFolder)
+                            // AppId uses raw folder name to uniquely identify the game (no double prefix)
+                            AppId = rawFolderName
                         };
 
                         games.Add(game);
@@ -216,5 +218,48 @@ public class GameScannerService
         }
 
         return games;
+    }
+
+    /// <summary>
+    /// Converts a raw scene/release folder name into a human-readable game display name.
+    /// e.g. "Custom_Alan.Wake.2.Deluxe.Edition-InsaneRamZes" → "Alan Wake 2"
+    /// </summary>
+    public static string CleanFolderName(string folderName)
+    {
+        var cleaned = folderName;
+
+        // Replace underscores with spaces if used as word separators
+        if (cleaned.Contains('_') && !cleaned.Contains(' '))
+            cleaned = cleaned.Replace('_', ' ');
+
+        // Replace dots with spaces if used as word separators
+        if (cleaned.Contains('.') && !cleaned.Contains(' '))
+            cleaned = cleaned.Replace('.', ' ');
+
+        // Remove scene/release group suffixes like "-InsaneRamZes", "-CODEX", "-FLT", etc.
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*-[A-Za-z0-9_.]+$", "");
+
+        // Remove year suffixes like "(2024)", "- 2024"
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*[\(\-]\s*\d{4}\s*[\)]?\s*$", "");
+
+        // Remove edition suffixes
+        var editionPatterns = new[] { "Deluxe", "Ultimate", "Gold", "GOTY", "Complete", "Enhanced", "Remastered", "Definitive" };
+        foreach (var pattern in editionPatterns)
+        {
+            cleaned = System.Text.RegularExpressions.Regex.Replace(
+                cleaned,
+                $@"\s*-?\s*{pattern}\s*(Edition)?\s*$",
+                "",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        // Remove scene/release group prefixes that appear before the real game name
+        cleaned = System.Text.RegularExpressions.Regex.Replace(
+            cleaned,
+            @"^(Custom|Rune|Razor|PLAZA|CODEX|RELOADED|FLT|SKIDROW|CPY|PROPHET|HOODLUM|SiMPLEX)\s+",
+            "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        return cleaned.Trim();
     }
 }
