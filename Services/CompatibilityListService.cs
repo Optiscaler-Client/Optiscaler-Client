@@ -52,7 +52,7 @@ namespace OptiscalerClient.Services
         // CompatibilityListCache.SchemaVersion). A cache saved by an older build deserializes
         // with SchemaVersion 0, which CheckForUpdatesAsync treats as unusable so it refreshes
         // immediately instead of waiting out the normal 24h cooldown on stale/incomplete data.
-        private const int CacheSchemaVersion = 3; // 3: added CompatibilityListEntry.IsLumaUnrealEngine
+        private const int CacheSchemaVersion = 4; // 4: re-fetch to fix truncated table parsing
 
         // Static so the in-memory cache survives across `new CompatibilityListService()` calls,
         // same convention as ComponentManagementService's release caches.
@@ -69,6 +69,9 @@ namespace OptiscalerClient.Services
         /// cache as a definitive "not found" result.
         /// </summary>
         public static bool IsRefreshInProgress => System.Threading.Volatile.Read(ref _refreshInProgress) != 0;
+
+        /// <summary>Raised when a network refresh of the unified Compatibility List begins.</summary>
+        public static event EventHandler? RefreshStarted;
 
         /// <summary>Raised after an in-progress Compatibility List refresh has finished.</summary>
         public static event EventHandler? RefreshCompleted;
@@ -183,6 +186,8 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log("[CompatList] Refresh already in progress — reusing it.");
                 return;
             }
+
+            RefreshStarted?.Invoke(null, EventArgs.Empty);
 
             try
             {
@@ -465,7 +470,11 @@ namespace OptiscalerClient.Services
             for (int i = firstRowIndex; i < lines.Length; i++)
             {
                 var line = lines[i].Trim();
-                if (!line.StartsWith("|")) break; // blank line or next heading ends the table
+                if (line.Length == 0 || line.StartsWith("#")) break; // blank line or next heading ends the table
+                // A row occasionally loses its leading "|" through a hand-edit of the wiki (seen on
+                // the live page for "Metro Exodus: Enhanced Edition") - tolerate it instead of
+                // treating it as the end of the table, which would silently drop every entry after it.
+                if (!line.StartsWith("|")) line = "|" + line;
 
                 var cells = line.Split('|');
                 // cells[0] and cells[^1] are the empty strings before/after the leading/trailing "|".
