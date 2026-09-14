@@ -90,7 +90,8 @@
                                 <Border Classes="InteractiveOption CardOption"
                                         CornerRadius="{StaticResource RadiusMedium}"
                                         Padding="16,12"
-                                        Margin="0,0,0,20">
+                                        Margin="0,0,0,20"
+                                        PointerPressed="BorderRefreshCovers_PointerPressed">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TxtRefreshCoversTitle}"

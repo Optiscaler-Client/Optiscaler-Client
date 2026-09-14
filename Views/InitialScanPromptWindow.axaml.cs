@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Services;
@@ -449,6 +450,18 @@ namespace OptiscalerClient.Views
             }
         }
 
+        private void BorderRefreshCovers_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is ToggleSwitch || (e.Source as Visual)?.FindAncestorOfType<ToggleSwitch>() != null)
+                return;
+
+            var tgl = this.FindControl<ToggleSwitch>("TglRefreshCoversOnly");
+            if (tgl != null)
+            {
+                tgl.IsChecked = !(tgl.IsChecked ?? false);
+            }
+        }
+
         private void TglRefreshCoversOnly_IsCheckedChanged(object? sender, RoutedEventArgs e)
         {
             var isCoversOnly = (sender as ToggleSwitch)?.IsChecked ?? false;
@@ -458,6 +471,16 @@ namespace OptiscalerClient.Views
             var pnlFilter = this.FindControl<StackPanel>("PnlUpscalerFilter");
             if (pnlFilter != null)
                 pnlFilter.IsEnabled = !isCoversOnly;
+
+            var btnStartScan = this.FindControl<Button>("BtnStartScan");
+            if (btnStartScan != null)
+            {
+                var resourceKey = isCoversOnly ? "TxtRefreshCoversTitle" : "TxtInitialScanStart";
+                if (this.TryFindResource(resourceKey, out var val) && val is string text)
+                {
+                    btnStartScan.Content = text;
+                }
+            }
         }
 
         private void BtnStartScan_Click(object? sender, RoutedEventArgs e)
