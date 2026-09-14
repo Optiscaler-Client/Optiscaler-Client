@@ -1029,4 +1029,12 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtWelcomeWhatsNew4">• Nuevo: la sección Experimental (en Settings) agrega soporte para addons de RenoDx e integración del Nvidia Neural Rendering Mod para AMD.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew5">• Corregido: las claves de FSR 4 DLL que desaparecían al reinstalar con un perfil distinto, y los cambios en la ventana Profile que no se guardaban al salir de la ventana.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew6">• Y un montón de cosas más.</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restaurar valores</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restaurar valor original</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Guardar</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Sobrescribir perfil actual</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">No se puede sobrescribir el perfil estándar</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">Como nuevo perfil</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">Nuevo perfil</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Introduce un nombre para el nuevo perfil:</x:String>
 </ResourceDictionary>

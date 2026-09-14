@@ -309,7 +309,7 @@
 
     <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">このインストールはパッケージマネージャー(AUR、Nixなど)によって管理されているようです。アプリ内ではなく、そちらから更新してください。</x:String>
 
-    <x:String x:Key="TxtBtnBulkInstall">⚡  一括インストール</x:String>
+    <x:String x:Key="TxtBtnBulkInstall">一括インストール</x:String>
     <x:String x:Key="TxtBtnFilters">フィルター</x:String>
 
     <!-- BulkInstallWindow -->
@@ -1024,4 +1024,12 @@
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">まだ設定されていないすべてのゲームに対して「Setup NR」モードを事前選択し、Quick Install / Bulk Installで自動的にインストールできるようにします。上の既定GPUがAMDに設定され、実験的機能が有効な場合にのみ表示されます。</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeMessage">複数回の連続クラッシュのため、プログラムはソフトウェアレンダリングモードに切り替わりました。&#x0a;&#x0a;設定からハードウェアレンダリング（推奨）に戻すことができます。</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeTitle">レンダリングモードが変更されました</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Override current profile</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">Cannot overwrite the standard profile</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
 </ResourceDictionary>

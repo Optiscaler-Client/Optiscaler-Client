@@ -437,6 +437,17 @@ namespace OptiscalerClient.Services
                 ?? OptiScalerProfile.CreateDefault();
         }
 
+        public string GetUniqueProfileName(string baseName)
+        {
+            var existing = GetAllProfiles().Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!existing.Contains(baseName)) return baseName;
+            for (var n = 2; ; n++)
+            {
+                var candidate = $"{baseName} ({n})";
+                if (!existing.Contains(candidate)) return candidate;
+            }
+        }
+
         private string SanitizeFileName(string fileName)
         {
             var invalid = Path.GetInvalidFileNameChars();

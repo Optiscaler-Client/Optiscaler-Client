@@ -24,7 +24,7 @@
                         IsHitTestVisible="False"/>
 
                 <Border CornerRadius="12" Background="Transparent" ClipToBounds="True">
-                    <Grid RowDefinitions="Auto, Auto, *">
+                    <Grid RowDefinitions="Auto, Auto, *, Auto">
 
                         <!-- Title Bar (Draggable) -->
                         <Border Grid.Row="0"
@@ -116,6 +116,32 @@
                                       VerticalScrollBarVisibility="Auto">
                             <StackPanel Name="PanelSections" Spacing="14"/>
                         </ScrollViewer>
+                        
+                        <!-- Footer -->
+                        <Border Grid.Row="3"
+                                Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,1,0,0"
+                                Padding="24,16">
+                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                <Button Grid.Column="0"
+                                        Name="BtnRestoreValues"
+                                        Classes="BtnBase"
+                                        Padding="14,8"
+                                        Click="BtnRestoreValues_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xF1A0;" FontFamily="{StaticResource FontIcons}" FontSize="12"/>
+                                        <TextBlock Text="{DynamicResource TxtViewIniRestoreAll}"/>
+                                    </StackPanel>
+                                </Button>
+                                <ComboBox Grid.Column="2"
+                                          Name="CmbSave"
+                                          Classes="BtnPrimary"
+                                          Padding="12,8"
+                                          PlaceholderText="{DynamicResource TxtViewIniSavePlaceholder}"
+                                          SelectionChanged="CmbSave_SelectionChanged"/>
+                            </Grid>
+                        </Border>
                     </Grid>
                 </Border>
             </Grid>

@@ -301,7 +301,7 @@
 
     <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">이 설치는 패키지 관리자(AUR, Nix 등)로 관리되는 것으로 보입니다. 앱 내에서가 아니라 그곳에서 업데이트해 주세요.</x:String>
 
-    <x:String x:Key="TxtBtnBulkInstall">⚡  일괄 설치</x:String>
+    <x:String x:Key="TxtBtnBulkInstall">일괄 설치</x:String>
     <x:String x:Key="TxtBtnFilters">필터</x:String>
 
     <!-- BulkInstallWindow -->
@@ -1023,4 +1023,12 @@
     <x:String x:Key="TxtWelcomeWhatsNew4">• 신규: 설정의 실험적 섹션에 RenoDx 애드온 지원과 AMD용 Nvidia Neural Rendering Mod 통합이 추가되었습니다.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew5">• 수정: 다른 프로필로 재설치한 후 FSR 4 DLL 키가 사라지던 문제와 Profile 창을 나갈 때 변경 사항이 저장되지 않던 문제를 수정했습니다.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew6">• 그 외에도 다양한 변경 사항이 있습니다.</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Override current profile</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">Cannot overwrite the standard profile</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
 </ResourceDictionary>

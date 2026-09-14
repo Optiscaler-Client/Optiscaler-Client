@@ -1023,4 +1023,12 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Default "Setup NR" mode to pre-select for every never-configured game, and to auto-install with Quick Install / Bulk Install. Only shown when the default GPU above is AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Default</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Could not apply the output upscaler configuration:</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Override current profile</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">Cannot overwrite the standard profile</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
 </ResourceDictionary>

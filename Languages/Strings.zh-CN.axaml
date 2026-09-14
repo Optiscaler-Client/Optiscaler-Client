@@ -308,7 +308,7 @@
 
     <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">此安装似乎由包管理器(例如 AUR、Nix)管理。请从那里更新，而不是在应用内更新。</x:String>
 
-    <x:String x:Key="TxtBtnBulkInstall">⚡  批量安装</x:String>
+    <x:String x:Key="TxtBtnBulkInstall">批量安装</x:String>
     <x:String x:Key="TxtBtnFilters">筛选</x:String>
 
     <!-- BulkInstallWindow -->
@@ -1023,4 +1023,12 @@
     <x:String x:Key="TxtHelpSetDlssNrDefaultText">为每个尚未配置的游戏预先选择“Setup NR”模式，让快速安装/批量安装自动完成安装。仅当上方的默认 GPU 设为 AMD 且已启用实验性功能时才会显示。</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeMessage">由于多次反复崩溃，程序已切换到软件渲染模式。&#x0a;&#x0a;你可以从设置中切换回硬件渲染（推荐）。</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeTitle">渲染模式已更改</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Override current profile</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">Cannot overwrite the standard profile</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
 </ResourceDictionary>

@@ -1,0 +1,76 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.PromptDialog"
+        Title="Prompt"
+        Width="400"
+        SizeToContent="Height"
+        MinHeight="220"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        ShowInTaskbar="False">
+
+    <Panel Margin="16" Name="RootPanel" Opacity="0">
+        <Border CornerRadius="12"
+                Background="{StaticResource BrBgBase}"
+                BoxShadow="0 10 30 0 #A0000000">
+
+            <Grid>
+                <Border CornerRadius="12"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="1"
+                        ZIndex="10"
+                        IsHitTestVisible="False"/>
+
+                <Border CornerRadius="12" Background="Transparent" ClipToBounds="True">
+                    <Grid RowDefinitions="Auto, Auto, Auto">
+                        <!-- Title Bar -->
+                        <Border Grid.Row="0"
+                                Name="TitleBar"
+                                Background="{StaticResource BrBgDeep}"
+                                Padding="20,16"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,0,0,1">
+                            <TextBlock Name="TxtTitle"
+                                       Text="Title"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource BrTextPrimary}"/>
+                        </Border>
+
+                        <!-- Content -->
+                        <StackPanel Grid.Row="1" Margin="24,20" Spacing="12">
+                            <TextBlock Name="TxtLabel"
+                                       Text="Label"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <TextBox Name="TxtInput"
+                                     HorizontalAlignment="Stretch"
+                                     KeyDown="TxtInput_KeyDown"/>
+                        </StackPanel>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Background="{StaticResource BrBgElevated}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,1,0,0"
+                                Padding="20,16">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                                <Button Content="{DynamicResource TxtCancel}"
+                                        Classes="BtnSecondary"
+                                        Padding="20,8"
+                                        Click="BtnCancel_Click"/>
+                                <Button Content="{DynamicResource TxtSave}"
+                                        Classes="BtnPrimary"
+                                        Padding="20,8"
+                                        Click="BtnOk_Click"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

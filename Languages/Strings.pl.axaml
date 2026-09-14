@@ -301,7 +301,7 @@
 
     <x:String x:Key="TxtUpdateManagedInstallMsgGeneric">Ta instalacja wygląda na zarządzaną przez menedżera pakietów (np. AUR, Nix). Zaktualizuj ją stamtąd zamiast z poziomu aplikacji.</x:String>
 
-    <x:String x:Key="TxtBtnBulkInstall">⚡  Instalacja masowa</x:String>
+    <x:String x:Key="TxtBtnBulkInstall">Instalacja masowa</x:String>
     <x:String x:Key="TxtBtnFilters">Filtry</x:String>
 
     <!-- BulkInstallWindow -->
@@ -1027,4 +1027,12 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtWelcomeWhatsNew4">• Nowość: sekcja Experimental (w Settings) dodaje wsparcie dla dodatków RenoDx oraz integrację z Nvidia Neural Rendering Mod dla AMD.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew5">• Naprawiono: znikanie kluczy FSR 4 DLL po reinstalacji z innym profilem oraz brak zapisywania zmian w oknie Profile po jego opuszczeniu.</x:String>
     <x:String x:Key="TxtWelcomeWhatsNew6">• I wiele więcej.</x:String>
+    <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
+    <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
+    <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
+    <x:String x:Key="TxtViewIniSaveOverride">Override current profile</x:String>
+    <x:String x:Key="TxtViewIniSaveOverrideDisabledTooltip">Cannot overwrite the standard profile</x:String>
+    <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
+    <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
 </ResourceDictionary>

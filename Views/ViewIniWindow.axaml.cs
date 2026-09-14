@@ -16,7 +16,19 @@ namespace OptiscalerClient.Views
     /// anything back; purely for inspection next to the Profile selector's "view ini" eye icon.</summary>
     public partial class ViewIniWindow : Window
     {
-        private sealed record IniRow(Border RowBorder, TextBlock KeyBlock, TextBlock ValueBlock, string Key, string Value);
+        private sealed class IniRow
+        {
+            public Border RowBorder { get; set; } = null!;
+            public TextBlock KeyBlock { get; set; } = null!;
+            public Control ValueControl { get; set; } = null!;
+            public string Section { get; set; } = "";
+            public string Key { get; set; } = "";
+            public string OriginalValue { get; set; } = "";
+            public Func<string> ValueGetter { get; set; } = null!;
+            public Action<string> ValueSetter { get; set; } = null!;
+            public Button RestoreRowButton { get; set; } = null!;
+        }
+
         private sealed record IniSectionUi(Border Card, TextBlock Header, string SectionName, List<IniRow> Rows);
 
         private const double BaseFontSize = 14; // slightly larger than the app's usual 12px body text, at 100% zoom
@@ -30,18 +42,38 @@ namespace OptiscalerClient.Views
         private double _fontSize = BaseFontSize;
         private string _searchMode = "term";
 
+        private Models.Game? _game;
+        private Models.OptiScalerProfile? _currentProfile;
+        private Services.ProfileManagementService? _profileService;
+        private Action<Models.OptiScalerProfile>? _onProfilePersisted;
+
+        private readonly Dictionary<(string, string), Views.SchemaSetting> _schemaLookup;
+        private readonly Helpers.KeybindCaptureController _keybindController = new();
+
         private void InitializeComponent() => AvaloniaXamlLoader.Load(this);
 
-        public ViewIniWindow() => InitializeComponent(); // designer-only
+        public ViewIniWindow() 
+        {
+            InitializeComponent(); 
+            _schemaLookup = new Dictionary<(string, string), Views.SchemaSetting>();
+        }
 
-        public ViewIniWindow(string iniPath, string gameName)
+        public ViewIniWindow(string iniPath, Models.Game game, Models.OptiScalerProfile currentProfile, Services.ProfileManagementService profileService, Action<Models.OptiScalerProfile> onProfilePersisted)
         {
             InitializeComponent();
+            _game = game;
+            _currentProfile = currentProfile;
+            _profileService = profileService;
+            _onProfilePersisted = onProfilePersisted;
+            
+            _schemaLookup = SchemaSettingControlFactory.LoadCanonicalSchemaLookup();
+
             DialogDimHelper.Register(this);
             WindowScreenFitHelper.FitToScreen(this);
-            SetupWindow(gameName);
+            SetupWindow(game.Name);
             PopulateSearchModeCombo();
             BuildContent(iniPath);
+            SetupFooter();
         }
 
         private void SetupWindow(string gameName)
@@ -64,6 +96,40 @@ namespace OptiscalerClient.Views
                     rootPanel.Opacity = 1;
                 }
             };
+
+            this.KeyDown += _keybindController.HandleKeyDown;
+        }
+
+        private void SetupFooter()
+        {
+            var cmbSave = this.FindControl<ComboBox>("CmbSave");
+            if (cmbSave != null)
+            {
+                cmbSave.Items.Clear();
+                
+                var overrideItem = new ComboBoxItem 
+                { 
+                    Content = GetResourceString("TxtViewIniSaveOverride", "Override current profile"), 
+                    Tag = "override" 
+                };
+                
+                if (_currentProfile != null && _currentProfile.IsBuiltIn)
+                {
+                    overrideItem.IsEnabled = false;
+                    ToolTip.SetTip(overrideItem, GetResourceString("TxtViewIniSaveOverrideDisabledTooltip", "Cannot overwrite built-in profile"));
+                }
+                
+                cmbSave.Items.Add(overrideItem);
+                cmbSave.Items.Add(new ComboBoxItem 
+                { 
+                    Content = GetResourceString("TxtViewIniSaveAsNew", "As new profile"), 
+                    Tag = "as_new" 
+                });
+                
+                cmbSave.SelectedIndex = -1;
+            }
+            
+            UpdateSaveButtonState();
         }
 
         private void BtnClose_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Close();
@@ -74,10 +140,6 @@ namespace OptiscalerClient.Views
         private static string GetResourceString(string key, string fallback)
             => Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
 
-        /// <summary>Built in code, like CmbSpoofing elsewhere in this app, instead of declaring
-        /// &lt;ComboBoxItem&gt; children directly in XAML — the declarative form threw "Could not find
-        /// parent name scope" here at runtime (XAML compiled fine; only failed when the window was
-        /// actually opened).</summary>
         private void PopulateSearchModeCombo()
         {
             var cmb = this.FindControl<ComboBox>("CmbSearchMode");
@@ -89,9 +151,6 @@ namespace OptiscalerClient.Views
             cmb.SelectionChanged += CmbSearchMode_SelectionChanged;
         }
 
-        /// <summary>Parses the ini into [Section] cards of "Key  Value" rows. Unknown format (can't
-        /// even find one "key=value" line) falls back to a plain monospace dump instead of an empty
-        /// window, so a malformed/edited-by-hand ini is still inspectable.</summary>
         private void BuildContent(string iniPath)
         {
             var panel = this.FindControl<StackPanel>("PanelSections");
@@ -165,39 +224,111 @@ namespace OptiscalerClient.Views
             return result;
         }
 
+        private void MarkRowDirty(IniRow row)
+        {
+            var currentVal = row.ValueGetter();
+            if (currentVal != row.OriginalValue)
+            {
+                row.RestoreRowButton.IsVisible = true;
+                row.RowBorder.Background = ResBrush("BrAccentSubtle", Brushes.DarkSlateBlue);
+            }
+            else
+            {
+                row.RestoreRowButton.IsVisible = false;
+                row.RowBorder.Background = Brushes.Transparent;
+            }
+            UpdateSaveButtonState();
+        }
+
+        private void UpdateSaveButtonState()
+        {
+            bool anyDirty = _sections.SelectMany(s => s.Rows).Any(r => r.ValueGetter() != r.OriginalValue);
+            var cmbSave = this.FindControl<ComboBox>("CmbSave");
+            if (cmbSave != null)
+            {
+                cmbSave.IsEnabled = anyDirty;
+            }
+            var btnRestoreValues = this.FindControl<Button>("BtnRestoreValues");
+            if (btnRestoreValues != null)
+            {
+                btnRestoreValues.IsEnabled = anyDirty;
+            }
+        }
+
+        private void RestoreRow(IniRow row)
+        {
+            row.ValueSetter(row.OriginalValue);
+            MarkRowDirty(row);
+        }
+
         private IniSectionUi BuildSectionCard(string section, List<(string Key, string Value)> rows)
         {
             var rowsPanel = new StackPanel { Spacing = 4 };
             var rowsUi = new List<IniRow>(rows.Count);
 
-            foreach (var (key, value) in rows)
+            foreach (var (itemKey, originalDiskValue) in rows)
             {
-                var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("150,*") };
+                var itemValue = originalDiskValue;
+                if (_currentProfile != null && _currentProfile.IniSettings.TryGetValue(section, out var sectionSettings) && sectionSettings.TryGetValue(itemKey, out var profileValue))
+                {
+                    itemValue = profileValue;
+                }
+                var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("150,*,Auto") };
                 var keyBlock = new TextBlock
                 {
-                    Text = key,
+                    Text = itemKey,
                     FontFamily = new FontFamily("Consolas, Monospace"),
                     FontSize = _fontSize,
                     Foreground = ResBrush("BrTextSecondary", Brushes.Gray),
                     TextWrapping = TextWrapping.Wrap,
-                    VerticalAlignment = VerticalAlignment.Top
+                    VerticalAlignment = VerticalAlignment.Center
                 };
-                var valueBlock = new TextBlock
+                
+                var rowObj = new IniRow
                 {
-                    Text = value,
-                    FontFamily = new FontFamily("Consolas, Monospace"),
-                    FontSize = _fontSize,
-                    Foreground = ResBrush("BrTextPrimary", Brushes.White),
-                    TextWrapping = TextWrapping.Wrap
+                    Section = section,
+                    Key = itemKey,
+                    OriginalValue = itemValue,
+                    KeyBlock = keyBlock
                 };
-                Grid.SetColumn(keyBlock, 0);
-                Grid.SetColumn(valueBlock, 1);
-                grid.Children.Add(keyBlock);
-                grid.Children.Add(valueBlock);
 
-                var rowBorder = new Border { Child = grid, Padding = new Thickness(0, 2) };
+                _schemaLookup.TryGetValue((section, itemKey), out var setting);
+
+                var controlResult = SchemaSettingControlFactory.BuildControl(setting, itemValue, _keybindController, () => MarkRowDirty(rowObj));
+                
+                var valueControl = controlResult.Control;
+                valueControl.VerticalAlignment = VerticalAlignment.Center;
+                
+                rowObj.ValueControl = valueControl;
+                rowObj.ValueGetter = controlResult.ValueGetter;
+                rowObj.ValueSetter = controlResult.ValueSetter;
+
+                var restoreBtn = new Button
+                {
+                    Content = "",
+                    FontFamily = (Application.Current?.FindResource("FontIcons") as FontFamily)!,
+                    Classes = { "IconGhost" },
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Width = 24, Height = 24, Padding = new Thickness(0),
+                    FontSize = 14, Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                    IsVisible = false
+                };
+                ToolTip.SetTip(restoreBtn, GetResourceString("TxtViewIniRestoreRowTooltip", "Restore original value"));
+                restoreBtn.Click += (_, __) => RestoreRow(rowObj);
+                rowObj.RestoreRowButton = restoreBtn;
+
+                Grid.SetColumn(keyBlock, 0);
+                Grid.SetColumn(valueControl, 1);
+                Grid.SetColumn(restoreBtn, 2);
+                grid.Children.Add(keyBlock);
+                grid.Children.Add(valueControl);
+                grid.Children.Add(restoreBtn);
+
+                var rowBorder = new Border { Child = grid, Padding = new Thickness(4, 4), CornerRadius = new CornerRadius(4) };
+                rowObj.RowBorder = rowBorder;
+
                 rowsPanel.Children.Add(rowBorder);
-                rowsUi.Add(new IniRow(rowBorder, keyBlock, valueBlock, key, value));
+                rowsUi.Add(rowObj);
             }
 
             var header = new TextBlock
@@ -222,6 +353,95 @@ namespace OptiscalerClient.Views
             return new IniSectionUi(card, header, section, rowsUi);
         }
 
+        private void BtnRestoreValues_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            foreach (var section in _sections)
+            {
+                foreach (var row in section.Rows)
+                {
+                    if (row.ValueGetter() != row.OriginalValue)
+                    {
+                        RestoreRow(row);
+                    }
+                }
+            }
+        }
+
+        private Dictionary<string, Dictionary<string, string>> GetCurrentIniSettings()
+        {
+            var dict = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var section in _sections)
+            {
+                if (!dict.ContainsKey(section.SectionName))
+                    dict[section.SectionName] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                
+                foreach (var row in section.Rows)
+                {
+                    dict[section.SectionName][row.Key] = row.ValueGetter();
+                }
+            }
+            return dict;
+        }
+
+        private void ClearDirtyStates()
+        {
+            foreach (var section in _sections)
+            {
+                foreach (var row in section.Rows)
+                {
+                    row.OriginalValue = row.ValueGetter();
+                    MarkRowDirty(row);
+                }
+            }
+        }
+
+        private async void CmbSave_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (sender is not ComboBox cmb || cmb.SelectedItem is not ComboBoxItem item) return;
+            var tag = item.Tag as string;
+            cmb.SelectedIndex = -1; // Reset right away
+
+            if (_game == null || _profileService == null || _currentProfile == null) return;
+
+            if (tag == "override")
+            {
+                _currentProfile.IniSettings = GetCurrentIniSettings();
+                _profileService.SaveProfile(_currentProfile, _currentProfile.IsBuiltIn);
+                
+                ClearDirtyStates();
+                _onProfilePersisted?.Invoke(_currentProfile);
+                Close();
+            }
+            else if (tag == "as_new")
+            {
+                var defaultName = _profileService.GetUniqueProfileName(_game.Name);
+                var prompt = new PromptDialog(
+                    GetResourceString("TxtPromptNewProfileTitle", "New Profile"),
+                    GetResourceString("TxtPromptNewProfileLabel", "Profile Name:"),
+                    defaultName
+                );
+
+                var newName = await prompt.ShowDialog<string?>(this);
+                if (!string.IsNullOrWhiteSpace(newName))
+                {
+                    var newProfile = new Models.OptiScalerProfile
+                    {
+                        Name = newName.Trim(),
+                        IsBuiltIn = false,
+                        CreatedBy = "User",
+                        CreatedDate = DateTime.Now,
+                        Description = "",
+                        IniSettings = GetCurrentIniSettings()
+                    };
+
+                    _profileService.SaveProfile(newProfile, false);
+                    ClearDirtyStates();
+                    _onProfilePersisted?.Invoke(newProfile);
+                    Close();
+                }
+            }
+        }
+
         private void BtnZoomIn_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
             => ChangeZoom(ZoomStepPercent);
 
@@ -242,7 +462,6 @@ namespace OptiscalerClient.Views
                 foreach (var row in section.Rows)
                 {
                     row.KeyBlock.FontSize = _fontSize;
-                    row.ValueBlock.FontSize = _fontSize;
                 }
             }
 
@@ -282,7 +501,7 @@ namespace OptiscalerClient.Views
                 {
                     var match = query.Length == 0
                         || row.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
-                        || row.Value.Contains(query, StringComparison.OrdinalIgnoreCase);
+                        || row.ValueGetter().Contains(query, StringComparison.OrdinalIgnoreCase);
                     row.RowBorder.IsVisible = match;
                     anyVisible |= match;
                 }
