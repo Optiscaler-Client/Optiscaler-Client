@@ -180,6 +180,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Vista previa no disponible</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Restaurar a la imagen que traía el juego por defecto</x:String>
     <x:String x:Key="TxtRestore">Restaurar</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Eliminar la carátula de la caché para poder volver a solicitarla</x:String>
+    <x:String x:Key="TxtDeleteCover">Eliminar carátula</x:String>
     <x:String x:Key="TxtApply">Aplicar</x:String>
     <x:String x:Key="TxtNoImageSelected">Sin imagen seleccionada</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Ya hay una descarga en curso para v{0}.</x:String>
@@ -225,6 +227,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notas</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">No pudimos encontrar la configuración recomendada para este juego. Consultá la Compatibility List completa para más información.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Obteniendo información de compatibilidad…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Obteniendo recursos…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Ver Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -295,8 +298,9 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtDefaultInjectionMethodDesc">DLL de inyección preseleccionada al abrir Manage. Automático la resuelve por juego según la lista de compatibilidad.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Perfil preseleccionado al abrir Manage para un juego que todavía no tiene uno propio.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Configuración de Frame Generation preseleccionada al abrir Manage para un juego que todavía no tiene una propia.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Limpiar caché de la aplicación</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Caché de la aplicación</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Elimina juegos escaneados, portadas y datos de versiones en caché. La app reanalizará y re-descargará datos al próximo inicio.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Abrir carpeta</x:String>
     <x:String x:Key="TxtClearCacheBtn">Limpiar caché</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Advertencia: Esto eliminará permanentemente todos los juegos escaneados, portadas y datos de versiones de OptiScaler en caché.&#x0a;&#x0a;La aplicación se cerrará al terminar. En el próximo inicio reanalizará tu biblioteca y re-descargará la información de versiones.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Tamaño total: {0}</x:String>
@@ -387,6 +391,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Guía rápida para mejorar la detección de carátulas.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">API Key de SteamGridDB</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Pegá aquí tu API key de SteamGridDB</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">No se ha ingresado una clave de API válida.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Faltan carátulas: configurá tu API key de SteamGridDB en Ajustes.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Pegala en Configuración</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Volvé a la app y pegá la key en el campo SteamGridDB API Key.</x:String>
 
@@ -749,6 +755,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtFilterOnlyFavorites">Solo favoritos</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Actualizacion de portadas completada. Se encontraron {0}/{1} portadas faltantes.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Actualizacion de portadas completada — {0}/{1} portadas encontradas.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Todas las portadas ya están disponibles.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

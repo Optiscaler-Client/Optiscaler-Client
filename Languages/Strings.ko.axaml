@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">참고 사항</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">이 게임에 대한 권장 설정을 찾을 수 없습니다. 자세한 내용은 전체 Compatibility List를 확인하세요.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">호환성 정보를 가져오는 중…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">리소스를 가져오는 중…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List 보기</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">게임 커버 감지를 개선하기 위한 빠른 안내서.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">유효한 SteamGridDB API 키를 입력하세요.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">누락된 커버: 설정에서 SteamGridDB API 키를 구성하세요.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. 설정에 붙여넣기</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">미리보기 사용 불가</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">게임의 기본 커버 이미지로 복원</x:String>
     <x:String x:Key="TxtRestore">복원</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">나중에 다시 가져올 수 있도록 캐시에서 커버 이미지를 삭제합니다</x:String>
+    <x:String x:Key="TxtDeleteCover">커버 삭제</x:String>
     <x:String x:Key="TxtApply">적용</x:String>
     <x:String x:Key="TxtNoImageSelected">선택된 이미지가 없습니다</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0}에 대한 다운로드가 이미 진행 중입니다.</x:String>
@@ -389,8 +394,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">관리 창을 열 때 미리 선택되는 기본 인젝션 DLL입니다. 자동을 선택하면 호환성 목록에 따라 게임별로 결정됩니다.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">아직 자체 프로필이 없는 게임의 관리 창을 열 때 미리 선택되는 기본 프로필입니다.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">아직 자체 설정이 없는 게임의 관리 창을 열 때 미리 선택되는 기본 프레임 생성 구성입니다.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">앱 캐시 지우기</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">앱 캐시</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">스캔된 게임, 커버 이미지 및 캐시된 버전 데이터를 제거합니다. 앱은 다음 시작 시 다시 스캔합니다.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">폴더 열기</x:String>
     <x:String x:Key="TxtClearCacheBtn">캐시 지우기</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">경고: 스캔된 모든 게임, 커버 이미지 및 캐시된 OptiScaler 버전 데이터가 영구적으로 삭제됩니다.&#x0a;&#x0a;지운 후 애플리케이션이 종료됩니다. 다음 시작 시 라이브러리를 다시 스캔하고 버전 정보를 다시 다운로드합니다.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">총 크기: {0}</x:String>
@@ -704,6 +710,7 @@
     <x:String x:Key="TxtFilterOnlyFavorites">즐겨찾기만</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">커버 새로 고침 완료. {0}/{1}개의 누락된 커버를 찾았습니다.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">커버 새로 고침 완료 — {0}/{1}개의 커버를 찾았습니다.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">모든 커버 이미지가 이미 사용 가능합니다.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

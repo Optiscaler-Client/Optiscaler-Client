@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Opmerkingen</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">We konden geen aanbevolen configuratie vinden voor dit spel. Raadpleeg de volledige Compatibility List voor meer info.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Compatibiliteitsinformatie ophalen…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Bronnen ophalen…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Bekijk Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -285,8 +286,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">Standaard injectie-DLL die vooraf wordt geselecteerd bij het openen van Beheren. Automatisch bepaalt dit per spel op basis van de compatibiliteitslijst.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Standaardprofiel dat vooraf wordt geselecteerd bij het openen van Beheren voor een spel dat nog geen eigen profiel heeft.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Standaard Frame Generation-configuratie die vooraf wordt geselecteerd bij het openen van Beheren voor een spel dat nog geen eigen instellingen heeft.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Applicatiecache wissen</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Applicatiecache</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Verwijdert gescande spellen, omslagafbeeldingen en gecachte versiegegevens. De app scant opnieuw bij de volgende start.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Map openen</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache wissen</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Waarschuwing: Dit zal alle gescande spellen, omslagafbeeldingen en gecachte OptiScaler-versiegegevens permanent verwijderen.&#x0a;&#x0a;De applicatie sluit na het wissen. Bij de volgende start wordt de bibliotheek opnieuw gescand en versie-informatie opnieuw gedownload.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Totale grootte: {0}</x:String>
@@ -363,6 +365,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Korte handleiding om de detectie van game-covers te verbeteren.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Voer een geldige SteamGridDB-API-sleutel in.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Ontbrekende covers: stel een SteamGridDB-API-sleutel in via Instellingen.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Plak deze in de instellingen</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -379,6 +383,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Voorvertoning niet beschikbaar</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Herstel naar de standaardomslag van het spel</x:String>
     <x:String x:Key="TxtRestore">Herstellen</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Omslagafbeelding uit cache verwijderen zodat deze later opnieuw kan worden opgehaald</x:String>
+    <x:String x:Key="TxtDeleteCover">Omslag verwijderen</x:String>
     <x:String x:Key="TxtApply">Toepassen</x:String>
     <x:String x:Key="TxtNoImageSelected">Geen afbeelding geselecteerd</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Voor v{0} is er al een download bezig.</x:String>
@@ -723,6 +729,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtFilterOnlyFavorites">Alleen favorieten</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Omslagvernieuwing voltooid. {0}/{1} ontbrekende omslagen gevonden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Omslagvernieuwing voltooid — {0}/{1} omslagen gevonden.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Alle omslagen zijn al beschikbaar.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

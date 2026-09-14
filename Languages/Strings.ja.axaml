@@ -211,6 +211,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">備考</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">このゲームの推奨設定が見つかりませんでした。詳細は Compatibility List 全体をご確認ください。</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">互換性情報を取得しています…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">リソースを取得中…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List を見る</x:String>
     <x:String x:Key="TxtCompatSidebarWikiFetching">ゲーム情報を取得しています…</x:String>
     <x:String x:Key="TxtCompatSidebarViewGamePage">このゲームのWikiページを見る</x:String>
@@ -343,6 +344,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">ゲームのカバー検出を改善するためのクイックガイド。</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">有効なSteamGridDB APIキーを入力してください。</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">カバー未取得: 設定でSteamGridDB APIキーを設定してください。</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. 設定に貼り付ける</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -359,6 +362,8 @@
     <x:String x:Key="TxtPreviewUnavailable">プレビューは利用できません</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">ゲームのデフォルトのカバー画像に戻す</x:String>
     <x:String x:Key="TxtRestore">復元</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">後で再取得できるようにカバー画像をキャッシュから削除します</x:String>
+    <x:String x:Key="TxtDeleteCover">カバーを削除</x:String>
     <x:String x:Key="TxtApply">適用</x:String>
     <x:String x:Key="TxtNoImageSelected">画像が選択されていません</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0} のダウンロードが既に進行中です。</x:String>
@@ -397,8 +402,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">管理を開いたときに事前選択されるデフォルトのインジェクションDLL。自動を選ぶと互換性リストからゲームごとに解決されます。</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">まだ独自のプロファイルを持たないゲームの管理を開いたときに事前選択されるデフォルトプロファイル。</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">まだ独自の設定を持たないゲームの管理を開いたときに事前選択されるデフォルトのフレーム生成設定。</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">アプリキャッシュをクリア</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">アプリキャッシュ</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">スキャンしたゲーム、カバーアート、キャッシュされたバージョンデータを削除します。次回起動時に再スキャンします。</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">フォルダを開く</x:String>
     <x:String x:Key="TxtClearCacheBtn">キャッシュをクリア</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">警告：スキャンしたすべてのゲーム、カバーアート、キャッシュされた OptiScaler バージョンデータが完全に削除されます。&#x0a;&#x0a;クリア後にアプリケーションが閉じます。次回起動時にライブラリを再スキャンし、バージョン情報を再ダウンロードします。</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">合計サイズ: {0}</x:String>
@@ -711,6 +717,7 @@
     <x:String x:Key="TxtFilterOnlyFavorites">お気に入りのみ</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">カバーの更新が完了しました。{0}/{1}件の不足カバーが見つかりました。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">カバーの更新が完了しました — {0}/{1}件のカバーが見つかりました。</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">すべてのカバー画像はすでに利用可能です。</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

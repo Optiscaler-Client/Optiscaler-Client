@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Note</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Non è stata trovata una configurazione consigliata per questo gioco. Consulta la Compatibility List completa per maggiori informazioni.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Recupero delle informazioni di compatibilità…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Recupero delle risorse…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Visualizza Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Guida rapida per migliorare il rilevamento delle copertine dei giochi.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Inserisci una chiave API SteamGridDB valida.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Copertine mancanti: configura una chiave SteamGridDB nelle impostazioni.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Incollala nelle impostazioni</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Anteprima non disponibile</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Ripristina l'immagine di copertina predefinita del gioco</x:String>
     <x:String x:Key="TxtRestore">Ripristina</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Elimina l'immagine di copertina dalla cache per poterla riscaricare in seguito</x:String>
+    <x:String x:Key="TxtDeleteCover">Elimina copertina</x:String>
     <x:String x:Key="TxtApply">Applica</x:String>
     <x:String x:Key="TxtNoImageSelected">Nessuna immagine selezionata</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">È già in corso un download per v{0}.</x:String>
@@ -389,8 +394,9 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDefaultInjectionMethodDesc">DLL di injection preselezionata all'apertura di Gestisci. Automatico la risolve per ogni gioco in base alla lista di compatibilità.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Profilo preselezionato all'apertura di Gestisci per un gioco che non ne ha ancora uno proprio.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Configurazione di Frame Generation preselezionata all'apertura di Gestisci per un gioco che non ne ha ancora una propria.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Svuota cache applicazione</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Cache applicazione</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Rimuove giochi scansionati, copertine e dati versione in cache. L'app eseguirà una nuova scansione al prossimo avvio.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Apri cartella</x:String>
     <x:String x:Key="TxtClearCacheBtn">Svuota cache</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Attenzione: questo eliminerà definitivamente tutti i giochi scansionati, le copertine e i dati di versione di OptiScaler in cache.&#x0a;&#x0a;L'applicazione si chiuderà dopo la pulizia. Al prossimo avvio rieseguirà la scansione della libreria e scaricherà nuovamente le informazioni di versione.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Dimensione totale: {0}</x:String>
@@ -723,6 +729,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtFilterOnlyFavorites">Solo preferiti</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Aggiornamento copertine completato. Trovate {0}/{1} copertine mancanti.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Aggiornamento copertine completato — {0}/{1} copertine trovate.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Tutte le copertine sono già disponibili.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

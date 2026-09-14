@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Примечания</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Не удалось найти рекомендуемую конфигурацию для этой игры. Подробнее см. в полном списке Compatibility List.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Получение информации о совместимости…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Получение ресурсов…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Открыть Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Краткое руководство по улучшению обнаружения обложек игр.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Пожалуйста, введите действительный ключ API SteamGridDB.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Нет обложек: настройте ключ SteamGridDB в Настройках.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Вставьте его в настройки</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Предпросмотр недоступен</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Восстановить изображение обложки по умолчанию для игры</x:String>
     <x:String x:Key="TxtRestore">Восстановить</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Удалить обложку из кэша, чтобы можно было запросить её позже</x:String>
+    <x:String x:Key="TxtDeleteCover">Удалить обложку</x:String>
     <x:String x:Key="TxtApply">Применить</x:String>
     <x:String x:Key="TxtNoImageSelected">Изображение не выбрано</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Загрузка для v{0} уже выполняется.</x:String>
@@ -389,8 +394,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">DLL для инъекции по умолчанию, выбираемая при открытии окна управления. «Авто» определяет её для каждой игры по списку совместимости.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Профиль по умолчанию, выбираемый при открытии окна управления для игры, у которой ещё нет собственного профиля.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Конфигурация Frame Generation по умолчанию, выбираемая при открытии окна управления для игры, у которой ещё нет собственных настроек.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Очистить кэш приложения</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Кэш приложения</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Удаляет отсканированные игры, обложки и кэшированные данные версий. Приложение снова выполнит сканирование при следующем запуске.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Открыть папку</x:String>
     <x:String x:Key="TxtClearCacheBtn">Очистить кэш</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Внимание: Следующее действие навсегда удалит все отсканированные игры, обложки и кэшированные данные версий OptiScaler.&#x0a;&#x0a;После очистки приложение закроется. При следующем запуске библиотека будет повторно отсканирована, а информация о версиях загружена заново.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Общий размер: {0}</x:String>
@@ -703,6 +709,7 @@
     <x:String x:Key="TxtFilterOnlyFavorites">Только избранное</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Обновление обложек завершено. Найдено {0}/{1} отсутствующих обложек.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Обновление обложек завершено — найдено {0}/{1} обложек.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Все обложки уже доступны.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notlar</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Bu oyun için önerilen bir yapılandırma bulamadık. Daha fazla bilgi için tam Compatibility List'e göz atın.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Uyumluluk bilgileri alınıyor…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Kaynaklar alınıyor…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List'i Görüntüle</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Oyun kapak algılamasını iyileştirmek için hızlı rehber.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Lütfen geçerli bir SteamGridDB API anahtarı girin.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Eksik kapaklar: Ayarlar'da bir SteamGridDB API anahtarı yapılandırın.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Ayarlara yapıştırın</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Önizleme mevcut değil</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Oyunun varsayılan kapak görselini geri yükle</x:String>
     <x:String x:Key="TxtRestore">Geri Yükle</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Daha sonra tekrar getirilebilmesi için kapak resmini önbellekten sil</x:String>
+    <x:String x:Key="TxtDeleteCover">Kapağı sil</x:String>
     <x:String x:Key="TxtApply">Uygula</x:String>
     <x:String x:Key="TxtNoImageSelected">Seçili görsel yok</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0} için bir indirme zaten devam ediyor.</x:String>
@@ -389,8 +394,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDefaultInjectionMethodDesc">Yönet penceresi açıldığında önceden seçilen varsayılan enjeksiyon DLL'si. Otomatik, uyumluluk listesine göre oyuna özel belirler.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Kendi profili henüz olmayan bir oyun için Yönet penceresi açıldığında önceden seçilen varsayılan profil.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Kendi ayarları henüz olmayan bir oyun için Yönet penceresi açıldığında önceden seçilen varsayılan Kare Oluşturma yapılandırması.</x:String>
-        <x:String x:Key="TxtClearAppCacheTitle">Uygulama Önbelleğini Temizle</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Uygulama Önbelleği</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Taranan oyunları, kapak resimleri ve önbelleğe alınmış sürüm verilerini kaldırır. Uygulama bir sonraki başlatılmada yeniden tarar.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Klasörü Aç</x:String>
     <x:String x:Key="TxtClearCacheBtn">Önbelleği Temizle</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Uyarı: Bu işlem taranan tüm oyunları, kapak resimlerini ve önbelleğe alınmış OptiScaler sürüm verilerini kalıcı olarak siler.&#x0a;&#x0a;Temizleme sonrası uygulama kapanacaktır. Bir sonraki başlatılmada kütüphane yeniden taranacak ve sürüm bilgileri yeniden indirilecektir.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Toplam boyut: {0}</x:String>
@@ -702,6 +708,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtFilterOnlyFavorites">Yalnızca favoriler</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Kapak yenileme tamamlandi. {0}/{1} eksik kapak bulundu.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Kapak yenileme tamamlandi — {0}/{1} kapak bulundu.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Tüm kapaklar zaten mevcut.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

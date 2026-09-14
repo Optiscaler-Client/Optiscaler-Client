@@ -211,6 +211,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">備註</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">找不到此遊戲的建議設定。請查看完整的 Compatibility List 以獲得更多資訊。</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">正在取得相容性資訊…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">正在取得資源…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">查看 Compatibility List</x:String>
     <x:String x:Key="TxtCompatSidebarWikiFetching">正在取得遊戲資訊…</x:String>
     <x:String x:Key="TxtCompatSidebarViewGamePage">查看此遊戲的 wiki 頁面</x:String>
@@ -343,6 +344,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">快速指南以提高遊戲封面檢測的準確性。</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">請輸入有效的 SteamGridDB API 金鑰。</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">缺少封面：請在「設定」中設定 SteamGridDB API 金鑰。</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. 將其貼到設定中</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -359,6 +362,8 @@
     <x:String x:Key="TxtPreviewUnavailable">無法預覽</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">還原為遊戲的預設封面圖片</x:String>
     <x:String x:Key="TxtRestore">還原</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">從快取中刪除封面圖片，以便稍後重新取得</x:String>
+    <x:String x:Key="TxtDeleteCover">刪除封面</x:String>
     <x:String x:Key="TxtApply">套用</x:String>
     <x:String x:Key="TxtNoImageSelected">未選擇圖片</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">v{0} 的下載已在進行中。</x:String>
@@ -397,8 +402,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">開啟管理時預先選取的預設注入 DLL。選擇「自動」會依相容性清單為每個遊戲自動解析。</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">為尚未擁有自己設定的遊戲開啟管理時預先選取的預設設定檔。</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">為尚未擁有自己設定的遊戲開啟管理時預先選取的預設畫面生成設定。</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">清除應用程式快取</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">應用程式快取</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">刪除已掃描的遊戲、封面圖片和已快取的版本資料。應用程式將在下次啟動時重新掃描。</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">開啟資料夾</x:String>
     <x:String x:Key="TxtClearCacheBtn">清除快取</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">警告：此操作將永久刪除所有已掃描的遊戲、封面圖片和已快取的 OptiScaler 版本資料。&#x0a;&#x0a;清除完成後應用程式即將關閉。下次啟動時將重新掃描遊戲庫並重新擷取版本資訊。</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">總大小：{0}</x:String>
@@ -711,6 +717,7 @@
     <x:String x:Key="TxtFilterOnlyFavorites">僅顯示最愛</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">封面重新整理完成。找到 {0}/{1} 個缺失封面。</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">封面重新整理完成 — 找到 {0}/{1} 個封面。</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">所有封面均已就緒。</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

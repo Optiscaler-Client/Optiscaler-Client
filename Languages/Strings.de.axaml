@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Hinweise</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Für dieses Spiel konnte keine empfohlene Konfiguration gefunden werden. Weitere Infos findest du in der vollständigen Compatibility List.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Kompatibilitätsinformationen werden abgerufen…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Ressourcen werden abgerufen…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Compatibility List ansehen</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Kurzanleitung zur Verbesserung der Erkennung von Spiel-Covern.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Bitte geben Sie einen gültigen SteamGridDB-API-Schlüssel ein.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Fehlende Cover: SteamGridDB-API-Schlüssel in Einstellungen konfigurieren.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. In den Einstellungen einfügen</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Vorschau nicht verfügbar</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Auf das Standard-Cover des Spiels zurücksetzen</x:String>
     <x:String x:Key="TxtRestore">Wiederherstellen</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Cover-Bild aus dem Cache löschen, um es später erneut abzurufen</x:String>
+    <x:String x:Key="TxtDeleteCover">Cover löschen</x:String>
     <x:String x:Key="TxtApply">Anwenden</x:String>
     <x:String x:Key="TxtNoImageSelected">Kein Bild ausgewählt</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Für v{0} läuft bereits ein Download.</x:String>
@@ -389,8 +394,9 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtDefaultInjectionMethodDesc">Standardmäßig vorausgewählte Injection-DLL beim Öffnen von Verwalten. Automatisch ermittelt sie pro Spiel anhand der Kompatibilitätsliste.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Standardmäßig vorausgewähltes Profil beim Öffnen von Verwalten für ein Spiel ohne eigenes Profil.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Standardmäßig vorausgewählte Frame-Generation-Konfiguration beim Öffnen von Verwalten für ein Spiel ohne eigene Einstellungen.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Anwendungscache leeren</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Anwendungscache</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Entfernt gescannte Spiele, Coverbilder und gecachte Versionsdaten. Die App scannt beim nächsten Start erneut.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Ordner öffnen</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache leeren</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Warnung: Dadurch werden alle gescannten Spiele, Coverbilder und gecachten OptiScaler-Versionsdaten dauerhaft gelöscht.&#x0a;&#x0a;Die Anwendung wird nach dem Löschen geschlossen. Beim nächsten Start wird die Bibliothek erneut gescannt und die Versionsinformationen neu heruntergeladen.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Gesamtgröße: {0}</x:String>
@@ -723,6 +729,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtFilterOnlyFavorites">Nur Favoriten</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Cover-Aktualisierung abgeschlossen. {0}/{1} fehlende Cover gefunden.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Cover-Aktualisierung abgeschlossen — {0}/{1} Cover gefunden.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Alle Cover sind bereits verfügbar.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

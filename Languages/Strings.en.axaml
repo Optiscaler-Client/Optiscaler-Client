@@ -182,6 +182,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Preview unavailable</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Restore to the game's default cover image</x:String>
     <x:String x:Key="TxtRestore">Restore</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Delete cover image from cache so it can be re-fetched later</x:String>
+    <x:String x:Key="TxtDeleteCover">Delete cover</x:String>
     <x:String x:Key="TxtApply">Apply</x:String>
     <x:String x:Key="TxtNoImageSelected">No image selected</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">A download is already in progress for v{0}.</x:String>
@@ -227,6 +229,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">We couldn't find recommended configuration for this game. Check the full Compatibility List for more info.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Getting compatibility information…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Fetching resources…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">View Compatibility List</x:String>
     <x:String x:Key="TxtCompatSidebarWikiFetching">Fetching game information…</x:String>
     <x:String x:Key="TxtCompatSidebarViewGamePage">View this game's wiki page</x:String>
@@ -319,8 +322,9 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtDefaultInjectionMethodDesc">Default injection DLL pre-selected when opening Manage. Auto resolves it per game from the compatibility list.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Default profile pre-selected when opening Manage for a game that doesn't have one of its own yet.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Default Frame Generation configuration pre-selected when opening Manage for a game that doesn't have one of its own yet.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Clear Application Cache</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Application Cache</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Remove scanned games, cover art and cached version data. The app will re-scan and re-download on next launch.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Open Folder</x:String>
     <x:String x:Key="TxtClearCacheBtn">Clear Cache</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.&#x0a;&#x0a;The application will close after clearing. On the next launch it will re-scan your library and re-download version information.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Total size: {0}</x:String>
@@ -387,6 +391,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Quick guide to improve game cover detection.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Please enter a valid SteamGridDB API key.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Missing covers: configure a SteamGridDB API key in Settings.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Paste it in Settings</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -749,6 +755,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtFilterOnlyFavorites">Favorites only</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Cover refresh complete. Found {0}/{1} missing covers.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Cover refresh complete — {0}/{1} covers found.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">All game covers are already available.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notes</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Nous n'avons pas trouvé de configuration recommandée pour ce jeu. Consultez la Compatibility List complète pour plus d'informations.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Récupération des informations de compatibilité…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Récupération des ressources…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Voir la Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Guide rapide pour améliorer la détection des jaquettes de jeu.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Veuillez entrer une clé API SteamGridDB valide.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Jaquettes manquantes : configurez une clé SteamGridDB dans les paramètres.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Collez-la dans les paramètres</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Aperçu non disponible</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Restaurer l'image de couverture par défaut du jeu</x:String>
     <x:String x:Key="TxtRestore">Restaurer</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Supprimer la pochette du cache pour pouvoir la récupérer ultérieurement</x:String>
+    <x:String x:Key="TxtDeleteCover">Supprimer la pochette</x:String>
     <x:String x:Key="TxtApply">Appliquer</x:String>
     <x:String x:Key="TxtNoImageSelected">Aucune image sélectionnée</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Un téléchargement est déjà en cours pour la v{0}.</x:String>
@@ -389,8 +394,9 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtDefaultInjectionMethodDesc">DLL d'injection présélectionnée à l'ouverture de Gérer. Auto la détermine par jeu à partir de la liste de compatibilité.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Profil présélectionné à l'ouverture de Gérer pour un jeu qui n'en a pas encore.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Configuration de Frame Generation présélectionnée à l'ouverture de Gérer pour un jeu qui n'en a pas encore.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Vider le cache de l'application</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Cache de l'application</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Supprime les jeux scannés, les pochettes et les données de version en cache. L'app renumérisera au prochain lancement.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Ouvrir le dossier</x:String>
     <x:String x:Key="TxtClearCacheBtn">Vider le cache</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Avertissement : Cela supprimera définitivement tous les jeux scannés, les pochettes et les données de version OptiScaler en cache.&#x0a;&#x0a;L'application se fermera après le nettoyage. Au prochain lancement, elle renumérisera votre bibliothèque et retéléchargera les informations de version.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Taille totale : {0}</x:String>
@@ -723,6 +729,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtFilterOnlyFavorites">Favoris uniquement</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Actualisation des pochettes terminee. {0}/{1} pochettes manquantes trouvees.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Actualisation des pochettes terminee — {0}/{1} pochettes trouvees.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Toutes les pochettes sont déjà disponibles.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

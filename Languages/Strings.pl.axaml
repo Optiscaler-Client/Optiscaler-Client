@@ -209,6 +209,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Uwagi</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Nie udało się znaleźć zalecanej konfiguracji dla tej gry. Sprawdź pełną Compatibility List, aby dowiedzieć się więcej.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Pobieranie informacji o zgodności…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Pobieranie zasobów…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Zobacz Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -335,6 +336,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Krótki przewodnik, jak poprawić wykrywanie okładek gier.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Wprowadź prawidłowy klucz API SteamGridDB.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Brakujące okładki: skonfiguruj klucz SteamGridDB w Ustawieniach.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Wklej go w ustawienia</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -351,6 +354,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Podgląd niedostępny</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Przywróć domyślny obraz okładki gry</x:String>
     <x:String x:Key="TxtRestore">Przywróć</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Usuń okładkę z pamięci podręcznej, aby móc pobrać ją ponownie później</x:String>
+    <x:String x:Key="TxtDeleteCover">Usuń okładkę</x:String>
     <x:String x:Key="TxtApply">Zastosuj</x:String>
     <x:String x:Key="TxtNoImageSelected">Nie wybrano obrazu</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Pobieranie dla v{0} jest już w toku.</x:String>
@@ -389,8 +394,9 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtDefaultInjectionMethodDesc">Domyślna biblioteka DLL do wstrzykiwania wybierana po otwarciu Zarządzania. Automatyczne ustala ją dla każdej gry na podstawie listy zgodności.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Domyślny profil wybierany wstępnie po otwarciu Zarządzania dla gry, która nie ma jeszcze własnego.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Domyślna konfiguracja Frame Generation wybierana wstępnie po otwarciu Zarządzania dla gry, która nie ma jeszcze własnej.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Wyczyść pamięć podręczną aplikacji</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Pamięć podręczna aplikacji</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Usuwa zeskanowane gry, okładki i dane wersji z pamięci podręcznej. Aplikacja ponownie przeskanuje przy następnym uruchomieniu.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Otwórz folder</x:String>
     <x:String x:Key="TxtClearCacheBtn">Wyczyść pamięć</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Ostrzeżenie: Spowoduje to trwałe usunięcie wszystkich zeskanowanych gier, okładek i danych wersji OptiScaler z pamięci podręcznej.&#x0a;&#x0a;Aplikacja zostanie zamknięta po wyczyszczeniu. Przy następnym uruchomieniu ponownie przeskanuje bibliotekę i pobierze informacje o wersjach.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Całkowity rozmiar: {0}</x:String>
@@ -723,6 +729,7 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtFilterOnlyFavorites">Tylko ulubione</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Odswierzanie okladek zakonczone. Znaleziono {0}/{1} brakujacych okladek.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Odswierzanie okladek zakonczone — znaleziono {0}/{1} okladek.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Wszystkie okładki są już dostępne.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>

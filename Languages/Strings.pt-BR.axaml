@@ -207,6 +207,7 @@
     <x:String x:Key="TxtCompatSidebarNotesLbl">Notas</x:String>
     <x:String x:Key="TxtCompatSidebarNotFound">Não encontramos uma configuração recomendada para este jogo. Consulte a Compatibility List completa para mais informações.</x:String>
     <x:String x:Key="TxtCompatSidebarListFetching">Obtendo informações de compatibilidade…</x:String>
+    <x:String x:Key="TxtFetchingResourcesToast">Obtendo recursos…</x:String>
     <x:String x:Key="TxtCompatSidebarViewMore">Ver Compatibility List</x:String>
 
     <!-- ManualDownloadDialog -->
@@ -283,8 +284,9 @@
     <x:String x:Key="TxtDefaultInjectionMethodDesc">DLL de injeção padrão pré-selecionada ao abrir o Gerenciar. Automático resolve isso por jogo com base na lista de compatibilidade.</x:String>
     <x:String x:Key="TxtDefaultProfileDesc">Perfil padrão pré-selecionado ao abrir o Gerenciar para um jogo que ainda não tem um próprio.</x:String>
     <x:String x:Key="TxtDefaultFrameGenerationDesc">Configuração padrão de Frame Generation pré-selecionada ao abrir o Gerenciar para um jogo que ainda não tem uma própria.</x:String>
-    <x:String x:Key="TxtClearAppCacheTitle">Limpar cache da aplicação</x:String>
+    <x:String x:Key="TxtClearAppCacheTitle">Cache da aplicação</x:String>
     <x:String x:Key="TxtClearAppCacheDesc">Remove jogos escaneados, capas e dados de versão em cache. O app irá reanalisar e baixar novamente no próximo início.</x:String>
+    <x:String x:Key="TxtOpenFolderBtn">Abrir pasta</x:String>
     <x:String x:Key="TxtClearCacheBtn">Limpar cache</x:String>
     <x:String x:Key="TxtClearAppCacheDialogMsg">Atenção: Isso irá excluir permanentemente todos os jogos escaneados, capas e dados de versão do OptiScaler em cache.&#x0a;&#x0a;O aplicativo será fechado após a limpeza. No próximo início ele irá reanalisar sua biblioteca e baixar novamente as informações de versão.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Tamanho total: {0}</x:String>
@@ -361,6 +363,8 @@
     <x:String x:Key="TxtSteamGridGuideHeaderDesc">Guia rápido para melhorar a detecção de capas de jogos.</x:String>
     <x:String x:Key="TxtSteamGridApiKey">SteamGridDB API Key</x:String>
     <x:String x:Key="TxtSteamGridApiKeyPlaceholder">Paste your SteamGridDB API key here</x:String>
+    <x:String x:Key="TxtInvalidSteamGridApiKeyToast">Insira uma chave de API do SteamGridDB válida.</x:String>
+    <x:String x:Key="TxtMissingCoversConfigureApiKeyToast">Capas ausentes: configure uma chave SteamGridDB nas Configurações.</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Title">3. Cole nas configurações</x:String>
     <x:String x:Key="TxtSteamGridGuideStep3Desc">Return to the app and paste the key into the SteamGridDB API Key field.</x:String>
 
@@ -377,6 +381,8 @@
     <x:String x:Key="TxtPreviewUnavailable">Visualização indisponível</x:String>
     <x:String x:Key="TxtCoverRestoreTooltip">Restaurar para a imagem de capa padrão do jogo</x:String>
     <x:String x:Key="TxtRestore">Restaurar</x:String>
+    <x:String x:Key="TxtCoverDeleteTooltip">Excluir a imagem da capa do cache para que possa ser baixada novamente depois</x:String>
+    <x:String x:Key="TxtDeleteCover">Excluir capa</x:String>
     <x:String x:Key="TxtApply">Aplicar</x:String>
     <x:String x:Key="TxtNoImageSelected">Nenhuma imagem selecionada</x:String>
     <x:String x:Key="TxtDownloadInProgressFormat">Já há um download em andamento para v{0}.</x:String>
@@ -723,6 +729,7 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtFilterOnlyFavorites">Somente favoritos</x:String>
     <x:String x:Key="TxtCoverRefreshDoneFmt">Atualizacao de capas concluida. {0}/{1} capas faltantes encontradas.</x:String>
     <x:String x:Key="TxtCoverRefreshToastFmt">Atualizacao de capas concluida — {0}/{1} capas encontradas.</x:String>
+    <x:String x:Key="TxtAllCoversAvailableToast">Todas as capas já estão disponíveis.</x:String>
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
