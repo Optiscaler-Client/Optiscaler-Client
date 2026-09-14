@@ -3526,9 +3526,13 @@ namespace OptiscalerClient.Views
             var txtCoverPath = this.FindControl<TextBlock>("TxtCoverPath");
 
             _pendingCoverPath = null;
-            if (imgPreview != null) imgPreview.Source = null;
+            if (imgPreview != null)
+            {
+                imgPreview.Source = null;
+                TrySetCoverImage(imgPreview, _game.CoverImageUrl);
+            }
             var noImage = GetResourceString("TxtNoImageSelected", "No image selected");
-            if (txtCoverPath != null) txtCoverPath.Text = noImage;
+            if (txtCoverPath != null) txtCoverPath.Text = string.IsNullOrWhiteSpace(_game.CoverImageUrl) ? noImage : _game.CoverImageUrl;
 
             if (bdCoverModal != null) bdCoverModal.IsVisible = true;
         }
@@ -3604,7 +3608,17 @@ namespace OptiscalerClient.Views
             try
             {
                 var metadataService = new GameMetadataService();
-                var defaultCover = await metadataService.FetchAndCacheCoverImageAsync(_game.Name, appIdKey);
+                metadataService.DeleteSentinel(appIdKey);
+                metadataService.DeleteCoverCache(appIdKey);
+                if (!string.IsNullOrEmpty(_game.Name) && !string.Equals(_game.Name, appIdKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    metadataService.DeleteCoverCache(_game.Name);
+                }
+
+                string? folderName = !string.IsNullOrWhiteSpace(_game.InstallPath)
+                    ? System.IO.Path.GetFileName(_game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
+                    : null;
+                var defaultCover = await metadataService.FetchAndCacheCoverImageAsync(_game.Name, appIdKey, fallbackName: folderName);
                 _game.CoverImageUrl = defaultCover;
             }
             catch (Exception ex)
@@ -3630,6 +3644,53 @@ namespace OptiscalerClient.Views
             var txtCoverPath = this.FindControl<TextBlock>("TxtCoverPath");
             var noImage2 = GetResourceString("TxtNoImageSelected", "No image selected");
             if (txtCoverPath != null) txtCoverPath.Text = string.IsNullOrWhiteSpace(_game.CoverImageUrl) ? noImage2 : _game.CoverImageUrl;
+
+            HideCoverModal();
+        }
+
+        private void BtnCoverDelete_Click(object sender, RoutedEventArgs e)
+        {
+            _pendingCoverPath = null;
+
+            string appIdKey = !string.IsNullOrWhiteSpace(_game.AppId) ? _game.AppId : _game.Name;
+            try
+            {
+                var metadataService = new GameMetadataService();
+                metadataService.DeleteCoverCache(appIdKey);
+
+                var coversCachePath = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
+                if (!string.IsNullOrEmpty(_game.CoverImageUrl) && File.Exists(_game.CoverImageUrl))
+                {
+                    var fullPath = System.IO.Path.GetFullPath(_game.CoverImageUrl);
+                    var cacheDir = System.IO.Path.GetFullPath(coversCachePath);
+                    if (fullPath.StartsWith(cacheDir, StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Delete(fullPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ManageGame] Cover delete failed: {ex.Message}");
+            }
+
+            _game.CoverImageUrl = null;
+
+            var imgGameCover = this.FindControl<Image>("ImgGameCover");
+            if (imgGameCover != null)
+            {
+                imgGameCover.Source = null;
+            }
+
+            var imgPreview = this.FindControl<Image>("ImgCoverPreview");
+            if (imgPreview != null)
+            {
+                imgPreview.Source = null;
+            }
+
+            var txtCoverPath = this.FindControl<TextBlock>("TxtCoverPath");
+            var noImage = GetResourceString("TxtNoImageSelected", "No image selected");
+            if (txtCoverPath != null) txtCoverPath.Text = noImage;
 
             HideCoverModal();
         }
@@ -3685,10 +3746,21 @@ namespace OptiscalerClient.Views
 
             var newName = txtGameNameEdit.Text?.Trim();
             if (!string.IsNullOrWhiteSpace(newName))
+            if (!string.IsNullOrWhiteSpace(newName) && !string.Equals(newName, _game.Name, StringComparison.Ordinal))
             {
                 _game.Name = newName;
                 txtGameName.Text = newName;
                 ToolTip.SetTip(txtGameName, newName);
+
+                // If game title changed, delete any sentinel so next refresh/scan re-evaluates cover fetching with the new name
+                string appIdKey = !string.IsNullOrWhiteSpace(_game.AppId) ? _game.AppId : _game.Name;
+                try
+                {
+                    var metadataService = new GameMetadataService();
+                    metadataService.DeleteSentinel(appIdKey);
+                    metadataService.DeleteSentinel(newName);
+                }
+                catch { }
             }
 
             txtGameNameEdit.IsVisible = false;
