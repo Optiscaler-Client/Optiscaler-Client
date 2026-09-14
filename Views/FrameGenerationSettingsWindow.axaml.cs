@@ -134,7 +134,9 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         {
             var advanced = this.FindControl<CheckBox>("ChkAdvancedRoutes");
             if (advanced != null) advanced.IsChecked = _initialSettings.AdvancedMode;
-            PopulateRoutes(_initialSettings.Route);
+            var initialOutputIsNukem = _initialSettings.Output == FrameGenerationOutput.Nukem;
+            var initialRoute = initialOutputIsNukem ? FrameGenerationRoute.Nukem : _initialSettings.Route;
+            PopulateRoutes(initialRoute, initialOutputIsNukem);
             UpdateDlssStreamlineRouteInfo();
             PopulateOutputs(_initialSettings.Route, _initialSettings.Output);
             PopulateNvngxReplacements(_initialSettings.NvngxReplacement);
@@ -158,7 +160,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         UpdateSaveButtonState();
     }
 
-    private void PopulateRoutes(FrameGenerationRoute selected)
+    /// <summary>The Nukem route (FGInput=nvngxfg) is meaningless with any output other than "Nukem
+    /// FSR3 FG" (see FrameGenerationConfigurationService.ResolveEffectiveRoute), so it's excluded
+    /// from the list entirely rather than merely left unselected whenever that isn't the current
+    /// output.</summary>
+    private void PopulateRoutes(FrameGenerationRoute selected, bool outputIsNukem)
     {
         var combo = this.FindControl<ComboBox>("CmbFgRoute");
         if (combo == null) return;
@@ -167,6 +173,8 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         IEnumerable<FrameGenerationRoute> routes = advanced && !_capabilities.IsAntiCheatDetected
             ? AdvancedRoutes
             : _capabilities.AvailableRoutes;
+        if (!outputIsNukem)
+            routes = routes.Where(route => route != FrameGenerationRoute.Nukem);
 
         combo.Items.Clear();
         foreach (var route in routes.Distinct())
@@ -446,12 +454,14 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         UpdateStreamlineVersionVisibility();
     }
 
-    /// <summary>Shows an info banner reminding the user that "DLSS-G via Streamline" needs
-    /// NVIDIA's native Frame Generation enabled in the game itself — OptiScaler taps into it,
-    /// it doesn't generate frames on its own for this route (unlike OptiFG, which does). Fires
-    /// both when the route is picked explicitly (Advanced routes) and when it's left on Auto and
-    /// silently resolves to DLSS-G via Streamline (the common case — most users never open
-    /// Advanced routes at all).</summary>
+    /// <summary>Shows an info banner reminding the user that DLSS-G-backed routes need NVIDIA's
+    /// native Frame Generation enabled in the game itself — OptiScaler taps into that signal, it
+    /// doesn't generate frames on its own for these routes (unlike OptiFG, which does). Covers both
+    /// DlssGStreamline and Nukem: Nukem also reads the game's native DLSS-G signal, it just
+    /// re-renders it through FSR3 instead of Streamline's interposer hook. Fires when a route is
+    /// picked explicitly (Advanced routes), when Output=Nukem forces the route (see
+    /// CmbFgOutput_SelectionChanged), and when Route is left on Auto and silently resolves to one of
+    /// these (the common case — most users never open Advanced routes at all).</summary>
     private void UpdateDlssStreamlineRouteInfo()
     {
         var panel = this.FindControl<Border>("PnlDlssStreamlineRouteInfo");
@@ -464,24 +474,26 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             : _recommendation.Route == FrameGenerationRoute.DlssGStreamline && _capabilities.AvailableRoutes.Contains(FrameGenerationRoute.Nukem)
                 ? FrameGenerationRoute.Nukem
                 : _recommendation.Route;
-        panel.IsVisible = effectiveRoute == FrameGenerationRoute.DlssGStreamline;
+        panel.IsVisible = effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveRoute == FrameGenerationRoute.Nukem;
     }
 
     private void CmbFgOutput_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_isUpdating) return;
         var outputDisabled = IsOutputDisabledSelected();
+        // "Nukem FSR3 FG" output only works paired with the Nukem route (see
+        // FrameGenerationConfigurationService.ResolveEffectiveRoute) — force it, and the route combo
+        // is repopulated so Nukem is only ever listed while this output is selected.
+        var outputIsNukem = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.Nukem;
         _isUpdating = true;
         try
         {
-            var routeCombo = this.FindControl<ComboBox>("CmbFgRoute");
-            if (routeCombo != null)
-            {
-                if (outputDisabled)
-                    SelectTag(routeCombo, FrameGenerationRoute.Disabled);
-                else if (GetSelectedTag<FrameGenerationRoute>("CmbFgRoute") == FrameGenerationRoute.Disabled)
-                    SelectTag(routeCombo, FrameGenerationRoute.Auto);
-            }
+            var currentRoute = GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
+            var desiredRoute = outputDisabled ? FrameGenerationRoute.Disabled
+                : outputIsNukem ? FrameGenerationRoute.Nukem
+                : currentRoute == FrameGenerationRoute.Disabled ? FrameGenerationRoute.Auto
+                : currentRoute;
+            PopulateRoutes(desiredRoute, outputIsNukem);
             UpdateDlssStreamlineRouteInfo();
             PopulateFgMultiplier(MultiFrameGenerationMode.X2);
             ApplyAutoNvngxReplacement();
@@ -560,16 +572,18 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private void ChkAdvancedRoutes_IsCheckedChanged(object? sender, RoutedEventArgs e)
     {
         if (_isUpdating) return;
-        var isAdvanced = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true;
-        // Leaving Advanced mode must drop back to Auto (unless the simple Output is Disabled) —
-        // otherwise a route picked while exploring Advanced routes stays selected even though the
-        // combo is hidden again, matching the same invariant BtnSave_Click now enforces.
-        var selectedRoute = isAdvanced ? GetSelectedTag<FrameGenerationRoute>("CmbFgRoute")
-            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled : FrameGenerationRoute.Auto;
+        // Preserve the current pick across the checkbox toggle — it only changes which routes are
+        // listed (adds Fsr30Native/OptiFg on top of the natively-supported ones), not whether a
+        // pick is respected. PopulateRoutes/SelectTag already fall back to Auto on their own if the
+        // current route isn't in the (possibly shrunk) list any more.
+        var outputIsNukem = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.Nukem;
+        var selectedRoute = outputIsNukem ? FrameGenerationRoute.Nukem
+            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled
+            : GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
         _isUpdating = true;
         try
         {
-            PopulateRoutes(selectedRoute);
+            PopulateRoutes(selectedRoute, outputIsNukem);
             UpdateDlssStreamlineRouteInfo();
             UpdateStreamlineVersionVisibility();
             UpdateDependentControlState();
@@ -582,11 +596,17 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         var enabled = !IsOutputDisabledSelected();
         var multiplier = this.FindControl<ComboBox>("CmbMfgMultiplier");
         var advanced = this.FindControl<StackPanel>("PnlAdvancedOptions");
+        var route = this.FindControl<ComboBox>("CmbFgRoute");
         var nvngxReplacement = this.FindControl<ComboBox>("CmbFgNvngxReplacement");
         var dlssEnablerVersion = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
         if (multiplier != null)
             multiplier.IsEnabled = enabled && multiplier.Items.Count > 1;
         if (advanced != null) advanced.IsEnabled = enabled;
+
+        // "Nukem FSR3 FG" output mandates the Nukem route (forced in CmbFgOutput_SelectionChanged) —
+        // lock the route combo so Advanced routes can't pick a mismatched pairing.
+        var outputIsNukem = enabled && GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.Nukem;
+        if (route != null) route.IsEnabled = enabled && !outputIsNukem;
 
         var outputIsDlssG = enabled && GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.DlssG;
         if (nvngxReplacement != null) nvngxReplacement.IsEnabled = outputIsDlssG;
@@ -619,14 +639,18 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private void BtnSave_Click(object? sender, RoutedEventArgs e)
     {
-        // CmbFgRoute can be left holding a concrete value (e.g. DLSS-G via Streamline) from an
-        // earlier visit to Advanced routes even after the checkbox is unchecked again — toggling
-        // Advanced off only re-populates the (hidden) combo, it doesn't clear the selection. Outside
-        // Advanced mode the route must always be Auto, or a stale concrete pick silently survives
-        // into a "simple mode" save and bypasses ResolveEffectiveRoute's route resolution entirely.
-        var isAdvanced = this.FindControl<CheckBox>("ChkAdvancedRoutes")?.IsChecked == true;
-        var route = isAdvanced ? GetSelectedTag<FrameGenerationRoute>("CmbFgRoute")
-            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled : FrameGenerationRoute.Auto;
+        // "Nukem FSR3 FG" output mandates the Nukem route regardless of Advanced mode — mirrors
+        // FrameGenerationConfigurationService.ResolveEffectiveRoute's own priority for this pairing.
+        // Route persistence must NOT be gated on the "Advanced routes" checkbox: CmbFgRoute already
+        // lists every route the game natively supports (DlssGStreamline, Nukem, Fsr31Native) even
+        // with that checkbox unchecked — it only adds extra experimental-only routes (Fsr30Native,
+        // OptiFg) on top. Gating on it used to silently discard a perfectly legitimate, visibly
+        // selected pick (e.g. explicitly choosing "DLSS-G via Streamline" as the input while leaving
+        // Output on something else) back to Auto on save — which then resolved to a different route
+        // that didn't need Streamline, so the version picker showed unlocked but nothing downloaded.
+        var route = GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") == FrameGenerationOutput.Nukem ? FrameGenerationRoute.Nukem
+            : IsOutputDisabledSelected() ? FrameGenerationRoute.Disabled
+            : GetSelectedTag<FrameGenerationRoute>("CmbFgRoute");
         if (route == FrameGenerationRoute.Disabled)
         {
             Close(new GameFrameGenerationSettings

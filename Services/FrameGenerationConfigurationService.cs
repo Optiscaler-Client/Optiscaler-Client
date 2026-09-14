@@ -12,6 +12,10 @@ public interface IFrameGenerationConfigurationService
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
     /// <summary>True when the effective (Auto-resolved) route or output needs the Streamline runtime DLLs in OptiScaler/streamline/.</summary>
     bool RequiresStreamline(GameFrameGenerationSettings settings, FrameGenerationCapabilities capabilities, string? optiscalerVersion = null);
+    /// <summary>Resolves what Route=Auto (and the Nukem-output override) actually lands on. Shared with
+    /// GameInstallationService.ApplySpoofingSettings, which needs to know whether the Nukem route is in
+    /// effect without duplicating this resolution logic.</summary>
+    FrameGenerationRoute ResolveEffectiveRoute(GameFrameGenerationSettings settings, FrameGenerationRecommendation recommendation, FrameGenerationCapabilities capabilities);
 }
 
 /// <summary>
@@ -42,7 +46,6 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         bool hasXeFg = files.Contains("libxess_fg.dll") && files.Contains("libxell.dll");
         bool hasFsrFg = files.Contains("amd_fidelityfx_dx12.dll") ||
                         (files.Contains("amd_fidelityfx_loader_dx12.dll") && files.Contains("amd_fidelityfx_framegeneration_dx12.dll"));
-        bool hasNukem = files.Contains("dlssg_to_fsr3_amd_is_better.dll");
         bool dx12 = files.Contains("d3d12.dll") || files.Contains("d3d12core.dll") ||
                     !string.IsNullOrEmpty(game.DlssFrameGenVersion) || hasFsr3 || hasXeFg;
         bool vulkan = files.Contains("vulkan-1.dll") || files.Contains("amd_fidelityfx_vk.dll");
@@ -70,20 +73,26 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             // on pre-existing files would make DLSS-G via Streamline unavailable for every fresh
             // install even when the game natively supports DLSS-G.
             if (hasDlssG && dx12) routes.Add(FrameGenerationRoute.DlssGStreamline);
-            if (hasDlssG && (hasNukem || !string.IsNullOrEmpty(game.DlssFrameGenVersion))) routes.Add(FrameGenerationRoute.Nukem);
+            // NukemFG ships bundled with OptiScaler itself (installed alongside it, not a separate
+            // user-provided component) — so this route only needs the game to have native DLSS-G,
+            // same as DlssGStreamline above.
+            if (hasDlssG) routes.Add(FrameGenerationRoute.Nukem);
             // FSR 3.1 is the safe automatic/native option. FSR 3.0 and OptiFG are
             // deliberately manual routes, exposed only through Advanced routes.
             if (hasFsr3) routes.Add(FrameGenerationRoute.Fsr31Native);
             if (hasFsrFg) outputs.Add(FrameGenerationOutput.FsrFg);
             if (hasXeFg) outputs.Add(FrameGenerationOutput.XeFg);
-            if (hasNukem) outputs.Add(FrameGenerationOutput.Nukem);
+            // FGOutput=nvngxfg only ever works paired with FGInput=nvngxfg (Route.Nukem), which
+            // per OptiScaler.ini itself "Requires DLSSG in the game" — offering this output without
+            // hasDlssG would advertise a combo whose mandatory route is never in AvailableRoutes.
+            if (hasDlssG) outputs.Add(FrameGenerationOutput.Nukem);
             // Unlike the route above, this isn't gated on hasDlssG: DLSS Enabler's replacement
             // provider (FGNvngxReplacement=Nukems/FFX/Arturs/Combo — see ApplyAutoNvngxReplacement)
             // exists specifically to fake DLSS-G output on games/GPUs with no native DLSS-G asset at
             // all, so this must stay selectable exactly like Auto/Disabled or that whole mechanism
             // becomes unreachable outside the permissive Default-settings capabilities.
             outputs.Add(FrameGenerationOutput.DlssG);
-            if (hasDlssG && hasNukem) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
+            if (hasDlssG) outputs.Add(FrameGenerationOutput.DlssGWithNvngx);
         }
 
         if (!hasXeFg) warnings.Add("XeFG requires libxess_fg.dll and libxell.dll.");
@@ -97,7 +106,9 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         {
             IsDirectX12 = dx12, IsVulkan = vulkan, HasNativeDlssG = hasDlssG, HasNativeFsr3 = hasFsr3,
             HasStreamline = hasStreamline, HasXeFgDependencies = hasXeFg, HasFsrFgDependencies = hasFsrFg,
-            HasNukem = hasNukem, IsIntelArc = arc, IsAntiCheatDetected = antiCheat, SupportsDynamicMfg = supportsDynamicMfg,
+            // NukemFG ships bundled with OptiScaler, so its own availability now just mirrors
+            // native DLSS-G — see the Route/Output.Nukem gating above.
+            HasNukem = hasDlssG, IsIntelArc = arc, IsAntiCheatDetected = antiCheat, SupportsDynamicMfg = supportsDynamicMfg,
             AvailableRoutes = routes, AvailableOutputs = outputs, AvailableMfgModes = mfg, Warnings = warnings
         };
     }
@@ -170,8 +181,14 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
     ///    was confirmed to start cleanly in the same scenario (manually pinned via Advanced routes).
     ///    Preferred over DlssGStreamline whenever available; DlssGStreamline remains the fallback when
     ///    Nukem isn't (native DLSS-G present but no converter DLL) — better than nothing.</summary>
-    private static FrameGenerationRoute ResolveEffectiveRoute(GameFrameGenerationSettings settings, FrameGenerationRecommendation recommendation, FrameGenerationCapabilities capabilities)
+    public FrameGenerationRoute ResolveEffectiveRoute(GameFrameGenerationSettings settings, FrameGenerationRecommendation recommendation, FrameGenerationCapabilities capabilities)
     {
+        // "Nukem FSR3 FG" output (FGOutput=nvngxfg) only works paired with the Nukem route
+        // (FGInput=nvngxfg) — any other route/output pairing silently fails to enable FG since
+        // OptiScaler has no matching input signal for that output. Takes priority over an explicit
+        // Route pick (mismatched saved/Advanced selections included) since the pairing is mandatory,
+        // not a preference.
+        if (settings.Output == FrameGenerationOutput.Nukem) return FrameGenerationRoute.Nukem;
         if (settings.Route != FrameGenerationRoute.Auto) return settings.Route;
         if (settings.Output == FrameGenerationOutput.DlssG &&
             settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
@@ -193,11 +210,13 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             return false;
 
         var effectiveOutput = settings.Output == FrameGenerationOutput.Auto ? recommendation.Output : settings.Output;
-        // FGInput=nvngxfg ("Uses Streamline swapchain for pacing" per OptiScaler.ini) is only
-        // reached on the nightly vocabulary — pre-nightly builds map this route to the legacy
-        // "nukems" FGInput value instead, which does not carry the same Streamline requirement.
-        var usesNvngxFgInput = effectiveRoute == FrameGenerationRoute.Nukem && UsesNightlyFrameGenerationSchema(optiscalerVersion);
-        return effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveOutput == FrameGenerationOutput.DlssG || usesNvngxFgInput;
+        // The Nukem route's "Uses Streamline swapchain for pacing" (OptiScaler.ini) refers to the
+        // GAME's own bundled native Streamline runtime (the same one that exposes native DLSS-G),
+        // not files OptiScaler needs downloaded into OptiScaler/streamline/ — confirmed against
+        // OptiScaler's own wiki (no Streamline-file requirement listed for Nukem's dlssg-to-fsr3)
+        // and its changelog, which places the actual Streamline-file-requiring "DLSSG via Nvngx"
+        // rework exclusively in Nightly/WIP v0.10, never in any stable release through v0.9.4.
+        return effectiveRoute == FrameGenerationRoute.DlssGStreamline || effectiveOutput == FrameGenerationOutput.DlssG;
     }
 
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildIniSettings(

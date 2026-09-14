@@ -280,7 +280,18 @@ namespace OptiscalerClient.Views
                     return;
                 }
 
-                await new ViewIniWindow(iniPath, _game.Name).ShowDialog(this);
+                var cmbProfile = this.FindControl<ComboBox>("CmbProfile");
+                var currentProfile = (cmbProfile?.SelectedItem as ComboBoxItem)?.Tag as OptiScalerProfile
+                    ?? new ProfileManagementService().GetDefaultProfile();
+                
+                var profileService = new ProfileManagementService();
+
+                await new ViewIniWindow(iniPath, _game, currentProfile, profileService, persistedProfile =>
+                {
+                    PopulateProfileSelector(profileService, profileService.GetAllProfiles(forceRefresh: true), persistedProfile.Name);
+                    RefreshInstallActionAvailability();
+                    _ = ShowToastAsync(GetResourceString("TxtProfileSavedToast", "Profile created and selected successfully."));
+                }).ShowDialog(this);
             }
             catch (Exception ex)
             {
@@ -5357,6 +5368,13 @@ namespace OptiscalerClient.Views
                             {
                                 DebugWindow.Log($"[OptiPatcher] OptiScaler.ini not found at {iniPath}, skipping patch");
                             }
+
+                            // Re-run the spoofing override now that OptiPatcher.asi actually exists
+                            // on disk: InstallOptiScaler's own ApplySpoofingSettings call (Step 2.5)
+                            // ran BEFORE this block copied the .asi, so its "Nukem needs Dxgi=true on
+                            // OptiPatcher games" check always saw no OptiPatcher installed yet and
+                            // left Dxgi=auto untouched.
+                            installSvc.ApplySpoofingSettings(_game, selectedSpoofing, gameDir);
                         });
 
                         installedComponents += " + OptiPatcher";

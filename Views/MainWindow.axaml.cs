@@ -1953,60 +1953,67 @@ namespace OptiscalerClient.Views
             SwitchToView("ViewSettings");
 
             _isInitializingLanguage = true;
-            var cmbLanguage = this.FindControl<ComboBox>("CmbLanguage");
-            if (cmbLanguage != null)
+            try
             {
-                foreach (var baseItem in cmbLanguage.Items)
+                var cmbLanguage = this.FindControl<ComboBox>("CmbLanguage");
+                if (cmbLanguage != null)
                 {
-                    if (baseItem is ComboBoxItem item && item.Tag?.ToString() == App.CurrentLanguage)
+                    foreach (var baseItem in cmbLanguage.Items)
                     {
-                        cmbLanguage.SelectedItem = item;
-                        break;
+                        if (baseItem is ComboBoxItem item && item.Tag?.ToString() == App.CurrentLanguage)
+                        {
+                            cmbLanguage.SelectedItem = item;
+                            break;
+                        }
                     }
                 }
-            }
-            var tglAutoScan = this.FindControl<ToggleSwitch>("TglAutoScan");
-            if (tglAutoScan != null)
-            {
-                tglAutoScan.IsChecked = _componentService.Config.AutoScan;
-            }
-            var tglAnimations = this.FindControl<ToggleSwitch>("TglAnimations");
-            if (tglAnimations != null)
-            {
-                tglAnimations.IsChecked = _componentService.Config.AnimationsEnabled;
-            }
-            var tglExperimentalFeatures = this.FindControl<ToggleSwitch>("TglExperimentalFeatures");
-            if (tglExperimentalFeatures != null)
-            {
-                tglExperimentalFeatures.IsChecked = _componentService.Config.ShowExperimentalFeatures;
-            }
-            var txtSteamGridApiKey = this.FindControl<TextBox>("TxtSteamGridApiKey");
-            if (txtSteamGridApiKey != null)
-            {
-                txtSteamGridApiKey.Text = _componentService.Config.SteamGridDBApiKey ?? string.Empty;
-            }
-
-            var cmbRenderingMode = this.FindControl<ComboBox>("CmbRenderingMode");
-            if (cmbRenderingMode != null)
-            {
-                var preference = _componentService.Config.RenderingModePreference ?? "hardware";
-                foreach (var baseItem in cmbRenderingMode.Items)
+                var tglAutoScan = this.FindControl<ToggleSwitch>("TglAutoScan");
+                if (tglAutoScan != null)
                 {
-                    if (baseItem is ComboBoxItem item && item.Tag?.ToString() == preference)
+                    tglAutoScan.IsChecked = _componentService.Config.AutoScan;
+                }
+                var tglAnimations = this.FindControl<ToggleSwitch>("TglAnimations");
+                if (tglAnimations != null)
+                {
+                    tglAnimations.IsChecked = _componentService.Config.AnimationsEnabled;
+                }
+                var tglExperimentalFeatures = this.FindControl<ToggleSwitch>("TglExperimentalFeatures");
+                if (tglExperimentalFeatures != null)
+                {
+                    tglExperimentalFeatures.IsChecked = _componentService.Config.ShowExperimentalFeatures;
+                }
+                var txtSteamGridApiKey = this.FindControl<TextBox>("TxtSteamGridApiKey");
+                if (txtSteamGridApiKey != null)
+                {
+                    txtSteamGridApiKey.Text = _componentService.Config.SteamGridDBApiKey ?? string.Empty;
+                }
+
+                var cmbRenderingMode = this.FindControl<ComboBox>("CmbRenderingMode");
+                if (cmbRenderingMode != null)
+                {
+                    var preference = _componentService.Config.RenderingModePreference ?? "hardware";
+                    foreach (var baseItem in cmbRenderingMode.Items)
                     {
-                        cmbRenderingMode.SelectedItem = item;
-                        break;
+                        if (baseItem is ComboBoxItem item && item.Tag?.ToString() == preference)
+                        {
+                            cmbRenderingMode.SelectedItem = item;
+                            break;
+                        }
                     }
                 }
-            }
-            var txtRenderingModeAutoNotice = this.FindControl<TextBlock>("TxtRenderingModeAutoNotice");
-            if (txtRenderingModeAutoNotice != null)
-            {
-                txtRenderingModeAutoNotice.IsVisible = _componentService.Config.ForcedSoftwareRenderingActive;
-            }
+                var txtRenderingModeAutoNotice = this.FindControl<TextBlock>("TxtRenderingModeAutoNotice");
+                if (txtRenderingModeAutoNotice != null)
+                {
+                    txtRenderingModeAutoNotice.IsVisible = _componentService.Config.ForcedSoftwareRenderingActive;
+                }
 
-            PopulateDefaultGpuComboBox();
-            RepopulateVersionCombos();
+                PopulateDefaultGpuComboBox();
+                RepopulateVersionCombos();
+            }
+            finally
+            {
+                _isInitializingLanguage = false;
+            }
         }
 
         private void RepopulateVersionCombos()
@@ -3202,7 +3209,6 @@ namespace OptiscalerClient.Views
             var cmb = this.FindControl<ComboBox>("CmbDefaultGpu");
             if (cmb == null) return;
 
-            _isInitializingLanguage = true;
             cmb.Items.Clear();
 
             var autoItem = new ComboBoxItem { Content = "Auto (Recommended)", Tag = "auto" };
@@ -3232,8 +3238,6 @@ namespace OptiscalerClient.Views
                     }
                 }
             }
-
-            _isInitializingLanguage = false;
         }
 
         private void CmbDefaultGpu_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -5967,6 +5971,13 @@ namespace OptiscalerClient.Views
                                         System.IO.File.WriteAllLines(iniPath, lines);
                                         DebugWindow.Log("[QuickInstall][OptiPatcher] Patched OptiScaler.ini: LoadAsiPlugins=true");
                                     }
+
+                                    // Re-run the spoofing override now that OptiPatcher.asi actually
+                                    // exists on disk — InstallOptiScaler's own ApplySpoofingSettings
+                                    // call ran before this block copied the .asi, so its "Nukem needs
+                                    // Dxgi=true on OptiPatcher games" check always saw no OptiPatcher
+                                    // installed yet and left Dxgi=auto untouched.
+                                    installSvc.ApplySpoofingSettings(selectedGame, _componentService.Config.DefaultDxgiSpoofing ?? "auto", gameDir);
                                 });
                             }
                             catch (Exception ex)

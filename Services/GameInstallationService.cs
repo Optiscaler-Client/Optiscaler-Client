@@ -1094,10 +1094,36 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrWhiteSpace(gameDir) || !Directory.Exists(gameDir))
                 throw new DirectoryNotFoundException("The game installation directory could not be resolved.");
 
-            ModifyOptiScalerIni(gameDir, "Dxgi", spoofingValue, "Spoofing");
-            ModifyOptiScalerIni(gameDir, "StreamlineSpoofing", spoofingValue, "Spoofing");
-            ModifyOptiScalerIni(gameDir, "Vulkan", spoofingValue, "Spoofing");
-            ModifyOptiScalerIni(gameDir, "VulkanExtensionSpoofing", spoofingValue, "Spoofing");
+            // OptiScaler auto-disables Dxgi spoofing once OptiPatcher successfully patches a game
+            // (OptiPatcher exposes DLSS/DLSSG inputs natively, so spoofing would just be overhead) —
+            // but its own changelog documents Nukem's dlssg-to-fsr3 route as the one exception that
+            // still needs it on Windows ("if you need Nukem, set Dxgi=true"), or OptiScaler reports
+            // FG as disabled even with a correctly paired FGInput/FGOutput=nukems and DLSS FG turned
+            // on in-game. Windows-only: on Linux/Proton, spoofing the DXGI vendor as Nvidia while the
+            // real device stays AMD/Intel confuses VKD3D-Proton's device/adapter matching and can
+            // outright fail D3D12 device creation ("Failed to initialize DirectX12") — confirmed on a
+            // Proton + AMD setup where dlssg_to_fsr3 had already hooked NVSDK_NGX_D3D12_Init_Ext
+            // successfully with spoofing off, and only broke once Dxgi was forced to true. Only
+            // overrides the "auto" default — an explicit user pick from the Spoofing selector is left
+            // alone either way.
+            var effectiveSpoofingValue = spoofingValue;
+            if (OperatingSystem.IsWindows() &&
+                string.Equals(spoofingValue, "auto", StringComparison.OrdinalIgnoreCase) &&
+                game.FrameGenerationSettings is { Route: not FrameGenerationRoute.Disabled } fgSettings &&
+                File.Exists(Path.Combine(gameDir, "plugins", "OptiPatcher.asi")))
+            {
+                var fgConfigService = new FrameGenerationConfigurationService();
+                var capabilities = fgConfigService.DetectCapabilities(game);
+                var recommendation = fgConfigService.GetRecommendation(capabilities);
+                var effectiveRoute = fgConfigService.ResolveEffectiveRoute(fgSettings, recommendation, capabilities);
+                if (effectiveRoute == FrameGenerationRoute.Nukem)
+                    effectiveSpoofingValue = "true";
+            }
+
+            ModifyOptiScalerIni(gameDir, "Dxgi", effectiveSpoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "StreamlineSpoofing", effectiveSpoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "Vulkan", effectiveSpoofingValue, "Spoofing");
+            ModifyOptiScalerIni(gameDir, "VulkanExtensionSpoofing", effectiveSpoofingValue, "Spoofing");
         }
 
         /// <summary>

@@ -1206,6 +1206,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                                 System.IO.File.WriteAllLines(iniPath, lines);
                                 DebugWindow.Log($"[BulkInstall][OptiPatcher] Patched OptiScaler.ini for {gameItem.Name}");
                             }
+
+                            // Re-run the spoofing override now that OptiPatcher.asi actually exists
+                            // on disk — InstallOptiScaler's own ApplySpoofingSettings call ran before
+                            // this block copied the .asi, so its "Nukem needs Dxgi=true on OptiPatcher
+                            // games" check always saw no OptiPatcher installed yet and left Dxgi=auto
+                            // untouched.
+                            _installService.ApplySpoofingSettings(gameItem.Game, selectedSpoofing, gameDir);
                         });
 
                         Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
