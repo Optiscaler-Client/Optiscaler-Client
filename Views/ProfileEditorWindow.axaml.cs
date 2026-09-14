@@ -24,8 +24,7 @@ namespace OptiscalerClient.Views
         private SettingsSchema? _schema;
         private LayoutSettings _layout = new();
         private WrapPanel? _sectionsWrap;
-        private Button? _keyCaptureButton;
-        private string? _keyCapturePreviousValue;
+        private readonly Helpers.KeybindCaptureController _keybindController = new();
         private string _searchText = string.Empty;
         private StackPanel? _sidebarNav;
         private Dictionary<string, Border> _sectionBorders = new();
@@ -86,7 +85,7 @@ namespace OptiscalerClient.Views
             };
 
             this.SizeChanged += (_, __) => UpdateWrapLayout();
-            this.KeyDown += HandleKeyCapture;
+            this.KeyDown += _keybindController.HandleKeyDown;
         }
 
         private void TxtSettingsSearch_TextChanged(object? sender, TextChangedEventArgs e)
@@ -372,94 +371,9 @@ namespace OptiscalerClient.Views
                             : "auto";
                     }
 
-                    if (string.Equals(setting.ControlType, "keybind", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var keybindButton = BuildKeybindButton(currentValue);
-                        settingControl = keybindButton;
-                        settingRef = new SettingControlRef(settingControl, () => keybindButton.Tag?.ToString() ?? "auto", setting.AppliesTo);
-                    }
-                    else if (string.Equals(setting.ControlType, "text", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var textBox = new TextBox
-                        {
-                            Text = currentValue == "auto" ? "" : currentValue,
-                            Watermark = "auto",
-                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
-                        };
-                        settingControl = textBox;
-                        settingRef = new SettingControlRef(settingControl, () =>
-                            string.IsNullOrWhiteSpace(textBox.Text) ? "auto" : textBox.Text, setting.AppliesTo);
-                    }
-                    else if (string.Equals(setting.ControlType, "folderpath", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var pathPanel = new StackPanel
-                        {
-                            Orientation = Avalonia.Layout.Orientation.Horizontal,
-                            Spacing = 8
-                        };
-
-                        var pathTextBox = new TextBox
-                        {
-                            Text = currentValue == "auto" ? "" : currentValue,
-                            Watermark = "auto",
-                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                            IsReadOnly = false,
-                            MinWidth = 180
-                        };
-
-                        var browseButton = new Button
-                        {
-                            Content = "Browse...",
-                            Padding = new Thickness(12, 6),
-                            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
-                        };
-
-                        browseButton.Click += async (s, e) =>
-                        {
-                            var topLevel = TopLevel.GetTopLevel(this);
-                            if (topLevel != null)
-                            {
-                                var folderPicker = await topLevel.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions
-                                {
-                                    Title = "Select Folder",
-                                    AllowMultiple = false
-                                });
-
-                                if (folderPicker.Count > 0)
-                                {
-                                    pathTextBox.Text = folderPicker[0].Path.LocalPath;
-                                }
-                            }
-                        };
-
-                        pathPanel.Children.Add(pathTextBox);
-                        pathPanel.Children.Add(browseButton);
-
-                        settingControl = pathPanel;
-                        settingRef = new SettingControlRef(settingControl, () =>
-                            string.IsNullOrWhiteSpace(pathTextBox.Text) ? "auto" : pathTextBox.Text, setting.AppliesTo);
-                    }
-                    else
-                    {
-                        var comboBox = new ComboBox
-                        {
-                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
-                        };
-
-                        var optionItems = BuildOptionItems(setting);
-                        foreach (var option in optionItems)
-                        {
-                            comboBox.Items.Add(option);
-                        }
-
-                        var selectedItem = optionItems.FirstOrDefault(item => item.Value == currentValue)
-                            ?? optionItems.FirstOrDefault();
-                        comboBox.SelectedItem = selectedItem;
-
-                        settingControl = comboBox;
-                        settingRef = new SettingControlRef(settingControl, () =>
-                            comboBox.SelectedItem is OptionItem optionItem ? optionItem.Value : "auto", setting.AppliesTo);
-                    }
+                    var builtControl = OptiscalerClient.Helpers.SchemaSettingControlFactory.BuildControl(setting, currentValue, _keybindController);
+                    settingControl = builtControl.Control;
+                    settingRef = new SettingControlRef(settingControl, builtControl.ValueGetter, setting.AppliesTo);
 
                     _settingControls[sectionName][setting.Key] = settingRef;
                     settingPanel.Children.Add(settingControl);
@@ -518,211 +432,6 @@ namespace OptiscalerClient.Views
             cardWidth = Math.Clamp(cardWidth, _layout.CardMinWidth, _layout.CardMaxWidth);
 
             _sectionsWrap.ItemWidth = cardWidth;
-        }
-
-        private List<OptionItem> BuildOptionItems(SchemaSetting setting)
-        {
-            var options = setting.Options ?? new List<OptionEntry>();
-            var items = new List<OptionItem>();
-
-            foreach (var option in options)
-            {
-                var value = option.Value ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    continue;
-                }
-
-                var label = string.IsNullOrWhiteSpace(option.Label) ? value : option.Label;
-                items.Add(new OptionItem(value, label));
-            }
-
-            return items;
-        }
-
-        private Button BuildKeybindButton(string value)
-        {
-            var button = new Button
-            {
-                Height = 32,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                Content = FormatKeybindLabel(value),
-                Tag = value
-            };
-
-            button.Click += (_, __) => BeginKeyCapture(button);
-            return button;
-        }
-
-        private void BeginKeyCapture(Button button)
-        {
-            _keyCaptureButton = button;
-            _keyCapturePreviousValue = button.Tag?.ToString() ?? "auto";
-            button.Content = "Press a key...";
-        }
-
-        private void HandleKeyCapture(object? sender, KeyEventArgs e)
-        {
-            if (_keyCaptureButton == null) return;
-            e.Handled = true;
-
-            var key = e.Key;
-            if (key == Key.Escape)
-            {
-                SetKeybindValue(_keyCaptureButton, _keyCapturePreviousValue ?? "auto");
-                EndKeyCapture();
-                return;
-            }
-
-            string? newValue = key switch
-            {
-                Key.Back => "auto",
-                Key.Delete => "-1",
-                _ => TryMapKeyToVirtualKey(key)
-            };
-
-            if (string.IsNullOrWhiteSpace(newValue))
-            {
-                SetKeybindValue(_keyCaptureButton, _keyCapturePreviousValue ?? "auto");
-                EndKeyCapture();
-                return;
-            }
-
-            SetKeybindValue(_keyCaptureButton, newValue);
-            EndKeyCapture();
-        }
-
-        private void EndKeyCapture()
-        {
-            _keyCaptureButton = null;
-            _keyCapturePreviousValue = null;
-        }
-
-        private void SetKeybindValue(Button button, string value)
-        {
-            button.Tag = value;
-            button.Content = FormatKeybindLabel(value);
-        }
-
-        private static string? TryMapKeyToVirtualKey(Key key)
-        {
-            if (key >= Key.A && key <= Key.Z)
-            {
-                var code = 0x41 + (key - Key.A);
-                return $"0x{code:X2}";
-            }
-
-            if (key >= Key.D0 && key <= Key.D9)
-            {
-                var code = 0x30 + (key - Key.D0);
-                return $"0x{code:X2}";
-            }
-
-            if (key >= Key.NumPad0 && key <= Key.NumPad9)
-            {
-                var code = 0x60 + (key - Key.NumPad0);
-                return $"0x{code:X2}";
-            }
-
-            if (key >= Key.F1 && key <= Key.F12)
-            {
-                var code = 0x70 + (key - Key.F1);
-                return $"0x{code:X2}";
-            }
-
-            return key switch
-            {
-                Key.Insert => "0x2D",
-                Key.Home => "0x24",
-                Key.End => "0x23",
-                Key.PageUp => "0x21",
-                Key.PageDown => "0x22",
-                Key.Back => "0x08",
-                Key.Tab => "0x09",
-                Key.Enter => "0x0D",
-                Key.Space => "0x20",
-                Key.Left => "0x25",
-                Key.Up => "0x26",
-                Key.Right => "0x27",
-                Key.Down => "0x28",
-                Key.Delete => "0x2E",
-                Key.Escape => "0x1B",
-                Key.LeftShift or Key.RightShift => "0x10",
-                Key.LeftCtrl or Key.RightCtrl => "0x11",
-                Key.LeftAlt or Key.RightAlt => "0x12",
-                Key.CapsLock => "0x14",
-                Key.PrintScreen => "0x2C",
-                Key.Pause => "0x13",
-                _ => null
-            };
-        }
-
-        private static string FormatKeybindLabel(string value)
-        {
-            if (string.Equals(value, "auto", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Auto";
-            }
-
-            if (value == "-1")
-            {
-                return "Disabled";
-            }
-
-            var normalized = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-                ? value[2..]
-                : value;
-
-            if (int.TryParse(normalized, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var code))
-            {
-                return GetVirtualKeyLabel(code);
-            }
-
-            return value;
-        }
-
-        private static string GetVirtualKeyLabel(int code)
-        {
-            if (code >= 0x41 && code <= 0x5A)
-            {
-                return ((char)code).ToString();
-            }
-
-            if (code >= 0x30 && code <= 0x39)
-            {
-                return ((char)code).ToString();
-            }
-
-            if (code >= 0x70 && code <= 0x7B)
-            {
-                return $"F{code - 0x6F}";
-            }
-
-            return code switch
-            {
-                0x2D => "Insert",
-                0x24 => "Home",
-                0x23 => "End",
-                0x21 => "Page Up",
-                0x22 => "Page Down",
-                0x08 => "Backspace",
-                0x09 => "Tab",
-                0x0D => "Enter",
-                0x20 => "Space",
-                0x25 => "Left",
-                0x26 => "Up",
-                0x27 => "Right",
-                0x28 => "Down",
-                0x2E => "Delete",
-                0x1B => "Escape",
-                0x10 => "Shift",
-                0x11 => "Ctrl",
-                0x12 => "Alt",
-                0x14 => "Caps Lock",
-                0x2C => "Print Screen",
-                0x13 => "Pause",
-                _ => $"Key {code:X2}"
-            };
         }
 
         private int CalculateColumns(LayoutSettings layout, double width)
