@@ -57,10 +57,60 @@ public class GameMetadataService
     }
 
     /// <summary>
+    /// Checks if a ".nocover" sentinel file exists for a game.
+    /// </summary>
+    public bool HasSentinel(string appIdKey)
+    {
+        var sentinelPath = Path.Combine(_coversCachePath, $"{SanitizeFileName(appIdKey)}.nocover");
+        return File.Exists(sentinelPath);
+    }
+
+    /// <summary>
+    /// Deletes all ".nocover" sentinel files in the cache directory.
+    /// </summary>
+    public void DeleteAllSentinels()
+    {
+        try
+        {
+            var files = Directory.GetFiles(_coversCachePath, "*.nocover");
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
+            DebugWindow.Log(() => $"[Cover] Deleted {files.Length} sentinels.");
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover] Failed to delete sentinels: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Deletes both the cached image and the sentinel file for a specific app key.
+    /// </summary>
+    public void DeleteCoverCache(string appIdKey)
+    {
+        try
+        {
+            var sanitized = SanitizeFileName(appIdKey);
+            var imagePath = Path.Combine(_coversCachePath, $"{sanitized}.jpg");
+            var sentinelPath = Path.Combine(_coversCachePath, $"{sanitized}.nocover");
+
+            if (File.Exists(imagePath)) File.Delete(imagePath);
+            if (File.Exists(sentinelPath)) File.Delete(sentinelPath);
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover] Failed to delete cover cache for '{appIdKey}': {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Searches for game cover art using multiple sources with fallback.
     /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) SteamGridDB
+    /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) Steam API (gameName), 4) SteamGridDB (gameName), 5) Fallbacks
     /// </summary>
-    public async Task<string?> FetchAndCacheCoverImageAsync(string gameName, string appIdKey)
+    public async Task<string?> FetchAndCacheCoverImageAsync(string gameName, string appIdKey, string? fallbackName = null)
     {
         string sanitized = SanitizeFileName(appIdKey);
         string localPath = Path.Combine(_coversCachePath, $"{sanitized}.jpg");
@@ -100,9 +150,14 @@ public class GameMetadataService
             DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] AppId direct failed, falling back to search...");
         }
 
-        // Try 2: Search Steam Store API by name (skip if it would just return the same AppId)
+        // Try 2: Search Steam Store API by name
         DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying Steam name search...");
         result = await TryFetchFromSteamSearch(gameName, localPath, sw, skipAppId: triedSteamAppId);
+        if (result == null && !string.IsNullOrWhiteSpace(fallbackName))
+        {
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Steam search failed, trying fallback name: {fallbackName}");
+            result = await TryFetchFromSteamSearch(fallbackName, localPath, sw, skipAppId: triedSteamAppId);
+        }
         if (result != null)
         {
             DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via Steam search: \"{gameName}\"");
@@ -112,11 +167,38 @@ public class GameMetadataService
 
         // Try 3: Fallback to SteamGridDB (only if API key configured)
         DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying SteamGridDB fallback...");
+        // Try 3: SteamGridDB by name
+        DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Steam search failed, trying SteamGridDB...");
         result = await TryFetchFromSteamGridDB(gameName, localPath, sw);
+        if (result == null && !string.IsNullOrWhiteSpace(fallbackName))
+        {
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] SteamGridDB failed, trying fallback name: {fallbackName}");
+            result = await TryFetchFromSteamGridDB(fallbackName, localPath, sw);
+        }
         if (result != null)
         {
             DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via SteamGridDB: \"{gameName}\"");
             return result;
+        }
+
+        // Try 4: Fallback Name (Steam API then SteamGridDB)
+        if (!string.IsNullOrWhiteSpace(fallbackName) && fallbackName != gameName)
+        {
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Primary name failed everywhere, trying fallback name: {fallbackName}");
+            
+            result = await TryFetchFromSteamSearch(fallbackName, localPath, sw, skipAppId: triedSteamAppId);
+            if (result != null)
+            {
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via Steam search (fallback): \"{fallbackName}\"");
+                return result;
+            }
+
+            result = await TryFetchFromSteamGridDB(fallbackName, localPath, sw);
+            if (result != null)
+            {
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via SteamGridDB (fallback): \"{fallbackName}\"");
+                return result;
+            }
         }
 
         DebugWindow.Log(() => $"[Cover] FAIL in {sw.ElapsedMilliseconds}ms — no cover found for: \"{gameName}\" — writing sentinel");
@@ -394,7 +476,7 @@ public class GameMetadataService
             }
         }
 
-        // Second try: starts with search name
+        // Second try: starts with search name (e.g., "The Witcher 3" -> "The Witcher 3: Wild Hunt")
         foreach (var item in itemsList)
         {
             if (item.TryGetProperty("name", out var nameEl))
@@ -407,14 +489,37 @@ public class GameMetadataService
             }
         }
 
-        // Fallback: return first item
-        return itemsList.Count > 0 ? itemsList[0] : null;
+        // Third try: search name is fully contained in the result (e.g., "Wild Hunt" -> "The Witcher 3: Wild Hunt")
+        foreach (var item in itemsList)
+        {
+            if (item.TryGetProperty("name", out var nameEl))
+            {
+                string itemName = nameEl.GetString() ?? "";
+                if (itemName.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return item;
+                }
+            }
+        }
+
+        // We used to blindly return itemsList[0] here.
+        // But Steam's API often returns completely unrelated games if the exact game is missing
+        // (e.g., searching "Alan Wake 2" returns a Beat Saber DLC).
+        // If none of the above matched, it's safer to fail so we can fall back to SteamGridDB.
+        return null;
     }
 
     private string CleanGameName(string gameName)
     {
         // Remove common suffixes and prefixes that might interfere with search
         var cleaned = gameName;
+
+        // Replace dots and underscores with spaces
+        cleaned = cleaned.Replace(".", " ").Replace("_", " ");
+
+        // Remove scene release group suffixes like "-InsaneRamZes", "-RUNE", "-FLT", "-TENOKE", "-DODI"
+        // This regex removes a dash followed by a single alphanumeric word at the very end.
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"-[A-Za-z0-9]+$", "");
 
         // Remove year suffixes like "(2024)", "- 2024"
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*[\(\-]\s*\d{4}\s*[\)]?\s*$", "");
@@ -425,6 +530,9 @@ public class GameMetadataService
         {
             cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, $@"\s*-?\s*{pattern}\s*(Edition)?\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
+
+        // Clean up multiple spaces
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ");
 
         return cleaned.Trim();
     }
