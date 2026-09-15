@@ -32,9 +32,10 @@ dotnet publish "$REPO_ROOT/OptiscalerClient.csproj" \
     -o "$PUBLISH_DIR"
 
 echo "==> Staging desktop file and icon"
-sed "s/^Exec=.*/Exec=OptiscalerClient/" "$REPO_ROOT/packaging/aur/optiscaler-client.desktop" \
+sed -e "s/^Exec=.*/Exec=OptiscalerClient/" -e "s/^Icon=.*/Icon=${APP_ID}/" \
+    "$REPO_ROOT/packaging/aur/optiscaler-client.desktop" \
     > "$BUILD_DIR/optiscaler-client.desktop"
-cp "$REPO_ROOT/assets/icon.png" "$BUILD_DIR/icon.png"
+magick "$REPO_ROOT/assets/icon.png" -resize 512x512 -background none -gravity center -extent 512x512 "$BUILD_DIR/icon.png"
 
 echo "==> Running flatpak-builder"
 rm -rf "$BUILDDIR" "$REPO_DIR"
