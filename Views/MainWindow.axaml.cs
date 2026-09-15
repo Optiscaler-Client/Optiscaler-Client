@@ -42,6 +42,7 @@ using OptiscalerClient.Models.Help;
 using Avalonia.Styling;
 using System.Text.Json;
 using System.Globalization;
+using System.Reflection;
 
 namespace OptiscalerClient.Views
 {
@@ -4091,8 +4092,10 @@ namespace OptiscalerClient.Views
 
             try
             {
-                var buildDate = System.IO.File.GetLastWriteTime(System.AppContext.BaseDirectory);
-                dateValue.Text = buildDate.ToString("yyyy-MM-dd");
+                var buildDate = Assembly.GetExecutingAssembly()
+                    .GetCustomAttributes<AssemblyMetadataAttribute>()
+                    .FirstOrDefault(a => a.Key == "BuildDate")?.Value;
+                dateValue.Text = buildDate ?? "Unknown";
             }
             catch
             {

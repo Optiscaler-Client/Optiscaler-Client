@@ -74,4 +74,16 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!--
+    Embeds the compile-time build date so the UI doesn't rely on the published output's
+    filesystem mtime, which repackaging (Flatpak/OSTree in particular, which zeroes all
+    timestamps for content-addressed storage) can't be trusted to preserve.
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BuildDate</_Parameter1>
+      <_Parameter2>$([System.DateTime]::UtcNow.ToString("yyyy-MM-dd"))</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>
