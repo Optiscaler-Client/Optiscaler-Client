@@ -4793,7 +4793,19 @@ namespace OptiscalerClient.Views
                         if (bdProgress != null && bdProgress.IsVisible != true)
                             bdProgress.IsVisible = true;
 
-                        if (prgDownload != null) prgDownload.Value = p;
+                        if (p < 0) // sentinel: extraction phase started, no byte-level progress available
+                        {
+                            if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                            var extractFormat = GetResourceString("TxtExtractingFormat", "Extracting and installing v{0}...");
+                            if (txtProgressState != null) txtProgressState.Text = string.Format(extractFormat, optiscalerVersion);
+                            return;
+                        }
+
+                        if (prgDownload != null)
+                        {
+                            prgDownload.IsIndeterminate = false;
+                            prgDownload.Value = p;
+                        }
                         var formatInstalling = GetResourceString("TxtInstallingFormat", "Downloading OptiScaler v{0}... {1}%");
                         if (txtProgressState != null) txtProgressState.Text = string.Format(formatInstalling, optiscalerVersion, (int)p);
                     });
@@ -4808,13 +4820,14 @@ namespace OptiscalerClient.Views
                     // Hide after download finishes
                     Dispatcher.UIThread.Post(() =>
                     {
+                        if (prgDownload != null) prgDownload.IsIndeterminate = false;
                         if (bdProgress != null) bdProgress.IsVisible = false;
                     });
                 }
                 catch (VersionUnavailableException vex)
                 {
                     isDownloadingOpti = false;
-                    Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                    Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.IsIndeterminate = false; if (bdProgress != null) bdProgress.IsVisible = false; });
                     if (vex.Message.Contains("Download already in progress", StringComparison.OrdinalIgnoreCase))
                     {
                         var inProgressFmt2 = GetResourceString("TxtDownloadInProgressFormat", "A download is already in progress for v{0}.");
@@ -4835,6 +4848,7 @@ namespace OptiscalerClient.Views
                     isDownloadingOpti = false;
                     Dispatcher.UIThread.Post(() =>
                     {
+                        if (prgDownload != null) prgDownload.IsIndeterminate = false;
                         if (bdProgress != null) bdProgress.IsVisible = false;
                     });
                     var msgFormat = GetResourceString("TxtDownloadErrorPrefix", "Failed to download OptiScaler: {0}");

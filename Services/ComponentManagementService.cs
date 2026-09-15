@@ -2568,6 +2568,7 @@ namespace OptiscalerClient.Services
 
                     // Extract with path traversal validation (off the UI thread)
                     DebugWindow.Log($"[Extract] Starting extraction of {Path.GetFileName(tempZip)} to {extractPath}");
+                    progress?.Report(-1); // sentinel: extraction phase started (indeterminate, no byte-level progress)
                     var extractStartTime = DateTime.Now;
                     var fileCount = 0;
 
