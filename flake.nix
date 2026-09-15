@@ -4,6 +4,12 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
   };
+  nixConfig = {
+    extra-substituters = [ "https://optiscaler-client.cachix.org" ];
+    extra-trusted-public-keys = [
+      "optiscaler-client.cachix.org-1:d/jtkVUDi0eCwR2Ax53YoIy2IuFxwUXq1ShoYh/EW5k="
+    ];
+  };
   outputs =
     {
       self,
