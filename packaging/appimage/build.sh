@@ -66,6 +66,6 @@ fi
 
 echo "==> Building AppImage"
 rm -f "$OUT_FILE"
-ARCH=x86_64 "$APPIMAGETOOL" "$APPDIR" "$OUT_FILE"
+ARCH=x86_64 "$APPIMAGETOOL" --appimage-extract-and-run "$APPDIR" "$OUT_FILE"
 
 echo "==> Done: $OUT_FILE"
