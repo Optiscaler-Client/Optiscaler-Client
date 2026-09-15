@@ -1,0 +1,29 @@
+app-id: io.github.optiscaler_client.OptiscalerClient
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: OptiscalerClient
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=host
+
+modules:
+  - name: optiscaler-client
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/bin
+      - cp -r publish/. /app/bin/
+      - chmod +x /app/bin/OptiscalerClient
+      - install -Dm644 optiscaler-client.desktop /app/share/applications/io.github.optiscaler_client.OptiscalerClient.desktop
+      - install -Dm644 icon.png /app/share/icons/hicolor/256x256/apps/io.github.optiscaler_client.OptiscalerClient.png
+    sources:
+      - type: dir
+        path: build/publish
+        dest: publish
+      - type: file
+        path: build/optiscaler-client.desktop
+      - type: file
+        path: build/icon.png
