@@ -439,12 +439,10 @@ namespace OptiscalerClient.Views
             }
         }
 
-        /// <summary>True for OptiScaler builds downloaded through Setup NR's "Mod + OptiScaler" flow
-        /// (MatheusGViana/dlss-5-amd-project — see ComponentManagementService.DownloadAndImportAmdWrapperVersionAsync),
-        /// which registers them as Custom versions under this name prefix. Kept out of the plain
-        /// "Custom" tab and shown in their own "Modded" tab instead, since they're a distinct source.</summary>
+        /// <summary>Kept out of the plain "Custom" tab and shown in their own "Modded" tab instead,
+        /// since they're a distinct source — see ComponentManagementService.IsAmdWrapperVersion.</summary>
         private static bool IsAmdWrapperVersion(string version) =>
-            version.StartsWith("custom-amd-presr-", StringComparison.OrdinalIgnoreCase);
+            ComponentManagementService.IsAmdWrapperVersion(version);
 
         private void RenderOptiScalerVersions(StackPanel content, bool showBeta, bool showNightly = false)
         {

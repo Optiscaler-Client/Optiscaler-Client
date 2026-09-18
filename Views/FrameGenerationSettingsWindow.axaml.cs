@@ -214,9 +214,11 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     private bool IsOutputDisabledSelected()
         => (this.FindControl<ComboBox>("CmbFgOutput")?.SelectedItem as ComboBoxItem)?.Tag is string tag && tag == OutputDisabledTag;
 
-    /// <summary>Simplified top-level multiplier: x2 only, unless the output is DLSS-G (x2..x6).
-    /// Anything beyond x2 on DLSS-G requires DLSS Enabler, which <see cref="ApplyAutoNvngxReplacement"/>
-    /// selects automatically, so no capability lookup is needed here.</summary>
+    /// <summary>Simplified top-level multiplier: x2 only, unless the output is DLSS-G (x2..x6) or
+    /// XeFg (x2..x6, via the XeFGUnlock.asi plugin — auto-installed at Install time when needed,
+    /// see ManageGameWindow's installXeFGUnlock). Anything beyond x2 on DLSS-G requires DLSS
+    /// Enabler, which <see cref="ApplyAutoNvngxReplacement"/> selects automatically, so no
+    /// capability lookup is needed here.</summary>
     private void PopulateFgMultiplier(MultiFrameGenerationMode selected)
     {
         var combo = this.FindControl<ComboBox>("CmbMfgMultiplier");
@@ -228,6 +230,10 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         {
             modes = [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
             if (_capabilities.SupportsDynamicMfg) modes.Add(MultiFrameGenerationMode.Dynamic);
+        }
+        else if (output == FrameGenerationOutput.XeFg)
+        {
+            modes = [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
         }
         else
         {

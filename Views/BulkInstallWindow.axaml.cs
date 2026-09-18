@@ -798,6 +798,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             fgConfigService.RequiresStreamline(_frameGenerationSettings, fgConfigService.DetectCapabilities(item.Game, preferredGpuForFsr4), version));
         var mfgWithEnabler = _frameGenerationSettings.Output == FrameGenerationOutput.DlssG &&
             _frameGenerationSettings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+        // XeFGUnlock.asi is installed whenever XeFg output is selected, regardless of multiplier.
+        var installXeFGUnlock = _frameGenerationSettings.Output == FrameGenerationOutput.XeFg;
         var streamlineCacheDir = string.Empty;
         var dlssEnablerCacheDir = string.Empty;
         string? nightlyFakenvapiCacheDir = null;
@@ -1115,7 +1117,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         if (packagedFiles.Count > 0)
                         {
                             var cacheDir = _componentService.GetExtrasDllCachePath(selectedExtrasVersion);
-                            var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDirForSwap, cacheDir, packagedFiles);
+                            var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(GameInstallationService.ResolveExtrasRoot(gameDirForSwap), cacheDir, packagedFiles);
                             if (candidates.Count > 1 && !_componentService.Config.Fsr4SwapAskEveryTime)
                                 candidates = Fsr4Int8DllHelper.FilterCandidatesByDefaultKeys(candidates, _componentService.Config.Fsr4SwapDefaultFileKeys);
 
@@ -1142,7 +1144,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     {
                         foreach (var file in filesToInject)
                         {
-                            _installService.InjectExtrasDll(gameItem.Game, file.TargetPath, file.SourceContentPath);
+                            _installService.InjectExtrasDll(gameItem.Game, gameDirForSwap, file.TargetPath, file.SourceContentPath);
                             DebugWindow.Log($"[BulkInstall] Copied FSR 4 Swap DLL to {file.TargetPath} for {gameItem.Name}");
                         }
                         if (selectedExtrasIsInt8)
@@ -1178,34 +1180,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         {
                             var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
 
-                            // Create plugins folder and copy the .asi
-                            var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");
-                            System.IO.Directory.CreateDirectory(pluginsDir);
-                            var destAsi = System.IO.Path.Combine(pluginsDir, "OptiPatcher.asi");
-                            System.IO.File.Copy(optiPatcherAsiPath, destAsi, overwrite: true);
-                            DebugWindow.Log($"[BulkInstall][OptiPatcher] Installed to {destAsi}");
-
-                            // Patch OptiScaler.ini: ensure LoadAsiPlugins=true
-                            var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
-                            if (System.IO.File.Exists(iniPath))
-                            {
-                                var lines = System.IO.File.ReadAllLines(iniPath).ToList();
-                                bool found = false;
-                                for (int idx = 0; idx < lines.Count; idx++)
-                                {
-                                    var trimmed = lines[idx].Trim();
-                                    if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
-                                        (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
-                                    {
-                                        lines[idx] = "LoadAsiPlugins=true";
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                if (!found) lines.Add("LoadAsiPlugins=true");
-                                System.IO.File.WriteAllLines(iniPath, lines);
-                                DebugWindow.Log($"[BulkInstall][OptiPatcher] Patched OptiScaler.ini for {gameItem.Name}");
-                            }
+                            _installService.InstallAsiPlugin(gameDir, optiPatcherAsiPath);
 
                             // Re-run the spoofing override now that OptiPatcher.asi actually exists
                             // on disk — InstallOptiScaler's own ApplySpoofingSettings call ran before
@@ -1221,6 +1196,41 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     {
                         Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
                         DebugWindow.Log($"[BulkInstall][OptiPatcher] Failed for {gameItem.Name}: {ex.Message}");
+                    }
+                }
+
+                // ── XeFGUnlock (Intel Xe FG multiplier > x2) ────────────────────────
+                if (installXeFGUnlock)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (txtProgressStatus != null) txtProgressStatus.Text = $"Downloading XeSS MFG unlock plugin for {gameItem.Name}...";
+                        if (progressBar != null) progressBar.IsIndeterminate = true;
+                    });
+
+                    try
+                    {
+                        var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion;
+                        if (string.IsNullOrEmpty(xeFGUnlockVersion))
+                            throw new Exception("No XeFGUnlock release is available yet.");
+
+                        var xeFGUnlockProgress = new Progress<double>(p =>
+                            Dispatcher.UIThread.Post(() => { if (progressBar != null) { progressBar.IsIndeterminate = false; progressBar.Value = p; } }));
+
+                        var xeFGUnlockAsiPath = await _componentService.DownloadXeFGUnlockAsync(xeFGUnlockVersion, xeFGUnlockProgress);
+
+                        await Task.Run(() =>
+                        {
+                            var gameDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+                            _installService.InstallAsiPlugin(gameDir, xeFGUnlockAsiPath);
+                        });
+
+                        Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.UIThread.Post(() => { if (progressBar != null) progressBar.IsIndeterminate = false; });
+                        DebugWindow.Log($"[BulkInstall][XeFGUnlock] Failed for {gameItem.Name}: {ex.Message}");
                     }
                 }
 
@@ -1361,7 +1371,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     // ExecuteDllSwapAsync in ManageGameWindow for the interactive per-file choice used
                     // outside bulk mode.
                     var cacheDir = _componentService.GetExtrasDllCachePath(extrasVersion);
-                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDir, cacheDir, packagedFiles);
+                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(GameInstallationService.ResolveExtrasRoot(gameDir), cacheDir, packagedFiles);
                     // Only filtered when there's an actual choice to make, same guard as
                     // ManageGameWindow — a single-file package must not be filtered away by a
                     // defaults list that happens not to list it.

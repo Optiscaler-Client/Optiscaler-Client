@@ -11,6 +11,10 @@
         "RepoOwner": "optiscaler",
         "RepoName": "OptiPatcher"
     },
+    "XeFGUnlock": {
+        "RepoOwner": "Optiscaler-Client",
+        "RepoName": "Optiscaler-MFG-Extras"
+    },
     "OptiScalerBetas": {
         "RepoOwner": "Optiscaler-Client",
         "RepoName": "OptiScaler-Betas"

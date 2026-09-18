@@ -97,6 +97,7 @@ namespace OptiscalerClient.Models
         public RepositoryConfig Fakenvapi { get; set; } = new();
         public RepositoryConfig NukemFG { get; set; } = new();
         public RepositoryConfig OptiPatcher { get; set; } = new();
+        public RepositoryConfig XeFGUnlock { get; set; } = new();
         public RepositoryConfig DlssEnablerMirror { get; set; } = new();
         public string Language { get; set; } = "en";
         public bool Debug { get; set; } = false;
@@ -417,6 +418,26 @@ namespace OptiscalerClient.Models
     {
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
         public List<OptiPatcherReleaseEntry> Releases { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A single XeFGUnlock (XeSS Multi Frame Generation unlock plugin) release entry stored in
+    /// the local cache.
+    /// </summary>
+    public class XeFGUnlockReleaseEntry
+    {
+        public string Version { get; set; } = string.Empty;
+        public string? DownloadUrl { get; set; }
+        public bool IsLatest { get; set; }
+    }
+
+    /// <summary>
+    /// Local cache of XeFGUnlock release metadata.
+    /// </summary>
+    public class XeFGUnlockReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<XeFGUnlockReleaseEntry> Releases { get; set; } = new();
     }
 
     /// <summary>

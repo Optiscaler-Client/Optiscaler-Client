@@ -6238,33 +6238,7 @@ namespace OptiscalerClient.Views
                                     var installSvc = new GameInstallationService();
                                     var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
 
-                                    var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");
-                                    Directory.CreateDirectory(pluginsDir);
-                                    var destAsi = System.IO.Path.Combine(pluginsDir, "OptiPatcher.asi");
-                                    System.IO.File.Copy(optiPatcherAsiPath, destAsi, overwrite: true);
-                                    DebugWindow.Log($"[QuickInstall][OptiPatcher] Installed to {destAsi}");
-
-                                    var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
-                                    if (System.IO.File.Exists(iniPath))
-                                    {
-                                        var lines = System.IO.File.ReadAllLines(iniPath).ToList();
-                                        bool found = false;
-                                        for (int idx = 0; idx < lines.Count; idx++)
-                                        {
-                                            var trimmed = lines[idx].Trim();
-                                            if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
-                                                (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
-                                            {
-                                                lines[idx] = "LoadAsiPlugins=true";
-                                                found = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!found)
-                                            lines.Add("LoadAsiPlugins=true");
-                                        System.IO.File.WriteAllLines(iniPath, lines);
-                                        DebugWindow.Log("[QuickInstall][OptiPatcher] Patched OptiScaler.ini: LoadAsiPlugins=true");
-                                    }
+                                    installSvc.InstallAsiPlugin(gameDir, optiPatcherAsiPath);
 
                                     // Re-run the spoofing override now that OptiPatcher.asi actually
                                     // exists on disk — InstallOptiScaler's own ApplySpoofingSettings
@@ -6281,6 +6255,43 @@ namespace OptiscalerClient.Views
                                     this,
                                     GetResourceString("TxtWarning", "Warning"),
                                     $"OptiPatcher download/inject failed (OptiScaler was still installed):\n{ex.Message}",
+                                    isAlert: true
+                                ).ShowDialog<bool>(this);
+                            }
+                        }
+
+                        // ── XeFGUnlock install (whenever XeFg output is selected) ───────────
+                        var installXeFGUnlock = selectedGame.FrameGenerationSettings?.Output == FrameGenerationOutput.XeFg;
+                        if (installXeFGUnlock)
+                        {
+                            try
+                            {
+                                var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion;
+                                if (string.IsNullOrEmpty(xeFGUnlockVersion))
+                                    throw new Exception("No XeFGUnlock release is available yet.");
+
+                                ShowToast("Downloading XeSS MFG unlock plugin...", showProgress: true, progressPercent: 0);
+                                var xeFGUnlockProgress = new Progress<double>(p =>
+                                    UpdateToastProgress($"Downloading XeSS MFG unlock plugin... {(int)p}%", p));
+
+                                var xeFGUnlockAsiPath = await _componentService.DownloadXeFGUnlockAsync(xeFGUnlockVersion, xeFGUnlockProgress);
+
+                                ShowToast("Installing XeSS MFG unlock plugin...", showProgress: true, progressPercent: null);
+
+                                await Task.Run(() =>
+                                {
+                                    var installSvc = new GameInstallationService();
+                                    var gameDir = resolvedGameDir ?? installSvc.DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+                                    installSvc.InstallAsiPlugin(gameDir, xeFGUnlockAsiPath);
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                HideToast();
+                                await new ConfirmDialog(
+                                    this,
+                                    GetResourceString("TxtWarning", "Warning"),
+                                    $"XeSS MFG unlock plugin download/inject failed (OptiScaler was still installed):\n{ex.Message}",
                                     isAlert: true
                                 ).ShowDialog<bool>(this);
                             }

@@ -269,7 +269,7 @@ namespace OptiscalerClient.Views
             {
                 var installService = new GameInstallationService();
                 var gameDir = installService.DetermineInstallDirectory(_game);
-                var iniPath = string.IsNullOrWhiteSpace(gameDir) ? null : System.IO.Path.Combine(gameDir, "OptiScaler.ini");
+                var iniPath = string.IsNullOrWhiteSpace(gameDir) ? null : GameInstallationService.ResolveOptiScalerIniPath(gameDir);
 
                 if (iniPath == null || !System.IO.File.Exists(iniPath))
                 {
@@ -314,7 +314,7 @@ namespace OptiscalerClient.Views
                 var gameDir = installService.DetermineInstallDirectory(_game);
                 if (string.IsNullOrWhiteSpace(gameDir)) return null;
 
-                var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
+                var iniPath = GameInstallationService.ResolveOptiScalerIniPath(gameDir);
                 if (!System.IO.File.Exists(iniPath)) return null;
 
                 var inSpoofingSection = false;
@@ -1484,7 +1484,13 @@ namespace OptiscalerClient.Views
             var allVersions = componentService.OptiScalerAvailableVersions;
             var betaVersions = componentService.BetaVersions;
             var nightlyVersions = componentService.NightlyVersions;
-            var customVersions = _customVersions;
+            // Exclude Setup NR's AMD wrapper builds (custom-amd-presr-*) — they're an internal
+            // implementation detail of that wizard (see IsAmdWrapperVersion), never something the
+            // user picks manually here. CacheManagementWindow already keeps them in their own
+            // "Modded" tab; this combo has no such split, so filter them out of "Custom" instead.
+            var customVersions = new HashSet<string>(
+                _customVersions.Where(v => !ComponentManagementService.IsAmdWrapperVersion(v)),
+                StringComparer.OrdinalIgnoreCase);
             var latestStable = componentService.LatestStableVersion;
             var latestBeta = componentService.LatestBetaVersion;
             var latestNightly = componentService.LatestNightlyVersion;
@@ -1754,18 +1760,20 @@ namespace OptiscalerClient.Views
                 .Where(version => componentService.GetExtrasDllVariant(version) == _extrasVariant)
                 .ToList();
             var latestInVariant = versions.FirstOrDefault();
+            cmb.IsEnabled = true;
+
+            // Option 0: None — always present and pickable, even if no versions were found for this
+            // variant (repo fetch failed, FP8 repo empty, ...). Never lock the whole combo: that left
+            // the user stuck on whatever variant they'd last selected with no way to opt out.
+            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
+
             if (versions.Count == 0)
             {
-                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoVersions", "No versions available"), Tag = "none" });
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoVersions", "No versions available"), IsEnabled = false });
                 cmb.SelectedIndex = 0;
-                cmb.IsEnabled = false;
                 cmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
                 return;
             }
-            cmb.IsEnabled = true;
-
-            // Option 0: None
-            cmb.Items.Add(new ComboBoxItem { Content = "None", Tag = "none", Classes = { "SentinelOption" } });
 
             var customExtrasVersions = componentService.CustomExtrasVersions;
             foreach (var ver in versions)
@@ -4880,6 +4888,8 @@ namespace OptiscalerClient.Views
                 var mfgWithEnabler = _game.FrameGenerationSettings?.Route != FrameGenerationRoute.Disabled &&
                     _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
                     _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+                // XeFGUnlock.asi is installed whenever XeFg output is selected, regardless of multiplier.
+                var installXeFGUnlock = _game.FrameGenerationSettings?.Output == FrameGenerationOutput.XeFg;
                 var streamlineCacheDir = string.Empty;
                 if (installStreamline)
                 {
@@ -5231,7 +5241,12 @@ namespace OptiscalerClient.Views
                                                         dxgiSpoofing: selectedSpoofing);
                     });
                 }
-                catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone)
+                catch (Exception instEx) when ((instEx.Message.Contains("corrupt or incomplete") || instEx.Message.Contains("not found in the downloaded package")) && !retryDone &&
+                    // A custom-imported OptiScaler version has no remote source to redownload from —
+                    // retrying here would only delete the user's imported archive and immediately fail
+                    // again (now via DownloadOptiScalerAsync's custom-version branch), surfacing a
+                    // misleading "check your internet connection" error instead of the real one below.
+                    !(_customVersions.Contains(optiscalerVersion) && !instEx.Message.Contains("Fakenvapi", StringComparison.OrdinalIgnoreCase) && !instEx.Message.Contains("NukemFG", StringComparison.OrdinalIgnoreCase)))
                 {
                     retryDone = true;
                     DebugWindow.Log($"[Install] Detected corrupt cache. Missing files. Triggering auto-retry...");
@@ -5283,7 +5298,7 @@ namespace OptiscalerClient.Views
                         if (packagedFiles.Count > 0)
                         {
                             var cacheDir = componentService.GetExtrasDllCachePath(selectedExtrasVersion);
-                            var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDirForSwap, cacheDir, packagedFiles);
+                            var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(GameInstallationService.ResolveExtrasRoot(gameDirForSwap), cacheDir, packagedFiles);
 
                             if (candidates.Count > 1 && componentService.Config.Fsr4SwapAskEveryTime)
                             {
@@ -5355,7 +5370,7 @@ namespace OptiscalerClient.Views
                             {
                                 if (!File.Exists(file.SourceContentPath))
                                     throw new Exception("Installation failed because the FSR 4 Swap package is corrupt or incomplete.");
-                                installSvc.InjectExtrasDll(_game, file.TargetPath, file.SourceContentPath);
+                                installSvc.InjectExtrasDll(_game, gameDir, file.TargetPath, file.SourceContentPath);
                                 DebugWindow.Log($"[ExtrasInject] Copied DLL to {file.TargetPath} and set version to {selectedExtrasVersion}");
                             }
 
@@ -5421,39 +5436,7 @@ namespace OptiscalerClient.Views
                             var installSvc = new GameInstallationService();
                             var gameDir = overrideGameDir ?? resolvedGameDir ?? installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
 
-                            // Create plugins folder and copy the .asi file
-                            var pluginsDir = System.IO.Path.Combine(gameDir, "plugins");
-                            Directory.CreateDirectory(pluginsDir);
-                            var destAsi = System.IO.Path.Combine(pluginsDir, "OptiPatcher.asi");
-                            System.IO.File.Copy(optiPatcherAsiPath, destAsi, overwrite: true);
-                            DebugWindow.Log($"[OptiPatcher] Installed to {destAsi}");
-
-                            // Patch OptiScaler.ini: ensure LoadAsiPlugins=true
-                            var iniPath = System.IO.Path.Combine(gameDir, "OptiScaler.ini");
-                            if (System.IO.File.Exists(iniPath))
-                            {
-                                var lines = System.IO.File.ReadAllLines(iniPath).ToList();
-                                bool found = false;
-                                for (int idx = 0; idx < lines.Count; idx++)
-                                {
-                                    var trimmed = lines[idx].Trim();
-                                    if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
-                                        (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
-                                    {
-                                        lines[idx] = "LoadAsiPlugins=true";
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                if (!found)
-                                    lines.Add("LoadAsiPlugins=true");
-                                System.IO.File.WriteAllLines(iniPath, lines);
-                                DebugWindow.Log("[OptiPatcher] Patched OptiScaler.ini: LoadAsiPlugins=true");
-                            }
-                            else
-                            {
-                                DebugWindow.Log($"[OptiPatcher] OptiScaler.ini not found at {iniPath}, skipping patch");
-                            }
+                            installSvc.InstallAsiPlugin(gameDir, optiPatcherAsiPath);
 
                             // Re-run the spoofing override now that OptiPatcher.asi actually exists
                             // on disk: InstallOptiScaler's own ApplySpoofingSettings call (Step 2.5)
@@ -5470,6 +5453,58 @@ namespace OptiscalerClient.Views
                         Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
                         await new ConfirmDialog(this, "Warning",
                             $"OptiPatcher installation failed (OptiScaler was still installed):\n{ex.Message}").ShowDialog<object>(this);
+                    }
+                    finally
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (prgDownload != null) prgDownload.IsIndeterminate = false;
+                            if (bdProgress != null) bdProgress.IsVisible = false;
+                        });
+                    }
+                }
+
+                // ── XeFGUnlock install (Intel Xe FG multiplier > x2) ────────────────
+                if (installXeFGUnlock)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (bdProgress != null) bdProgress.IsVisible = true;
+                        if (txtProgressState != null) txtProgressState.Text = GetResourceString("TxtDownloadingXeFGUnlock", "Downloading XeSS MFG unlock plugin...");
+                        if (prgDownload != null) { prgDownload.IsIndeterminate = false; prgDownload.Value = 0; }
+                    });
+
+                    try
+                    {
+                        var xeFGUnlockVersion = componentService.LatestXeFGUnlockVersion;
+                        if (string.IsNullOrEmpty(xeFGUnlockVersion))
+                            throw new Exception("No XeFGUnlock release is available yet.");
+
+                        var xeFGUnlockProgress = new Progress<double>(p =>
+                            Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
+
+                        var xeFGUnlockAsiPath = await componentService.DownloadXeFGUnlockAsync(xeFGUnlockVersion, xeFGUnlockProgress);
+
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (txtProgressState != null) txtProgressState.Text = GetResourceString("TxtInstallingXeFGUnlock", "Installing XeSS MFG unlock plugin...");
+                            if (prgDownload != null) prgDownload.IsIndeterminate = true;
+                        });
+
+                        await Task.Run(() =>
+                        {
+                            var installSvc = new GameInstallationService();
+                            var gameDir = overrideGameDir ?? resolvedGameDir ?? installSvc.DetermineInstallDirectory(_game) ?? _game.InstallPath;
+                            installSvc.InstallAsiPlugin(gameDir, xeFGUnlockAsiPath);
+                        });
+
+                        installedComponents += " + XeFGUnlock";
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.UIThread.Post(() => { if (bdProgress != null) bdProgress.IsVisible = false; });
+                        await new ConfirmDialog(this, "Warning",
+                            $"XeSS MFG unlock plugin installation failed (OptiScaler was still installed):\n{ex.Message}").ShowDialog<object>(this);
                     }
                     finally
                     {
@@ -6291,7 +6326,7 @@ namespace OptiscalerClient.Views
                         throw new InvalidOperationException("This FSR4 version doesn't contain any recognized file.");
 
                     var cacheDir = componentService.GetExtrasDllCachePath(extrasVersion);
-                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(gameDir, cacheDir, packagedFiles);
+                    var candidates = Fsr4Int8DllHelper.BuildSwapCandidates(GameInstallationService.ResolveExtrasRoot(gameDir), cacheDir, packagedFiles);
 
                     if (candidates.Count > 1 && componentService.Config.Fsr4SwapAskEveryTime)
                     {
@@ -7180,7 +7215,7 @@ namespace OptiscalerClient.Views
         private sealed record SoftInstallSelection(string? ProfileName, string? UpscalingQualityPreset,
             double? UpscalingQualityRatio, string? OutputUpscalerBackend, string? FrameGenRoute,
             string? FrameGenOutput, string? FrameGenMfgMode, bool InstallStreamline, bool InstallDlssEnabler,
-            string SpoofingValue);
+            bool InstallXeFGUnlock, string SpoofingValue);
 
         private SoftInstallSelection ReadCurrentSoftInstallSelection(string optiscalerVersion)
         {
@@ -7207,10 +7242,11 @@ namespace OptiscalerClient.Views
             bool installDlssEnabler = _game.FrameGenerationSettings?.Route != FrameGenerationRoute.Disabled &&
                 _game.FrameGenerationSettings?.Output == FrameGenerationOutput.DlssG &&
                 _game.FrameGenerationSettings?.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
+            bool installXeFGUnlock = _game.FrameGenerationSettings?.Output == FrameGenerationOutput.XeFg;
 
             return new SoftInstallSelection(profileName, upscalingQualityPreset, upscalingQualityRatio,
                 outputUpscalerBackend, frameGenRoute, frameGenOutput, frameGenMfgMode, installStreamline, installDlssEnabler,
-                spoofingValue);
+                installXeFGUnlock, spoofingValue);
         }
 
         /// <summary>Session baseline for SoftInstallSelection — see CaptureConfigOnlyBaseline.</summary>
@@ -7220,11 +7256,12 @@ namespace OptiscalerClient.Views
         /// True when Profile/Upscaling Quality/Output Upscaler/Frame Generation/Spoofing actually
         /// changed since the session baseline, and nothing else did — so a full reinstall would just
         /// redo work already on disk. Three things must hold: the six HardInstallSelection combos still
-        /// match _installedHardSelectionBaseline; the Streamline/DLSS Enabler requirements (real
-        /// components, not narrow INI patches) still match what the baseline had, so a Frame Generation
-        /// change that newly needs one of them forces a full reinstall instead; and at least one of the five
-        /// config-only fields actually differs from _installedSoftSelectionBaseline — if nothing changed
-        /// at all, there's nothing to offer, and the button must behave like a normal Install/Reinstall.
+        /// match _installedHardSelectionBaseline; the Streamline/DLSS Enabler/XeFGUnlock requirements
+        /// (real components, not narrow INI patches) still match what the baseline had, so a Frame
+        /// Generation change that newly needs one of them forces a full reinstall instead; and at
+        /// least one of the five config-only fields actually differs from _installedSoftSelectionBaseline
+        /// — if nothing changed at all, there's nothing to offer, and the button must behave like a
+        /// normal Install/Reinstall.
         /// </summary>
         private bool ComputeConfigOnlyEligible()
         {
@@ -7237,7 +7274,8 @@ namespace OptiscalerClient.Views
             var baseline = _installedSoftSelectionBaseline;
 
             if (currentSoft.InstallStreamline != baseline.InstallStreamline
-                || currentSoft.InstallDlssEnabler != baseline.InstallDlssEnabler)
+                || currentSoft.InstallDlssEnabler != baseline.InstallDlssEnabler
+                || currentSoft.InstallXeFGUnlock != baseline.InstallXeFGUnlock)
                 return false;
 
             bool anythingChanged =
