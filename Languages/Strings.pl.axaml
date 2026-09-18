@@ -749,6 +749,8 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtViewIniOpenError">Nie można otworzyć podglądu ini:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Pobieranie OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Instalowanie OptiPatcher...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">Pobieranie wtyczki odblokowującej XeSS MFG...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">Instalowanie wtyczki odblokowującej XeSS MFG...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Zarządzanie wersjami</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">Wersjami OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi i NukemFG można zarządzać z sekcji Lokalna pamięć podręczna &amp; Zarządzanie wersjami domyślnymi w Ustawieniach.</x:String>
     <x:String x:Key="TxtSetDefault">Ustaw domyślny</x:String>

@@ -736,6 +736,8 @@
     <x:String x:Key="TxtViewIniOpenError">无法打开 ini 查看器：</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">正在下载 OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">正在安装 OptiPatcher...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">正在下载 XeSS MFG 解锁插件...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">正在安装 XeSS MFG 解锁插件...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">版本管理</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler、OptiPatcher、FSR 4 Swap、Fakenvapi 和 NukemFG 的版本可以在设置中的本地缓存和默认版本管理部分进行管理。</x:String>
     <x:String x:Key="TxtSetDefault">设为默认</x:String>

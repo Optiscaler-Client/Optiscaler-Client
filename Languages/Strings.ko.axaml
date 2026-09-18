@@ -730,6 +730,8 @@
     <x:String x:Key="TxtViewIniOpenError">ini 뷰어를 열 수 없습니다:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher 다운로드 중...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher 설치 중...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">XeSS MFG 잠금 해제 플러그인 다운로드 중...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">XeSS MFG 잠금 해제 플러그인 설치 중...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">버전 관리</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi 및 NukemFG 버전은 설정의 로컬 캐시 &amp; 기본 버전 관리 섹션에서 관리할 수 있습니다.</x:String>
     <x:String x:Key="TxtSetDefault">기본값 설정</x:String>

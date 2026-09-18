@@ -728,6 +728,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtViewIniOpenError">ini görüntüleyici açılamadı:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher indiriliyor...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher yükleniyor...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">XeSS MFG kilidini açma eklentisi indiriliyor...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">XeSS MFG kilidini açma eklentisi yükleniyor...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Sürüm Yönetimi</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi ve NukemFG sürümleri Ayarlar'daki Yerel önbellek &amp; Varsayılan sürüm yönetimi bölümünden yönetilebilir.</x:String>
     <x:String x:Key="TxtSetDefault">Varsayılan Yap</x:String>

@@ -749,6 +749,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtViewIniOpenError">Kon de ini-viewer niet openen:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcher downloaden...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcher installeren...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">XeSS MFG-ontgrendelingsplugin downloaden...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">XeSS MFG-ontgrendelingsplugin installeren...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Versiebeheer</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi en NukemFG versies kunnen worden beheerd vanuit het gedeelte Lokale cache &amp; Standaard versiebeheer in Instellingen.</x:String>
     <x:String x:Key="TxtSetDefault">Als standaard instellen</x:String>
