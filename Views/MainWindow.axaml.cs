@@ -5993,8 +5993,11 @@ namespace OptiscalerClient.Views
                         }
 
                         var configuredFakenvapi = versionIncludesBundled ? null : _componentService.Config.DefaultFakenvapiVersion;
+                        // Resolve on demand: the startup release fetch can be skipped by the
+                        // 15-minute cooldown or lost to GitHub's rate limit, and the raw property is
+                        // then null — which used to silently turn this component's install off.
                         if (configuredFakenvapi == ComponentManagementService.LatestAvailableTag)
-                            configuredFakenvapi = _componentService.LatestFakenvapiVersion;
+                            configuredFakenvapi = await _componentService.ResolveLatestFakenvapiVersionAsync();
                         bool installFakenvapi = !string.IsNullOrEmpty(configuredFakenvapi) &&
                                                 !configuredFakenvapi.Equals("none", StringComparison.OrdinalIgnoreCase);
 
@@ -6149,7 +6152,7 @@ namespace OptiscalerClient.Views
                         // ── FSR 4 Swap DLL injection (respect configured default extras)
                         var configuredExtras = _componentService.Config.DefaultExtrasVersion;
                         if (configuredExtras == ComponentManagementService.LatestAvailableTag)
-                            configuredExtras = _componentService.LatestExtrasVersion;
+                            configuredExtras = await _componentService.ResolveLatestExtrasVersionAsync();
                         if (!string.IsNullOrEmpty(configuredExtras) && !configuredExtras.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
                             var configuredExtrasIsInt8 = _componentService.GetExtrasDllVariant(configuredExtras) == Fsr4DllVariant.Int8;
@@ -6205,10 +6208,10 @@ namespace OptiscalerClient.Views
                         {
                             if (patcherIsAuto &&
                                 new CompatibilityListService().TryGetForGame(selectedGame.Name, out var compatEntryForPatcher) &&
-                                compatEntryForPatcher != null && compatEntryForPatcher.OptiPatcherSupported &&
-                                !string.IsNullOrEmpty(_componentService.LatestOptiPatcherVersion))
+                                compatEntryForPatcher != null && compatEntryForPatcher.OptiPatcherSupported)
                             {
-                                configuredPatcher = _componentService.LatestOptiPatcherVersion;
+                                configuredPatcher = await _componentService.ResolveLatestOptiPatcherVersionAsync()
+                                                    ?? configuredPatcher;
                             }
                         }
                         catch (Exception ex) { DebugWindow.Log($"[QuickInstall] Compatibility List lookup failed: {ex.Message}"); }
@@ -6266,9 +6269,8 @@ namespace OptiscalerClient.Views
                         {
                             try
                             {
-                                var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion;
-                                if (string.IsNullOrEmpty(xeFGUnlockVersion))
-                                    throw new Exception("No XeFGUnlock release is available yet.");
+                                // Empty resolves to latest inside DownloadXeFGUnlockAsync.
+                                var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion ?? "";
 
                                 ShowToast("Downloading XeSS MFG unlock plugin...", showProgress: true, progressPercent: 0);
                                 var xeFGUnlockProgress = new Progress<double>(p =>

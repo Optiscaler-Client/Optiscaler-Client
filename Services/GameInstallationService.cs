@@ -39,7 +39,6 @@ namespace OptiscalerClient.Services
             // OptiScaler core
             "OptiScaler.ini", "OptiScaler.log", "OptiScaler.dll",
             "setup_linux.sh", "setup_windows.bat",
-            @"D3D12_Optiscaler\", @"Licences\",
             "!! README_EXTRACT ALL FILES TO GAME FOLDER !!.txt",
             // "dxgi.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll",
             // "version.dll", "wininet.dll", "winhttp.dll",
@@ -76,6 +75,31 @@ namespace OptiscalerClient.Services
             "OptiScaler",
         };
 
+        /// <summary>Resolves one of <see cref="KnownOptiscalerDirectories"/> inside
+        /// <paramref name="parentDir"/> whatever its casing, or null if it is not there.
+        ///
+        /// OptiScaler's own packages are not consistent: stable 0.9.x ships "D3D12_Optiscaler"
+        /// while nightly ships "OptiScaler\D3D12_OptiScaler" (capital S). Windows does not care,
+        /// but Directory.Exists is case-sensitive on Linux, so the hardcoded spelling matched only
+        /// one of the two and uninstall silently left the other behind.</summary>
+        private static string? ResolveKnownDirectoryIgnoreCase(string parentDir, string name)
+        {
+            var direct = Path.Combine(parentDir, name);
+            if (Directory.Exists(direct)) return direct;
+            if (!Directory.Exists(parentDir)) return null;
+
+            try
+            {
+                return Directory.EnumerateDirectories(parentDir).FirstOrDefault(d =>
+                    string.Equals(Path.GetFileName(d), name, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install] Could not scan '{parentDir}' for '{name}': {ex.Message}");
+                return null;
+            }
+        }
+
         // Sensitive files that OptiScaler may place in the game folder but that could also
         // be native game files. Exposed publicly so the UI can present them as opt-in checkboxes.
         public static readonly string[] SensitiveArtifacts =
@@ -94,6 +118,18 @@ namespace OptiscalerClient.Services
         // essentially anything that OptiScaler might replace.
         // We will backup ANYTHING we overwrite, but these are known criticals.
         private readonly string[] _criticalFiles = { "dxgi.dll", "version.dll", "winmm.dll", "nvngx.dll", "nvngx_dlssg.dll", "libxess.dll" };
+
+        /// <summary>Proxy DLL names OptiScaler can be loaded through — the injection methods offered
+        /// in the UI. A custom package may ship its main DLL already renamed to one of these, so they
+        /// are accepted as a last resort when neither OptiScaler.dll nor nvngx.dll is present. Kept
+        /// separate from <see cref="_criticalFiles"/> on purpose: that list is a watch list for
+        /// CapturePreInstallKeySnapshot and includes runtimes that are NOT OptiScaler itself.</summary>
+        private static readonly string[] ProxyDllNames =
+            { "dxgi.dll", "version.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll", "winhttp.dll", "wininet.dll" };
+
+        private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
+            cacheFiles.FirstOrDefault(f =>
+                Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
 
         // Derived from NVIDIA's proprietary DLSS Neural Rendering weights — never redistributed
         // bundled with a third-party OptiScaler build, no matter who produced the file. The user
@@ -302,20 +338,25 @@ namespace OptiscalerClient.Services
 
             // Find the main OptiScaler DLL. Usually "OptiScaler.dll" or "nvngx.dll" (older versions),
             // but some custom packages ship it pre-renamed to whichever proxy DLL it loads through
-            // (dxgi.dll, winmm.dll, ...) instead — same names as _criticalFiles below.
-            string? optiscalerMainDll = null;
-            foreach (var file in cacheFiles)
-            {
-                var fileName = Path.GetFileName(file);
-                if (fileName.Equals("OptiScaler.dll", StringComparison.OrdinalIgnoreCase) ||
-                    fileName.Equals("nvngx.dll", StringComparison.OrdinalIgnoreCase) ||
-                    _criticalFiles.Contains(fileName, StringComparer.OrdinalIgnoreCase))
-                {
-                    optiscalerMainDll = file;
-                    DebugWindow.Log($"[Install] Found main OptiScaler DLL: {fileName}");
-                    break;
-                }
-            }
+            // (dxgi.dll, winmm.dll, ...) instead.
+            //
+            // Resolved by explicit priority rather than by whichever candidate the directory
+            // listing reaches first. This used to scan cacheFiles once and accept any name in
+            // _criticalFiles, but that list is built for CapturePreInstallKeySnapshot and also
+            // carries third-party runtimes OptiScaler ships ALONGSIDE its own DLL — libxess.dll
+            // and nvngx_dlssg.dll. Directory.GetFiles returns the cache alphabetically, so in
+            // every 0.9.x package libxess.dll was reached before OptiScaler.dll and installed as
+            // the injection DLL: the game loaded the XeSS SDK as its dxgi.dll and crashed before
+            // reaching a window, while libxess.dll itself was skipped by Step 2 as "already
+            // handled" and never landed in the game folder at all.
+            string? optiscalerMainDll =
+                FindCacheFile(cacheFiles, "OptiScaler.dll")
+                ?? FindCacheFile(cacheFiles, "nvngx.dll")
+                ?? cacheFiles.FirstOrDefault(f =>
+                    ProxyDllNames.Contains(Path.GetFileName(f), StringComparer.OrdinalIgnoreCase));
+
+            if (optiscalerMainDll != null)
+                DebugWindow.Log($"[Install] Found main OptiScaler DLL: {Path.GetFileName(optiscalerMainDll)}");
 
             // No recognizable DLL — still not corrupt if it at least carries OptiScaler.ini (e.g. a
             // config-only test package meant to tune an already-installed OptiScaler). Step 1 below
@@ -483,11 +524,11 @@ namespace OptiscalerClient.Services
             if (installStreamline)
             {
                 if (string.IsNullOrWhiteSpace(streamlineCachePath) || !Directory.Exists(streamlineCachePath))
-                    throw new DirectoryNotFoundException("Streamline is required for OptiScaler Nightly but is not available in the local cache.");
+                    throw new DirectoryNotFoundException("The Streamline runtime this Frame Generation setup needs was not downloaded. Retry the install; the client downloads it automatically.");
 
                 var streamlineFiles = Directory.GetFiles(streamlineCachePath, "*.dll", SearchOption.AllDirectories);
                 if (streamlineFiles.Length == 0 || !File.Exists(Path.Combine(streamlineCachePath, "sl.common.dll")))
-                    throw new InvalidDataException("The cached Streamline runtime is incomplete. Download the latest Streamline release and try again.");
+                    throw new InvalidDataException("The downloaded Streamline runtime is incomplete. Delete it from Settings > Cache management and retry the install.");
 
                 // Goes under gameDir\OptiScaler\ if the installed package shipped that folder
                 // (nightly), otherwise flat at gameDir root — see ResolveExtrasRoot.
@@ -1457,6 +1498,23 @@ namespace OptiscalerClient.Services
                 }
             }
 
+            // Priority 1b: the fixed candidate list above can only guess where OptiScaler landed.
+            // The store is keyed by the directory the install actually used (resolved from the real
+            // executable), so ask the store itself which of its committed backups sits under this
+            // game root — see BackupStoreService.FindBackupDirUnder.
+            if (!usingExternalStore)
+            {
+                var recordedDir = _backupStore.FindBackupDirUnder(rootDir);
+                if (recordedDir != null && _backupStore.HasValidBackup(recordedDir))
+                {
+                    storeKey = recordedDir;
+                    manifest = _backupStore.LoadManifest(recordedDir);
+                    usingExternalStore = true;
+                    gameDir = recordedDir;
+                    DebugWindow.Log($"[Uninstall] Resolved backup for '{game.Name}' by manifest: {gameDir}");
+                }
+            }
+
             // Priority 2: Fall back to searching for legacy in-folder manifest
             if (!usingExternalStore)
             {
@@ -1497,9 +1555,12 @@ namespace OptiscalerClient.Services
                 }
             }
 
-            // Priority 3: last-resort re-detection
+            // Priority 3: last-resort re-detection. DetermineInstallDirectory is the same resolver
+            // the install used, so it finds non-UE layouts (Cyberpunk 2077's bind) that
+            // DetectCorrectInstallDirectory — which only knows Binaries\Win64 — silently answered
+            // with the game root, leaving a manifest-less uninstall deleting nothing.
             if (string.IsNullOrEmpty(gameDir))
-                gameDir = DetectCorrectInstallDirectory(rootDir);
+                gameDir = DetermineInstallDirectory(game) ?? DetectCorrectInstallDirectory(rootDir);
 
             if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
                 throw new Exception($"Could not determine installation directory for '{game.Name}'.");
@@ -1629,13 +1690,13 @@ namespace OptiscalerClient.Services
                 // (e.g. after an update where the directory already existed pre-install).
                 foreach (var knownDir in KnownOptiscalerDirectories)
                 {
-                    var dirPath = Path.Combine(gameDir, knownDir);
                     try
                     {
-                        if (Directory.Exists(dirPath))
+                        var dirPath = ResolveKnownDirectoryIgnoreCase(gameDir, knownDir);
+                        if (dirPath != null)
                         {
                             DeleteDirectoryWithRetry(dirPath, true);
-                            DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {knownDir}");
+                            DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {Path.GetFileName(dirPath)}");
                         }
                     }
                     catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to remove known directory '{knownDir}': {ex.Message}"); }
@@ -1912,8 +1973,8 @@ namespace OptiscalerClient.Services
             // here would be unrecoverable if a later step in this same install fails and rolls back.
             foreach (var knownDir in KnownOptiscalerDirectories)
             {
-                var dirPath = Path.Combine(gameDir, knownDir);
-                if (!Directory.Exists(dirPath)) continue;
+                var dirPath = ResolveKnownDirectoryIgnoreCase(gameDir, knownDir);
+                if (dirPath == null) continue;
                 try
                 {
                     foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
@@ -2344,13 +2405,13 @@ namespace OptiscalerClient.Services
                 // Delete every known OptiScaler directory unconditionally (including contents)
                 foreach (var knownDir in KnownOptiscalerDirectories)
                 {
-                    var fullPath = Path.Combine(dir, knownDir);
                     try
                     {
-                        if (Directory.Exists(fullPath))
+                        var fullPath = ResolveKnownDirectoryIgnoreCase(dir, knownDir);
+                        if (fullPath != null)
                         {
                             Directory.Delete(fullPath, true);
-                            DebugWindow.Log($"[Uninstall][ForceClean] Deleted directory: {knownDir}");
+                            DebugWindow.Log($"[Uninstall][ForceClean] Deleted directory: {Path.GetFileName(fullPath)}");
                         }
                     }
                     catch (Exception ex)

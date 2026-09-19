@@ -77,8 +77,12 @@ namespace OptiscalerClient.Services
         // so they can never be captured as "created" files the normal way. Names are unambiguous
         // (nothing else in a game folder is called this), so RestoreFromManifest always sweeps for
         // them directly instead of relying on the manifest.
-        private static readonly string[] RuntimeArtifactFileNames = { "dlssnr_on_amd.log", "amd_presr.log", "amd_bridge.log" };
+        private static readonly string[] RuntimeArtifactFileNames =
+            { "dlssnr_on_amd.log", "amd_presr.log", "amd_bridge.log", "dlssnr_on_amd.ini", WeightsMarkerFileName };
         private const string RuntimePassFileGlob = "dlssnr_amd_pass*.dll";
+        // "Dump next frame" (Enter in the mod's overlay) writes several hundred MB of these
+        // next to the game exe. Nothing tracks them: they appear long after any install.
+        private const string RuntimeDumpFileGlob = "dlssnr_*.raw";
 
         private readonly string _cacheDir;
         private readonly string _nvngxCacheDir;
@@ -649,6 +653,13 @@ namespace OptiscalerClient.Services
             var markerPath = Path.Combine(session.GameDir, WeightsMarkerFileName);
             if (!File.Exists(markerPath)) return false;
 
+            // The marker has to have been produced by THIS run. It used to be enough that the file
+            // existed, so a weights file left behind by an earlier install (or by a run this app
+            // gave up on and never cleaned up) made the very first poll succeed: the wizard closed
+            // itself a second after opening and reported an install nobody had performed, recording
+            // whichever version happened to be selected rather than what is actually on disk.
+            if (!IsMarkerFromThisSession(session, markerPath)) return false;
+
             SaveDanielModManifest(session);
             // Seed the cache from whichever mode finishes first (see the cache's own comment above
             // IsModeBOutputCached) — only Mode B ever consumes it, but Mode A's output is just as
@@ -668,6 +679,27 @@ namespace OptiscalerClient.Services
             game.DlssNrOnAmdVersion = danielVersion;
             game.InstalledDlssNrOnAmdMode = isModeB ? "daniel-and-opti" : "daniel-only";
             return true;
+        }
+
+        /// <summary>True when the weights marker is new, or was rewritten, since the session's
+        /// baseline snapshot was taken — i.e. danielblnc's installer actually produced it during
+        /// this run rather than it being a leftover from a previous one.</summary>
+        private static bool IsMarkerFromThisSession(InstallSession session, string markerPath)
+        {
+            if (!session.BeforeSnapshot.TryGetValue(WeightsMarkerFileName, out var before))
+                return true; // wasn't there when we started — it is ours
+
+            try
+            {
+                var info = new FileInfo(markerPath);
+                return info.Length != before.Size || info.LastWriteTimeUtc != before.WriteUtc;
+            }
+            catch (Exception ex)
+            {
+                // Can't tell — treat it as stale rather than reporting a phantom success.
+                DebugWindow.Log($"[DlssNrOnAmd] Could not stat '{markerPath}': {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>Diffs the game folder against the session's baseline and saves an
@@ -906,7 +938,24 @@ namespace OptiscalerClient.Services
                             // Cyberpunk 2077's bin\x64 also has REDEngineErrorReporter.exe) — never
                             // guaranteed to appear, so this must not be its own strict stage between
                             // WaitFolder and the DLL-name prompt, just an optional detour handled here.
-                            if (pending.Contains("Which one is the game?", StringComparison.OrdinalIgnoreCase))
+                            // Only asked when the installer finds no AMD GPU. That happens on a
+                            // perfectly supported card whenever OptiScaler is already installed in
+                            // this folder with spoofing on: dlssnr_on_amd_setup.exe imports dxgi.dll
+                            // and runs from the game directory, so Windows resolves it to
+                            // OptiScaler's proxy instead of System32's, and the setup's DXGI adapter
+                            // enumeration returns the spoofed NVIDIA card. Unanswered, this stage
+                            // just timed out and killed the installer. Answering "y" is right: the
+                            // client has already checked the real GPU (see GpuSelectionHelper.IsRdna3OrRdna4) before
+                            // offering the mod at all.
+                            if (pending.Contains("Install anyway?", StringComparison.OrdinalIgnoreCase))
+                            {
+                                DebugWindow.Log("[SetupNr] Installer reported no AMD GPU (OptiScaler spoofing in this folder) — confirming install");
+                                await proc.StandardInput.WriteLineAsync("y");
+                                await proc.StandardInput.FlushAsync();
+                                buffer.Clear();
+                                stageDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+                            }
+                            else if (pending.Contains("Which one is the game?", StringComparison.OrdinalIgnoreCase))
                             {
                                 var choice = PickGameExecutableChoice(pending, expectedExeFileName);
                                 DebugWindow.Log($"[SetupNr] Multiple executables found, choosing: '{choice}'");
@@ -994,7 +1043,16 @@ namespace OptiscalerClient.Services
         {
             var storeKey = gameDir + "::dlssnr";
             var manifest = _backupStore.LoadManifest(storeKey);
-            if (manifest == null) return;
+            if (manifest == null)
+            {
+                // No manifest means an install that never completed its bookkeeping — which is
+                // exactly the case that leaves the game folder full of the mod's files with nothing
+                // tracking them. Still sweep what is unambiguously the mod's instead of returning
+                // and leaving the user to clean it by hand.
+                DebugWindow.Log($"[DlssNrOnAmd] No manifest for '{gameDir}' — sweeping runtime artifacts only.");
+                SweepRuntimeArtifacts(gameDir);
+                return;
+            }
 
             DebugWindow.Log($"[DlssNrOnAmd] Uninstalling from manifest: created=[{string.Join(", ", manifest.FilesCreated.Select(f => f.RelativePath))}], overwritten=[{string.Join(", ", manifest.FilesOverwritten.Select(f => f.RelativePath))}]");
 
@@ -1054,6 +1112,15 @@ namespace OptiscalerClient.Services
                 }
             }
             catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not sweep '{RuntimePassFileGlob}': {ex.Message}"); }
+            try
+            {
+                foreach (var dumpFile in Directory.GetFiles(gameDir, RuntimeDumpFileGlob))
+                {
+                    try { File.Delete(dumpFile); }
+                    catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not delete '{dumpFile}': {ex.Message}"); }
+                }
+            }
+            catch (Exception ex) { DebugWindow.Log($"[DlssNrOnAmd] Could not sweep '{RuntimeDumpFileGlob}': {ex.Message}"); }
         }
 
         // ── Quick Install / Bulk Install headless orchestration ─────────────────────────

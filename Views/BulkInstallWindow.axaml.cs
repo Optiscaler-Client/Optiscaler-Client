@@ -1210,9 +1210,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
                     try
                     {
-                        var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion;
-                        if (string.IsNullOrEmpty(xeFGUnlockVersion))
-                            throw new Exception("No XeFGUnlock release is available yet.");
+                        // Empty resolves to latest inside DownloadXeFGUnlockAsync.
+                        var xeFGUnlockVersion = _componentService.LatestXeFGUnlockVersion ?? "";
 
                         var xeFGUnlockProgress = new Progress<double>(p =>
                             Dispatcher.UIThread.Post(() => { if (progressBar != null) { progressBar.IsIndeterminate = false; progressBar.Value = p; } }));

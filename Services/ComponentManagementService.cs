@@ -475,6 +475,54 @@ namespace OptiscalerClient.Services
             }
         }
 
+        /// <summary>Merges a freshly fetched FSR 4 Swap listing (FP16 + FP8 combined) into the
+        /// persistent cache — add new, never remove old — and refreshes the in-memory version list.
+        /// Shared by CheckForUpdatesAsync's startup batch and ResolveLatestExtrasVersionAsync.</summary>
+        private void MergeExtrasReleases(System.Collections.Generic.List<ExtrasReleaseEntry> fetched)
+        {
+            if (fetched.Count == 0) return;
+
+            var existing = new System.Collections.Generic.HashSet<string>(
+                _extrasCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _extrasCache.Releases) e.IsLatest = false;
+            foreach (var entry in fetched)
+            {
+                if (!existing.Contains(entry.Version))
+                    _extrasCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _extrasCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                        // Was never refreshed here before — an entry cached with the wrong Variant
+                        // (e.g. from before the FP8 repo/forcedVariant split existed) stayed wrong
+                        // forever, permanently hiding it from the FP8 tab's filter no matter how
+                        // many times the app re-fetched a correct Variant for it.
+                        ex.Variant = entry.Variant;
+                    }
+                }
+            }
+            _extrasCache.LastUpdated = DateTime.Now;
+            SaveExtrasCache();
+            RebuildInMemoryExtrasCache();
+        }
+
+        /// <summary>Same on-demand "latest" resolution as ResolveLatestStreamlineVersionAsync.</summary>
+        public async Task<string?> ResolveLatestExtrasVersionAsync()
+        {
+            if (!string.IsNullOrEmpty(_cachedLatestExtrasVersion))
+                return _cachedLatestExtrasVersion;
+
+            MergeExtrasReleases((await FetchExtrasReleasesAsync()).Concat(await FetchExtrasFp8ReleasesAsync()).ToList());
+            if (!string.IsNullOrEmpty(_cachedLatestExtrasVersion))
+                return _cachedLatestExtrasVersion;
+
+            return GetDownloadedExtrasVersions().FirstOrDefault();
+        }
+
         private void RebuildInMemoryExtrasCache()
         {
             if (_extrasCache.Releases == null || _extrasCache.Releases.Count == 0)
@@ -787,118 +835,14 @@ namespace OptiscalerClient.Services
                             RebuildInMemoryCacheFromReleases();
                         }
 
-                        var newExtras = (await extrasTask).Concat(await extrasFp8Task).ToList();
-                        if (newExtras.Count > 0)
-                        {
-                            // Merge extras: add new, never remove old
-                            var existing = new System.Collections.Generic.HashSet<string>(
-                                _extrasCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
-                            // Reset IsLatest flags
-                            foreach (var e in _extrasCache.Releases) e.IsLatest = false;
-                            foreach (var entry in newExtras)
-                            {
-                                if (!existing.Contains(entry.Version))
-                                    _extrasCache.Releases.Add(entry);
-                                else
-                                {
-                                    var ex = _extrasCache.Releases.FirstOrDefault(
-                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
-                                    if (ex != null)
-                                    {
-                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
-                                        ex.IsLatest = entry.IsLatest;
-                                        // Was never refreshed here before — an entry cached with the
-                                        // wrong Variant (e.g. from before the FP8 repo/forcedVariant
-                                        // split existed) stayed wrong forever, permanently hiding it
-                                        // from the FP8 tab's filter no matter how many times the app
-                                        // re-fetched a correct Variant for it.
-                                        ex.Variant = entry.Variant;
-                                    }
-                                }
-                            }
-                            _extrasCache.LastUpdated = DateTime.Now;
-                            SaveExtrasCache();
-                            RebuildInMemoryExtrasCache();
-                        }
+                        MergeExtrasReleases((await extrasTask).Concat(await extrasFp8Task).ToList());
 
-                        var newFakenvapi = await fakeTask;
-                        if (newFakenvapi.Count > 0)
-                        {
-                            var existingFake = new System.Collections.Generic.HashSet<string>(
-                                _fakenvapiCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
-                            foreach (var e in _fakenvapiCache.Releases) e.IsLatest = false;
-                            foreach (var entry in newFakenvapi)
-                            {
-                                if (!existingFake.Contains(entry.Version))
-                                    _fakenvapiCache.Releases.Add(entry);
-                                else
-                                {
-                                    var ex = _fakenvapiCache.Releases.FirstOrDefault(
-                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
-                                    if (ex != null)
-                                    {
-                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
-                                        ex.IsLatest = entry.IsLatest;
-                                    }
-                                }
-                            }
-                            _fakenvapiCache.LastUpdated = DateTime.Now;
-                            SaveFakenvapiCache();
-                            RebuildInMemoryFakenvapiCache();
-                        }
+                        MergeFakenvapiReleases(await fakeTask);
                         _cachedFakenvapiVersion = _cachedLatestFakenvapiVersion ?? _cachedFakenvapiVersion;
 
-                        var newOptiPatcher = await optiPatcherTask;
-                        if (newOptiPatcher.Count > 0)
-                        {
-                            var existingOp = new System.Collections.Generic.HashSet<string>(
-                                _optiPatcherCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
-                            foreach (var e in _optiPatcherCache.Releases) e.IsLatest = false;
-                            foreach (var entry in newOptiPatcher)
-                            {
-                                if (!existingOp.Contains(entry.Version))
-                                    _optiPatcherCache.Releases.Add(entry);
-                                else
-                                {
-                                    var ex = _optiPatcherCache.Releases.FirstOrDefault(
-                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
-                                    if (ex != null)
-                                    {
-                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
-                                        ex.IsLatest = entry.IsLatest;
-                                    }
-                                }
-                            }
-                            _optiPatcherCache.LastUpdated = DateTime.Now;
-                            SaveOptiPatcherCache();
-                            RebuildInMemoryOptiPatcherCache();
-                        }
+                        MergeOptiPatcherReleases(await optiPatcherTask);
 
-                        var newXeFGUnlock = await xeFGUnlockTask;
-                        if (newXeFGUnlock.Count > 0)
-                        {
-                            var existingXeFG = new System.Collections.Generic.HashSet<string>(
-                                _xeFGUnlockCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
-                            foreach (var e in _xeFGUnlockCache.Releases) e.IsLatest = false;
-                            foreach (var entry in newXeFGUnlock)
-                            {
-                                if (!existingXeFG.Contains(entry.Version))
-                                    _xeFGUnlockCache.Releases.Add(entry);
-                                else
-                                {
-                                    var ex = _xeFGUnlockCache.Releases.FirstOrDefault(
-                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
-                                    if (ex != null)
-                                    {
-                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
-                                        ex.IsLatest = entry.IsLatest;
-                                    }
-                                }
-                            }
-                            _xeFGUnlockCache.LastUpdated = DateTime.Now;
-                            SaveXeFGUnlockCache();
-                            RebuildInMemoryXeFGUnlockCache();
-                        }
+                        MergeXeFGUnlockReleases(await xeFGUnlockTask);
 
                         var newDlssEnablerMirror = await dlssEnablerMirrorTask;
                         if (newDlssEnablerMirror.Count > 0)
@@ -926,31 +870,7 @@ namespace OptiscalerClient.Services
                             RebuildInMemoryDlssEnablerMirrorCache();
                         }
 
-                        var newStreamline = await streamlineTask;
-                        if (newStreamline.Count > 0)
-                        {
-                            var existingStreamline = new System.Collections.Generic.HashSet<string>(
-                                _streamlineReleasesCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
-                            foreach (var e in _streamlineReleasesCache.Releases) e.IsLatest = false;
-                            foreach (var entry in newStreamline)
-                            {
-                                if (!existingStreamline.Contains(entry.Version))
-                                    _streamlineReleasesCache.Releases.Add(entry);
-                                else
-                                {
-                                    var ex = _streamlineReleasesCache.Releases.FirstOrDefault(
-                                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
-                                    if (ex != null)
-                                    {
-                                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
-                                        ex.IsLatest = entry.IsLatest;
-                                    }
-                                }
-                            }
-                            _streamlineReleasesCache.LastUpdated = DateTime.Now;
-                            SaveStreamlineReleasesCache();
-                            RebuildInMemoryStreamlineCache();
-                        }
+                        MergeStreamlineReleases(await streamlineTask);
 
                         // DlssNrOnAmdRelease has no IsLatest flag (GitHub already returns newest-first,
                         // and this list is small enough to just replace wholesale each check — same
@@ -1599,6 +1519,48 @@ namespace OptiscalerClient.Services
             }
         }
 
+        /// <summary>Merges a freshly fetched OptiPatcher listing into the persistent cache — add new,
+        /// never remove old. Shared by CheckForUpdatesAsync and ResolveLatestOptiPatcherVersionAsync.</summary>
+        private void MergeOptiPatcherReleases(System.Collections.Generic.List<OptiPatcherReleaseEntry> fetched)
+        {
+            if (fetched.Count == 0) return;
+
+            var existing = new System.Collections.Generic.HashSet<string>(
+                _optiPatcherCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _optiPatcherCache.Releases) e.IsLatest = false;
+            foreach (var entry in fetched)
+            {
+                if (!existing.Contains(entry.Version))
+                    _optiPatcherCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _optiPatcherCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                    }
+                }
+            }
+            _optiPatcherCache.LastUpdated = DateTime.Now;
+            SaveOptiPatcherCache();
+            RebuildInMemoryOptiPatcherCache();
+        }
+
+        /// <summary>Same on-demand "latest" resolution as ResolveLatestStreamlineVersionAsync.</summary>
+        public async Task<string?> ResolveLatestOptiPatcherVersionAsync()
+        {
+            if (!string.IsNullOrEmpty(_cachedLatestOptiPatcherVersion))
+                return _cachedLatestOptiPatcherVersion;
+
+            MergeOptiPatcherReleases(await FetchOptiPatcherReleasesAsync());
+            if (!string.IsNullOrEmpty(_cachedLatestOptiPatcherVersion))
+                return _cachedLatestOptiPatcherVersion;
+
+            return GetDownloadedOptiPatcherVersions().FirstOrDefault();
+        }
+
         private void RebuildInMemoryOptiPatcherCache()
         {
             if (_optiPatcherCache.Releases == null || _optiPatcherCache.Releases.Count == 0)
@@ -1661,6 +1623,48 @@ namespace OptiscalerClient.Services
             }
         }
 
+        /// <summary>Merges a freshly fetched XeFGUnlock listing into the persistent cache (add new,
+        /// never remove old) and refreshes the in-memory latest tag. Shared by CheckForUpdatesAsync's
+        /// startup batch and ResolveLatestXeFGUnlockVersionAsync's on-demand fetch.</summary>
+        private void MergeXeFGUnlockReleases(System.Collections.Generic.List<XeFGUnlockReleaseEntry> fetched)
+        {
+            if (fetched.Count == 0) return;
+
+            var existing = new System.Collections.Generic.HashSet<string>(
+                _xeFGUnlockCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _xeFGUnlockCache.Releases) e.IsLatest = false;
+            foreach (var entry in fetched)
+            {
+                if (!existing.Contains(entry.Version))
+                    _xeFGUnlockCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _xeFGUnlockCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                    }
+                }
+            }
+            _xeFGUnlockCache.LastUpdated = DateTime.Now;
+            SaveXeFGUnlockCache();
+            RebuildInMemoryXeFGUnlockCache();
+        }
+
+        /// <summary>Same on-demand "latest" resolution as ResolveLatestStreamlineVersionAsync: the
+        /// startup fetch can be skipped by the cooldown or lost to GitHub's rate limit, and there is
+        /// no picker for this component, so LatestXeFGUnlockVersion alone left the install dead.</summary>
+        private async Task<string?> ResolveLatestXeFGUnlockVersionAsync()
+        {
+            if (!string.IsNullOrEmpty(_cachedLatestXeFGUnlockVersion))
+                return _cachedLatestXeFGUnlockVersion;
+
+            MergeXeFGUnlockReleases(await FetchXeFGUnlockReleasesAsync());
+            return _cachedLatestXeFGUnlockVersion;
+        }
+
         private void RebuildInMemoryXeFGUnlockCache()
         {
             _cachedLatestXeFGUnlockVersion = _xeFGUnlockCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
@@ -1705,6 +1709,48 @@ namespace OptiscalerClient.Services
             {
                 DebugWindow.Log($"[FakenvapiCache] Failed to save: {ex.Message}");
             }
+        }
+
+        /// <summary>Merges a freshly fetched Fakenvapi listing into the persistent cache — add new,
+        /// never remove old. Shared by CheckForUpdatesAsync and ResolveLatestFakenvapiVersionAsync.</summary>
+        private void MergeFakenvapiReleases(System.Collections.Generic.List<FakenvapiReleaseEntry> fetched)
+        {
+            if (fetched.Count == 0) return;
+
+            var existing = new System.Collections.Generic.HashSet<string>(
+                _fakenvapiCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _fakenvapiCache.Releases) e.IsLatest = false;
+            foreach (var entry in fetched)
+            {
+                if (!existing.Contains(entry.Version))
+                    _fakenvapiCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _fakenvapiCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                    }
+                }
+            }
+            _fakenvapiCache.LastUpdated = DateTime.Now;
+            SaveFakenvapiCache();
+            RebuildInMemoryFakenvapiCache();
+        }
+
+        /// <summary>Same on-demand "latest" resolution as ResolveLatestStreamlineVersionAsync.</summary>
+        public async Task<string?> ResolveLatestFakenvapiVersionAsync()
+        {
+            if (!string.IsNullOrEmpty(_cachedLatestFakenvapiVersion))
+                return _cachedLatestFakenvapiVersion;
+
+            MergeFakenvapiReleases(await FetchFakenvapiReleasesAsync());
+            if (!string.IsNullOrEmpty(_cachedLatestFakenvapiVersion))
+                return _cachedLatestFakenvapiVersion;
+
+            return GetDownloadedFakenvapiVersions().FirstOrDefault();
         }
 
         private void RebuildInMemoryFakenvapiCache()
@@ -1834,6 +1880,57 @@ namespace OptiscalerClient.Services
             {
                 DebugWindow.Log($"[StreamlineCache] Failed to save: {ex.Message}");
             }
+        }
+
+        /// <summary>Merges a freshly fetched release listing into the persistent Streamline cache
+        /// (add new, never remove old) and refreshes the in-memory version list. Called from the
+        /// startup batch in CheckForUpdatesAsync and from ResolveLatestStreamlineVersionAsync's
+        /// on-demand fetch, so both paths leave the picker and the cache in the same state.</summary>
+        private void MergeStreamlineReleases(System.Collections.Generic.List<StreamlineReleaseEntry> fetched)
+        {
+            if (fetched.Count == 0) return;
+
+            var existing = new System.Collections.Generic.HashSet<string>(
+                _streamlineReleasesCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _streamlineReleasesCache.Releases) e.IsLatest = false;
+            foreach (var entry in fetched)
+            {
+                if (!existing.Contains(entry.Version))
+                    _streamlineReleasesCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _streamlineReleasesCache.Releases.FirstOrDefault(
+                        r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                    }
+                }
+            }
+            _streamlineReleasesCache.LastUpdated = DateTime.Now;
+            SaveStreamlineReleasesCache();
+            RebuildInMemoryStreamlineCache();
+        }
+
+        /// <summary>
+        /// Resolves "latest Streamline SDK" at download time: the list fetched at startup, else one
+        /// live fetch right now (the startup batch is skipped entirely by the 15-minute cooldown, and
+        /// its Streamline request is the 9th of eleven, so it is the first to lose to GitHub's
+        /// unauthenticated rate limit — leaving LatestStreamlineVersion null for the whole session),
+        /// else the newest version already in the local cache so an offline install still works.
+        /// Returns null only when there is genuinely nothing to install.
+        /// </summary>
+        private async Task<string?> ResolveLatestStreamlineVersionAsync()
+        {
+            if (!string.IsNullOrEmpty(_cachedLatestStreamlineVersion))
+                return _cachedLatestStreamlineVersion;
+
+            MergeStreamlineReleases(await FetchStreamlineReleasesAsync());
+            if (!string.IsNullOrEmpty(_cachedLatestStreamlineVersion))
+                return _cachedLatestStreamlineVersion;
+
+            return GetDownloadedStreamlineVersions().FirstOrDefault();
         }
 
         private void RebuildInMemoryStreamlineCache()
@@ -2575,6 +2672,16 @@ namespace OptiscalerClient.Services
         /// </summary>
         public async Task<string> DownloadXeFGUnlockAsync(string version, IProgress<double>? progress = null)
         {
+            // Empty means "latest" — see DownloadStreamlineAsync for why callers can reach this
+            // with nothing resolved.
+            if (string.IsNullOrWhiteSpace(version) || version == LatestAvailableTag)
+            {
+                version = await ResolveLatestXeFGUnlockVersionAsync()
+                    ?? throw new VersionUnavailableException("latest",
+                        "Could not resolve the latest XeSS MFG unlock plugin release. Check your internet " +
+                        "connection and try again — GitHub also rate-limits anonymous requests for about an hour.");
+            }
+
             var cacheDir = GetXeFGUnlockCachePath(version);
             var asiPath  = Path.Combine(cacheDir, "XeFGUnlock.asi");
 
@@ -2944,6 +3051,20 @@ namespace OptiscalerClient.Services
         /// </summary>
         public async Task<string> DownloadStreamlineAsync(string version, IProgress<double>? progress = null)
         {
+            // "Latest" arrives here as an empty string: every caller resolves LatestStreamlineVersion
+            // first, and that is null until a startup release fetch has succeeded. Falling through to
+            // the GitHub lookup below with an empty tag always fails and surfaced a misleading
+            // "No streamline-sdk ZIP asset found for this version", which reads as "supply the ZIP
+            // yourself". Resolve it here instead — same shape as the custom-OptiScaler guard in
+            // DownloadOptiScalerAsync.
+            if (string.IsNullOrWhiteSpace(version) || version == LatestAvailableTag)
+            {
+                version = await ResolveLatestStreamlineVersionAsync()
+                    ?? throw new VersionUnavailableException("latest",
+                        "Could not resolve the latest Streamline SDK release. Check your internet connection " +
+                        "and try again — GitHub also rate-limits anonymous requests for about an hour.");
+            }
+
             var cacheDir = GetStreamlineCachePath(version);
             if (IsStreamlineCached(version))
             {

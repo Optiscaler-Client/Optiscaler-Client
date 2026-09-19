@@ -161,7 +161,20 @@ public class GameAnalyzerService
                     if (!string.IsNullOrEmpty(game.ExecutablePath))
                         candidateDirs.Add(Path.GetDirectoryName(game.ExecutablePath));
 
-                    foreach (var candidate in candidateDirs.Where(d => !string.IsNullOrEmpty(d) && Directory.Exists(d)))
+                    // Lazily appended so the store scan only runs when the guesses above miss: the
+                    // store is keyed by the directory OptiScaler was installed into, which for
+                    // non-UE layouts (Cyberpunk 2077's bind) is neither of them — and with no
+                    // ExecutablePath recorded, nothing here could reach it. Detection then fell
+                    // through to the heuristic scan, which finds the files but reports the version
+                    // read off disk instead of the manifest's, and disagreed with what uninstall
+                    // could resolve. Same reverse lookup UninstallOptiScaler uses.
+                    IEnumerable<string?> ResolveCandidates()
+                    {
+                        foreach (var c in candidateDirs) yield return c;
+                        yield return backupStore.FindBackupDirUnder(game.InstallPath);
+                    }
+
+                    foreach (var candidate in ResolveCandidates().Where(d => !string.IsNullOrEmpty(d) && Directory.Exists(d)))
                     {
                         if (backupStore.HasValidBackup(candidate!))
                         {
