@@ -91,6 +91,10 @@ namespace OptiscalerClient.Views
         private readonly string? _originalCoverPath;
         private const string NewProfileTag = "__NEW_PROFILE__";
         private bool _isUpdatingProfiles;
+        // CmbSetupNr_SelectionChanged deliberately runs for programmatic selections too (its
+        // "none" case relies on that). Only the daniel-only warning must not: during initial
+        // population the window isn't shown yet, and ShowDialog over a non-visible owner throws.
+        private bool _isPopulatingSetupNr;
         private string? _lastSelectedProfileName;
         private string? _defaultProfileName;
         private IGamepadDetectionService? _gamepadService;
@@ -1466,7 +1470,9 @@ namespace OptiscalerClient.Views
                 : ((showExperimental ? _game.PendingDlssNrOnAmdMode : null)
                     ?? (setupNrGpuOk && showExperimental ? componentService.Config.DefaultDlssNrOnAmdMode : null)
                     ?? "none");
-            SelectCmbSetupNrTag(targetSetupNrTag);
+            _isPopulatingSetupNr = true;
+            try { SelectCmbSetupNrTag(targetSetupNrTag); }
+            finally { _isPopulatingSetupNr = false; }
 
             // This is the point where all five "hard" combos (OptiVersion/Extras/OptiPatcher/
             // NukemFG/Fakenvapi) have real selections for the first time — LoadVersionsAsync runs
@@ -5476,9 +5482,9 @@ namespace OptiscalerClient.Views
 
                     try
                     {
-                        var xeFGUnlockVersion = componentService.LatestXeFGUnlockVersion;
-                        if (string.IsNullOrEmpty(xeFGUnlockVersion))
-                            throw new Exception("No XeFGUnlock release is available yet.");
+                        // Empty resolves to latest inside DownloadXeFGUnlockAsync, which fetches
+                        // the release list on demand when the startup one never landed.
+                        var xeFGUnlockVersion = componentService.LatestXeFGUnlockVersion ?? "";
 
                         var xeFGUnlockProgress = new Progress<double>(p =>
                             Dispatcher.UIThread.Post(() => { if (prgDownload != null) prgDownload.Value = p; }));
@@ -5580,6 +5586,28 @@ namespace OptiscalerClient.Views
         /// PopulateVersionSelectors restoring state on window reopen), which is deliberate — it means
         /// reopening the window re-derives locking/tabs/version lists from Game state for free instead
         /// of needing separate restore logic.</summary>
+        /// <summary>Warns before installing danielblnc's mod on a game that already has a regular
+        /// OptiScaler install. Returns true to go ahead, false to fall back to "none".</summary>
+        private async Task<bool> ConfirmDanielOnlyOverOptiScalerAsync()
+        {
+            // Belt and braces: ShowDialog throws "Cannot show window with non-visible owner" if this
+            // window hasn't been shown yet. Callers must not reach here during construction, but
+            // a silent "go ahead" beats crashing the app if one ever does.
+            if (!IsVisible) return true;
+
+            var dialog = new ConfirmDialog(this,
+                GetResourceString("TxtSetupNrOverOptiTitle", "OptiScaler is already installed"),
+                GetResourceString("TxtSetupNrOverOptiMsg",
+                    "This game already has OptiScaler installed. Adding the standalone mod on top of it " +
+                    "is a known-bad combination: both hook Direct3D 12 independently and the game " +
+                    "usually crashes before it opens.\n\nTo use both, pick \"Mod + OptiScaler\" instead " +
+                    "— it installs a build that integrates neural rendering, which is the supported " +
+                    "way.\n\nInstall the standalone mod anyway?"),
+                confirmText: GetResourceString("TxtSetupNrOverOptiConfirmBtn", "Install anyway"));
+
+            return await dialog.ShowDialog<bool>(this);
+        }
+
         private async void CmbSetupNr_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             var cmb = this.FindControl<ComboBox>("CmbSetupNr");
@@ -5628,6 +5656,24 @@ namespace OptiscalerClient.Views
                     break;
 
                 case "daniel-only":
+                    // Stacking the standalone mod on top of a regular OptiScaler install is a real
+                    // runtime conflict, not just an unsupported layout: the mod creates its own
+                    // throwaway D3D12 device for probing, OptiScaler's D3D12CreateDevice hook adopts
+                    // it as the game's, and when the mod releases it OptiScaler is left tracking a
+                    // dead device — the game then faults inside D3D12Core.dll while creating its
+                    // swapchain. "Mod + OptiScaler" avoids this by installing the wrapper fork, which
+                    // integrates neural rendering instead of running a second device alongside it.
+                    // Warn rather than block: the user may be deliberately testing the combination.
+                    // Skipped while populating (see _isPopulatingSetupNr) and when the mod is
+                    // already installed — then the combo is just reflecting existing state, not a
+                    // new install to warn about.
+                    if (!_isPopulatingSetupNr && _game.IsOptiscalerInstalled &&
+                        !_game.IsDlssNrOnAmdInstalled &&
+                        !await ConfirmDanielOnlyOverOptiScalerAsync())
+                    {
+                        SelectCmbSetupNrTag("none");
+                        return;
+                    }
                     _game.PendingDlssNrOnAmdMode = "daniel-only";
                     SetOptiScalerControlsLocked(true);
                     SetOptiTabsForModdedMode(false);

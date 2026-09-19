@@ -888,6 +888,9 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrInstallingWrapper">OptiScaler (resmi olmayan wrapper) kuruluyor...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">Mod + OptiScaler (wrapper) başarıyla kuruldu.</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">OptiScaler wrapper'ı kurulurken hata oluştu: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler zaten kurulu</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">Bu oyunda OptiScaler zaten kurulu. Bağımsız modu bunun üzerine eklemek bilinen sorunlu bir birleşimdir: ikisi de Direct3D 12'ye bağımsız olarak bağlanır ve oyun genellikle açılmadan çöker.&#10;&#10;İkisini birlikte kullanmak için bunun yerine "Mod + OptiScaler" seçin — sinirsel görüntülemeyi tümleşik sunan bir sürüm kurar, desteklenen yol budur.&#10;&#10;Bağımsız mod yine de kurulsun mu?</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">Yine de kur</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">Önbelleğe alınmış bir danielblnc sürümü yok — dlssnr_on_amd_setup.exe'yi oyun klasöründe manuel olarak çalıştırın ve kaldırmayı seçin.</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, deneysel)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">"Setup NR" aracılığıyla danielblnc/DLSS-NR-on-AMD — resmi değil, deneysel, kendi sorumluluğunuzdadır</x:String>

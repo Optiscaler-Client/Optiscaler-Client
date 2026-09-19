@@ -909,6 +909,9 @@ Esta versão não está disponível para download. Verifique sua conexão com a 
     <x:String x:Key="TxtSetupNrInstallingWrapper">Instalando OptiScaler (wrapper não oficial)...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">Mod + OptiScaler (wrapper) instalados com sucesso.</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">Erro ao instalar o wrapper do OptiScaler: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">O OptiScaler já está instalado</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">Este jogo já tem o OptiScaler instalado. Adicionar o mod independente por cima é uma combinação reconhecidamente problemática: os dois fazem hook no Direct3D 12 de forma independente e o jogo costuma travar antes de abrir.&#10;&#10;Para usar os dois, escolha "Mod + OptiScaler" — ele instala uma versão que integra o neural rendering, que é a forma suportada.&#10;&#10;Instalar o mod independente mesmo assim?</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">Instalar mesmo assim</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">Não há nenhuma versão do danielblnc em cache — execute dlssnr_on_amd_setup.exe manualmente na pasta do jogo e escolha remover.</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, experimental)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD via "Setup NR" — não oficial, experimental, por sua conta e risco</x:String>

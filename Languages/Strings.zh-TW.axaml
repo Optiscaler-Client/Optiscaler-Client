@@ -903,6 +903,9 @@
     <x:String x:Key="TxtSetupNrInstallingWrapper">正在安裝 OptiScaler（非官方 wrapper）...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">模組 + OptiScaler（wrapper）已成功安裝。</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">安裝 OptiScaler wrapper 時發生錯誤：{0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler 已安裝</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">此遊戲已安裝 OptiScaler。在其之上再加入獨立模組是已知有問題的組合：兩者都會各自掛鉤 Direct3D 12，遊戲通常在開啟前就會當機。&#10;&#10;若要同時使用兩者，請改選「Mod + OptiScaler」——它會安裝整合神經算圖的版本，這是受支援的方式。&#10;&#10;仍要安裝獨立模組嗎？</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">仍要安裝</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">沒有已快取的 danielblnc 版本 — 請在遊戲資料夾中手動執行 dlssnr_on_amd_setup.exe 並選擇移除。</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering（AMD，實驗性）</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD，透過「Setup NR」安裝 — 非官方、實驗性，風險請自行承擔</x:String>

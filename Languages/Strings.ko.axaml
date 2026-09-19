@@ -890,6 +890,9 @@
     <x:String x:Key="TxtSetupNrInstallingWrapper">OptiScaler(비공식 래퍼) 설치 중...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">모드 + OptiScaler(래퍼)가 성공적으로 설치되었습니다.</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">OptiScaler 래퍼 설치 오류: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler가 이미 설치되어 있습니다</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">이 게임에는 이미 OptiScaler가 설치되어 있습니다. 그 위에 단독 모드를 추가하는 것은 알려진 문제 조합입니다. 둘 다 Direct3D 12를 독립적으로 후킹하므로 보통 게임이 실행되기 전에 충돌합니다.&#10;&#10;둘 다 사용하려면 대신 "Mod + OptiScaler"를 선택하세요. 뉴럴 렌더링이 통합된 빌드를 설치하며, 이것이 지원되는 방식입니다.&#10;&#10;그래도 단독 모드를 설치할까요?</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">그래도 설치</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">캐시된 danielblnc 버전이 없습니다 — 게임 폴더에서 dlssnr_on_amd_setup.exe를 수동으로 실행하고 제거를 선택하세요.</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, 실험적)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD ("Setup NR" 경유) — 비공식, 실험적, 본인 책임하에 사용</x:String>

@@ -903,6 +903,9 @@
     <x:String x:Key="TxtSetupNrInstallingWrapper">OptiScaler（非公式ラッパー）をインストール中...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">モッド + OptiScaler（ラッパー）が正常にインストールされました。</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">OptiScalerラッパーのインストールエラー: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler は既にインストールされています</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">このゲームには既に OptiScaler がインストールされています。その上に単体モッドを追加するのは既知の不具合のある組み合わせです。両方が個別に Direct3D 12 をフックするため、通常はゲームが起動する前にクラッシュします。&#10;&#10;両方を使うには、代わりに「Mod + OptiScaler」を選んでください。ニューラルレンダリングを統合したビルドがインストールされ、これがサポートされた方法です。&#10;&#10;それでも単体モッドをインストールしますか？</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">それでもインストール</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">danielblncのキャッシュ済みバージョンがありません — ゲームフォルダでdlssnr_on_amd_setup.exeを手動で実行し、削除を選んでください。</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering（AMD、実験的）</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD（「Setup NR」経由） — 非公式・実験的、自己責任で使用してください</x:String>

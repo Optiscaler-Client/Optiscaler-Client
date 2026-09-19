@@ -889,6 +889,9 @@
     <x:String x:Key="TxtSetupNrInstallingWrapper">Установка OptiScaler (неофициальная обёртка)...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">Мод + OptiScaler (обёртка) успешно установлены.</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">Ошибка при установке обёртки OptiScaler: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler уже установлен</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">В этой игре уже установлен OptiScaler. Добавлять отдельный мод поверх него — заведомо неудачное сочетание: оба независимо перехватывают Direct3D 12, и игра обычно падает ещё до запуска.&#10;&#10;Чтобы использовать оба, выберите "Mod + OptiScaler" — он устанавливает сборку со встроенным нейронным рендерингом, это поддерживаемый способ.&#10;&#10;Всё равно установить отдельный мод?</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">Всё равно установить</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">Нет закэшированной версии danielblnc — запустите dlssnr_on_amd_setup.exe вручную в папке игры и выберите удаление.</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, экспериментально)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD через «Setup NR» — неофициально, экспериментально, на свой страх и риск</x:String>
