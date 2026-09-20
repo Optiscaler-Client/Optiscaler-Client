@@ -75,28 +75,128 @@ namespace OptiscalerClient.Services
             "OptiScaler",
         };
 
-        /// <summary>Resolves one of <see cref="KnownOptiscalerDirectories"/> inside
-        /// <paramref name="parentDir"/> whatever its casing, or null if it is not there.
+        /// <summary>Exact spelling of the DirectX 12 Agility SDK folder that OptiScaler's own binary
+        /// looks up at runtime (verified against the wide string "\D3D12_OptiScaler\" inside
+        /// OptiScaler.dll) — capital S. See <see cref="EnsureAgilitySdkCasingAlias"/>.</summary>
+        private const string AgilitySdkDirectoryName = "D3D12_OptiScaler";
+
+        /// <summary>Resolves every directory inside <paramref name="parentDir"/> whose name matches
+        /// <paramref name="name"/> case-insensitively (usually zero or one; two when a case-variant
+        /// alias exists, see <see cref="EnsureAgilitySdkCasingAlias"/>), deepest-safe order not
+        /// required since they are siblings.
         ///
         /// OptiScaler's own packages are not consistent: stable 0.9.x ships "D3D12_Optiscaler"
         /// while nightly ships "OptiScaler\D3D12_OptiScaler" (capital S). Windows does not care,
         /// but Directory.Exists is case-sensitive on Linux, so the hardcoded spelling matched only
-        /// one of the two and uninstall silently left the other behind.</summary>
-        private static string? ResolveKnownDirectoryIgnoreCase(string parentDir, string name)
+        /// one of the two and uninstall silently left the other behind.
+        ///
+        /// Enumerates file system ENTRIES, not directories, on purpose: once uninstall removes the
+        /// real folder, the alias EnsureAgilitySdkCasingAlias created becomes a dangling symlink,
+        /// and .NET then reports it as neither a directory nor existing (Directory.Exists = false,
+        /// EnumerateDirectories skips it, File.Exists = true). Enumerating entries and keeping
+        /// anything that is a directory OR a link is what still sees it — otherwise the alias is
+        /// invisible to the very sweep meant to remove it and survives the uninstall.</summary>
+        private static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
         {
-            var direct = Path.Combine(parentDir, name);
-            if (Directory.Exists(direct)) return direct;
-            if (!Directory.Exists(parentDir)) return null;
+            if (!Directory.Exists(parentDir)) yield break;
 
+            string[] matches;
             try
             {
-                return Directory.EnumerateDirectories(parentDir).FirstOrDefault(d =>
-                    string.Equals(Path.GetFileName(d), name, StringComparison.OrdinalIgnoreCase));
+                matches = Directory.EnumerateFileSystemEntries(parentDir)
+                    .Where(d => string.Equals(Path.GetFileName(d), name, StringComparison.OrdinalIgnoreCase))
+                    .Where(d => Directory.Exists(d) || IsLink(d))
+                    .ToArray();
             }
             catch (Exception ex)
             {
                 DebugWindow.Log($"[Install] Could not scan '{parentDir}' for '{name}': {ex.Message}");
-                return null;
+                yield break;
+            }
+
+            foreach (var match in matches) yield return match;
+        }
+
+        /// <summary>True when <paramref name="path"/> is a symlink — including a dangling one, which
+        /// only <see cref="FileInfo.LinkTarget"/> still reports (see ResolveKnownDirectoriesIgnoreCase).</summary>
+        private static bool IsLink(string path)
+        {
+            try { return new FileInfo(path).LinkTarget != null; }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install] Could not probe '{path}' for a link target: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>Linux-only: guarantees a "D3D12_OptiScaler" directory (capital S) exists next to
+        /// whichever OptiScaler layout was just installed, aliasing the one the package actually
+        /// shipped when its casing differs.
+        ///
+        /// OptiScaler hardcodes "\D3D12_OptiScaler\" as the Agility SDK search path it hands to
+        /// D3D12's SDKConfiguration, but the stable 0.9.x archive ships the folder as
+        /// "D3D12_Optiscaler" (lowercase s); only nightly matches its own lookup. On NTFS that
+        /// mismatch is invisible, but under Proton on a case-sensitive filesystem the load fails and
+        /// OptiScaler logs "CheckForGPU RDNA4 GPU is detected but Agility SDK is not detected!",
+        /// then drops to the FSR 3.1 pipeline — the user still picks FSR 4 in the overlay and still
+        /// gets an FSR3 watermark. Since this client is what lays the folder down, the alias belongs
+        /// here rather than in a manual symlink the user has to know about.
+        ///
+        /// A symlink is preferred (no duplicated D3D12Core.dll); a real copy is the fallback for
+        /// filesystems or permissions that reject it. The result is tracked in the manifest so
+        /// uninstall removes it, and ResolveKnownDirectoriesIgnoreCase sweeps both spellings.</summary>
+        private void EnsureAgilitySdkCasingAlias(string gameDir, InstallationManifest manifest, InstallationRollbackJournal rollbackJournal)
+        {
+            if (!OperatingSystem.IsLinux()) return;
+
+            var parents = new HashSet<string>(StringComparer.Ordinal) { gameDir, ResolveExtrasRoot(gameDir) };
+
+            foreach (var parentDir in parents)
+            {
+                var existing = ResolveKnownDirectoriesIgnoreCase(parentDir, AgilitySdkDirectoryName).ToList();
+                if (existing.Count == 0) continue;
+                if (existing.Any(d => string.Equals(Path.GetFileName(d), AgilitySdkDirectoryName, StringComparison.Ordinal)))
+                    continue;
+
+                // Alias the real folder, never another link — the resolver also reports links so
+                // that uninstall can see dangling ones.
+                var source = existing.FirstOrDefault(d => !IsLink(d));
+                if (source == null) continue;
+
+                var aliasPath = Path.Combine(parentDir, AgilitySdkDirectoryName);
+                var relativeAlias = Path.GetRelativePath(gameDir, aliasPath);
+
+                try
+                {
+                    rollbackJournal.CaptureDirectoryChain(aliasPath);
+                    Directory.CreateSymbolicLink(aliasPath, Path.GetFileName(source));
+                    DebugWindow.Log($"[Install][Linux] Linked Agility SDK '{relativeAlias}' -> '{Path.GetFileName(source)}'");
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[Install][Linux] Could not symlink Agility SDK folder ({ex.Message}), copying instead");
+                    try
+                    {
+                        Directory.CreateDirectory(aliasPath);
+                        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+                        {
+                            var destFile = Path.Combine(aliasPath, Path.GetRelativePath(source, file));
+                            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+                            rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, destFile));
+                            File.Copy(file, destFile, overwrite: true);
+                            manifest.InstalledFiles.Add(Path.GetRelativePath(gameDir, destFile));
+                        }
+                        DebugWindow.Log($"[Install][Linux] Copied Agility SDK folder to '{relativeAlias}'");
+                    }
+                    catch (Exception copyEx)
+                    {
+                        DebugWindow.Log($"[Install][Linux] Failed to provide '{relativeAlias}': {copyEx.Message} — FSR 4 may fall back to FSR 3");
+                        continue;
+                    }
+                }
+
+                if (!manifest.InstalledDirectories.Contains(relativeAlias, StringComparer.OrdinalIgnoreCase))
+                    manifest.InstalledDirectories.Add(relativeAlias);
             }
         }
 
@@ -517,6 +617,11 @@ namespace OptiscalerClient.Services
             }
 
             DebugWindow.Log($"[Install] Copied {additionalFileCount} additional files");
+
+            // Step 2.1 (Linux only): make the Agility SDK folder reachable under the exact name
+            // OptiScaler looks up. See EnsureAgilitySdkCasingAlias — without this, RDNA3/RDNA4 users
+            // on Proton silently lose FSR 4 and fall back to FSR 3.
+            EnsureAgilitySdkCasingAlias(gameDir, manifest, rollbackJournal);
 
             // Step 2.25: Nightly builds require NVIDIA Streamline runtime DLLs. The cache contains
             // only the bin/x64 runtime subset, preserving its nvngx subdirectory beneath the
@@ -1438,6 +1543,17 @@ namespace OptiscalerClient.Services
         /// folder holding dlss-enabler-headless.dll/Streamline DLLs while the game is still tearing down).</summary>
         private static void DeleteDirectoryWithRetry(string path, bool recursive, int maxAttempts = 6, int delayMs = 150)
         {
+            // A symlinked alias (see EnsureAgilitySdkCasingAlias) is unlinked with File.Delete, never
+            // deleted as a directory: recursing would destroy the real folder's contents through the
+            // link, and Directory.Delete throws DirectoryNotFoundException once the link is dangling.
+            // File.Delete unlinks correctly in both states and never follows the link.
+            if (IsLink(path))
+            {
+                try { File.Delete(path); }
+                catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not unlink '{path}': {ex.Message}"); }
+                return;
+            }
+
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try { Directory.Delete(path, recursive); return; }
@@ -1692,8 +1808,7 @@ namespace OptiscalerClient.Services
                 {
                     try
                     {
-                        var dirPath = ResolveKnownDirectoryIgnoreCase(gameDir, knownDir);
-                        if (dirPath != null)
+                        foreach (var dirPath in ResolveKnownDirectoriesIgnoreCase(gameDir, knownDir).ToList())
                         {
                             DeleteDirectoryWithRetry(dirPath, true);
                             DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {Path.GetFileName(dirPath)}");
@@ -1973,16 +2088,20 @@ namespace OptiscalerClient.Services
             // here would be unrecoverable if a later step in this same install fails and rolls back.
             foreach (var knownDir in KnownOptiscalerDirectories)
             {
-                var dirPath = ResolveKnownDirectoryIgnoreCase(gameDir, knownDir);
-                if (dirPath == null) continue;
-                try
+                foreach (var dirPath in ResolveKnownDirectoriesIgnoreCase(gameDir, knownDir).ToList())
                 {
-                    foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
-                        rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, filePath));
-                    Directory.Delete(dirPath, recursive: true);
-                    DebugWindow.Log($"[Install] Update cleanup: removed known directory '{knownDir}'");
+                    try
+                    {
+                        // Link aliases carry no contents of their own — DeleteDirectoryWithRetry
+                        // unlinks them instead of recursing, so nothing to capture for rollback.
+                        if (!IsLink(dirPath))
+                            foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
+                                rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, filePath));
+                        DeleteDirectoryWithRetry(dirPath, true);
+                        DebugWindow.Log($"[Install] Update cleanup: removed known directory '{Path.GetFileName(dirPath)}'");
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known directory '{knownDir}': {ex.Message}"); }
                 }
-                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known directory '{knownDir}': {ex.Message}"); }
             }
         }
 
@@ -2361,8 +2480,8 @@ namespace OptiscalerClient.Services
                 if (File.Exists(Path.Combine(gameDir, file)))
                     return true;
 
-            // OptiScaler's exclusive subdirectory
-            if (Directory.Exists(Path.Combine(gameDir, "D3D12_Optiscaler")))
+            // OptiScaler's exclusive subdirectory — either spelling (see AgilitySdkDirectoryName)
+            if (ResolveKnownDirectoriesIgnoreCase(gameDir, AgilitySdkDirectoryName).Any())
                 return true;
 
             // OptiPatcher plugin — may be at root or under OptiScaler\, depending on layout
@@ -2407,10 +2526,9 @@ namespace OptiscalerClient.Services
                 {
                     try
                     {
-                        var fullPath = ResolveKnownDirectoryIgnoreCase(dir, knownDir);
-                        if (fullPath != null)
+                        foreach (var fullPath in ResolveKnownDirectoriesIgnoreCase(dir, knownDir).ToList())
                         {
-                            Directory.Delete(fullPath, true);
+                            DeleteDirectoryWithRetry(fullPath, true);
                             DebugWindow.Log($"[Uninstall][ForceClean] Deleted directory: {Path.GetFileName(fullPath)}");
                         }
                     }
