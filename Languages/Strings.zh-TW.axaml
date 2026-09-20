@@ -426,7 +426,7 @@
     <x:String x:Key="TxtHelpPageGamepad">手把支援</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">常見問題 &amp; 疑難排解</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免責聲明 ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">這不是 OptiScaler 的官方專案。我與 OptiScaler 團隊沒有任何關聯。這是一個沒有任何商業目的的個人專案。任何人均可自行承擔風險使用本軟體。&#x0a;&#x0a;致謝：特別感謝 OptiScaler 團隊；本工具的實現完全得益於他們在原版模組上的卓越工作。同樣感謝 artur07305(DLSS Enabler)、danielblnc(AMD 版 DLSS Neural Rendering mod)以及 MatheusGViana(社群版 OptiScaler + Neural Rendering 包裝器)，為這些可選的實驗性整合所付出的努力。</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">這不是 OptiScaler 的官方專案。我與 OptiScaler 團隊沒有任何關聯。這是一個沒有任何商業目的的個人專案。任何人均可自行承擔風險使用本軟體。&#x0a;&#x0a;致謝：特別感謝 OptiScaler 團隊；本工具的實現完全得益於他們在原版模組上的卓越工作。</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;根據 GPL-3.0-or-later 授權。這是自由軟體：您可以在特定條件下修改並重新散布。詳情請參閱 LICENSE 檔案。&#x0a;&#x0a;第三方元件（OptiScaler、Fakenvapi、NukemFG、FSR 4 Swap）受其各自授權條款的約束。</x:String>
     <x:String x:Key="TxtHelpSystemTitle">系統</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">授權 &amp; 版權</x:String>
@@ -774,12 +774,14 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日誌</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：FSR 4 INT8 已由 FSR 4 DLL（Swap）取代，現在可以在 INT8 與 FP8 之間切換，並直接替換遊戲的 FSR 4 檔案，無需安裝 OptiScaler。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 新增：現在可以直接在管理視窗中設定影格生成與多重影格生成，包括對 DLSS Enabler 的支援。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新增：管理視窗新增了「輸出放大器」與「放大品質」選擇器，無需進入設定檔即可覆寫遊戲的設定。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 新增：實驗性功能區（設定中）新增了對 RenoDx 附加元件的支援，以及 AMD 版 Nvidia Neural Rendering Mod 的整合。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正：以不同設定檔重新安裝後 FSR 4 DLL 金鑰消失的問題，以及離開設定檔視窗後變更未儲存的問題。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 還有更多改進。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：Intel Xe Frame Generation 現在支援最高 x6 的倍率。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正：由於不存在可供下載的版本，安裝自訂 OptiScaler 版本時會失敗。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 修正：在 Linux 上，OptiScaler 資料夾建立時使用了 OptiScaler 本身不會尋找的大小寫，導致 FSR 4 靜默回退到 FSR 3。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 修正：使用 dxgi 注入方式安裝 OptiScaler 會與 XeSS 衝突，導致遊戲尚未啟動便當機。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正：安裝 Nightly 版本時，plugins 資料夾被建立在 OptiScaler 資料夾之外。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 修正：安裝 Nightly 版本時，FSR 4 的 DLL 置換被套用到 OptiScaler 資料夾之外。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• 修正：當 GitHub 請求失敗時，FSR 4 DLL Swap 中的 FP8 版本選擇器會保持鎖定。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• 修正：因從 GitHub 取得儲存庫資料時發生錯誤，導致 Streamline 下載失敗。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整變更和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日誌</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速入門</x:String>
