@@ -1,3 +1,25 @@
+#### [1.0.7.1] ####
+
+# What’s Changed
+
+This patch focuses on **installation reliability**. It fixes custom OptiScaler imports, corrects two path bugs that placed the `plugins` folder and FSR 4 DLL swaps outside the `OptiScaler` folder on nightly builds, and resolves a **dxgi/XeSS conflict** that crashed games before they opened. Streamline downloads and the FP8 version selector no longer break when a GitHub request fails. On Linux, an installation path issue that silently downgraded **FSR 4 to FSR 3** has been fixed. This release also adds multipliers up to **x6** for **Intel Xe Frame Generation**.
+
+# Changelog
+
+### Fixes
+
+- Fixed a bug where installing a custom OptiScaler version failed because the installer still looked for a release to download, which does not exist for custom imports.
+- Fixed a bug where the `plugins` folder was created outside the `OptiScaler` folder when installing nightly versions.
+- Fixed a bug where FSR 4 DLL swaps were applied outside the `OptiScaler` folder when installing nightly versions.
+- Fixed a bug where installing OptiScaler with the **dxgi** injection method interfered with XeSS, crashing the game before it opened.
+- Fixed a bug where the FP8 version selector in **FSR 4 DLL Swap** appeared locked when the request to GitHub failed.
+- Fixed a bug where downloading Streamline failed due to an error retrieving repository data from GitHub.
+- Fixed a bug on Linux where the OptiScaler folder was created under a name OptiScaler itself does not look for, causing **FSR 4 to silently fall back to FSR 3**.
+
+### New
+
+- Added multiplier options up to **x6** alongside **Intel Xe Frame Generation**.
+
 #### [1.0.7] ####
 
 # What’s Changed
