@@ -71,6 +71,18 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             var shortVendor = vendorIdRaw.Replace("0x", "").PadLeft(4, '0').ToLowerInvariant();
             var shortDevice = deviceIdRaw.Replace("0x", "").PadLeft(4, '0').ToLowerInvariant();
 
+            // 0. Vendor-specific databases/tools give the exact retail model, which the generic PCI
+            //    tables cannot (they share one entry across a whole chip family, e.g.
+            //    "Radeon RX 9070/9070 XT/9070 GRE" for every Navi 48 board).
+            var exactName = vendor switch
+            {
+                GpuVendor.AMD => LookupAmdgpuIds(shortDevice, GetPciRevision(devicePath)),
+                GpuVendor.NVIDIA => QueryNvidiaSmiName(devicePath),
+                _ => null
+            };
+            if (!string.IsNullOrWhiteSpace(exactName))
+                return exactName;
+
             // 1. Try lspci (fastest, most accurate)
             var lspciOutput = RunProcess("lspci", $"-d {shortVendor}:{shortDevice} -mm", timeoutMs: 2000);
             if (!string.IsNullOrWhiteSpace(lspciOutput))
@@ -123,6 +135,114 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     {
         var match = Regex.Match(deviceField, @"\[([^\[\]]+)\]\s*$");
         return match.Success ? match.Groups[1].Value.Trim() : deviceField.Trim();
+    }
+
+    private static readonly string[] _amdgpuIdsPaths =
+    [
+        "/usr/share/libdrm/amdgpu.ids",
+        "/usr/local/share/libdrm/amdgpu.ids",
+    ];
+
+    /// <summary>
+    /// Reads the PCI revision of the device as an uppercase hex string without the "0x" prefix
+    /// (sysfs exposes e.g. "0xc0" -> "C0"), which is the form amdgpu.ids uses.
+    /// </summary>
+    private static string? GetPciRevision(string devicePath)
+    {
+        try
+        {
+            var revFile = Path.Combine(devicePath, "revision");
+            if (!File.Exists(revFile)) return null;
+
+            var rev = File.ReadAllText(revFile).Trim();
+            if (rev.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                rev = rev.Substring(2);
+
+            return string.IsNullOrEmpty(rev) ? null : rev.PadLeft(2, '0').ToUpperInvariant();
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Looks up the exact AMD marketing name in libdrm's amdgpu.ids database, which keys on
+    /// device id + PCI revision and therefore distinguishes boards sharing a device id
+    /// (7550/C0 = "AMD Radeon RX 9070 XT", 7550/C3 = "AMD Radeon RX 9070", ...).
+    /// This is the same source tools like LACT use.
+    /// Format: "device_id,\trevision_id,\tproduct_name".
+    /// </summary>
+    private static string? LookupAmdgpuIds(string deviceId, string? revisionId)
+    {
+        if (string.IsNullOrEmpty(revisionId)) return null;
+
+        try
+        {
+            var idsFile = _amdgpuIdsPaths.FirstOrDefault(File.Exists);
+            if (idsFile == null) return null;
+
+            foreach (var line in File.ReadLines(idsFile))
+            {
+                if (line.Length == 0 || line.StartsWith('#')) continue;
+
+                var parts = line.Split(',');
+                if (parts.Length < 3) continue;
+
+                if (!parts[0].Trim().Equals(deviceId, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!parts[1].Trim().Equals(revisionId, StringComparison.OrdinalIgnoreCase)) continue;
+
+                var name = string.Join(',', parts.Skip(2)).Trim();
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Asks the proprietary driver for the exact model name, matching by PCI bus id so multi-GPU
+    /// systems map each sysfs card to its own entry.
+    /// </summary>
+    private string? QueryNvidiaSmiName(string devicePath)
+    {
+        try
+        {
+            var busId = GetPciBusId(devicePath);
+            var output = RunProcess("nvidia-smi", "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
+            if (string.IsNullOrWhiteSpace(output)) return null;
+
+            string? firstName = null;
+            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var sep = line.IndexOf(',');
+                if (sep < 0) continue;
+
+                var lineBus = line.Substring(0, sep).Trim();
+                var name = line.Substring(sep + 1).Trim();
+                if (string.IsNullOrEmpty(name)) continue;
+
+                firstName ??= name;
+
+                // nvidia-smi pads the domain ("00000000:03:00.0" vs sysfs "0000:03:00.0")
+                if (busId != null && lineBus.EndsWith(busId, StringComparison.OrdinalIgnoreCase))
+                    return name;
+            }
+
+            // Single-GPU systems: no bus id match needed
+            return busId == null ? firstName : null;
+        }
+        catch { return null; }
+    }
+
+    private static string? GetPciBusId(string devicePath)
+    {
+        try
+        {
+            var resolved = Directory.ResolveLinkTarget(devicePath, returnFinalTarget: true)?.FullName ?? devicePath;
+            var busId = Path.GetFileName(resolved.TrimEnd(Path.DirectorySeparatorChar));
+            return Regex.IsMatch(busId, @"^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.\d$") ? busId : null;
+        }
+        catch { return null; }
     }
 
     private static readonly string[] _pciIdsPaths =
@@ -225,7 +345,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         return "Unknown";
     }
 
-    private string? RunProcess(string fileName, string args, int timeoutMs)
+    private string? RunProcess(string fileName, string args, int timeoutMs, bool readAllLines = false)
     {
         try
         {
@@ -237,7 +357,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             };
             using var proc = Process.Start(psi);
             if (proc == null) return null;
-            var output = proc.StandardOutput.ReadLine();
+            var output = readAllLines ? proc.StandardOutput.ReadToEnd() : proc.StandardOutput.ReadLine();
             proc.WaitForExit(timeoutMs);
             return output;
         }
