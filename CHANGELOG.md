@@ -20,6 +20,10 @@ This patch focuses on **installation reliability**. It fixes custom OptiScaler i
 
 - Added multiplier options up to **x6** alongside **Intel Xe Frame Generation**.
 
+##### Improvements
+
+- Improved GPU model detection on Linux to display the exact commercial name.
+
 #### [1.0.7] ####
 
 # What’s Changed
