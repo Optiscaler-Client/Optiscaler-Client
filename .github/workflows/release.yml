@@ -153,10 +153,11 @@ jobs:
         with:
           name: optiscaler-client
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - name: Regenerate nix-deps.json (in-memory, not committed)
-        run: |
-          dotnet restore OptiscalerClient.csproj --packages /tmp/nuget-packages
-          nix run nixpkgs#nuget-to-json -- /tmp/nuget-packages > nix-deps.json
+      # nix-deps.json is a committed lockfile generated via passthru.fetch-deps, which
+      # excludes the NuGet packages the .NET SDK derivation already provides. Regenerating it
+      # here with a plain `dotnet restore` reintroduces them (SelfContained=true pulls
+      # Microsoft.NETCore.App.Runtime.linux-x64) and configureNuget then fails linking a
+      # duplicate into the fallback folder. nix-build.yml validates the committed file.
       - run: nix build .#default -L
 
   flatpak-build:
@@ -175,8 +176,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
-          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install -y --noninteractive flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+          # --user: the runner has no polkit session, so system-wide flatpak operations
+          # are refused with "ConfigureRemote not allowed for user".
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
 
       - name: Build flatpak bundle
         run: bash packaging/flatpak/build.sh
