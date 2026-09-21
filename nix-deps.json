@@ -106,8 +106,8 @@
   },
   {
     "pname": "SharpCompress",
-    "version": "0.44.5",
-    "hash": "sha256-aukmJzrgVS2hugVUNH+FHJuaC2VomBNFy6g8furI3tE="
+    "version": "0.49.1",
+    "hash": "sha256-o2IpO605TKJ2mJLKnxWBHtCFnFJPnRj6zMQJBCGgNGw="
   },
   {
     "pname": "SkiaSharp",
@@ -148,5 +148,15 @@
     "pname": "Tmds.DBus.Protocol",
     "version": "0.21.2",
     "hash": "sha256-gaK/5aAummyin6ptnhaJbnA0ih4+2xADrtrLfFbHwYI="
+  },
+  {
+    "pname": "ValveKeyValue",
+    "version": "0.70.0.499",
+    "hash": "sha256-HMMO3hXpCK7D+xXJ6RfA/sPPmjDubbZN4fWdv7kTBhg="
+  },
+  {
+    "pname": "YamlDotNet",
+    "version": "18.1.0",
+    "hash": "sha256-Wf/mWt5nrZ2IYmf4d7Y0pFA2PLgblOGducpMNkYUFvY="
   }
 ]
