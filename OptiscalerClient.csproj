@@ -5,9 +5,9 @@
     <OutputType Condition="'$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
     <OutputType Condition="'$(RuntimeIdentifier)' == '' And !$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <Version>1.0.7</Version>
-    <FileVersion>1.0.7</FileVersion>
-    <AssemblyVersion>1.0.7</AssemblyVersion>
+    <Version>1.0.7.1</Version>
+    <FileVersion>1.0.7.1</FileVersion>
+    <AssemblyVersion>1.0.7.1</AssemblyVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
@@ -71,6 +71,18 @@
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>Optiscaler-Client.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!--
+    Embeds the compile-time build date so the UI doesn't rely on the published output's
+    filesystem mtime, which repackaging (Flatpak/OSTree in particular, which zeroes all
+    timestamps for content-addressed storage) can't be trusted to preserve.
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BuildDate</_Parameter1>
+      <_Parameter2>$([System.DateTime]::UtcNow.ToString("yyyy-MM-dd"))</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
 

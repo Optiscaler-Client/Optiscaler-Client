@@ -34,6 +34,17 @@ public static class AppPaths
     {
         if (_cachedRoot != null) return _cachedRoot;
 
+        // Escape hatch for automated tests, which otherwise read and write the real user's
+        // config.json and Backups\ — that clobbers their settings and makes tests depend on, and
+        // interfere with, each other's leftovers. Unset in normal use.
+        var overrideRoot = Environment.GetEnvironmentVariable("OPTISCALER_CLIENT_APPDATA");
+        if (!string.IsNullOrWhiteSpace(overrideRoot))
+        {
+            Directory.CreateDirectory(overrideRoot);
+            _cachedRoot = overrideRoot;
+            return _cachedRoot;
+        }
+
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
         if (string.IsNullOrEmpty(appData))

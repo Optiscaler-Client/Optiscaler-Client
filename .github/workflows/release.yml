@@ -159,8 +159,35 @@ jobs:
           nix run nixpkgs#nuget-to-json -- /tmp/nuget-packages > nix-deps.json
       - run: nix build .#default -L
 
+  flatpak-build:
+    needs: prepare
+    if: needs.prepare.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install flatpak-builder and runtimes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y --noninteractive flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+
+      - name: Build flatpak bundle
+        run: bash packaging/flatpak/build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak
+          path: OptiscalerClient-*-x86_64.flatpak
+
   release:
-    needs: [prepare, build]
+    needs: [prepare, build, flatpak-build]
     if: needs.prepare.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -173,6 +200,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: flatpak
           path: dist
 
       - name: Tag and publish release

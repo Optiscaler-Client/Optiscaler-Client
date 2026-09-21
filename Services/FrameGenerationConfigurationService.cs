@@ -141,13 +141,14 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
         if (output == FrameGenerationOutput.XeFg)
         {
-            var modes = new List<MultiFrameGenerationMode> { MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2 };
-            if (capabilities.IsIntelArc)
-            {
-                modes.Add(MultiFrameGenerationMode.X3);
-                modes.Add(MultiFrameGenerationMode.X4);
-            }
-            return modes;
+            // x3-x6 need the XeFGUnlock.asi plugin (auto-installed at Install time when picked —
+            // see ManageGameWindow's installXeFGUnlock), which works on any GPU, not just Intel
+            // Arc's native x3/x4 cap. No GPU gate here on purpose.
+            return
+            [
+                MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3,
+                MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6
+            ];
         }
 
         // MFG beyond x2 for the DLSS-G output requires DLSS Enabler's DLL (Arturs/Combo).
@@ -193,7 +194,14 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         if (settings.Output == FrameGenerationOutput.DlssG &&
             settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo)
             return FrameGenerationRoute.DlssGStreamline;
-        if (recommendation.Route == FrameGenerationRoute.DlssGStreamline &&
+        // Nukem's FGInput=nvngxfg is documented as "Limited to FSR 3 FG" (OptiScaler_example.ini) —
+        // it only pairs validly with FGOutput=nvngxfg (Nukem's own output, handled above). Swapping
+        // the route here while a DIFFERENT explicit Output is selected (e.g. XeFg) produces a
+        // silently-broken ini: input locked to Nukem's DLSS-G reader, the chosen output never
+        // actually engages. Only take this crash-avoidance swap when Output is still Auto — an
+        // explicit non-Nukem Output pick must keep whatever route actually supports it.
+        if (settings.Output == FrameGenerationOutput.Auto &&
+            recommendation.Route == FrameGenerationRoute.DlssGStreamline &&
             capabilities.AvailableRoutes.Contains(FrameGenerationRoute.Nukem))
             return FrameGenerationRoute.Nukem;
         return recommendation.Route;
@@ -276,7 +284,17 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         var result = new Dictionary<string, IReadOnlyDictionary<string, string>> { ["FrameGen"] = frameGen };
         if (effectiveOutput == FrameGenerationOutput.XeFg)
         {
-            var count = settings.MultiFrameMode switch { MultiFrameGenerationMode.X2 => "1", MultiFrameGenerationMode.X3 => "2", MultiFrameGenerationMode.X4 => "3", _ => "auto" };
+            // X5/X6 need XeFGUnlock.asi (see GetAvailableMfgModes) — without this mapping they fell
+            // through to "auto", silently never asking for more than native x2-x4 in the ini.
+            var count = settings.MultiFrameMode switch
+            {
+                MultiFrameGenerationMode.X2 => "1",
+                MultiFrameGenerationMode.X3 => "2",
+                MultiFrameGenerationMode.X4 => "3",
+                MultiFrameGenerationMode.X5 => "4",
+                MultiFrameGenerationMode.X6 => "5",
+                _ => "auto"
+            };
             result["XeFG"] = new Dictionary<string, string> { ["InterpolationCount"] = count };
         }
         // FGNvngxReplacement only does anything when FGOutput=dlssg. None keeps the ini default.

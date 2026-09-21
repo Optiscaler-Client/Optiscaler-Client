@@ -425,7 +425,7 @@
     <x:String x:Key="TxtHelpPageGamepad">ゲームパッド対応</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; トラブルシューティング</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">免責事項 ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">これはOptiScalerの公式プロジェクトではありません。OptiScalerチームとは一切関係ありません。これは商業目的なく開発された個人プロジェクトです。誰でも自己責任でこのソフトウェアを試用・利用できます。&#x0a;&#x0a;クレジット: OptiScalerチームへの特別な感謝を捧げます。このツールは彼らの素晴らしいオリジナルModの仕事があって初めて成り立っています。また、これらのオプションの実験的統合を支えてくれた artur07305(DLSS Enabler)、danielblnc(AMD向けDLSS Neural Renderingのmod)、MatheusGViana(コミュニティ製OptiScaler + Neural Renderingラッパー)にも感謝します。</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">これはOptiScalerの公式プロジェクトではありません。OptiScalerチームとは一切関係ありません。これは商業目的なく開発された個人プロジェクトです。誰でも自己責任でこのソフトウェアを試用・利用できます。&#x0a;&#x0a;クレジット: OptiScalerチームへの特別な感謝を捧げます。このツールは彼らの素晴らしいオリジナルModの仕事があって初めて成り立っています。</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;GPL-3.0-or-later ライセンスの下で提供されています。これはフリーソフトウェアです: 一定の条件のもとで変更・再配布が可能です。詳細はLICENSEファイルをご覧ください。&#x0a;&#x0a;サードパーティコンポーネント (OptiScaler、Fakenvapi、NukemFG、FSR 4 Swap) はそれぞれのライセンスに従います。</x:String>
     <x:String x:Key="TxtHelpSystemTitle">システム</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">ライセンス &amp; 著作権</x:String>
@@ -737,6 +737,8 @@
     <x:String x:Key="TxtViewIniOpenError">ini ビューアーを開けませんでした:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">OptiPatcherをダウンロード中...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcherをインストール中...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">XeSS MFGアンロックプラグインをダウンロード中...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">XeSS MFGアンロックプラグインをインストール中...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">バージョン管理</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler、OptiPatcher、FSR 4 Swap、Fakenvapi、NukemFGのバージョンは、設定のローカルキャッシュ &amp; デフォルトバージョン管理セクションから管理できます。</x:String>
     <x:String x:Key="TxtSetDefault">デフォルトに設定</x:String>
@@ -772,12 +774,14 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: FSR 4 INT8 が FSR 4 DLL（Swap）に置き換わり、OptiScaler をインストールせずに INT8 と FP8 を切り替えたり、ゲームの FSR 4 ファイルを直接入れ替えたりできるようになりました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 新機能: フレーム生成とマルチフレーム生成を、Manage ウィンドウから直接設定できるようになりました。DLSS Enabler にも対応しています。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 新機能: Manage ウィンドウに「Output Upscaler」と「Upscaling Quality」セレクターが追加され、Profiles を開かずにゲームのプロファイルを上書きできます。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 新機能: 設定の実験的セクションに、RenoDx アドオン対応と AMD 向け Nvidia Neural Rendering Mod 統合が追加されました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: 別のプロファイルで再インストールした後に FSR 4 DLL キーが消える問題と、Profile ウィンドウを離れた際に変更が保存されない問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• そしてまだまだ盛りだくさんです。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: Intel Xe Frame Generation で最大 x6 の倍率を選べるようになりました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正: ダウンロードすべきリリースが存在しないために、カスタム版の OptiScaler のインストールが失敗する問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 修正: Linux で OptiScaler フォルダーが OptiScaler 自身の参照しない大文字・小文字で作成され、FSR 4 が無警告で FSR 3 にフォールバックする問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 修正: dxgi インジェクション方式で OptiScaler をインストールすると XeSS と競合し、ゲームが起動前にクラッシュする問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: Nightly 版で plugins フォルダーが OptiScaler フォルダーの外に作成される問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 修正: Nightly 版で FSR 4 の DLL スワップが OptiScaler フォルダーの外に適用される問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• 修正: GitHub へのリクエストが失敗した場合に、FSR 4 DLL Swap の FP8 バージョンセレクターがロックされたままになる問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• 修正: GitHub のリポジトリ情報の取得エラーにより Streamline のダウンロードが失敗する問題を修正しました。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>
@@ -901,6 +905,9 @@
     <x:String x:Key="TxtSetupNrInstallingWrapper">OptiScaler（非公式ラッパー）をインストール中...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">モッド + OptiScaler（ラッパー）が正常にインストールされました。</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">OptiScalerラッパーのインストールエラー: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler は既にインストールされています</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">このゲームには既に OptiScaler がインストールされています。その上に単体モッドを追加するのは既知の不具合のある組み合わせです。両方が個別に Direct3D 12 をフックするため、通常はゲームが起動する前にクラッシュします。&#10;&#10;両方を使うには、代わりに「Mod + OptiScaler」を選んでください。ニューラルレンダリングを統合したビルドがインストールされ、これがサポートされた方法です。&#10;&#10;それでも単体モッドをインストールしますか？</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">それでもインストール</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">danielblncのキャッシュ済みバージョンがありません — ゲームフォルダでdlssnr_on_amd_setup.exeを手動で実行し、削除を選んでください。</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering（AMD、実験的）</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD（「Setup NR」経由） — 非公式・実験的、自己責任で使用してください</x:String>

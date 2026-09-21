@@ -444,7 +444,7 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtHelpPageGamepad">Gamepad Support</x:String>
     <x:String x:Key="TxtHelpPageTroubleshooting">FAQ &amp; Troubleshooting</x:String>
     <x:String x:Key="TxtHelpDisclaimerTitle">Disclaimer ⚠️</x:String>
-    <x:String x:Key="TxtHelpDisclaimerContent">This is not an official OptiScaler project. I am not affiliated with the OptiScaler team. This is a personal project developed without any commercial purpose. Anyone is free to try and use this software at their own risk.&#x0a;&#x0a;Credits: A special thanks to the OptiScaler team; this tool is only possible thanks to their incredible work on the original mod. Thanks as well to artur07305 (DLSS Enabler), danielblnc (DLSS Neural Rendering mod for AMD) and MatheusGViana (community OptiScaler + Neural Rendering wrapper) for the work behind these optional experimental integrations.</x:String>
+    <x:String x:Key="TxtHelpDisclaimerContent">This is not an official OptiScaler project. I am not affiliated with the OptiScaler team. This is a personal project developed without any commercial purpose. Anyone is free to try and use this software at their own risk.&#x0a;&#x0a;Credits: A special thanks to the OptiScaler team; this tool is only possible thanks to their incredible work on the original mod.</x:String>
     <x:String x:Key="TxtHelpSystemTitle">System</x:String>
     <x:String x:Key="TxtHelpLicenseTitle">License &amp; Copyright</x:String>
     <x:String x:Key="TxtHelpLicenseContent">Copyright 2026 Agustinm28&#x0a;&#x0a;Licensed under GPL-3.0-or-later. This is free software: you are free to change and redistribute it under certain conditions. See the LICENSE file for details.&#x0a;&#x0a;Third-party components (OptiScaler, Fakenvapi, NukemFG, FSR 4 Swap) are subject to their respective licenses.</x:String>
@@ -775,6 +775,8 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtViewIniOpenError">Could not open the ini viewer:</x:String>
     <x:String x:Key="TxtDownloadingOptiPatcher">Downloading OptiPatcher...</x:String>
     <x:String x:Key="TxtInstallingOptiPatcher">Installing OptiPatcher...</x:String>
+    <x:String x:Key="TxtDownloadingXeFGUnlock">Downloading XeSS MFG unlock plugin...</x:String>
+    <x:String x:Key="TxtInstallingXeFGUnlock">Installing XeSS MFG unlock plugin...</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Version Management</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi and NukemFG versions can be managed from the Local cache &amp; Default version management section in Settings.</x:String>
     <x:String x:Key="TxtSetDefault">Set Default</x:String>
@@ -788,12 +790,14 @@ This version is unavailable for download. Check your internet connection and try
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">Changelog</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• New: FSR 4 INT8 was replaced by FSR 4 DLL (Swap), letting you switch between INT8 and FP8 and swap the game's FSR 4 files directly, without installing OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• New: Frame Generation and Multi Frame Generation can now be set up directly from the Manage window, including DLSS Enabler support.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• New: The Manage window adds Output Upscaler and Upscaling Quality selectors to override a game's profile without opening Profiles.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• New: An Experimental section (Settings) adds RenoDx addon support and Nvidia Neural Rendering Mod for AMD integration.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Fixed: FSR 4 DLL keys disappearing after reinstalling with a different profile, and Profile window changes not saving when leaving the window.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• And a lot more.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• New: Intel Xe Frame Generation now supports multipliers up to x6.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Fixed: Installing a custom OptiScaler build failed because the installer still expected a release to download.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Fixed: On Linux, the OptiScaler folder was created with a casing OptiScaler itself doesn't look for, making FSR 4 silently fall back to FSR 3.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Fixed: Installing OptiScaler with the dxgi injection method clashed with XeSS and crashed the game before it opened.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Fixed: On Nightly builds, the plugins folder was created outside the OptiScaler folder.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Fixed: On Nightly builds, FSR 4 DLL swaps were applied outside the OptiScaler folder.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• Fixed: The FP8 version selector in FSR 4 DLL Swap stayed locked when the GitHub request failed.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• Fixed: Streamline downloads failed because of an error fetching repository data from GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">See the full list of changes and new features for this version on GitHub.</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; View changelog on GitHub</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">Getting Started</x:String>
@@ -917,6 +921,9 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtSetupNrInstallingWrapper">Installing OptiScaler (unofficial wrapper)...</x:String>
     <x:String x:Key="TxtSetupNrBothInstalledDone">Mod + OptiScaler (wrapper) installed successfully.</x:String>
     <x:String x:Key="TxtSetupNrWrapperInstallError">Error installing the OptiScaler wrapper: {0}</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiTitle">OptiScaler is already installed</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiMsg">This game already has OptiScaler installed. Adding the standalone mod on top of it is a known-bad combination: both hook Direct3D 12 independently and the game usually crashes before it opens.&#10;&#10;To use both, pick "Mod + OptiScaler" instead — it installs a build that integrates neural rendering, which is the supported way.&#10;&#10;Install the standalone mod anyway?</x:String>
+    <x:String x:Key="TxtSetupNrOverOptiConfirmBtn">Install anyway</x:String>
     <x:String x:Key="TxtSetupNrNoCachedVersion">There's no cached danielblnc version — run dlssnr_on_amd_setup.exe manually in the game folder and pick remove.</x:String>
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, experimental)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD via "Setup NR" — unofficial, experimental, at your own risk</x:String>
