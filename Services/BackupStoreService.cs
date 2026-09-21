@@ -83,6 +83,66 @@ namespace OptiscalerClient.Services
             }
         }
 
+        /// <summary>
+        /// Reverse lookup: the recorded install directory of a committed backup that sits at or under
+        /// <paramref name="gameRoot"/>, or null if there is none.
+        ///
+        /// The store is keyed by a hash of the directory OptiScaler was actually installed into, which
+        /// InstallOptiScaler resolves by scanning for the game's real executable — for Cyberpunk 2077
+        /// that is "&lt;game&gt;ind", which is neither Game.InstallPath nor one of the hardcoded
+        /// UE subfolder candidates, and Game.ExecutablePath can be empty. A caller that only knows the
+        /// game root therefore cannot reproduce the key and found no backup at all: detection still saw
+        /// the files (it scans recursively), but uninstall targeted the root, removed nothing, and
+        /// reported success. Slugs are hashes and cannot be reversed, so match on the manifests instead.
+        /// </summary>
+        public string? FindBackupDirUnder(string gameRoot)
+        {
+            if (string.IsNullOrWhiteSpace(gameRoot) || !Directory.Exists(_backupsRoot))
+                return null;
+
+            string root;
+            try
+            {
+                root = Path.GetFullPath(gameRoot)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+            catch { return null; }
+
+            foreach (var entry in Directory.GetDirectories(_backupsRoot))
+            {
+                var manifestPath = Path.Combine(entry, ManifestFileName);
+                if (!File.Exists(manifestPath)) continue;
+
+                try
+                {
+                    var manifest = JsonSerializer.Deserialize(
+                        File.ReadAllText(manifestPath), OptimizerContext.Default.InstallationManifest);
+                    if (!string.Equals(manifest?.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var installed = manifest!.InstalledGameDirectory;
+                    if (string.IsNullOrWhiteSpace(installed) || !Directory.Exists(installed)) continue;
+
+                    var full = Path.GetFullPath(installed)
+                        .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    if (full.Equals(root, StringComparison.OrdinalIgnoreCase) ||
+                        full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // ponytail: first match wins — one game root is never expected to hold two
+                        // committed backups. Pick the deepest match if that ever stops holding.
+                        DebugWindow.Log($"[BackupStore] Reverse lookup matched '{full}' under '{root}'");
+                        return full;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[BackupStore] Reverse lookup skipped '{entry}': {ex.Message}");
+                }
+            }
+
+            return null;
+        }
+
         public InstallationManifest? LoadManifest(string gameDir)
         {
             var manifestPath = GetManifestPath(gameDir);

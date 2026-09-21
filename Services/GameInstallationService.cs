@@ -39,7 +39,6 @@ namespace OptiscalerClient.Services
             // OptiScaler core
             "OptiScaler.ini", "OptiScaler.log", "OptiScaler.dll",
             "setup_linux.sh", "setup_windows.bat",
-            @"D3D12_Optiscaler\", @"Licences\",
             "!! README_EXTRACT ALL FILES TO GAME FOLDER !!.txt",
             // "dxgi.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll",
             // "version.dll", "wininet.dll", "winhttp.dll",
@@ -76,6 +75,131 @@ namespace OptiscalerClient.Services
             "OptiScaler",
         };
 
+        /// <summary>Exact spelling of the DirectX 12 Agility SDK folder that OptiScaler's own binary
+        /// looks up at runtime (verified against the wide string "\D3D12_OptiScaler\" inside
+        /// OptiScaler.dll) — capital S. See <see cref="EnsureAgilitySdkCasingAlias"/>.</summary>
+        private const string AgilitySdkDirectoryName = "D3D12_OptiScaler";
+
+        /// <summary>Resolves every directory inside <paramref name="parentDir"/> whose name matches
+        /// <paramref name="name"/> case-insensitively (usually zero or one; two when a case-variant
+        /// alias exists, see <see cref="EnsureAgilitySdkCasingAlias"/>), deepest-safe order not
+        /// required since they are siblings.
+        ///
+        /// OptiScaler's own packages are not consistent: stable 0.9.x ships "D3D12_Optiscaler"
+        /// while nightly ships "OptiScaler\D3D12_OptiScaler" (capital S). Windows does not care,
+        /// but Directory.Exists is case-sensitive on Linux, so the hardcoded spelling matched only
+        /// one of the two and uninstall silently left the other behind.
+        ///
+        /// Enumerates file system ENTRIES, not directories, on purpose: once uninstall removes the
+        /// real folder, the alias EnsureAgilitySdkCasingAlias created becomes a dangling symlink,
+        /// and .NET then reports it as neither a directory nor existing (Directory.Exists = false,
+        /// EnumerateDirectories skips it, File.Exists = true). Enumerating entries and keeping
+        /// anything that is a directory OR a link is what still sees it — otherwise the alias is
+        /// invisible to the very sweep meant to remove it and survives the uninstall.</summary>
+        private static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
+        {
+            if (!Directory.Exists(parentDir)) yield break;
+
+            string[] matches;
+            try
+            {
+                matches = Directory.EnumerateFileSystemEntries(parentDir)
+                    .Where(d => string.Equals(Path.GetFileName(d), name, StringComparison.OrdinalIgnoreCase))
+                    .Where(d => Directory.Exists(d) || IsLink(d))
+                    .ToArray();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install] Could not scan '{parentDir}' for '{name}': {ex.Message}");
+                yield break;
+            }
+
+            foreach (var match in matches) yield return match;
+        }
+
+        /// <summary>True when <paramref name="path"/> is a symlink — including a dangling one, which
+        /// only <see cref="FileInfo.LinkTarget"/> still reports (see ResolveKnownDirectoriesIgnoreCase).</summary>
+        private static bool IsLink(string path)
+        {
+            try { return new FileInfo(path).LinkTarget != null; }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install] Could not probe '{path}' for a link target: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>Linux-only: guarantees a "D3D12_OptiScaler" directory (capital S) exists next to
+        /// whichever OptiScaler layout was just installed, aliasing the one the package actually
+        /// shipped when its casing differs.
+        ///
+        /// OptiScaler hardcodes "\D3D12_OptiScaler\" as the Agility SDK search path it hands to
+        /// D3D12's SDKConfiguration, but the stable 0.9.x archive ships the folder as
+        /// "D3D12_Optiscaler" (lowercase s); only nightly matches its own lookup. On NTFS that
+        /// mismatch is invisible, but under Proton on a case-sensitive filesystem the load fails and
+        /// OptiScaler logs "CheckForGPU RDNA4 GPU is detected but Agility SDK is not detected!",
+        /// then drops to the FSR 3.1 pipeline — the user still picks FSR 4 in the overlay and still
+        /// gets an FSR3 watermark. Since this client is what lays the folder down, the alias belongs
+        /// here rather than in a manual symlink the user has to know about.
+        ///
+        /// A symlink is preferred (no duplicated D3D12Core.dll); a real copy is the fallback for
+        /// filesystems or permissions that reject it. The result is tracked in the manifest so
+        /// uninstall removes it, and ResolveKnownDirectoriesIgnoreCase sweeps both spellings.</summary>
+        private void EnsureAgilitySdkCasingAlias(string gameDir, InstallationManifest manifest, InstallationRollbackJournal rollbackJournal)
+        {
+            if (!OperatingSystem.IsLinux()) return;
+
+            var parents = new HashSet<string>(StringComparer.Ordinal) { gameDir, ResolveExtrasRoot(gameDir) };
+
+            foreach (var parentDir in parents)
+            {
+                var existing = ResolveKnownDirectoriesIgnoreCase(parentDir, AgilitySdkDirectoryName).ToList();
+                if (existing.Count == 0) continue;
+                if (existing.Any(d => string.Equals(Path.GetFileName(d), AgilitySdkDirectoryName, StringComparison.Ordinal)))
+                    continue;
+
+                // Alias the real folder, never another link — the resolver also reports links so
+                // that uninstall can see dangling ones.
+                var source = existing.FirstOrDefault(d => !IsLink(d));
+                if (source == null) continue;
+
+                var aliasPath = Path.Combine(parentDir, AgilitySdkDirectoryName);
+                var relativeAlias = Path.GetRelativePath(gameDir, aliasPath);
+
+                try
+                {
+                    rollbackJournal.CaptureDirectoryChain(aliasPath);
+                    Directory.CreateSymbolicLink(aliasPath, Path.GetFileName(source));
+                    DebugWindow.Log($"[Install][Linux] Linked Agility SDK '{relativeAlias}' -> '{Path.GetFileName(source)}'");
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[Install][Linux] Could not symlink Agility SDK folder ({ex.Message}), copying instead");
+                    try
+                    {
+                        Directory.CreateDirectory(aliasPath);
+                        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+                        {
+                            var destFile = Path.Combine(aliasPath, Path.GetRelativePath(source, file));
+                            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+                            rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, destFile));
+                            File.Copy(file, destFile, overwrite: true);
+                            manifest.InstalledFiles.Add(Path.GetRelativePath(gameDir, destFile));
+                        }
+                        DebugWindow.Log($"[Install][Linux] Copied Agility SDK folder to '{relativeAlias}'");
+                    }
+                    catch (Exception copyEx)
+                    {
+                        DebugWindow.Log($"[Install][Linux] Failed to provide '{relativeAlias}': {copyEx.Message} — FSR 4 may fall back to FSR 3");
+                        continue;
+                    }
+                }
+
+                if (!manifest.InstalledDirectories.Contains(relativeAlias, StringComparer.OrdinalIgnoreCase))
+                    manifest.InstalledDirectories.Add(relativeAlias);
+            }
+        }
+
         // Sensitive files that OptiScaler may place in the game folder but that could also
         // be native game files. Exposed publicly so the UI can present them as opt-in checkboxes.
         public static readonly string[] SensitiveArtifacts =
@@ -94,6 +218,18 @@ namespace OptiscalerClient.Services
         // essentially anything that OptiScaler might replace.
         // We will backup ANYTHING we overwrite, but these are known criticals.
         private readonly string[] _criticalFiles = { "dxgi.dll", "version.dll", "winmm.dll", "nvngx.dll", "nvngx_dlssg.dll", "libxess.dll" };
+
+        /// <summary>Proxy DLL names OptiScaler can be loaded through — the injection methods offered
+        /// in the UI. A custom package may ship its main DLL already renamed to one of these, so they
+        /// are accepted as a last resort when neither OptiScaler.dll nor nvngx.dll is present. Kept
+        /// separate from <see cref="_criticalFiles"/> on purpose: that list is a watch list for
+        /// CapturePreInstallKeySnapshot and includes runtimes that are NOT OptiScaler itself.</summary>
+        private static readonly string[] ProxyDllNames =
+            { "dxgi.dll", "version.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll", "winhttp.dll", "wininet.dll" };
+
+        private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
+            cacheFiles.FirstOrDefault(f =>
+                Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
 
         // Derived from NVIDIA's proprietary DLSS Neural Rendering weights — never redistributed
         // bundled with a third-party OptiScaler build, no matter who produced the file. The user
@@ -197,7 +333,7 @@ namespace OptiscalerClient.Services
             var effectiveProfile = profile;
             if (priorManifest != null && (effectiveProfile == null || effectiveProfile.IniSettings.Count == 0))
             {
-                var existingIniPath = Path.Combine(gameDir, "OptiScaler.ini");
+                var existingIniPath = ResolveOptiScalerIniPath(gameDir);
                 if (File.Exists(existingIniPath))
                 {
                     try
@@ -300,92 +436,115 @@ namespace OptiscalerClient.Services
                 }
             }
 
-            // Find the main OptiScaler DLL (OptiScaler.dll or nvngx.dll for older versions)
-            string? optiscalerMainDll = null;
-            foreach (var file in cacheFiles)
-            {
-                var fileName = Path.GetFileName(file);
-                if (fileName.Equals("OptiScaler.dll", StringComparison.OrdinalIgnoreCase) ||
-                    fileName.Equals("nvngx.dll", StringComparison.OrdinalIgnoreCase))
-                {
-                    optiscalerMainDll = file;
-                    DebugWindow.Log($"[Install] Found main OptiScaler DLL: {fileName}");
-                    break;
-                }
-            }
+            // Find the main OptiScaler DLL. Usually "OptiScaler.dll" or "nvngx.dll" (older versions),
+            // but some custom packages ship it pre-renamed to whichever proxy DLL it loads through
+            // (dxgi.dll, winmm.dll, ...) instead.
+            //
+            // Resolved by explicit priority rather than by whichever candidate the directory
+            // listing reaches first. This used to scan cacheFiles once and accept any name in
+            // _criticalFiles, but that list is built for CapturePreInstallKeySnapshot and also
+            // carries third-party runtimes OptiScaler ships ALONGSIDE its own DLL — libxess.dll
+            // and nvngx_dlssg.dll. Directory.GetFiles returns the cache alphabetically, so in
+            // every 0.9.x package libxess.dll was reached before OptiScaler.dll and installed as
+            // the injection DLL: the game loaded the XeSS SDK as its dxgi.dll and crashed before
+            // reaching a window, while libxess.dll itself was skipped by Step 2 as "already
+            // handled" and never landed in the game folder at all.
+            string? optiscalerMainDll =
+                FindCacheFile(cacheFiles, "OptiScaler.dll")
+                ?? FindCacheFile(cacheFiles, "nvngx.dll")
+                ?? cacheFiles.FirstOrDefault(f =>
+                    ProxyDllNames.Contains(Path.GetFileName(f), StringComparer.OrdinalIgnoreCase));
 
-            if (optiscalerMainDll == null)
+            if (optiscalerMainDll != null)
+                DebugWindow.Log($"[Install] Found main OptiScaler DLL: {Path.GetFileName(optiscalerMainDll)}");
+
+            // No recognizable DLL — still not corrupt if it at least carries OptiScaler.ini (e.g. a
+            // config-only test package meant to tune an already-installed OptiScaler). Step 1 below
+            // just skips copying a main DLL in that case, leaving whatever is already in gameDir.
+            bool hasOptiScalerIni = optiscalerMainDll == null && cacheFiles.Any(f =>
+                Path.GetFileName(f).Equals("OptiScaler.ini", StringComparison.OrdinalIgnoreCase));
+
+            if (optiscalerMainDll == null && !hasOptiScalerIni)
                 throw new Exception("Installation failed because the downloaded package is corrupt or incomplete (missing OptiScaler.dll). Please go to Settings -> Manage Cache, delete this version, and try the installation again.");
 
-            // Step 1: Install the main OptiScaler DLL with the selected injection method name
+            // Step 1: Install the main OptiScaler DLL with the selected injection method name.
+            // Skipped entirely for an ini-only package (optiscalerMainDll == null) — nothing to
+            // copy, so whatever is already at injectionDllPath (a prior install) is left untouched.
             var injectionDllPath = Path.Combine(gameDir, injectionDllName);
-            DebugWindow.Log($"[Install] Installing main DLL as: {injectionDllName}");
-            var injectionExisted = File.Exists(injectionDllPath);
-
-            // Backup existing file if it exists (into external store).
-            // During an update, skip re-backing-up files that already have an original backup
-            // (priorBackedUpOriginals) or that were created by a previous OptiScaler install
-            // (priorCreatedByOptiScaler) — doing so would overwrite the original game file.
-            bool injIsOriginal = priorBackedUpOriginals.Contains(injectionDllName);
-            bool injIsOptiCreated = priorCreatedByOptiScaler.Contains(injectionDllName);
-            string? injectionPreHash = null;
-
-            // Always check — not just when RenoDX is selected — because OptiScaler and ReShade
-            // both default to the same proxy DLL name (usually dxgi.dll). Without this, installing
-            // OptiScaler over an already-working manual ReShade install silently destroys it: the
-            // pre-existing file just goes into our own internal backup store under its original
-            // name, so nothing usable is left in the game folder, and LoadReshade=true (see Step
-            // 2.6 below) has nothing to load. Renaming it to ReShade64.dll first is the exact fix
-            // documented on OptiScaler's own wiki for this proxy-name collision, and it's what
-            // LoadReshade actually looks for.
             var preservedReshadeAsReshade64 = false;
-            if (injectionExisted && !injIsOriginal && !injIsOptiCreated && LooksLikeReshadeDll(injectionDllPath))
+            if (optiscalerMainDll != null)
             {
-                var reshade64Path = Path.Combine(gameDir, "ReShade64.dll");
-                if (!File.Exists(reshade64Path))
+                DebugWindow.Log($"[Install] Installing main DLL as: {injectionDllName}");
+                var injectionExisted = File.Exists(injectionDllPath);
+
+                // Backup existing file if it exists (into external store).
+                // During an update, skip re-backing-up files that already have an original backup
+                // (priorBackedUpOriginals) or that were created by a previous OptiScaler install
+                // (priorCreatedByOptiScaler) — doing so would overwrite the original game file.
+                bool injIsOriginal = priorBackedUpOriginals.Contains(injectionDllName);
+                bool injIsOptiCreated = priorCreatedByOptiScaler.Contains(injectionDllName);
+                string? injectionPreHash = null;
+
+                // Always check — not just when RenoDX is selected — because OptiScaler and ReShade
+                // both default to the same proxy DLL name (usually dxgi.dll). Without this, installing
+                // OptiScaler over an already-working manual ReShade install silently destroys it: the
+                // pre-existing file just goes into our own internal backup store under its original
+                // name, so nothing usable is left in the game folder, and LoadReshade=true (see Step
+                // 2.6 below) has nothing to load. Renaming it to ReShade64.dll first is the exact fix
+                // documented on OptiScaler's own wiki for this proxy-name collision, and it's what
+                // LoadReshade actually looks for.
+                if (injectionExisted && !injIsOriginal && !injIsOptiCreated && LooksLikeReshadeDll(injectionDllPath))
                 {
-                    try
+                    var reshade64Path = Path.Combine(gameDir, "ReShade64.dll");
+                    if (!File.Exists(reshade64Path))
                     {
-                        rollbackJournal.CaptureFile("ReShade64.dll");
-                        File.Copy(injectionDllPath, reshade64Path);
-                        manifest.InstalledFiles.Add("ReShade64.dll");
-                        TrackManifestFileMutation(
-                            manifest,
-                            relativePath: "ReShade64.dll",
-                            existedBefore: false,
-                            preInstallHash: null,
-                            postInstallHash: ComputeSha256(reshade64Path));
-                        preservedReshadeAsReshade64 = true;
-                        DebugWindow.Log($"[Install] Detected an existing ReShade at '{injectionDllName}' — preserved it as ReShade64.dll before overwriting");
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugWindow.Log($"[Install] Failed to preserve existing ReShade as ReShade64.dll: {ex.Message}");
+                        try
+                        {
+                            rollbackJournal.CaptureFile("ReShade64.dll");
+                            File.Copy(injectionDllPath, reshade64Path);
+                            manifest.InstalledFiles.Add("ReShade64.dll");
+                            TrackManifestFileMutation(
+                                manifest,
+                                relativePath: "ReShade64.dll",
+                                existedBefore: false,
+                                preInstallHash: null,
+                                postInstallHash: ComputeSha256(reshade64Path));
+                            preservedReshadeAsReshade64 = true;
+                            DebugWindow.Log($"[Install] Detected an existing ReShade at '{injectionDllName}' — preserved it as ReShade64.dll before overwriting");
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugWindow.Log($"[Install] Failed to preserve existing ReShade as ReShade64.dll: {ex.Message}");
+                        }
                     }
                 }
-            }
 
-            if (injectionExisted && !injIsOriginal && !injIsOptiCreated)
+                if (injectionExisted && !injIsOriginal && !injIsOptiCreated)
+                {
+                    injectionPreHash = ComputeSha256(injectionDllPath); // only hash when we actually need it
+                    _backupStore.BackupFile(storeKey, gameDir, injectionDllName);
+                    manifest.BackedUpFiles.Add(injectionDllName);
+                    DebugWindow.Log($"[Install] Backed up existing file: {injectionDllName}");
+                }
+
+                // Copy OptiScaler.dll as the injection DLL
+                rollbackJournal.CaptureFile(injectionDllName);
+                File.Copy(optiscalerMainDll, injectionDllPath, true);
+                manifest.InstalledFiles.Add(injectionDllName);
+                // existedBefore=false for OptiScaler-created files forces them into FilesCreated (delete on uninstall).
+                // existedBefore=true for game-original files keeps them in FilesOverwritten (restore on uninstall).
+                TrackManifestFileMutation(
+                    manifest,
+                    relativePath: injectionDllName,
+                    existedBefore: injectionExisted && !injIsOptiCreated,
+                    preInstallHash: injectionPreHash,
+                    postInstallHash: ComputeSha256(injectionDllPath));
+                DebugWindow.Log($"[Install] Installed main OptiScaler DLL");
+            }
+            else
             {
-                injectionPreHash = ComputeSha256(injectionDllPath); // only hash when we actually need it
-                _backupStore.BackupFile(storeKey, gameDir, injectionDllName);
-                manifest.BackedUpFiles.Add(injectionDllName);
-                DebugWindow.Log($"[Install] Backed up existing file: {injectionDllName}");
+                DebugWindow.Log($"[Install] No OptiScaler DLL in package — leaving '{injectionDllName}' untouched, installing config/extra files only");
             }
-
-            // Copy OptiScaler.dll as the injection DLL
-            rollbackJournal.CaptureFile(injectionDllName);
-            File.Copy(optiscalerMainDll, injectionDllPath, true);
-            manifest.InstalledFiles.Add(injectionDllName);
-            // existedBefore=false for OptiScaler-created files forces them into FilesCreated (delete on uninstall).
-            // existedBefore=true for game-original files keeps them in FilesOverwritten (restore on uninstall).
-            TrackManifestFileMutation(
-                manifest,
-                relativePath: injectionDllName,
-                existedBefore: injectionExisted && !injIsOptiCreated,
-                preInstallHash: injectionPreHash,
-                postInstallHash: ComputeSha256(injectionDllPath));
-            DebugWindow.Log($"[Install] Installed main OptiScaler DLL");
 
             // Step 2: Copy all other files (configs, dependencies, etc.)
             DebugWindow.Log($"[Install] Copying additional files...");
@@ -395,9 +554,10 @@ namespace OptiscalerClient.Services
             {
                 var fileName = Path.GetFileName(sourcePath);
 
-                // Skip the main OptiScaler DLL as we already handled it
-                if (fileName.Equals("OptiScaler.dll", StringComparison.OrdinalIgnoreCase) ||
-                    fileName.Equals("nvngx.dll", StringComparison.OrdinalIgnoreCase))
+                // Skip the main OptiScaler DLL — already handled by Step 1 above (whatever file
+                // that resolved to, not just the two default names: a custom package may have
+                // shipped it pre-renamed to a proxy DLL name instead).
+                if (string.Equals(sourcePath, optiscalerMainDll, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -458,25 +618,32 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[Install] Copied {additionalFileCount} additional files");
 
+            // Step 2.1 (Linux only): make the Agility SDK folder reachable under the exact name
+            // OptiScaler looks up. See EnsureAgilitySdkCasingAlias — without this, RDNA3/RDNA4 users
+            // on Proton silently lose FSR 4 and fall back to FSR 3.
+            EnsureAgilitySdkCasingAlias(gameDir, manifest, rollbackJournal);
+
             // Step 2.25: Nightly builds require NVIDIA Streamline runtime DLLs. The cache contains
             // only the bin/x64 runtime subset, preserving its nvngx subdirectory beneath the
             // OptiScaler installation directory exactly as required by OptiScaler Nightly.
             if (installStreamline)
             {
                 if (string.IsNullOrWhiteSpace(streamlineCachePath) || !Directory.Exists(streamlineCachePath))
-                    throw new DirectoryNotFoundException("Streamline is required for OptiScaler Nightly but is not available in the local cache.");
+                    throw new DirectoryNotFoundException("The Streamline runtime this Frame Generation setup needs was not downloaded. Retry the install; the client downloads it automatically.");
 
                 var streamlineFiles = Directory.GetFiles(streamlineCachePath, "*.dll", SearchOption.AllDirectories);
                 if (streamlineFiles.Length == 0 || !File.Exists(Path.Combine(streamlineCachePath, "sl.common.dll")))
-                    throw new InvalidDataException("The cached Streamline runtime is incomplete. Download the latest Streamline release and try again.");
+                    throw new InvalidDataException("The downloaded Streamline runtime is incomplete. Delete it from Settings > Cache management and retry the install.");
 
-                var streamlineRoot = Path.Combine("OptiScaler", "streamline");
+                // Goes under gameDir\OptiScaler\ if the installed package shipped that folder
+                // (nightly), otherwise flat at gameDir root — see ResolveExtrasRoot.
+                var streamlineTargetRoot = Path.Combine(ResolveExtrasRoot(gameDir), "streamline");
                 var streamlineFileCount = 0;
                 foreach (var sourcePath in streamlineFiles)
                 {
                     var sourceRelativePath = Path.GetRelativePath(streamlineCachePath, sourcePath);
-                    var relativePath = Path.Combine(streamlineRoot, sourceRelativePath);
-                    var destinationPath = Path.Combine(gameDir, relativePath);
+                    var destinationPath = Path.Combine(streamlineTargetRoot, sourceRelativePath);
+                    var relativePath = Path.GetRelativePath(gameDir, destinationPath);
                     var destinationDirectory = Path.GetDirectoryName(destinationPath);
 
                     if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
@@ -512,22 +679,22 @@ namespace OptiscalerClient.Services
                     streamlineFileCount++;
                 }
 
-                manifest.ExpectedFinalMarkers.Add(Path.Combine(streamlineRoot, "sl.common.dll"));
+                manifest.ExpectedFinalMarkers.Add(Path.GetRelativePath(gameDir, Path.Combine(streamlineTargetRoot, "sl.common.dll")));
                 manifest.IncludesStreamline = true;
                 DebugWindow.Log($"[Install] Installed {streamlineFileCount} Streamline runtime DLL(s)");
             }
 
             // Step 2.3: DLSS Enabler headless mode. A single DLL (already renamed to
             // dlss-enabler-headless.dll at import time, see ComponentManagementService.ImportDlssEnablerAsync)
-            // copied into the root of the OptiScaler folder — not a subfolder, unlike Streamline.
+            // copied straight into ResolveExtrasRoot — no subfolder of its own, unlike Streamline.
             if (installDlssEnabler)
             {
                 var dlssEnablerSourceFile = Path.Combine(dlssEnablerCachePath, "dlss-enabler-headless.dll");
                 if (string.IsNullOrWhiteSpace(dlssEnablerCachePath) || !File.Exists(dlssEnablerSourceFile))
                     throw new FileNotFoundException("The cached DLSS Enabler DLL is not available.");
 
-                var relativePath = Path.Combine("OptiScaler", "dlss-enabler-headless.dll");
-                var destinationPath = Path.Combine(gameDir, relativePath);
+                var destinationPath = Path.Combine(ResolveExtrasRoot(gameDir), "dlss-enabler-headless.dll");
+                var relativePath = Path.GetRelativePath(gameDir, destinationPath);
                 var destinationDirectory = Path.GetDirectoryName(destinationPath);
 
                 if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
@@ -1110,7 +1277,7 @@ namespace OptiscalerClient.Services
             if (OperatingSystem.IsWindows() &&
                 string.Equals(spoofingValue, "auto", StringComparison.OrdinalIgnoreCase) &&
                 game.FrameGenerationSettings is { Route: not FrameGenerationRoute.Disabled } fgSettings &&
-                File.Exists(Path.Combine(gameDir, "plugins", "OptiPatcher.asi")))
+                File.Exists(Path.Combine(ResolveExtrasRoot(gameDir), "plugins", "OptiPatcher.asi")))
             {
                 var fgConfigService = new FrameGenerationConfigurationService();
                 var capabilities = fgConfigService.DetectCapabilities(game);
@@ -1164,7 +1331,7 @@ namespace OptiscalerClient.Services
                 ? profileService.GetProfileByName(manifest!.AppliedProfileName!)
                 : null) ?? OptiScalerProfile.CreateDefault();
 
-            var existingIniPath = Path.Combine(gameDir, "OptiScaler.ini");
+            var existingIniPath = ResolveOptiScalerIniPath(gameDir);
             var generated = profileService.GenerateOptiScalerIni(profile, existingIniPath);
             return (
                 ExtractIniValue(generated, "Upscalers", "Dx11Upscaler") ?? "fsr22",
@@ -1280,10 +1447,14 @@ namespace OptiscalerClient.Services
         /// as created and simply deleted on uninstall — never "restored" from a backup that doesn't
         /// exist. Without this, a normal install with an original game DLL of the same name would be
         /// silently clobbered with no way back.
+        /// <paramref name="gameDir"/> must be the game's install directory (the manifest's root), which
+        /// is NOT always destPath's parent: since extras placement follows <see cref="ResolveExtrasRoot"/>,
+        /// destPath can sit inside "<gameDir>\OptiScaler\". Deriving it from destPath instead recorded
+        /// every swapped file under a root-relative path it never occupied, so uninstall "restored"
+        /// those backups straight into the game root and left them behind.
         /// </summary>
-        public void InjectExtrasDll(Game game, string destPath, string sourceContentPath)
+        public void InjectExtrasDll(Game game, string gameDir, string destPath, string sourceContentPath)
         {
-            var gameDir = Path.GetDirectoryName(destPath)!;
             var storeKey = game.InstallPath;
 
             var manifest = _backupStore.LoadManifest(storeKey);
@@ -1372,6 +1543,17 @@ namespace OptiscalerClient.Services
         /// folder holding dlss-enabler-headless.dll/Streamline DLLs while the game is still tearing down).</summary>
         private static void DeleteDirectoryWithRetry(string path, bool recursive, int maxAttempts = 6, int delayMs = 150)
         {
+            // A symlinked alias (see EnsureAgilitySdkCasingAlias) is unlinked with File.Delete, never
+            // deleted as a directory: recursing would destroy the real folder's contents through the
+            // link, and Directory.Delete throws DirectoryNotFoundException once the link is dangling.
+            // File.Delete unlinks correctly in both states and never follows the link.
+            if (IsLink(path))
+            {
+                try { File.Delete(path); }
+                catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not unlink '{path}': {ex.Message}"); }
+                return;
+            }
+
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try { Directory.Delete(path, recursive); return; }
@@ -1432,6 +1614,23 @@ namespace OptiscalerClient.Services
                 }
             }
 
+            // Priority 1b: the fixed candidate list above can only guess where OptiScaler landed.
+            // The store is keyed by the directory the install actually used (resolved from the real
+            // executable), so ask the store itself which of its committed backups sits under this
+            // game root — see BackupStoreService.FindBackupDirUnder.
+            if (!usingExternalStore)
+            {
+                var recordedDir = _backupStore.FindBackupDirUnder(rootDir);
+                if (recordedDir != null && _backupStore.HasValidBackup(recordedDir))
+                {
+                    storeKey = recordedDir;
+                    manifest = _backupStore.LoadManifest(recordedDir);
+                    usingExternalStore = true;
+                    gameDir = recordedDir;
+                    DebugWindow.Log($"[Uninstall] Resolved backup for '{game.Name}' by manifest: {gameDir}");
+                }
+            }
+
             // Priority 2: Fall back to searching for legacy in-folder manifest
             if (!usingExternalStore)
             {
@@ -1472,9 +1671,12 @@ namespace OptiscalerClient.Services
                 }
             }
 
-            // Priority 3: last-resort re-detection
+            // Priority 3: last-resort re-detection. DetermineInstallDirectory is the same resolver
+            // the install used, so it finds non-UE layouts (Cyberpunk 2077's bind) that
+            // DetectCorrectInstallDirectory — which only knows Binaries\Win64 — silently answered
+            // with the game root, leaving a manifest-less uninstall deleting nothing.
             if (string.IsNullOrEmpty(gameDir))
-                gameDir = DetectCorrectInstallDirectory(rootDir);
+                gameDir = DetermineInstallDirectory(game) ?? DetectCorrectInstallDirectory(rootDir);
 
             if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
                 throw new Exception($"Could not determine installation directory for '{game.Name}'.");
@@ -1604,13 +1806,12 @@ namespace OptiscalerClient.Services
                 // (e.g. after an update where the directory already existed pre-install).
                 foreach (var knownDir in KnownOptiscalerDirectories)
                 {
-                    var dirPath = Path.Combine(gameDir, knownDir);
                     try
                     {
-                        if (Directory.Exists(dirPath))
+                        foreach (var dirPath in ResolveKnownDirectoriesIgnoreCase(gameDir, knownDir).ToList())
                         {
                             DeleteDirectoryWithRetry(dirPath, true);
-                            DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {knownDir}");
+                            DebugWindow.Log($"[Uninstall] Removed known OptiScaler directory: {Path.GetFileName(dirPath)}");
                         }
                     }
                     catch (Exception ex) { DebugWindow.Log($"[Uninstall] Failed to remove known directory '{knownDir}': {ex.Message}"); }
@@ -1690,14 +1891,14 @@ namespace OptiscalerClient.Services
                 catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not delete runtime file '{runtimeFile}': {ex.Message}"); }
             }
 
-            // dlss-enabler-headless.dll itself lives in OptiScaler/ (see InstallOptiScaler's DLSS
-            // Enabler step), not gameDir root — its own runtime log lands next to it there, not above.
+            // dlss-enabler-headless.dll itself lives wherever ResolveExtrasRoot put it (see
+            // InstallOptiScaler's DLSS Enabler step) — its own runtime log lands next to it there.
             try
             {
-                var enablerLogPath = Path.Combine(gameDir, "OptiScaler", "dlss-enabler.log");
+                var enablerLogPath = Path.Combine(ResolveExtrasRoot(gameDir), "dlss-enabler.log");
                 if (File.Exists(enablerLogPath)) DeleteFileWithRetry(enablerLogPath);
             }
-            catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not delete runtime file 'OptiScaler/dlss-enabler.log': {ex.Message}"); }
+            catch (Exception ex) { DebugWindow.Log($"[Uninstall] Could not delete runtime file 'dlss-enabler.log': {ex.Message}"); }
 
             // Remove external backup store entry
             _backupStore.DeleteBackup(storeKey ?? gameDir);
@@ -1887,16 +2088,20 @@ namespace OptiscalerClient.Services
             // here would be unrecoverable if a later step in this same install fails and rolls back.
             foreach (var knownDir in KnownOptiscalerDirectories)
             {
-                var dirPath = Path.Combine(gameDir, knownDir);
-                if (!Directory.Exists(dirPath)) continue;
-                try
+                foreach (var dirPath in ResolveKnownDirectoriesIgnoreCase(gameDir, knownDir).ToList())
                 {
-                    foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
-                        rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, filePath));
-                    Directory.Delete(dirPath, recursive: true);
-                    DebugWindow.Log($"[Install] Update cleanup: removed known directory '{knownDir}'");
+                    try
+                    {
+                        // Link aliases carry no contents of their own — DeleteDirectoryWithRetry
+                        // unlinks them instead of recursing, so nothing to capture for rollback.
+                        if (!IsLink(dirPath))
+                            foreach (var filePath in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories))
+                                rollbackJournal.CaptureFile(Path.GetRelativePath(gameDir, filePath));
+                        DeleteDirectoryWithRetry(dirPath, true);
+                        DebugWindow.Log($"[Install] Update cleanup: removed known directory '{Path.GetFileName(dirPath)}'");
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known directory '{knownDir}': {ex.Message}"); }
                 }
-                catch (Exception ex) { DebugWindow.Log($"[Install] Update cleanup: failed to remove known directory '{knownDir}': {ex.Message}"); }
             }
         }
 
@@ -2275,12 +2480,12 @@ namespace OptiscalerClient.Services
                 if (File.Exists(Path.Combine(gameDir, file)))
                     return true;
 
-            // OptiScaler's exclusive subdirectory
-            if (Directory.Exists(Path.Combine(gameDir, "D3D12_Optiscaler")))
+            // OptiScaler's exclusive subdirectory — either spelling (see AgilitySdkDirectoryName)
+            if (ResolveKnownDirectoriesIgnoreCase(gameDir, AgilitySdkDirectoryName).Any())
                 return true;
 
-            // OptiPatcher plugin
-            if (File.Exists(Path.Combine(gameDir, "plugins", "OptiPatcher.asi")))
+            // OptiPatcher plugin — may be at root or under OptiScaler\, depending on layout
+            if (File.Exists(Path.Combine(ResolveExtrasRoot(gameDir), "plugins", "OptiPatcher.asi")))
                 return true;
 
             return false;
@@ -2319,13 +2524,12 @@ namespace OptiscalerClient.Services
                 // Delete every known OptiScaler directory unconditionally (including contents)
                 foreach (var knownDir in KnownOptiscalerDirectories)
                 {
-                    var fullPath = Path.Combine(dir, knownDir);
                     try
                     {
-                        if (Directory.Exists(fullPath))
+                        foreach (var fullPath in ResolveKnownDirectoriesIgnoreCase(dir, knownDir).ToList())
                         {
-                            Directory.Delete(fullPath, true);
-                            DebugWindow.Log($"[Uninstall][ForceClean] Deleted directory: {knownDir}");
+                            DeleteDirectoryWithRetry(fullPath, true);
+                            DebugWindow.Log($"[Uninstall][ForceClean] Deleted directory: {Path.GetFileName(fullPath)}");
                         }
                     }
                     catch (Exception ex)
@@ -2938,14 +3142,60 @@ namespace OptiscalerClient.Services
         /// archive included one). No file there → key stays unset, same as before.
         /// </summary>
         /// <summary>
-        /// Copies a downloaded RDNA2 amdxc64.dll companion into OptiDllPath (".\OptiScaler\") so
+        /// Copies a downloaded RDNA2 amdxc64.dll companion into OptiDllPath (ResolveExtrasRoot) so
         /// ConfigureFsr4IntFallback can find it and enable LoadCustomAmdxc64OnRdna2.
         /// </summary>
         public void InstallCustomAmdxc64(string gameDir, string sourcePath)
         {
-            var optiScalerDir = Path.Combine(gameDir, "OptiScaler");
-            Directory.CreateDirectory(optiScalerDir);
-            File.Copy(sourcePath, Path.Combine(optiScalerDir, Fsr4Int8DllHelper.CustomRdna2FileName), overwrite: true);
+            var extrasRoot = ResolveExtrasRoot(gameDir);
+            Directory.CreateDirectory(extrasRoot);
+            File.Copy(sourcePath, Path.Combine(extrasRoot, Fsr4Int8DllHelper.CustomRdna2FileName), overwrite: true);
+        }
+
+        /// <summary>
+        /// Installs an .asi plugin (its destination filename taken from asiSourcePath) into
+        /// ResolveExtrasRoot\plugins\ and ensures OptiScaler.ini has LoadAsiPlugins=true — the ASI
+        /// loader loads everything in plugins\ generically, so one ini key covers every plugin.
+        /// Shared by every plugin install call site (OptiPatcher, XeFGUnlock; single-game install,
+        /// bulk install, quick install) — was previously duplicated three times per plugin, each
+        /// hardcoded to gameDir root regardless of whether the installed OptiScaler package uses an
+        /// OptiScaler\ subfolder (breaking nightly, whose loader only looks for plugins\ next to
+        /// itself in there).
+        /// </summary>
+        public void InstallAsiPlugin(string gameDir, string asiSourcePath)
+        {
+            var pluginsDir = Path.Combine(ResolveExtrasRoot(gameDir), "plugins");
+            Directory.CreateDirectory(pluginsDir);
+            var asiFileName = Path.GetFileName(asiSourcePath);
+            var destAsi = Path.Combine(pluginsDir, asiFileName);
+            File.Copy(asiSourcePath, destAsi, overwrite: true);
+            DebugWindow.Log($"[AsiPlugin] Installed to {destAsi}");
+
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
+            if (File.Exists(iniPath))
+            {
+                var lines = File.ReadAllLines(iniPath).ToList();
+                bool found = false;
+                for (int idx = 0; idx < lines.Count; idx++)
+                {
+                    var trimmed = lines[idx].Trim();
+                    if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
+                        (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
+                    {
+                        lines[idx] = "LoadAsiPlugins=true";
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    lines.Add("LoadAsiPlugins=true");
+                File.WriteAllLines(iniPath, lines);
+                DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: LoadAsiPlugins=true ({asiFileName})");
+            }
+            else
+            {
+                DebugWindow.Log($"[AsiPlugin] OptiScaler.ini not found at {iniPath}, skipping patch");
+            }
         }
 
         public void ConfigureFsr4IntFallback(string gameDir, bool isRdna4, bool isRdna2)
@@ -2957,8 +3207,34 @@ namespace OptiscalerClient.Services
             ModifyOptiScalerIni(gameDir, "Fsr4ForceEnableInt8", "true", "FSR");
             ModifyOptiScalerIni(gameDir, "Fsr4Update", "true", "FSR");
 
-            if (isRdna2 && File.Exists(Path.Combine(gameDir, "OptiScaler", Fsr4Int8DllHelper.CustomRdna2FileName)))
+            if (isRdna2 && File.Exists(Path.Combine(ResolveExtrasRoot(gameDir), Fsr4Int8DllHelper.CustomRdna2FileName)))
                 ModifyOptiScalerIni(gameDir, "LoadCustomAmdxc64OnRdna2", "true", "Plugins");
+        }
+
+        /// <summary>
+        /// Where add-on installs (Streamline, DLSS Enabler, OptiPatcher, FSR4 swap, ...) should write.
+        /// Nightly builds ship their own "OptiScaler\" subfolder for everything but the main DLL/ini;
+        /// stable/beta/custom builds may or may not. No version/channel check on purpose — this just
+        /// asks disk which layout the currently-installed package actually used, so it keeps working
+        /// for any custom import too.
+        /// </summary>
+        public static string ResolveExtrasRoot(string gameDir) =>
+            Directory.Exists(Path.Combine(gameDir, "OptiScaler"))
+                ? Path.Combine(gameDir, "OptiScaler")
+                : gameDir;
+
+        /// <summary>
+        /// Locates OptiScaler.ini for reading/modifying an existing install. Always prefers gameDir
+        /// root (where a package's own ini always lands — see InstallOptiScaler); falls back to
+        /// gameDir\OptiScaler\ only if it's not at root. Returns the root path (for creation) if
+        /// neither exists — new ini files always default to root, never the nested folder.
+        /// </summary>
+        public static string ResolveOptiScalerIniPath(string gameDir)
+        {
+            var rootPath = Path.Combine(gameDir, "OptiScaler.ini");
+            if (File.Exists(rootPath)) return rootPath;
+            var nestedPath = Path.Combine(gameDir, "OptiScaler", "OptiScaler.ini");
+            return File.Exists(nestedPath) ? nestedPath : rootPath;
         }
 
         /// <summary>
@@ -2967,7 +3243,7 @@ namespace OptiscalerClient.Services
         /// </summary>
         private void ModifyOptiScalerIni(string gameDir, string key, string value, string section = "General")
         {
-            var iniPath = Path.Combine(gameDir, "OptiScaler.ini");
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
             var sectionHeader = $"[{section}]";
 
             if (!File.Exists(iniPath))
