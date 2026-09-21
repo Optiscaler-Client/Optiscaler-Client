@@ -35,7 +35,16 @@ echo "==> Staging desktop file and icon"
 sed -e "s/^Exec=.*/Exec=OptiscalerClient/" -e "s/^Icon=.*/Icon=${APP_ID}/" \
     "$REPO_ROOT/packaging/aur/optiscaler-client.desktop" \
     > "$BUILD_DIR/optiscaler-client.desktop"
-magick "$REPO_ROOT/assets/icon.png" -resize 512x512 -background none -gravity center -extent 512x512 "$BUILD_DIR/icon.png"
+# ImageMagick 7 ships `magick`, ImageMagick 6 (Debian/Ubuntu) only `convert`.
+if command -v magick >/dev/null 2>&1; then
+    IM=(magick)
+elif command -v convert >/dev/null 2>&1; then
+    IM=(convert)
+else
+    echo "error: ImageMagick is required (install 'imagemagick')" >&2
+    exit 1
+fi
+"${IM[@]}" "$REPO_ROOT/assets/icon.png" -resize 512x512 -background none -gravity center -extent 512x512 "$BUILD_DIR/icon.png"
 
 echo "==> Running flatpak-builder"
 rm -rf "$BUILDDIR" "$REPO_DIR"
