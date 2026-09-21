@@ -140,7 +140,6 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -164,7 +163,6 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -175,7 +173,7 @@ jobs:
       - name: Install flatpak-builder and runtimes
         run: |
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
+          sudo apt-get install -y flatpak flatpak-builder imagemagick
           # --user: the runner has no polkit session, so system-wide flatpak operations
           # are refused with "ConfigureRemote not allowed for user".
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -190,7 +188,7 @@ jobs:
           path: OptiscalerClient-*-x86_64.flatpak
 
   release:
-    needs: [prepare, build, flatpak-build]
+    needs: [prepare, build, nix-build, flatpak-build]
     if: needs.prepare.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -206,7 +204,6 @@ jobs:
           path: dist
 
       - uses: actions/download-artifact@v4
-        continue-on-error: true
         with:
           name: flatpak
           path: dist
