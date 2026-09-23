@@ -69,6 +69,9 @@ namespace OptiscalerClient.Views
                 if (e.Property == WindowStateProperty) OnChromeWindowStateChanged();
             };
 
+            if (OperatingSystem.IsWindows())
+                WindowsAutoHideTaskbarHelper.Attach(this);
+
             UpdateChromeForState();
         }
 
