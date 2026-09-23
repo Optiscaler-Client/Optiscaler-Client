@@ -779,14 +779,16 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">変更履歴</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: Intel Xe Frame Generation で最大 x6 の倍率を選べるようになりました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 修正: ダウンロードすべきリリースが存在しないために、カスタム版の OptiScaler のインストールが失敗する問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 修正: Linux で OptiScaler フォルダーが OptiScaler 自身の参照しない大文字・小文字で作成され、FSR 4 が無警告で FSR 3 にフォールバックする問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 修正: dxgi インジェクション方式で OptiScaler をインストールすると XeSS と競合し、ゲームが起動前にクラッシュする問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修正: Nightly 版で plugins フォルダーが OptiScaler フォルダーの外に作成される問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 修正: Nightly 版で FSR 4 の DLL スワップが OptiScaler フォルダーの外に適用される問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• 修正: GitHub へのリクエストが失敗した場合に、FSR 4 DLL Swap の FP8 バージョンセレクターがロックされたままになる問題を修正しました。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• 修正: GitHub のリポジトリ情報の取得エラーにより Streamline のダウンロードが失敗する問題を修正しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新機能: README に、OptiScaler を各ブランチから自分でビルドする方法を追加しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 改善: アプリ全体になじむようにタイトルバーを再デザインしました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 改善: 携帯ゲーム機や小さな画面への対応を強化しました。より多くのウィンドウでのゲームパッド操作、タッチでのスクロールとボタン操作、タップでのツールチップとグリッド表示のオプション表示、管理ウィンドウのドラッグとダブルタップでの最大化に対応しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 改善: カバー画像が見つからない場合は実行ファイルのアイコンを表示し、リスト表示ではよりコンパクトにするためアイコンを使うようにしました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 改善: Linux で、アプリ自身のアイコンがタスクバーに表示されるようになりました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 改善: OptiScaler をインストールせずに FSR 4 の DLL を置き換えられることを説明する案内を追加しました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• 修正: アンインストール時に、ゲーム同梱の FidelityFX DLL（amd_fidelityfx_*）が元に戻されずに削除されることがありました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• 修正: 一部のフォルダー名が正しく整形されず、互換性情報の検索でそのゲームが認識されないことがありました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew9">• 修正: 同じフォルダーが同じ実行ファイルを探して 2 回スキャンされることがありました。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew10">• 修正: Windows で、最大化したウィンドウが自動的に隠れるタスクバーの表示を妨げていました。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">このバージョンの変更点と新機能の完全なリストはGitHubで確認できます。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; GitHubで変更履歴を見る</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">はじめに</x:String>

@@ -778,14 +778,16 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：Intel Xe Frame Generation 现在支持最高 x6 的倍率。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 修复：由于不存在可供下载的版本，安装自定义 OptiScaler 版本时会失败。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 修复：在 Linux 上，OptiScaler 文件夹创建时使用了 OptiScaler 自身不会查找的大小写，导致 FSR 4 静默回退到 FSR 3。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 修复：使用 dxgi 注入方式安装 OptiScaler 会与 XeSS 冲突，导致游戏未启动便崩溃。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修复：安装 Nightly 版本时，plugins 文件夹被创建在 OptiScaler 文件夹之外。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 修复：安装 Nightly 版本时，FSR 4 的 DLL 替换被应用到 OptiScaler 文件夹之外。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• 修复：当 GitHub 请求失败时，FSR 4 DLL Swap 中的 FP8 版本选择器会保持锁定。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• 修复：因从 GitHub 获取仓库数据出错，导致 Streamline 下载失败。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：README 现已说明如何从 OptiScaler 的各个分支自行构建。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 改进：重新设计的标题栏，与应用整体风格更协调。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 改进：更好地支持掌机和小屏幕——更多窗口支持手柄、触控滚动与按钮、轻触显示提示和网格选项，管理窗口可拖动或双击最大化。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 改进：找不到封面时显示可执行文件图标，列表视图现在使用图标以更紧凑。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 改进：在 Linux 上，应用现在会在任务栏显示自己的图标。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 改进：新增提示，说明无需安装 OptiScaler 也可替换 FSR 4 DLL。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• 修复：卸载时可能删除游戏自带的 FidelityFX DLL（amd_fidelityfx_*）且未恢复原文件。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• 修复：部分文件夹名称清理错误，导致查询兼容性信息时无法识别这些游戏。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew9">• 修复：同一文件夹可能因同一可执行文件被扫描两次。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew10">• 修复：在 Windows 上，最大化窗口会导致自动隐藏的任务栏无法显示。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>
