@@ -7,4 +7,5 @@ Exec=optiscaler-client
 Icon=optiscaler-client
 Categories=Utility;
 StartupNotify=true
+StartupWMClass=OptiscalerClient
 Terminal=false
