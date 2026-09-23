@@ -249,6 +249,18 @@ namespace OptiscalerClient.Services
             return File.Exists(rootCopy) ? rootCopy : null;
         }
 
+        /// <summary>AMD's redistributable FidelityFX SDK DLLs (amd_fidelityfx_*). Games with native FSR
+        /// ship the exact same official builds OptiScaler bundles (e.g. Crimson Desert), so neither the
+        /// name nor the hash tells a leftover from a game file: never delete one blindly.</summary>
+        private static bool IsGameOwnableFfxDll(string relativePath) =>
+            Path.GetFileName(relativePath).StartsWith("amd_fidelityfx_", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>True only when the manifest's pre-install snapshot proves the file did not exist
+        /// before the install, i.e. it can only be ours.</summary>
+        private static bool WasAbsentBeforeInstall(InstallationManifest manifest, string relativePath) =>
+            manifest.PreInstallKeyFiles.Any(k => !k.Existed &&
+                k.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
+
         private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
             cacheFiles.FirstOrDefault(f =>
                 Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
@@ -441,7 +453,10 @@ namespace OptiscalerClient.Services
                 var nukemDir = componentService.GetNukemFGCachePath();
                 if (Directory.Exists(nukemDir)) cacheDirsForResidue.Add(nukemDir);
 
-                var residues = _backupStore.FindResiduesInGameDir(gameDir, KnownOptiscalerArtifacts, cacheDirsForResidue);
+                // Without a manifest a root FidelityFX DLL may well be the game's own: Step 2 / 2.05
+                // back it up and replace it instead.
+                var residueCandidates = KnownOptiscalerArtifacts.Where(a => !IsGameOwnableFfxDll(a));
+                var residues = _backupStore.FindResiduesInGameDir(gameDir, residueCandidates, cacheDirsForResidue);
                 foreach (var residue in residues)
                 {
                     var residuePath = Path.Combine(gameDir, residue);
@@ -1802,6 +1817,10 @@ namespace OptiscalerClient.Services
                 // which does the same thing for known directories.
                 foreach (var artifact in KnownOptiscalerArtifacts)
                 {
+                    // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
+                    if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(manifest, artifact))
+                        continue;
+
                     var artifactPath = Path.Combine(gameDir, artifact);
                     try
                     {
@@ -1923,6 +1942,9 @@ namespace OptiscalerClient.Services
                     {
                         var filePath = Path.Combine(dir, fileName);
                         if (!File.Exists(filePath)) continue;
+
+                        // No manifest: can't tell a game's own FidelityFX DLL from ours.
+                        if (IsGameOwnableFfxDll(fileName)) continue;
 
                         try
                         {
@@ -2102,6 +2124,10 @@ namespace OptiscalerClient.Services
             // (e.g. the FSR 4 Swap Extras DLL / OptiPatcher.asi, installed through separate flows).
             foreach (var artifact in KnownOptiscalerArtifacts)
             {
+                // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
+                if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(priorManifest, artifact))
+                    continue;
+
                 try
                 {
                     var artifactPath = Path.Combine(gameDir, artifact);
