@@ -1,5 +1,7 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 
 namespace OptiscalerClient.Helpers;
@@ -13,7 +15,10 @@ namespace OptiscalerClient.Helpers;
 /// </summary>
 public static class WindowDragHelper
 {
-    public static void EnableDrag(Window window, Control dragHandle)
+    /// <param name="shouldHandle">Optional filter: only presses it accepts start a drag. Lets a
+    /// window keep the native BeginMoveDrag for the mouse (Aero Snap, etc.) and use this only
+    /// for touch.</param>
+    public static void EnableDrag(Window window, Control dragHandle, Func<PointerPressedEventArgs, bool>? shouldHandle = null)
     {
         PixelPoint? startPointerScreenPos = null;
         PixelPoint? startWindowPos = null;
@@ -24,6 +29,8 @@ public static class WindowDragHelper
             // drag handle — BeginMoveDrag never had this problem since the native OS drag doesn't
             // steal Avalonia's own pointer routing, but capturing the pointer here would.
             if (e.Source is Visual v && v.FindAncestorOfType<Button>(includeSelf: true) != null)
+                return;
+            if (shouldHandle != null && !shouldHandle(e))
                 return;
 
             startPointerScreenPos = window.PointToScreen(e.GetPosition(window));
