@@ -840,6 +840,7 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtSetupNrModeDanielOnly">Nur der Mod von danielblnc (ohne OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (inoffizieller Wrapper)</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler bietet derzeit keine offizielle Unterstützung für Neural Rendering, daher ist ein von der Community gewrapptes Build (MatheusGViana) erforderlich, um es zusammen zu verwenden. Installation auf eigenes Risiko.</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">Die Mod von danielblnc funktioniert nur in DirectX-12-Spielen mit FSR 3.1 oder neuer. In DirectX 11 und Vulkan funktioniert sie nicht.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Mod-Version (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Version von danielblncs DLSS-Neural-Rendering-Mod zum Erzeugen der AMD-Weights. Wird sowohl für "danielblnc mod only" als auch für "Mod + OptiScaler" benötigt.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Verwendet einen inoffiziellen Drittanbieter-Fork (guentra/DLSS-NR-on-AMD-Linux), um danielblncs DLSS-Neural-Rendering-Mod unter Linux über eine echte ROCm-Brücke laufen zu lassen</x:String>

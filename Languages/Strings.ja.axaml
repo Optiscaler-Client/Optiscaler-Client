@@ -836,6 +836,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnly">danielblncのモッドのみ（OptiScalerなし）</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">モッド + OptiScaler（非公式ラッパー）</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">現時点でOptiScalerはNeural Renderingを公式にサポートしていないため、併用するにはコミュニティによるラップ版ビルド（MatheusGViana）が必要です。自己責任でインストールしてください。</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc の Mod は、FSR 3.1 以降を使用する DirectX 12 のゲームでのみ動作します。DirectX 11 と Vulkan では動作しません。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">モッドのバージョン（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMDのweightsを生成するために使用するdanielblncのDLSS Neural Renderingモッドのバージョンです。「danielblnc mod only」と「Mod + OptiScaler」の両方で必要です。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">非公式のサードパーティ製フォーク(guentra/DLSS-NR-on-AMD-Linux)を使い、実際のROCmブリッジ経由でdanielblncのDLSS Neural RenderingモッドをLinuxで動かします</x:String>

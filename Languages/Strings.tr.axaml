@@ -819,6 +819,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrModeDanielOnly">Yalnızca danielblnc modu (OptiScaler olmadan)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (resmi olmayan wrapper)</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">Şu anda OptiScaler'ın Neural Rendering için resmi desteği bulunmuyor, bu nedenle birlikte kullanabilmek için topluluk tarafından sarmalanmış bir sürüm (MatheusGViana) gereklidir. Kendi sorumluluğunuzda kurun.</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc'in modu yalnızca FSR 3.1 veya daha yenisini kullanan DirectX 12 oyunlarında çalışır. DirectX 11 ve Vulkan'da çalışmaz.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Mod sürümü (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD weights'lerini oluşturmak için kullanılan danielblnc'nin DLSS Neural Rendering mod sürümü. Hem "danielblnc mod only" hem de "Mod + OptiScaler" için gereklidir.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">danielblnc'in DLSS Neural Rendering modunu Linux'ta gerçek bir ROCm köprüsü üzerinden çalıştırmak için resmi olmayan üçüncü taraf bir fork (guentra/DLSS-NR-on-AMD-Linux) kullanır</x:String>

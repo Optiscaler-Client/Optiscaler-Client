@@ -836,6 +836,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnly">僅安裝 danielblnc 的模組（不含 OptiScaler）</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">模組 + OptiScaler（非官方 wrapper）</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支援 Neural Rendering，因此需要使用社群打包的版本（MatheusGViana）才能搭配使用。安裝風險請自行承擔。</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc 的模組僅適用於使用 FSR 3.1 或更新版本的 DirectX 12 遊戲。在 DirectX 11 和 Vulkan 中無法使用。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模組版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">用於產生 AMD 權重的 danielblnc DLSS Neural Rendering 模組版本。「danielblnc mod only」和「Mod + OptiScaler」都需要它。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">透過一個非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux),經由真正的 ROCm 橋接,在 Linux 上執行 danielblnc 的 DLSS Neural Rendering 模組</x:String>

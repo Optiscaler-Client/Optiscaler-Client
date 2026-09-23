@@ -120,8 +120,16 @@
                             Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
                             MaxWidth="320"
                             MaxHeight="460"
-                            ClipToBounds="True">
+                            ClipToBounds="True"
+                            Background="{StaticResource BrBgElevated}">
                             <Grid>
+                                <!-- Same no-cover fallback as the Games grid cards; the cover hides it once loaded. -->
+                                <TextBlock Text="🎮"
+                                           FontSize="40"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           Opacity="0.5"/>
                                 <Image Name="ImgGameCover" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Border Classes="ImageOverlay">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
@@ -595,6 +603,36 @@
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrWrapperWarning}"
                                                Foreground="{StaticResource BrWarning}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Shown while Setup NR's mod-only mode is pending/installed: the mod hooks the
+                                 game's own FSR 3.1+ on D3D12, so in a DX11 game it loads and silently does
+                                 nothing (no End menu) — same style as PanelFsr4SwapOnlyHint. -->
+                            <Border Name="PanelDanielOnlyDx12Info"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="#4A90E2"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtSetupNrDanielOnlyDx12Info}"
+                                               Foreground="#4A90E2"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                VerticalAlignment="Center"

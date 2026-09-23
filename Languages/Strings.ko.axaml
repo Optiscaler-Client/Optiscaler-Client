@@ -821,6 +821,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnly">danielblnc 모드만 (OptiScaler 없이)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">모드 + OptiScaler (비공식 래퍼)</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">현재 OptiScaler는 Neural Rendering을 공식적으로 지원하지 않으므로, 함께 사용하려면 커뮤니티에서 래핑한 빌드(MatheusGViana)가 필요합니다. 본인 책임하에 설치하세요.</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc의 모드는 FSR 3.1 이상을 사용하는 DirectX 12 게임에서만 작동합니다. DirectX 11과 Vulkan에서는 작동하지 않습니다.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">모드 버전 (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD 웨이트를 생성하는 데 사용되는 danielblnc의 DLSS Neural Rendering 모드 버전입니다. "danielblnc mod only"와 "Mod + OptiScaler" 모두에 필요합니다.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">비공식 서드파티 포크(guentra/DLSS-NR-on-AMD-Linux)를 사용해 실제 ROCm 브리지를 통해 danielblnc의 DLSS Neural Rendering 모드를 Linux에서 실행합니다</x:String>

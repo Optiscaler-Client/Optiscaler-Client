@@ -2279,6 +2279,7 @@ namespace OptiscalerClient.Views
             bool danielOnlyActive = danielModOnlyInstalledForPanels || danielOnlyPendingForPanels;
             if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !_optiShowingModded && !isNone;
             if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = !danielOnlyActive && _optiShowingModded;
+            SetDanielOnlyDx12InfoVisible(danielOnlyActive);
 
             if (disableFakenvapi)
             {
@@ -3948,6 +3949,8 @@ namespace OptiscalerClient.Views
             try
             {
                 if (bdProgress != null) bdProgress.IsVisible = true;
+                // Auto Install shows this card indeterminate while waiting (see ShowDanielModAutoInstallingStatus).
+                if (prgDownload != null) prgDownload.IsIndeterminate = false;
                 var progress = new Progress<double>(p => Dispatcher.UIThread.Post(() =>
                 {
                     if (prgDownload != null) prgDownload.Value = p;
@@ -4136,6 +4139,8 @@ namespace OptiscalerClient.Views
                 var gameDir = await DownloadAndStageDanielModAsync(version);
                 if (gameDir == null) return false;
 
+                // The download step hid the progress card again; the headless installer is the longest wait.
+                ShowDanielModAutoInstallingStatus();
                 var result = await _dlssNrService.RunAutomatedInstallAsync(_game, gameDir, version, isModeB);
                 if (result == DlssNrOnAmdService.AutomatedInstallResult.Success) return true;
 
@@ -4156,6 +4161,7 @@ namespace OptiscalerClient.Views
             }
             finally
             {
+                HideLinuxWrapperInstallingStatus(); // hides the shared progress card, not Linux-specific
                 UpdateStatus();
             }
         }
@@ -4356,7 +4362,13 @@ namespace OptiscalerClient.Views
             var statusIndicator = this.FindControl<Ellipse>("StatusIndicator");
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
-            if (txtStatus != null) txtStatus.Text = GetResourceString("TxtSetupNrAutoInstalling", "Installing danielblnc's mod...");
+            var installingText = GetResourceString("TxtSetupNrAutoInstalling", "Installing danielblnc's mod...");
+            if (txtStatus != null) txtStatus.Text = installingText;
+            // Same progress card as the Linux fork install (ShowLinuxWrapperInstallingStatus): the status
+            // line alone was easy to miss during the Defender-exclusion pause and the headless installer.
+            SetLinuxWrapperStatusText(installingText);
+            if (this.FindControl<ProgressBar>("PrgDownload") is { } prgDownload) prgDownload.IsIndeterminate = true;
+            if (this.FindControl<Border>("BdProgress") is { } bdProgress) bdProgress.IsVisible = true;
             if (statusIndicator != null) statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
             if (btnInstall != null) btnInstall.IsEnabled = false;
             if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
@@ -5658,6 +5670,7 @@ namespace OptiscalerClient.Views
                     SetOptiTabsForModdedMode(false);
                     var dlssNrLinuxWarningNone = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
                     if (dlssNrLinuxWarningNone != null) dlssNrLinuxWarningNone.IsVisible = false;
+                    SetDanielOnlyDx12InfoVisible(false);
                     if (_cachedComponentService != null)
                     {
                         UpdateOptiChannelButtons();
@@ -5708,11 +5721,13 @@ namespace OptiscalerClient.Views
                     if (betaInfoPanelDanielOnly != null) betaInfoPanelDanielOnly.IsVisible = false;
                     if (moddedWarningPanelDanielOnly != null) moddedWarningPanelDanielOnly.IsVisible = false;
                     if (dlssNrLinuxWarningDanielOnly != null) dlssNrLinuxWarningDanielOnly.IsVisible = !OperatingSystem.IsWindows();
+                    SetDanielOnlyDx12InfoVisible(true);
                     _ = PopulateDlssNrDanielVersionComboAsync();
                     break;
 
                 case "daniel-and-opti":
                     _game.PendingDlssNrOnAmdMode = "daniel-and-opti";
+                    SetDanielOnlyDx12InfoVisible(false);
                     SetOptiScalerControlsLocked(false);
                     SetOptiTabsForModdedMode(true);
                     if (btnInstallManual != null) btnInstallManual.IsVisible = true;
@@ -5724,6 +5739,11 @@ namespace OptiscalerClient.Views
             }
 
             UpdateStatus();
+        }
+
+        private void SetDanielOnlyDx12InfoVisible(bool visible)
+        {
+            if (this.FindControl<Border>("PanelDanielOnlyDx12Info") is { } panel) panel.IsVisible = visible;
         }
 
         private void SelectCmbSetupNrTag(string tag)
