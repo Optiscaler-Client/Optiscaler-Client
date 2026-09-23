@@ -318,19 +318,24 @@ namespace OptiscalerClient.Views
                     visibleSettingsCount++;
 
                     var settingPanel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 12, 12) };
-                    var labelRow = new StackPanel
+                    // A DockPanel (not a horizontal StackPanel) so the label is measured against the
+                    // cell's width: long labels get trimmed instead of spilling over the next column
+                    // on narrow cards. The "?" is docked right and added first, so it's measured
+                    // first and always stays visible, right after the (possibly trimmed) text.
+                    var labelRow = new DockPanel
                     {
-                        Orientation = Avalonia.Layout.Orientation.Horizontal,
-                        Spacing = 6
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left
                     };
+                    var labelText = setting.Label ?? setting.Key;
                     var labelBlock = new TextBlock
                     {
-                        Text = setting.Label ?? setting.Key,
+                        Text = labelText,
                         FontSize = 12,
+                        TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
                         Foreground = Application.Current?.FindResource("BrTextSecondary") as Avalonia.Media.IBrush
                             ?? Avalonia.Media.Brushes.Gray
                     };
-                    labelRow.Children.Add(labelBlock);
+                    ToolTip.SetTip(labelBlock, labelText);
 
                     if (!string.IsNullOrWhiteSpace(setting.Tooltip))
                     {
@@ -356,9 +361,12 @@ namespace OptiscalerClient.Views
                             }
                         };
                         ToolTip.SetTip(tooltipIcon, setting.Tooltip);
+                        tooltipIcon.Margin = new Thickness(6, 0, 0, 0);
+                        DockPanel.SetDock(tooltipIcon, Dock.Right);
                         labelRow.Children.Add(tooltipIcon);
                     }
 
+                    labelRow.Children.Add(labelBlock);
                     settingPanel.Children.Add(labelRow);
 
                     Control settingControl;
