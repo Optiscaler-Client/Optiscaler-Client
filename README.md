@@ -1,6 +1,6 @@
 # ✦ OptiScaler Client
 
-[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.7.1)
+[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.7.2)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-yellow.svg?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-E95420?style=flat-square&logo=linux)](https://www.linux.org)
@@ -297,5 +297,5 @@ This client application is merely a frontend interface to help users more easily
 ---
 
 <p align="center">
-  Developed with ❤️
+  Developed with ❤️ by <a href="https://github.com/agustinm28">Agustinm28</a>
 </p>

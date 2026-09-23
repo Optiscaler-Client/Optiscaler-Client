@@ -48,7 +48,7 @@
         };
         packages.default = pkgs.buildDotnetModule rec {
           pname = "OptiscalerClient";
-          version = "1.0.7.1";
+          version = "1.0.7.2";
           src = ./.;
 
           inherit dotnet-sdk dotnet-runtime;
