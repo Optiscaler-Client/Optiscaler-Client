@@ -99,17 +99,23 @@
         </Style>
     </Window.Styles>
 
+    <Panel>
     <Panel Margin="12" Name="RootPanel" Opacity="0">
-        <Border CornerRadius="12"
+        <!-- Floating card: rounded, outlined, with a shadow in RootPanel's margin. On small screens
+             the window fills the work area instead and this goes square and edge to edge
+             (see EnableFillScreen in ManageGameWindow.Responsive.cs). -->
+        <Border Name="BdManageFrame"
+                CornerRadius="12"
                 Background="{StaticResource BrBgBase}"
                 BoxShadow="0 8 32 0 #80000000"
                 BorderBrush="{StaticResource BrBorderSubtle}"
                 BorderThickness="1">
-            <Grid ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
+            <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
                 <!-- LEFT COLUMN -->
-                <Grid Grid.Column="0" Margin="16" RowDefinitions="*,Auto">
+                <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
                     <StackPanel Grid.Row="0" Spacing="12">
                     <Border Classes="ImageCard"
+                            Name="BdGameCover"
                             HorizontalAlignment="Stretch"
                             Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
                             MaxWidth="320"
@@ -138,7 +144,7 @@
                                  same Stretch-with-leftover-space centering offset and their left
                                  edges line up, instead of this Grid filling the full (wider)
                                  column and sitting flush against the window edge. -->
-                            <Grid ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                            <Grid Name="GridGameTitle" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                                 <!-- Long titles wrap to a second line and only then ellipsize: at
                                      this width a single line cuts around 20 characters, which is
                                      still inside the shared prefix of many franchise titles. The
@@ -178,7 +184,7 @@
                     <!-- Path & Open Folder bottom aligned. Same MaxWidth as the title Grid above
                          so both pick up the identical Stretch centering offset as the cover and
                          line up with it (see comment on the title Grid). -->
-                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+                    <Grid Grid.Row="1" Name="GridInstallPath" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
                         <Border Grid.Column="0"
                                 Background="{StaticResource BrBgBase}"
                                 BorderBrush="{StaticResource BrBorderSubtle}"
@@ -348,20 +354,44 @@
 
                     <!-- DETECTED COMPONENTS -->
                     <Border Grid.Row="1"
+                            Name="BdDetectedComponents"
                             Background="{StaticResource BrBgSurface}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
                             Padding="12,10"
                             Margin="0,0,0,10">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="{DynamicResource TxtDetectedComponents}"
-                                       FontSize="{StaticResource FontSizeBody}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource BrTextSecondary}"/>
+                        <StackPanel Name="PnlDetectedComponents" Spacing="8">
+                            <!-- Collapsible to a single row of badges (see ManageGameWindow.Responsive.cs):
+                                 the toggle only shows when the badges wrap past one row, and reads "+N"
+                                 with the number of hidden badges while collapsed. -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{DynamicResource TxtDetectedComponents}"
+                                           FontSize="{StaticResource FontSizeBody}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrTextSecondary}"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="1"
+                                        Name="BtnToggleComponents"
+                                        Classes="BtnBase"
+                                        Padding="8,2"
+                                        IsVisible="False"
+                                        Click="BtnToggleComponents_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Name="TxtComponentsMore"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Name="TxtComponentsChevron"
+                                                   Text="▾"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
                             <ListBox Name="LstComponents"
                                      Background="Transparent"
-                                     BorderThickness="0">
+                                     BorderThickness="0"
+                                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
                                 <ListBox.Styles>
                                     <!-- Informational only - no selection/hover highlight, but pointer
                                          events must reach items so item tooltips can show. -->
@@ -442,15 +472,74 @@
 
                     <!-- CONFIG + ACTIONS -->
                     <Border Grid.Row="2"
+                            Name="BdInstallOptionsCard"
                             VerticalAlignment="Stretch"
                             Background="{StaticResource BrBgDeep}"
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
                             Padding="14,12">
+                        <DockPanel>
+                        <!-- Action row: pinned below the scroll area so Install stays reachable on small screens.
+                             Install buttons right-aligned, Cleanup left-aligned. -->
+                        <Grid Name="GridInstallActions" DockPanel.Dock="Bottom" Margin="0,10,0,0" ColumnDefinitions="Auto,*">
+                            <!-- Cleanup button — left side (own column, so a narrow window can't
+                                 push the install buttons on top of it) -->
+                            <Button Name="BtnFolderCleanup"
+                                    Content="{DynamicResource TxtFolderCleanup}"
+                                    Classes="BtnBase"
+                                    Padding="14,7"
+                                    HorizontalAlignment="Left"
+                                    Click="BtnFolderCleanup_Click"/>
+
+                            <!-- Install buttons — right side -->
+                            <!-- WrapPanel: on very narrow windows the long "Update / Reinstall" labels
+                                 drop to a second line instead of running past the card's edge. -->
+                            <WrapPanel Name="InstallBtnGroup"
+                                       Grid.Column="1" Margin="10,0,0,0"
+                                       Orientation="Horizontal" ItemSpacing="10" LineSpacing="6"
+                                       HorizontalAlignment="Right">
+                                <!-- Shown instead of BtnInstallManual only when Profile/Upscaling
+                                     Quality/Output Upscaler/Frame Generation changed and nothing
+                                     else did (see RefreshInstallActionAvailability) — a plain
+                                     dropdown like CmbOptiVersion/CmbOptiPatcherVersion above, not
+                                     a split button. Item 0 is a non-persisting placeholder that
+                                     just displays the button's usual label; picking one of the
+                                     two real options fires the action and snaps back to it. -->
+                                <ComboBox Name="CmbInstallActionManual"
+                                          Classes="BtnSuccess"
+                                          Padding="16,8"
+                                          MinWidth="170"
+                                          IsVisible="False"
+                                          PlaceholderText="{DynamicResource TxtUpdateOptiManual}"
+                                          SelectionChanged="CmbInstallActionManual_SelectionChanged"/>
+                                <Button Name="BtnInstallManual"
+                                        Content="{DynamicResource TxtBtnManualInstall}"
+                                        Classes="BtnSuccess"
+                                        Padding="16,8"
+                                        Click="BtnInstallManual_Click"/>
+                                <ComboBox Name="CmbInstallAction"
+                                          Classes="BtnSuccess"
+                                          Padding="16,8"
+                                          MinWidth="170"
+                                          IsVisible="False"
+                                          PlaceholderText="{DynamicResource TxtUpdateOpti}"
+                                          SelectionChanged="CmbInstallAction_SelectionChanged"/>
+                                <Button Name="BtnInstall"
+                                        Content="{DynamicResource TxtInstallOpti}"
+                                        Classes="BtnSuccess"
+                                        Padding="16,8"
+                                        Click="BtnInstall_Click"/>
+                            </WrapPanel>
+                        </Grid>
+                        <!-- Scrolls only when the window can't fit everything (small screens / handhelds). -->
+                        <ScrollViewer Name="ScrollInstallOptions"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
                         <StackPanel Name="PnlInstallOptions" Spacing="0">
-                            <!-- Info panel -->
-                            <Border Name="BetaInfoPanel"
+                            <!-- Info panel: users rarely discover that OptiScaler = "None" + a FSR 4 DLL
+                                 does a swap-only install, so point it out while a real version is picked. -->
+                            <Border Name="PanelFsr4SwapOnlyHint"
                                     Background="{StaticResource BrBgElevated}"
                                     BorderBrush="#4A90E2"
                                     BorderThickness="1"
@@ -458,22 +547,26 @@
                                     Padding="10,6"
                                     Margin="0,0,0,10"
                                     IsVisible="False">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xF4A4;"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
                                                FontFamily="{StaticResource FontIcons}"
                                                Foreground="#4A90E2"
                                                FontSize="16"
                                                FontWeight="Bold"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource TxtBetaIncludesComponents}"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtFsr4SwapOnlyHint}"
                                                Foreground="#4A90E2"
                                                FontSize="12"
                                                FontWeight="Medium"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
                             </Border>
 
-                            <!-- Shown instead of BetaInfoPanel while the "Modded" OptiScaler channel
+                            <!-- Shown instead of PanelFsr4SwapOnlyHint while the "Modded" OptiScaler channel
                                  (Setup NR's Mod + OptiScaler mode) is selected — that build is a
                                  community wrapper, not an OptiScaler release, so the "already includes
                                  X/Y" info doesn't apply and a risk warning belongs there instead. -->
@@ -509,7 +602,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Shown instead of BetaInfoPanel/PanelModdedWarning while danielblnc's
+                            <!-- Shown instead of PanelFsr4SwapOnlyHint/PanelModdedWarning while danielblnc's
                                  mod-only Setup NR mode is pending/installed on Linux — there, "Setup NR"
                                  doesn't run danielblnc's own installer at all, it runs
                                  guentra/DLSS-NR-on-AMD-Linux, an unofficial third-party fork (not
@@ -571,8 +664,11 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Options + Actions (3 columns × 7 rows: 4 option rows, Experimental, Uninstall, Buttons) -->
-                            <Grid ColumnDefinitions="*,*,*"
+                            <!-- Options (3 columns, or 2 on narrow widths — see ManageGameWindow.Responsive.cs):
+                                 6 option rows, Experimental, Uninstall. The Install/Cleanup action row
+                                 lives outside the scroll area, pinned at the bottom of the card. -->
+                            <Grid Name="GridInstallOptions"
+                                  ColumnDefinitions="*,*,*"
                                   RowSpacing="10"
                                   ColumnSpacing="12">
                                 <Grid.RowDefinitions>
@@ -583,6 +679,10 @@
                                          and/or NukemFG selectors visible — older/Custom OptiScaler
                                          builds) — see UpdateOptionsLayout. The compact layout never
                                          places anything here, so it collapses to zero height. -->
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- 5th/6th options rows: only used by the 2-column layout (up to
+                                         11 panels → 6 rows); empty rows collapse to zero height. -->
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <!-- Experimental zone (RenoDX today, future experimental options
                                          go here too) — its own row, always after the regular options
@@ -596,7 +696,6 @@
                                          again the moment the game gets installed. Matches the
                                          buttons' own height (Padding="14,7" around a ~20px line). -->
                                     <RowDefinition Height="Auto" MinHeight="34"/>
-                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -880,9 +979,23 @@
 
                             <!-- Row 0, Col 1 : FSR 4 DLL swap -->
                                 <StackPanel Name="PanelExtrasVersion" Grid.Row="0" Grid.Column="1">
-                                    <TextBlock Text="{DynamicResource TxtFsr4SwapLbl}"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtFsr4SwapLbl}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtFsr4SwapTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <Grid Name="GridExtrasTabs" ColumnDefinitions="*,*" Margin="0,4,0,0">
                                         <Button Name="BtnExtrasInt8"
                                                 Grid.Column="0"
@@ -954,7 +1067,7 @@
                                      underneath it instead of just sitting inside the box. Declared after
                                      BorderExperimentalZone in this same Grid cell so it paints on top
                                      (Grid children z-order by declaration order). -->
-                                <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                <Grid Name="GridExperimentalZone" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
                                     <Border Name="BorderExperimentalZone"
                                             BorderBrush="{StaticResource BrExperimental}"
                                             BorderThickness="1"
@@ -1105,9 +1218,9 @@
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
 
-                                <!-- Row 5, Col 2 : Uninstall button -->
+                                <!-- Row 7, last column : Uninstall button -->
                                 <Button Name="BtnUninstall"
-                                        Grid.Row="5" Grid.Column="2"
+                                        Grid.Row="7" Grid.Column="2"
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
@@ -1115,55 +1228,10 @@
                                         IsVisible="False"
                                         Click="BtnUninstall_Click"/>
 
-                                <!-- Row 6, all columns : Install buttons right-aligned, Cleanup left-aligned -->
-                                <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
-                                    <!-- Cleanup button — left side -->
-                                    <Button Name="BtnFolderCleanup"
-                                            Content="{DynamicResource TxtFolderCleanup}"
-                                            Classes="BtnBase"
-                                            Padding="14,7"
-                                            HorizontalAlignment="Left"
-                                            Click="BtnFolderCleanup_Click"/>
-
-                                    <!-- Install buttons — right side -->
-                                    <StackPanel Name="InstallBtnGroup"
-                                                Orientation="Horizontal" Spacing="10"
-                                                HorizontalAlignment="Right">
-                                        <!-- Shown instead of BtnInstallManual only when Profile/Upscaling
-                                             Quality/Output Upscaler/Frame Generation changed and nothing
-                                             else did (see RefreshInstallActionAvailability) — a plain
-                                             dropdown like CmbOptiVersion/CmbOptiPatcherVersion above, not
-                                             a split button. Item 0 is a non-persisting placeholder that
-                                             just displays the button's usual label; picking one of the
-                                             two real options fires the action and snaps back to it. -->
-                                        <ComboBox Name="CmbInstallActionManual"
-                                                  Classes="BtnSuccess"
-                                                  Padding="16,8"
-                                                  MinWidth="170"
-                                                  IsVisible="False"
-                                                  PlaceholderText="{DynamicResource TxtUpdateOptiManual}"
-                                                  SelectionChanged="CmbInstallActionManual_SelectionChanged"/>
-                                        <Button Name="BtnInstallManual"
-                                                Content="{DynamicResource TxtBtnManualInstall}"
-                                                Classes="BtnSuccess"
-                                                Padding="16,8"
-                                                Click="BtnInstallManual_Click"/>
-                                        <ComboBox Name="CmbInstallAction"
-                                                  Classes="BtnSuccess"
-                                                  Padding="16,8"
-                                                  MinWidth="170"
-                                                  IsVisible="False"
-                                                  PlaceholderText="{DynamicResource TxtUpdateOpti}"
-                                                  SelectionChanged="CmbInstallAction_SelectionChanged"/>
-                                        <Button Name="BtnInstall"
-                                                Content="{DynamicResource TxtInstallOpti}"
-                                                Classes="BtnSuccess"
-                                                Padding="16,8"
-                                                Click="BtnInstall_Click"/>
-                                    </StackPanel>
-                                </Grid>
                             </Grid>
                         </StackPanel>
+                        </ScrollViewer>
+                        </DockPanel>
                     </Border>
 
                     <!-- TOAST NOTIFICATION -->
@@ -1762,5 +1830,19 @@
                 Background="#A0000000"
                 IsVisible="False"
                 ZIndex="9999"/>
+    </Panel>
+
+    <!-- Resize borders — only shown when the Debug window's "Make Manage window resizable" check
+         is on (see ManageGameWindow.Responsive.cs). They sit on RootPanel's transparent margin. -->
+    <Panel Name="ManageResizeGrips" IsVisible="False">
+        <Border Tag="North" Height="10" VerticalAlignment="Top" Background="Transparent" Cursor="TopSide"/>
+        <Border Tag="South" Height="10" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomSide"/>
+        <Border Tag="West" Width="10" HorizontalAlignment="Left" Background="Transparent" Cursor="LeftSide"/>
+        <Border Tag="East" Width="10" HorizontalAlignment="Right" Background="Transparent" Cursor="RightSide"/>
+        <Border Tag="NorthWest" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" Cursor="TopLeftCorner"/>
+        <Border Tag="NorthEast" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Cursor="TopRightCorner"/>
+        <Border Tag="SouthWest" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomLeftCorner"/>
+        <Border Tag="SouthEast" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomRightCorner"/>
+    </Panel>
     </Panel>
 </Window>
