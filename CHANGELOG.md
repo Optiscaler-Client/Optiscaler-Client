@@ -1,3 +1,37 @@
+#### [1.0.7.2] ####
+
+# What’s Changed
+
+This patch fixes a **critical uninstall bug** that deleted a game's own FidelityFX DLLs, along with several scanning and window issues. It also brings a **refreshed title bar**, executable icons as a fallback when no cover is found, and much better support for **handhelds and small screens**, with extended gamepad and touch controls across the app.
+
+# Changelog
+
+### Fixes
+
+- Fixed a critical bug where the client failed to recognize a game's own FSR 4 DLLs during uninstallation, deleting its `amd_fidelityfx_*` files without restoring the originals from the backup.
+- Fixed a bug where some folder names were cleaned up incorrectly, preventing certain games from being matched when looking up compatibility information.
+- Fixed a bug where the same folder could be scanned twice for the same executable.
+- Fixed a bug on Windows where a maximized window kept the taskbar from showing when taskbar auto-hide is enabled.
+
+### New
+
+- Added instructions to the README for building OptiScaler yourself from its different branches.
+
+##### Improvements
+
+- Redesigned the app's title bar so it blends in with the rest of the interface.
+- In the Games view, the executable's icon is now shown when no cover art can be found.
+- List view now shows the executable's icon instead of the cover art, for a more compact layout.
+- On Linux, the app now shows its own icon in the taskbar while running.
+- Added an info note explaining that FSR 4 DLLs can be swapped without installing OptiScaler.
+- Improved support for handhelds and small screens:
+  - Extended gamepad support to more windows.
+  - Improved touch support across multiple windows: you can now scroll and press buttons with your finger.
+  - Tapping a game in grid mode now keeps its options visible until you tap somewhere else.
+  - Tapping an element with a tooltip now shows the tooltip; tap anywhere else to close it.
+  - The Manage window can now be dragged with your finger, and double-tapped to maximize.
+  - Compacted some views to make them easier to read on small screens.
+
 #### [1.0.7.1] ####
 
 # What’s Changed
