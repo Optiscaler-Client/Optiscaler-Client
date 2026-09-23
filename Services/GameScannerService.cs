@@ -228,13 +228,11 @@ public class GameScannerService
     {
         var cleaned = folderName;
 
-        // Replace underscores with spaces if used as word separators
-        if (cleaned.Contains('_') && !cleaned.Contains(' '))
-            cleaned = cleaned.Replace('_', ' ');
-
-        // Replace dots with spaces if used as word separators
-        if (cleaned.Contains('.') && !cleaned.Contains(' '))
-            cleaned = cleaned.Replace('.', ' ');
+        // Replace underscores and dots with spaces if used as word separators. Both are checked
+        // against the original name: "Custom_Alan.Wake.2" mixes them, and replacing "_" first
+        // used to add a space that then skipped the dots.
+        if (!cleaned.Contains(' '))
+            cleaned = cleaned.Replace('_', ' ').Replace('.', ' ');
 
         // Remove scene/release group suffixes like "-InsaneRamZes", "-CODEX", "-FLT", etc.
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*-[A-Za-z0-9_.]+$", "");

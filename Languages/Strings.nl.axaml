@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">Minimaliseren</x:String>
+    <x:String x:Key="TxtWindowMaximize">Maximaliseren</x:String>
+    <x:String x:Key="TxtWindowRestore">Herstellen</x:String>
+    <x:String x:Key="TxtWindowClose">Sluiten</x:String>
     <x:String x:Key="TxtBtnScan">⟳  Games scannen</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  Voeg handmatig toe</x:String>
     <x:String x:Key="TxtTipSettings">Instellingen</x:String>
@@ -113,6 +117,8 @@
     <x:String x:Key="TxtOpenFolder">📂  Open Map</x:String>
     <x:String x:Key="TxtOptiStatus">OptiScaler Status</x:String>
     <x:String x:Key="TxtDetectedComponents">Gedetecteerde Componenten</x:String>
+    <x:String x:Key="TxtComponentsShowAll">Alles tonen</x:String>
+    <x:String x:Key="TxtComponentsShowLess">Minder tonen</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">Bevestig Deïnstallatie</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">Weet u zeker dat u OptiScaler wilt deïnstalleren?&#x0a;Alleen geback-upde originele bestanden worden hersteld.</x:String>
     <x:String x:Key="TxtUninstall">✕ Deïnstalleer</x:String>
@@ -138,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Configuratie bijgewerkt.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Kan de configuratie niet bijwerken:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Er is iets anders veranderd — gebruik in plaats daarvan Installeren/Opnieuw installeren.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Geen</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Geen — alleen FSR 4-wissel</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Automatische DLL-swap</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Handmatige DLL-swap</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Originele DLL herstellen</x:String>
@@ -264,7 +270,6 @@
     <x:String x:Key="TxtRenderingModeSoftware">Software</x:String>
     <x:String x:Key="TxtBetaVersions">Voorkeur voor laatste beta als standaard</x:String>
     <x:String x:Key="TxtBetaVersionsDesc">Wanneer ingeschakeld, selecteert automatisch de laatste beta versie in plaats van de stabiele release.</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">Deze versie bevat al Fakenvapi en NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Selecteer een Optiscaler-versie of een FSR 4-DLL (Swap).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Standaard FSR 4 Swap</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Standaard FSR 4 Swap-modversie die vooraf wordt geselecteerd bij het openen van een spel. RDNA 4-GPU's (RX 9000-serie) gebruiken automatisch Geen.</x:String>
@@ -816,7 +821,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (alleen mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">Hiermee kun je DLSS Neural Rendering gebruiken op AMD-gpu's via de niet-officiële mod van danielblnc, optioneel gecombineerd met een niet-officiële OptiScaler-build. Experimenteel, zonder officiële ondersteuning en losstaand van OptiScalers eigen upscalers — gebruik op eigen risico.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Te installeren OptiScaler-versie. Schakelt automatisch over naar de community-build "Modded" (de wrapper van MatheusGViana) wanneer hierboven "Mod + OptiScaler" is geselecteerd.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Te installeren OptiScaler-versie. Kies "Geen" om alleen de FSR 4-DLL te wisselen, zonder OptiScaler te installeren.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">De AMD DLSS Neural Rendering-mod is al geïnstalleerd voor deze game.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Verwijderen voert het installatieprogramma van danielblnc opnieuw uit — kies de verwijderoptie wanneer daarom wordt gevraagd.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Eerst hebben we je eigen legitieme kopie van nvngx_dlssnr.dll nodig — we mogen dit bestand om juridische redenen niet zelf aanleveren. Je kunt het halen uit elke game met DLSS 5-ondersteuning. Wordt maar één keer gevraagd en hergebruikt voor toekomstige installaties; je kunt het later bijwerken via Instellingen → Beheer Lokale Versies.</x:String>
@@ -835,6 +840,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrModeDanielOnly">Alleen de mod van danielblnc (zonder OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (niet-officiële wrapper)</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler heeft momenteel geen officiële ondersteuning voor Neural Rendering, daarom is een door de community gewrapte build (MatheusGViana) nodig om het samen te gebruiken. Installeer op eigen risico.</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">De mod van danielblnc werkt alleen in DirectX 12-games die FSR 3.1 of nieuwer gebruiken. Hij werkt niet in DirectX 11 of Vulkan.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Modversie (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versie van danielblncs DLSS Neural Rendering-mod die wordt gebruikt om de AMD-weights te genereren. Nodig voor zowel "danielblnc mod only" als "Mod + OptiScaler".</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Gebruikt een onofficiële externe fork (guentra/DLSS-NR-on-AMD-Linux) om danielblncs DLSS Neural Rendering-mod via een echte ROCm-brug op Linux te draaien</x:String>
@@ -938,6 +944,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Kies de vooraf geselecteerde FSR 4-DLL in Manage en Quick Install. None slaat injectie of swap over.</x:String>
     <x:String x:Key="TxtFrameGeneration">Framegeneratie</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4-DLL (Wisselen)</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Vervangt de FSR-DLL van het spel door FSR 4. INT8: voor GPU's zonder officiële FSR 4-ondersteuning. FP8: het officiële model (RDNA 4).&#10;&#10;Werkt met of zonder OptiScaler: zet OptiScaler op "Geen" om alleen de DLL te wisselen. Zonder OptiScaler moet het spel al FSR 3.1 of nieuwer bevatten.</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">Om naar FSR 4 te wisselen zonder OptiScaler te installeren, kies "Geen" als OptiScaler-versie en selecteer een FSR 4-DLL (Wisselen).</x:String>
     <x:String x:Key="TxtFgRoute">FG-route</x:String>
     <x:String x:Key="TxtFgRouteTooltip">Selecteert de invoerroute die OptiScaler gebruikt voor Framegeneratie in deze game.</x:String>
     <x:String x:Key="TxtFgOutput">FG-uitvoer</x:String>
@@ -1033,14 +1041,16 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtUpscalingQualityApplyError">De upscaling-kwaliteitsconfiguratie kon niet worden toegepast:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Kies de deler die wordt gebruikt om de interne invoerresolutie te berekenen op basis van de outputresolutie.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Aangepaste upscaling-kwaliteit</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: Intel Xe Frame Generation ondersteunt nu vermenigvuldigers tot x6.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Opgelost: het installeren van een aangepaste OptiScaler-versie mislukte omdat de installer nog steeds een release verwachtte om te downloaden.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Opgelost: op Linux werd de OptiScaler-map aangemaakt met een schrijfwijze waar OptiScaler zelf niet naar zoekt, waardoor FSR 4 stilletjes terugviel op FSR 3.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Opgelost: OptiScaler installeren met de dxgi-injectiemethode botste met XeSS en liet het spel crashen voordat het opende.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Opgelost: bij Nightly-builds werd de map plugins buiten de OptiScaler-map aangemaakt.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Opgelost: bij Nightly-builds werden FSR 4 DLL-swaps buiten de OptiScaler-map toegepast.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• Opgelost: de FP8-versiekiezer in FSR 4 DLL Swap bleef vergrendeld wanneer de GitHub-aanvraag mislukte.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• Opgelost: Streamline-downloads mislukten door een fout bij het ophalen van repositorygegevens van GitHub.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: De README legt nu uit hoe je OptiScaler zelf bouwt vanuit de verschillende branches.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Verbeterd: Vernieuwde titelbalk die opgaat in de rest van de app.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Verbeterd: Betere ondersteuning voor handhelds en kleine schermen – gamepad in meer vensters, scrollen en knoppen via aanraking, tikken voor tooltips en rasteropties, en het Beheren-venster slepen of dubbeltikken.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Verbeterd: Het pictogram van het uitvoerbare bestand wordt getoond als er geen cover is, en de lijstweergave gebruikt nu pictogrammen voor een compactere indeling.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Verbeterd: Op Linux toont de app nu zijn eigen pictogram in de taakbalk.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Verbeterd: Een nieuwe infomelding legt uit dat FSR 4-DLL's zonder OptiScaler-installatie kunnen worden gewisseld.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• Opgelost: Verwijderen kon de eigen FidelityFX-DLL's van een game (amd_fidelityfx_*) wissen zonder de originelen te herstellen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• Opgelost: Sommige mapnamen werden verkeerd opgeschoond, waardoor die games niet werden herkend bij het zoeken naar compatibiliteitsinfo.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew9">• Opgelost: Dezelfde map kon twee keer worden gescand op hetzelfde uitvoerbare bestand.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew10">• Opgelost: Op Windows verhinderde een gemaximaliseerd venster dat een automatisch verborgen taakbalk verscheen.</x:String>
     <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
     <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
     <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>

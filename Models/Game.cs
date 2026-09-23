@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Text.Json.Serialization;
+
 namespace OptiscalerClient.Models;
 
 // Values are persisted as raw integers in games.json (no string enum converter is
@@ -45,6 +47,13 @@ public class Game
     public string ExecutablePath { get; set; } = string.Empty; // Path to main .exe (if detectable)
 
     public string? CoverImageUrl { get; set; }
+
+    /// <summary>Cached PNG of the icon embedded in the game's executable (see GameIconCoverService).</summary>
+    public string? IconImagePath { get; set; }
+
+    /// <summary>List-mode thumbnail: the exe icon, or the cover (cropped square by the view) when there's none.</summary>
+    [JsonIgnore]
+    public string? ListThumbnailPath => !string.IsNullOrEmpty(IconImagePath) ? IconImagePath : CoverImageUrl;
 
     // Detected Technologies
     public string? DlssVersion { get; set; }

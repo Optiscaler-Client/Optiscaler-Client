@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">最小化</x:String>
+    <x:String x:Key="TxtWindowMaximize">最大化</x:String>
+    <x:String x:Key="TxtWindowRestore">还原</x:String>
+    <x:String x:Key="TxtWindowClose">关闭</x:String>
     <x:String x:Key="TxtBtnScan">⟳  扫描游戏</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  手动添加</x:String>
     <x:String x:Key="TxtTipSettings">设置</x:String>
@@ -114,6 +118,8 @@
     <x:String x:Key="TxtOpenFolder">📂  打开文件夹</x:String>
     <x:String x:Key="TxtOptiStatus">OptiScaler 状态</x:String>
     <x:String x:Key="TxtDetectedComponents">检测到的组件</x:String>
+    <x:String x:Key="TxtComponentsShowAll">显示全部</x:String>
+    <x:String x:Key="TxtComponentsShowLess">收起</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">确认卸载</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">确定要卸载 OptiScaler 吗？&#x0a;仅会恢复已备份的原始文件。</x:String>
     <x:String x:Key="TxtUninstall">✕ 卸载</x:String>
@@ -139,7 +145,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">配置已更新。</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">无法更新配置:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">其他选项已更改——请改用安装/重新安装。</x:String>
-    <x:String x:Key="TxtOptiVersionNone">无</x:String>
+    <x:String x:Key="TxtOptiVersionNone">无 — 仅替换 FSR 4</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 自动交换 DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手动交换 DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ 还原原始 DLL</x:String>
@@ -379,7 +385,6 @@
     <x:String x:Key="TxtDonateTitle">支持开发</x:String>
     <x:String x:Key="TxtDonateDesc">OptiScaler Client 是免费的，由我利用业余时间开发。如果它为你节省了时间，欢迎在 Ko-fi 上支持它的开发。这完全是自愿的，绝不是使用本应用的必要条件。</x:String>
     <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 和 NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">请选择 Optiscaler 版本或 FSR 4 DLL（交换）其中之一。</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">默认 FSR 4 Swap</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">打开游戏时预选的默认 FSR 4 Swap 模组版本。RDNA 4 GPU（RX 9000 系列）会自动使用「无」选项。</x:String>
@@ -773,14 +778,16 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：Intel Xe Frame Generation 现在支持最高 x6 的倍率。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 修复：由于不存在可供下载的版本，安装自定义 OptiScaler 版本时会失败。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 修复：在 Linux 上，OptiScaler 文件夹创建时使用了 OptiScaler 自身不会查找的大小写，导致 FSR 4 静默回退到 FSR 3。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 修复：使用 dxgi 注入方式安装 OptiScaler 会与 XeSS 冲突，导致游戏未启动便崩溃。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 修复：安装 Nightly 版本时，plugins 文件夹被创建在 OptiScaler 文件夹之外。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 修复：安装 Nightly 版本时，FSR 4 的 DLL 替换被应用到 OptiScaler 文件夹之外。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• 修复：当 GitHub 请求失败时，FSR 4 DLL Swap 中的 FP8 版本选择器会保持锁定。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• 修复：因从 GitHub 获取仓库数据出错，导致 Streamline 下载失败。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：README 现已说明如何从 OptiScaler 的各个分支自行构建。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 改进：重新设计的标题栏，与应用整体风格更协调。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 改进：更好地支持掌机和小屏幕——更多窗口支持手柄、触控滚动与按钮、轻触显示提示和网格选项，管理窗口可拖动或双击最大化。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 改进：找不到封面时显示可执行文件图标，列表视图现在使用图标以更紧凑。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• 改进：在 Linux 上，应用现在会在任务栏显示自己的图标。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• 改进：新增提示，说明无需安装 OptiScaler 也可替换 FSR 4 DLL。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• 修复：卸载时可能删除游戏自带的 FidelityFX DLL（amd_fidelityfx_*）且未恢复原文件。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• 修复：部分文件夹名称清理错误，导致查询兼容性信息时无法识别这些游戏。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew9">• 修复：同一文件夹可能因同一可执行文件被扫描两次。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew10">• 修复：在 Windows 上，最大化窗口会导致自动隐藏的任务栏无法显示。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>
@@ -811,7 +818,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(仅模组)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">通过 danielblnc 的非官方模组在 AMD GPU 上使用 DLSS Neural Rendering，可选与非官方 OptiScaler 构建版本结合使用。此功能为实验性，不受官方支持，且与 OptiScaler 自身的放大器无关——使用风险自负。</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">要安装的 OptiScaler 版本。当上方选择“Mod + OptiScaler”时会自动切换到社区构建的“Modded”（MatheusGViana 的 wrapper）。</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">要安装的 OptiScaler 版本。选择"无"可只替换 FSR 4 DLL，而不安装 OptiScaler。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">此游戏已安装适用于 AMD 的 DLSS Neural Rendering 模组。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">卸载将重新运行 danielblnc 的安装程序 — 出现提示时请选择移除选项。</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">首先需要你自己合法获得的 nvngx_dlssnr.dll —— 出于法律原因我们无法自行提供该文件。你可以从任何支持 DLSS 5 的游戏中获取它。只询问一次，之后的安装会重复使用；之后可以在 设置 → 管理本地版本 中更新它。</x:String>
@@ -830,6 +837,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnly">仅安装 danielblnc 的模组（不含 OptiScaler）</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">模组 + OptiScaler（非官方 wrapper）</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支持 Neural Rendering，因此需要使用社区打包的版本（MatheusGViana）才能配合使用。安装风险自负。</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc 的模组仅适用于使用 FSR 3.1 或更高版本的 DirectX 12 游戏。在 DirectX 11 和 Vulkan 中无法使用。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">用于生成 AMD 权重的 danielblnc DLSS Neural Rendering 模组版本。“danielblnc mod only” 和 “Mod + OptiScaler” 都需要它。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组</x:String>
@@ -933,6 +941,8 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultText">选择在 Manage 和 Quick Install 中预选的 FSR 4 DLL。None 会跳过注入或交换。</x:String>
     <x:String x:Key="TxtFrameGeneration">帧生成</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL（替换）</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">将游戏的 FSR DLL 替换为 FSR 4。INT8：适用于未获官方 FSR 4 支持的 GPU。FP8：官方模型（RDNA 4）。&#10;&#10;无论是否安装 OptiScaler 都可使用：如只想替换 DLL，请将 OptiScaler 设为"无"。不使用 OptiScaler 时，游戏需自带 FSR 3.1 或更高版本。</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">如需在不安装 OptiScaler 的情况下替换为 FSR 4，请将 OptiScaler 版本设为"无"，并选择一个 FSR 4 DLL（替换）。</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 路径</x:String>
     <x:String x:Key="TxtFgRouteTooltip">选择 OptiScaler 在此游戏中用于帧生成的输入路径。</x:String>

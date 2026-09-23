@@ -1,6 +1,6 @@
-﻿# ✦ OptiScaler Client
+# ✦ OptiScaler Client
 
-[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.7.1)
+[![GitHub Release](https://img.shields.io/github/v/release/Optiscaler-Client/Optiscaler-Client?style=flat-square&color=8A2BE2)](https://github.com/Optiscaler-Client/Optiscaler-Client/releases/tag/OptiscalerClient-1.0.7.2)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-yellow.svg?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows)](https://www.microsoft.com/windows)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-E95420?style=flat-square&logo=linux)](https://www.linux.org)
@@ -173,8 +173,54 @@ Full interface translation in **14 languages**:
 - The app is self-contained, so no external .NET runtime installation is required.
 - On Linux, automatic scanner sources are focused on Steam and Heroic libraries.
 - Manual add/install flows currently target executable files (`.exe`) for game selection.
-- **Nix/NixOS:** A `flake.nix` is provided for building via Nix. Before the first build, regenerate the lock file by running `nix flake update` in the project root.
 - **Arch Linux (AUR):** Available as [`optiscaler-client-bin`](https://aur.archlinux.org/packages/optiscaler-client-bin), maintained by the community (`yay -S optiscaler-client-bin`). See [`packaging/aur/README.md`](packaging/aur/README.md) for details.
+
+### 🔨 Building from Source
+
+#### Prerequisites
+
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
+- [Git](https://git-scm.com/)
+
+#### Clone & Run
+
+```bash
+git clone https://github.com/Optiscaler-Client/Optiscaler-Client.git
+cd Optiscaler-Client
+
+# Build the project
+dotnet build
+
+# Run the application (or run both together: dotnet build && dotnet run)
+dotnet run
+```
+
+> **Note:** `dotnet run` automatically builds the project before starting if changes are detected, but running `dotnet build` beforehand is useful to verify compilation and catch errors without launching the UI.
+
+#### Standalone Publishing (Single-File)
+
+To generate self-contained, single-file binaries matching the official releases:
+
+- **Windows (x64):**
+  ```bash
+  dotnet publish OptiscalerClient.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist/win-x64
+  ```
+
+- **Linux (x64):**
+  ```bash
+  dotnet publish OptiscalerClient.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o dist/linux-x64
+  ```
+
+- **Linux (ARM64):**
+  ```bash
+  dotnet publish OptiscalerClient.csproj -c Release -r linux-arm64 --self-contained true -p:PublishSingleFile=true -o dist/linux-arm64
+  ```
+
+- **Nix / NixOS:**
+  ```bash
+  nix flake update
+  nix build .#default -L
+  ```
 
 ---
 
@@ -251,5 +297,5 @@ This client application is merely a frontend interface to help users more easily
 ---
 
 <p align="center">
-  Developed with ❤️
+  Developed with ❤️ by <a href="https://github.com/agustinm28">Agustinm28</a>
 </p>

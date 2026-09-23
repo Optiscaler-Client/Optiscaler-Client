@@ -15,7 +15,17 @@ public class GameMetadataService
     private static readonly HttpClient SharedHttpClient = CreateHttpClient();
     private readonly HttpClient _httpClient;
     private readonly string _coversCachePath;
+    private readonly string _iconsCachePath;
     private readonly ComponentManagementService? _componentService;
+    private readonly GameIconCoverService _iconCovers = new();
+
+    /// <summary>Suffix of the covers generated from the game's .exe icon when no real cover exists.</summary>
+    public const string IconCoverSuffix = ".icon.png";
+
+    /// <summary>True for a cover generated from the exe icon: shown, but still worth replacing with
+    /// real cover art whenever covers are retried.</summary>
+    public static bool IsIconCover(string? coverPath) =>
+        coverPath?.EndsWith(IconCoverSuffix, StringComparison.OrdinalIgnoreCase) == true;
 
     public GameMetadataService(ComponentManagementService? componentService = null)
     {
@@ -25,6 +35,8 @@ public class GameMetadataService
         // Caching covers in AppData
         _coversCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
         Directory.CreateDirectory(_coversCachePath);
+        _iconsCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "Icons");
+        Directory.CreateDirectory(_iconsCachePath);
     }
 
     private static HttpClient CreateHttpClient()
@@ -66,6 +78,27 @@ public class GameMetadataService
     }
 
     /// <summary>
+    /// True when the exe-icon fallback already ran for a game and found no usable icon.
+    /// </summary>
+    public bool HasNoIconMarker(string appIdKey) =>
+        File.Exists(NoIconMarkerPath(SanitizeFileName(appIdKey)));
+
+    private string IconPath(string sanitizedKey) => Path.Combine(_iconsCachePath, $"{sanitizedKey}.png");
+    private string NoIconMarkerPath(string sanitizedKey) => Path.Combine(_iconsCachePath, $"{sanitizedKey}.noicon");
+
+    /// <summary>
+    /// Cached PNG of the icon embedded in the game's executable (extracted on first call), or null
+    /// when the game has none. Used as the list-mode thumbnail.
+    /// </summary>
+    public Task<string?> GetOrExtractIconAsync(Game game)
+    {
+        var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
+        if (string.IsNullOrEmpty(key)) return Task.FromResult<string?>(null);
+        var sanitized = SanitizeFileName(key);
+        return Task.Run(() => _iconCovers.GetOrExtractIcon(game, IconPath(sanitized), NoIconMarkerPath(sanitized)));
+    }
+
+    /// <summary>
     /// Deletes all ".nocover" sentinel files in the cache directory.
     /// </summary>
     public void DeleteAllSentinels()
@@ -95,9 +128,15 @@ public class GameMetadataService
             var sanitized = SanitizeFileName(appIdKey);
             var imagePath = Path.Combine(_coversCachePath, $"{sanitized}.jpg");
             var sentinelPath = Path.Combine(_coversCachePath, $"{sanitized}.nocover");
+            var iconCoverPath = Path.Combine(_coversCachePath, sanitized + IconCoverSuffix);
+            var iconPath = IconPath(sanitized);
+            var noIconPath = NoIconMarkerPath(sanitized);
 
             if (File.Exists(imagePath)) File.Delete(imagePath);
             if (File.Exists(sentinelPath)) File.Delete(sentinelPath);
+            if (File.Exists(iconCoverPath)) File.Delete(iconCoverPath);
+            if (File.Exists(iconPath)) File.Delete(iconPath);
+            if (File.Exists(noIconPath)) File.Delete(noIconPath);
         }
         catch (Exception ex)
         {
@@ -109,8 +148,10 @@ public class GameMetadataService
     /// Searches for game cover art using multiple sources with fallback.
     /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) SteamGridDB
     /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) Steam API (gameName), 4) SteamGridDB (gameName), 5) Fallbacks
+    /// When every source fails and <paramref name="game"/> is given, falls back to a cover generated
+    /// from the game's executable icon (see <see cref="GameIconCoverService"/>).
     /// </summary>
-    public async Task<string?> FetchAndCacheCoverImageAsync(string gameName, string appIdKey, string? fallbackName = null)
+    public async Task<string?> FetchAndCacheCoverImageAsync(string gameName, string appIdKey, string? fallbackName = null, Game? game = null)
     {
         string sanitized = SanitizeFileName(appIdKey);
         string localPath = Path.Combine(_coversCachePath, $"{sanitized}.jpg");
@@ -127,7 +168,7 @@ public class GameMetadataService
         if (File.Exists(sentinelPath))
         {
             DebugWindow.Log(() => $"[Cover] HIT sentinel (no cover): {gameName}");
-            return null;
+            return await GetIconCoverAsync(game, sanitized);
         }
 
         var sw = Stopwatch.StartNew();
@@ -205,7 +246,14 @@ public class GameMetadataService
         try { await File.WriteAllBytesAsync(sentinelPath, Array.Empty<byte>()); }
         catch (Exception ex) { DebugWindow.Log(() => $"[Cover] Failed to write sentinel: {ex.Message}"); }
 
-        return null;
+        return await GetIconCoverAsync(game, sanitized);
+    }
+
+    private Task<string?> GetIconCoverAsync(Game? game, string sanitizedKey)
+    {
+        if (game == null) return Task.FromResult<string?>(null);
+        var outputPath = Path.Combine(_coversCachePath, sanitizedKey + IconCoverSuffix);
+        return Task.Run(() => _iconCovers.GetOrCreateCover(game, outputPath, IconPath(sanitizedKey), NoIconMarkerPath(sanitizedKey)));
     }
 
     // Ordered list of Steam image formats to try — standard-res first (smaller, faster)

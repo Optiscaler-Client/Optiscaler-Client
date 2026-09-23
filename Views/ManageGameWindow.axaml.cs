@@ -462,9 +462,13 @@ namespace OptiscalerClient.Views
             this.Closed += ManageGameWindow_Closed;
             this.AddHandler(InputElement.PointerMovedEvent, ManageGameWindow_PointerMoved, handledEventsToo: true);
 
+            // Before the drag wiring below: on small screens the window fills the work area and
+            // isn't movable.
+            InitializeResponsiveLayout(owner);
+
             // Re-bind TitleBar dragging and Close button
             var titleBar = this.FindControl<Border>("TitleBar");
-            if (titleBar != null)
+            if (titleBar != null && !_fillsScreen)
             {
                 WindowDragHelper.EnableDrag(this, titleBar);
             }
@@ -1050,6 +1054,8 @@ namespace OptiscalerClient.Views
 
         private static void FocusControl(Control control)
         {
+            // The options area scrolls on small screens — keep the gamepad-focused control visible.
+            control.BringIntoView();
             control.Focus(NavigationMethod.Directional);
         }
 
@@ -1401,7 +1407,7 @@ namespace OptiscalerClient.Views
             if (dlssNrDanielPanel != null) dlssNrDanielPanel.IsVisible = showExperimental;
             // Actual visibility of PanelDlssNrLinuxWrapperWarning is driven by CmbSetupNr_SelectionChanged
             // (only for "daniel-only", on Linux) — not set here, since it lives in the shared
-            // BetaInfoPanel/PanelModdedWarning info-panel area rather than under this experimental zone.
+            // PanelFsr4SwapOnlyHint/PanelModdedWarning info-panel area rather than under this experimental zone.
 
             // On Linux, "Setup NR" runs via guentra/DLSS-NR-on-AMD-Linux, a fork of danielblnc's mod —
             // labeled explicitly so the combo item doesn't imply it's danielblnc's own installer.
@@ -2250,7 +2256,7 @@ namespace OptiscalerClient.Views
             var cmbNukemFG = this.FindControl<ComboBox>("CmbNukemFGVersion");
             var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
             var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
-            var betaInfoPanel = this.FindControl<Border>("BetaInfoPanel");
+            var swapOnlyHintPanel = this.FindControl<Border>("PanelFsr4SwapOnlyHint");
             var moddedWarningPanel = this.FindControl<Border>("PanelModdedWarning");
 
             // Since OptiScaler 0.9 these components are included in the package; Nightly
@@ -2260,8 +2266,9 @@ namespace OptiscalerClient.Views
             if (nukemFGPanel != null) nukemFGPanel.IsVisible = !disableNukemFG;
             UpdateOptionsLayout(disableFakenvapi && disableNukemFG);
 
-            // The "already includes X/Y" info only applies to real OptiScaler releases — while the
-            // "Modded" channel is selected, show the unofficial-build risk warning instead. Neither
+            // The "swap FSR 4 without OptiScaler" hint only makes sense while a real OptiScaler release
+            // is picked (with "None" the user is already in swap-only mode) — while the "Modded"
+            // channel is selected, show the unofficial-build risk warning instead. Neither
             // applies while danielblnc's mod-only mode is pending/installed: OptiScaler itself is
             // locked out entirely then, so whatever CmbOptiVersion happens to still have selected
             // (e.g. a leftover Stable/Beta pick, or just PopulateOptiVersionCombo running again on a
@@ -2270,8 +2277,9 @@ namespace OptiscalerClient.Views
             bool danielModOnlyInstalledForPanels = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
             bool danielOnlyPendingForPanels = !danielModOnlyInstalledForPanels && _game.PendingDlssNrOnAmdMode == "daniel-only";
             bool danielOnlyActive = danielModOnlyInstalledForPanels || danielOnlyPendingForPanels;
-            if (betaInfoPanel != null) betaInfoPanel.IsVisible = !danielOnlyActive && !_optiShowingModded && (isBeta || includedInPackage);
+            if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !_optiShowingModded && !isNone;
             if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = !danielOnlyActive && _optiShowingModded;
+            SetDanielOnlyDx12InfoVisible(danielOnlyActive);
 
             if (disableFakenvapi)
             {
@@ -2506,9 +2514,14 @@ namespace OptiscalerClient.Views
         /// <summary>
         /// Packs the remaining selectors left-to-right when OptiScaler supplies the legacy
         /// components itself. Older versions retain the full three-column layout.
+        /// Panels wrap every <see cref="_optionColumns"/> (3, or 2 on narrow widths — see
+        /// ManageGameWindow.Responsive.cs), which re-runs this with the last layout on change.
         /// </summary>
         private void UpdateOptionsLayout(bool useCompactLayout)
         {
+            _lastOptionsCompactLayout = useCompactLayout;
+            var cols = _optionColumns;
+
             var opti = this.FindControl<StackPanel>("PanelOptiScalerVersion");
             var extras = this.FindControl<StackPanel>("PanelExtrasVersion");
             var injection = this.FindControl<StackPanel>("PanelInjectionMethod");
@@ -2528,16 +2541,17 @@ namespace OptiscalerClient.Views
             if (useCompactLayout)
             {
                 // Opti / FSR4 / injection, then patcher / Output Upscaler / Quality, then Frame
-                // Generation / Profile / Spoofing — exactly 9 panels, fits the 3 fixed option rows.
-                Grid.SetRow(opti, 0); Grid.SetColumn(opti, 0);
-                Grid.SetRow(extras, 0); Grid.SetColumn(extras, 1);
-                Grid.SetRow(injection, 0); Grid.SetColumn(injection, 2);
-                Grid.SetRow(patcher, 1); Grid.SetColumn(patcher, 0);
-                Grid.SetRow(outputUpscaler, 1); Grid.SetColumn(outputUpscaler, 1);
-                Grid.SetRow(upscalingQuality, 1); Grid.SetColumn(upscalingQuality, 2);
-                Grid.SetRow(frameGeneration, 2); Grid.SetColumn(frameGeneration, 0);
-                Grid.SetRow(profile, 2); Grid.SetColumn(profile, 1);
-                Grid.SetRow(spoofingHost, 2); Grid.SetColumn(spoofingHost, 2);
+                // Generation / Profile / Spoofing — exactly 9 panels: 3 rows at 3 columns, 5 at 2.
+                var ordered = new List<StackPanel>
+                {
+                    opti, extras, injection, patcher, outputUpscaler, upscalingQuality,
+                    frameGeneration, profile, spoofingHost,
+                };
+                for (var i = 0; i < ordered.Count; i++)
+                {
+                    Grid.SetRow(ordered[i], i / cols);
+                    Grid.SetColumn(ordered[i], i % cols);
+                }
             }
             else
             {
@@ -2546,9 +2560,9 @@ namespace OptiscalerClient.Views
                 // to 11 total incl. Spoofing). Lay them out in a fixed logical order instead of
                 // hand-picking (row, col) per panel — wrap to a new row every 3 — so it can never
                 // again silently run out of cells the way it did when Output Upscaler landed on top
-                // of the Uninstall row and Spoofing got squeezed into Profile's column. A 4th options
-                // row is reserved in the grid (see the .axaml RowDefinitions) specifically for this;
-                // ceil(11/3) = 4 rows, so it always fits.
+                // of the Uninstall row and Spoofing got squeezed into Profile's column. 6 options
+                // rows are reserved in the grid (see the .axaml RowDefinitions): ceil(11/3) = 4 rows
+                // at 3 columns, ceil(11/2) = 6 at 2, so it always fits.
                 var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
                 var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
                 var ordered = new List<StackPanel> { opti, extras };
@@ -2564,23 +2578,22 @@ namespace OptiscalerClient.Views
 
                 for (var i = 0; i < ordered.Count; i++)
                 {
-                    Grid.SetRow(ordered[i], i / 3);
-                    Grid.SetColumn(ordered[i], i % 3);
+                    Grid.SetRow(ordered[i], i / cols);
+                    Grid.SetColumn(ordered[i], i % cols);
                 }
             }
 
+            // Pushes the injection combo down to line up with the Opti/FSR4 combos (which have a tab
+            // row above them) — only when it actually shares their row.
             if (injectionLabel != null)
-                injectionLabel.Margin = useCompactLayout ? new Thickness(0, 32, 0, 0) : default;
+                injectionLabel.Margin = useCompactLayout && cols == 3 ? new Thickness(0, 32, 0, 0) : default;
         }
 
-        /// <summary>The sidebar Border's own top+bottom margin (its XAML Margin="0,10,16,12"),
-        /// which sits outside its MaxHeight but still counts towards the row height it shares with
-        /// the other columns.</summary>
-        private const double CompatSidebarOuterMargin = 22;
-
         /// <summary>Everything between the window's height and that shared row: RootPanel's
-        /// Margin="12" top and bottom, plus the card Border's 1px edges.</summary>
-        private const double RootPanelChrome = 26;
+        /// margin top and bottom, plus the card Border's edges (26 floating, 0 filling the screen).</summary>
+        private double RootPanelChrome =>
+            (this.FindControl<Panel>("RootPanel")?.Margin is { } m ? m.Top + m.Bottom : 0)
+            + (this.FindControl<Border>("BdManageFrame")?.BorderThickness is { } b ? b.Top + b.Bottom : 0);
 
         private double _appliedCompatSidebarCap = double.NaN;
 
@@ -2614,7 +2627,14 @@ namespace OptiscalerClient.Views
             if (!double.IsNaN(MaxHeight) && !double.IsInfinity(MaxHeight))
                 available = Math.Min(available, MaxHeight - RootPanelChrome);
 
-            var cap = available - CompatSidebarOuterMargin;
+            // Filling the screen, the window's height is fixed rather than content-sized: the
+            // sidebar gets the full height like the other columns.
+            if (_fillsScreen && ClientSize.Height > 0)
+                available = ClientSize.Height - RootPanelChrome;
+
+            // The sidebar's own top+bottom margin sits outside its MaxHeight but still counts
+            // towards the row height it shares with the other columns (tighter on small screens).
+            var cap = available - (sidebar.Margin.Top + sidebar.Margin.Bottom);
 
             // Also the loop guard: assigning MaxHeight schedules another layout pass, which calls
             // straight back in here.
@@ -2626,9 +2646,8 @@ namespace OptiscalerClient.Views
         // ── Recommended Config sidebar collapse ──────────────────────────────────
         // The sidebar's Width drives the outer Grid's Auto-sized 3rd column directly (see XAML
         // comment), so animating it reclaims the space instead of just hiding content behind a
-        // fixed-width column. Starts expanded every time the window opens — no persisted state,
-        // matches the ask ("por defecto desplegada") without over-building a settings entry
-        // nobody asked for.
+        // fixed-width column. Starts expanded every time the window opens (collapsed on small
+        // screens — see InitializeResponsiveLayout) — no persisted state.
         private void SetupCompatSidebarToggle()
         {
             var sidebar = this.FindControl<Border>("PnlCompatSidebar");
@@ -3632,7 +3651,7 @@ namespace OptiscalerClient.Views
                 string? folderName = !string.IsNullOrWhiteSpace(_game.InstallPath)
                     ? System.IO.Path.GetFileName(_game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
                     : null;
-                var defaultCover = await metadataService.FetchAndCacheCoverImageAsync(_game.Name, appIdKey, fallbackName: folderName);
+                var defaultCover = await metadataService.FetchAndCacheCoverImageAsync(_game.Name, appIdKey, fallbackName: folderName, game: _game);
                 _game.CoverImageUrl = defaultCover;
             }
             catch (Exception ex)
@@ -3930,6 +3949,8 @@ namespace OptiscalerClient.Views
             try
             {
                 if (bdProgress != null) bdProgress.IsVisible = true;
+                // Auto Install shows this card indeterminate while waiting (see ShowDanielModAutoInstallingStatus).
+                if (prgDownload != null) prgDownload.IsIndeterminate = false;
                 var progress = new Progress<double>(p => Dispatcher.UIThread.Post(() =>
                 {
                     if (prgDownload != null) prgDownload.Value = p;
@@ -4118,6 +4139,8 @@ namespace OptiscalerClient.Views
                 var gameDir = await DownloadAndStageDanielModAsync(version);
                 if (gameDir == null) return false;
 
+                // The download step hid the progress card again; the headless installer is the longest wait.
+                ShowDanielModAutoInstallingStatus();
                 var result = await _dlssNrService.RunAutomatedInstallAsync(_game, gameDir, version, isModeB);
                 if (result == DlssNrOnAmdService.AutomatedInstallResult.Success) return true;
 
@@ -4138,6 +4161,7 @@ namespace OptiscalerClient.Views
             }
             finally
             {
+                HideLinuxWrapperInstallingStatus(); // hides the shared progress card, not Linux-specific
                 UpdateStatus();
             }
         }
@@ -4338,7 +4362,13 @@ namespace OptiscalerClient.Views
             var statusIndicator = this.FindControl<Ellipse>("StatusIndicator");
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
-            if (txtStatus != null) txtStatus.Text = GetResourceString("TxtSetupNrAutoInstalling", "Installing danielblnc's mod...");
+            var installingText = GetResourceString("TxtSetupNrAutoInstalling", "Installing danielblnc's mod...");
+            if (txtStatus != null) txtStatus.Text = installingText;
+            // Same progress card as the Linux fork install (ShowLinuxWrapperInstallingStatus): the status
+            // line alone was easy to miss during the Defender-exclusion pause and the headless installer.
+            SetLinuxWrapperStatusText(installingText);
+            if (this.FindControl<ProgressBar>("PrgDownload") is { } prgDownload) prgDownload.IsIndeterminate = true;
+            if (this.FindControl<Border>("BdProgress") is { } bdProgress) bdProgress.IsVisible = true;
             if (statusIndicator != null) statusIndicator.Fill = new SolidColorBrush(Color.FromRgb(0xD4, 0xA0, 0x17));
             if (btnInstall != null) btnInstall.IsEnabled = false;
             if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
@@ -5640,6 +5670,7 @@ namespace OptiscalerClient.Views
                     SetOptiTabsForModdedMode(false);
                     var dlssNrLinuxWarningNone = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
                     if (dlssNrLinuxWarningNone != null) dlssNrLinuxWarningNone.IsVisible = false;
+                    SetDanielOnlyDx12InfoVisible(false);
                     if (_cachedComponentService != null)
                     {
                         UpdateOptiChannelButtons();
@@ -5680,21 +5711,23 @@ namespace OptiscalerClient.Views
                     // Both Install buttons are shown for this mode (see UpdateStatus's danielOnlyPending
                     // block below, which runs right after this switch and is authoritative for their
                     // visibility/labels) — nothing to set here.
-                    // BetaInfoPanel/PanelModdedWarning live outside PanelOptiScalerVersion (so
+                    // PanelFsr4SwapOnlyHint/PanelModdedWarning live outside PanelOptiScalerVersion (so
                     // SetOptiScalerControlsLocked doesn't hide them) and PopulateOptiVersionCombo
                     // isn't called for this mode — hide both explicitly instead of leaving whichever
                     // was showing before this switch.
-                    var betaInfoPanelDanielOnly = this.FindControl<Border>("BetaInfoPanel");
+                    var betaInfoPanelDanielOnly = this.FindControl<Border>("PanelFsr4SwapOnlyHint");
                     var moddedWarningPanelDanielOnly = this.FindControl<Border>("PanelModdedWarning");
                     var dlssNrLinuxWarningDanielOnly = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
                     if (betaInfoPanelDanielOnly != null) betaInfoPanelDanielOnly.IsVisible = false;
                     if (moddedWarningPanelDanielOnly != null) moddedWarningPanelDanielOnly.IsVisible = false;
                     if (dlssNrLinuxWarningDanielOnly != null) dlssNrLinuxWarningDanielOnly.IsVisible = !OperatingSystem.IsWindows();
+                    SetDanielOnlyDx12InfoVisible(true);
                     _ = PopulateDlssNrDanielVersionComboAsync();
                     break;
 
                 case "daniel-and-opti":
                     _game.PendingDlssNrOnAmdMode = "daniel-and-opti";
+                    SetDanielOnlyDx12InfoVisible(false);
                     SetOptiScalerControlsLocked(false);
                     SetOptiTabsForModdedMode(true);
                     if (btnInstallManual != null) btnInstallManual.IsVisible = true;
@@ -5706,6 +5739,11 @@ namespace OptiscalerClient.Views
             }
 
             UpdateStatus();
+        }
+
+        private void SetDanielOnlyDx12InfoVisible(bool visible)
+        {
+            if (this.FindControl<Border>("PanelDanielOnlyDx12Info") is { } panel) panel.IsVisible = visible;
         }
 
         private void SelectCmbSetupNrTag(string tag)
@@ -6663,7 +6701,7 @@ namespace OptiscalerClient.Views
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
             var btnUninstall = this.FindControl<Button>("BtnUninstall");
             var btnFolderCleanup = this.FindControl<Button>("BtnFolderCleanup");
-            var installBtnGroup = this.FindControl<StackPanel>("InstallBtnGroup");
+            var installBtnGroup = this.FindControl<WrapPanel>("InstallBtnGroup");
             var pnlInstallOptions = this.FindControl<StackPanel>("PnlInstallOptions");
 
             // Folder Cleanup is always available regardless of install state.

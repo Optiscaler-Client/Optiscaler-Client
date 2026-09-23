@@ -11,7 +11,9 @@
         Title="{DynamicResource TxtAppTitle}"
         Height="720" Width="1280"
         MinHeight="520" MinWidth="760"
-        Background="{StaticResource BrBgBase}"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
         Foreground="{StaticResource BrTextPrimary}"
         FontFamily="{StaticResource FontPrimary}"
         Icon="avares://OptiscalerClient/assets/icon.png">
@@ -21,9 +23,49 @@
         <converters:BoolToVisibilityConverter  x:Key="BoolToVisibilityConverter"/>
         <converters:BitmapValueConverter       x:Key="BitmapValueConverter"/>
 
+        <!-- Caption button glyphs for the custom title bar -->
+        <StreamGeometry x:Key="IconWindowMinimize">M20,13H4V11H20V13Z</StreamGeometry>
+        <StreamGeometry x:Key="IconWindowMaximize">M4,4H20V20H4V4M6,6V18H18V6H6Z</StreamGeometry>
+        <StreamGeometry x:Key="IconWindowRestore">M4,8H8V4H20V16H16V20H4V8M16,8V14H18V6H10V8H16M6,10V18H14V10H6Z</StreamGeometry>
+        <StreamGeometry x:Key="IconWindowClose">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</StreamGeometry>
+
         </Window.Resources>
 
     <Window.Styles>
+        <!-- Window chrome buttons (custom title bar, SystemDecorations="None") -->
+        <Style Selector="Button.WindowBtn">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+        <Style Selector="Button.WindowBtn PathIcon">
+            <Setter Property="Width" Value="11"/>
+            <Setter Property="Height" Value="11"/>
+        </Style>
+        <Style Selector="Button.WindowBtn /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextSecondary}"/>
+        </Style>
+        <Style Selector="Button.WindowBtn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
+        </Style>
+        <Style Selector="Button.WindowBtn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBorderSubtle}"/>
+        </Style>
+        <Style Selector="Button.WindowBtn.Close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E5484D"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.WindowBtn.Close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#C53B40"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+
         <Style Selector="RadioButton.NavBtnStyle">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource BrTextSecondary}"/>
@@ -235,6 +277,14 @@
         </Style>
     </Window.Styles>
 
+    <Panel>
+    <!-- Rounded window: the Window itself is transparent and this frame draws the shape. The outer
+         border carries the shadow (a clipping border would clip its own shadow), the inner one
+         clips the content to the rounded corners. Margin/shadow/radius follow the window state in
+         MainWindow.UpdateChromeForState. -->
+    <Border Name="WindowShadow" Background="{StaticResource BrBgBase}" CornerRadius="12">
+    <Border Name="WindowFrame" CornerRadius="12" ClipToBounds="True">
+    <Panel>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="68"/> <!-- Sidebar -->
@@ -242,7 +292,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <Border Grid.Column="0" Background="{StaticResource BrBgDeep}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,1,0" ZIndex="10">
+        <Border Name="SidebarArea" Grid.Column="0" Background="{StaticResource BrBgDeep}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,1,0" ZIndex="10">
             <Grid Margin="0,16">
                 <!-- Top actions: Logo + Games + Profiles -->
                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center">
@@ -261,7 +311,28 @@
         </Border>
 
         <!-- MAIN CONTENT AREA -->
-        <Grid Grid.Column="1">
+        <DockPanel Grid.Column="1">
+
+        <!-- Custom title bar (SystemDecorations="None"): same background as the view headers so it
+             blends in; drag to move, double click to maximize, buttons replace the WM's ones. -->
+        <Grid Name="TitleBar" DockPanel.Dock="Top" Height="38" Background="{StaticResource BrBgDeep}" ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,0,6,0" VerticalAlignment="Center">
+                <Button Name="BtnWindowMinimize" Classes="WindowBtn" ToolTip.Tip="{DynamicResource TxtWindowMinimize}">
+                    <PathIcon Data="{StaticResource IconWindowMinimize}"/>
+                </Button>
+                <Button Name="BtnWindowMaximize" Classes="WindowBtn">
+                    <Panel>
+                        <PathIcon Name="IconWindowMaximizeGlyph" Data="{StaticResource IconWindowMaximize}"/>
+                        <PathIcon Name="IconWindowRestoreGlyph" Data="{StaticResource IconWindowRestore}" IsVisible="False"/>
+                    </Panel>
+                </Button>
+                <Button Name="BtnWindowClose" Classes="WindowBtn Close" ToolTip.Tip="{DynamicResource TxtWindowClose}">
+                    <PathIcon Data="{StaticResource IconWindowClose}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Grid>
 
              <!-- ════════════════════════════════════════════════════════
                   1. GAMES VIEW
@@ -630,31 +701,31 @@
 
                                          <Grid>
                                              <Grid.ColumnDefinitions>
-                                                 <ColumnDefinition Width="Auto"/> <!-- Cover Art -->
+                                                 <ColumnDefinition Width="Auto"/> <!-- Icon -->
                                                  <ColumnDefinition Width="*"/>
                                                  <ColumnDefinition Width="Auto"/>
                                              </Grid.ColumnDefinitions>
 
-                                             <!-- Cover Art -->
-                                             <Border Grid.Column="0" Width="80" Height="120" Margin="0,0,20,0"
-                                                     CornerRadius="4" ClipToBounds="True"
+                                             <!-- Icon: the game's exe icon, or its cover cropped to a square when there's none -->
+                                             <Border Grid.Column="0" Width="52" Height="52" Margin="0,0,16,0"
+                                                     VerticalAlignment="Center"
+                                                     CornerRadius="10" ClipToBounds="True"
                                                      Background="{StaticResource BrBgElevated}"
                                                      BorderBrush="{StaticResource BrBorderSubtle}"
                                                      BorderThickness="1">
-                                                 <!--
-                                                     <RectangleGeometry RadiusX="4" RadiusY="4" Rect="0,0,80,120"/>
-                                                 -->
                                                  <Grid>
                                                      <!-- Fallback Icon -->
                                                      <TextBlock Text="🎮"
-                                                                FontSize="36"
+                                                                FontSize="22"
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"
                                                                 Foreground="{StaticResource BrTextSecondary}"
                                                                 Opacity="0.5"/>
 
                                                      <!-- Image (overlays fallback if valid) -->
-                                                     <Image Source="{Binding CoverImageUrl, Converter={StaticResource BitmapValueConverter}}" Stretch="UniformToFill" />
+                                                     <Image Source="{Binding ListThumbnailPath, Converter={StaticResource BitmapValueConverter}}"
+                                                            Stretch="UniformToFill"
+                                                            RenderOptions.BitmapInterpolationMode="HighQuality"/>
                                                  </Grid>
                                              </Border>
 
@@ -1015,7 +1086,8 @@
                                          Width="205"
                                          Padding="0"
                                          PointerEntered="GameGridCard_PointerEntered"
-                                         PointerExited="GameGridCard_PointerExited">
+                                         PointerExited="GameGridCard_PointerExited"
+                                         Tapped="GameGridCard_Tapped">
                                      <Border.Styles>
                                          <Style Selector="Border.GameGridCard:pointerover">
                                              <Setter Property="BorderBrush" Value="{StaticResource BrBorderDefault}"/>
@@ -2303,6 +2375,7 @@
              </Border>
 
         </Grid>
+        </DockPanel>
 
         <!-- LOADING RESOURCES OVERLAY (covers full window while version data is being fetched) -->
         <Grid Name="OverlayLoading" Grid.ColumnSpan="2" Background="#CC000000" IsVisible="False" ZIndex="500">
@@ -2411,4 +2484,25 @@
                 IsVisible="False"
                 ZIndex="9999"/>
     </Grid>
+    <!-- Outline drawn above the content: square-cornered children (sidebar, headers) would
+         otherwise paint over the frame's rounded stroke at the corners. -->
+    <Border Name="WindowOutline" CornerRadius="12" IsHitTestVisible="False"
+            BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="1"/>
+    </Panel>
+    </Border>
+    </Border>
+
+    <!-- Resize borders (no system decorations means no others). They sit on the transparent shadow
+         margin around the restored window; hidden while maximized. -->
+    <Panel Name="ResizeGrips">
+        <Border Tag="North" Height="12" VerticalAlignment="Top" Background="Transparent" Cursor="TopSide"/>
+        <Border Tag="South" Height="12" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomSide"/>
+        <Border Tag="West" Width="12" HorizontalAlignment="Left" Background="Transparent" Cursor="LeftSide"/>
+        <Border Tag="East" Width="12" HorizontalAlignment="Right" Background="Transparent" Cursor="RightSide"/>
+        <Border Tag="NorthWest" Width="22" Height="22" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" Cursor="TopLeftCorner"/>
+        <Border Tag="NorthEast" Width="22" Height="22" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent" Cursor="TopRightCorner"/>
+        <Border Tag="SouthWest" Width="22" Height="22" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomLeftCorner"/>
+        <Border Tag="SouthEast" Width="22" Height="22" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomRightCorner"/>
+    </Panel>
+    </Panel>
 </Window>

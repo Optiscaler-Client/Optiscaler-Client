@@ -49,7 +49,10 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-            .AfterSetup(_ => TryCapRenderFps(renderFpsLimit));
+            .AfterSetup(_ => TryCapRenderFps(renderFpsLimit))
+            // Pinned X11 WM_CLASS: Linux desktops (GNOME 45+ ignores the window's own icon) match the
+            // window to its .desktop entry through StartupWMClass=OptiscalerClient to show the app icon.
+            .With(new X11PlatformOptions { WmClass = "OptiscalerClient" });
 
         if (forceSoftwareRendering && OperatingSystem.IsWindows())
         {

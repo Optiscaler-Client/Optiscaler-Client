@@ -304,6 +304,7 @@ namespace OptiscalerClient.Views
         public MainWindow()
         {
             InitializeComponent();
+            InitializeChrome();
             InitializeOsk();
             _scannerService = new GameScannerService();
             _persistenceService = new GamePersistenceService();
@@ -380,6 +381,8 @@ namespace OptiscalerClient.Views
                 _lstGamesGrid = this.FindControl<ListBox>("LstGamesGrid");
                 if (_lstGames != null) _lstGames.ContainerPrepared += GameContainer_FavoriteIconPrepared;
                 if (_lstGamesGrid != null) _lstGamesGrid.ContainerPrepared += GameContainer_FavoriteIconPrepared;
+                // A touch tap anywhere outside the card whose actions were revealed by touch hides them.
+                AddHandler(Gestures.TappedEvent, MainWindow_TouchTappedOutsideGridCard, handledEventsToo: true);
                 _btnScan = this.FindControl<Button>("BtnScan");
                 _btnViewList = this.FindControl<Button>("BtnViewList");
                 _btnViewGrid = this.FindControl<Button>("BtnViewGrid");
@@ -839,6 +842,50 @@ namespace OptiscalerClient.Views
                 _pnlNoUpscalersFound.IsVisible = _hasScanned && _games.Count == 0;
         }
 
+        /// <summary>
+        /// Extracts (or reuses the cached) exe icon of every game missing one, off the UI thread,
+        /// then refreshes the lists once if anything changed. Icons are the list-mode thumbnail.
+        /// </summary>
+        private async Task ResolveGameIconsAsync(List<Game> games)
+        {
+            try
+            {
+                var pending = games.Where(g => string.IsNullOrEmpty(g.IconImagePath) || !File.Exists(g.IconImagePath)).ToList();
+                if (pending.Count == 0) return;
+
+                var changed = 0;
+                using var semaphore = new SemaphoreSlim(4, 4);
+                await Task.WhenAll(pending.Select(async game =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        var icon = await _metadataService.GetOrExtractIconAsync(game);
+                        if (icon != game.IconImagePath)
+                        {
+                            game.IconImagePath = icon;
+                            Interlocked.Increment(ref changed);
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }));
+
+                if (changed == 0) return;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    RefreshGameLists();
+                    _persistenceService.SaveGames(_allGames);
+                });
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[MainWindow] Icon resolution failed: {ex.Message}");
+            }
+        }
+
         private void RefreshGameLists()
         {
             if (_lstGames != null)
@@ -876,8 +923,14 @@ namespace OptiscalerClient.Views
             }
         }
 
+        // Grid cards reveal Quick Install / Manage on hover. A finger has no hover: a touch press
+        // "enters" the card and the release "exits" it again, so the actions would vanish before
+        // they could be tapped. Touch ignores enter/exit and toggles the actions on tap instead.
+        private Border? _touchOpenGridCard;
+
         private void GameGridCard_PointerEntered(object? sender, PointerEventArgs e)
         {
+            if (e.Pointer.Type == PointerType.Touch) return;
             if (_isEditMode) return;
             if (_isCursorHiddenByGamepad) return;
             if (sender is Border card)
@@ -888,10 +941,36 @@ namespace OptiscalerClient.Views
 
         private void GameGridCard_PointerExited(object? sender, PointerEventArgs e)
         {
+            if (e.Pointer.Type == PointerType.Touch) return;
             if (sender is Border card)
             {
                 ToggleGridCardHover(card, false);
             }
+        }
+
+        private void GameGridCard_Tapped(object? sender, TappedEventArgs e)
+        {
+            if (e.Pointer.Type != PointerType.Touch || _isEditMode || sender is not Border card) return;
+
+            // Taps on the revealed buttons (Manage, Quick Install, favorite…) belong to them.
+            if (e.Source is Visual source && source.FindAncestorOfType<Button>(includeSelf: true) != null) return;
+
+            var open = _touchOpenGridCard != card;
+            ClearGridCardHoverVisuals();
+            _touchOpenGridCard = null;
+            if (!open) return;
+
+            ToggleGridCardHover(card, true);
+            _touchOpenGridCard = card;
+        }
+
+        private void MainWindow_TouchTappedOutsideGridCard(object? sender, TappedEventArgs e)
+        {
+            if (_touchOpenGridCard == null || e.Pointer.Type != PointerType.Touch) return;
+            if (e.Source is Visual source && (source == _touchOpenGridCard || _touchOpenGridCard.IsVisualAncestorOf(source))) return;
+
+            ToggleGridCardHover(_touchOpenGridCard, false);
+            _touchOpenGridCard = null;
         }
 
         private void ToggleGridCardHover(Border card, bool isVisible)
@@ -4953,6 +5032,7 @@ namespace OptiscalerClient.Views
             }
 
             ApplyFilter(_txtSearch?.Text);
+            _ = ResolveGameIconsAsync(_allGames.ToList());
 
             if (savedGames.Count > 0)
             {
@@ -4968,6 +5048,7 @@ namespace OptiscalerClient.Views
                         var gamesNeedingCovers = savedGames.Where(game =>
                         {
                             var needsCover = string.IsNullOrEmpty(game.CoverImageUrl) ||
+                                            GameMetadataService.IsIconCover(game.CoverImageUrl) ||
                                             game.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
                                             !File.Exists(game.CoverImageUrl);
 
@@ -4978,7 +5059,9 @@ namespace OptiscalerClient.Views
 
                             // On normal startup, skip games that already failed previously and have a sentinel
                             var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
-                            if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key))
+                            // (unless the exe-icon fallback hasn't run for it yet — that needs no network)
+                            if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key) &&
+                                (GameMetadataService.IsIconCover(game.CoverImageUrl) || _metadataService.HasNoIconMarker(key)))
                             {
                                 return false;
                             }
@@ -5028,7 +5111,7 @@ namespace OptiscalerClient.Views
                                         var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
                                             ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
                                             : null;
-                                        var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName);
+                                        var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName, game: game);
                                         if (!string.IsNullOrEmpty(newCover))
                                         {
                                             game.CoverImageUrl = newCover;
@@ -5087,7 +5170,7 @@ namespace OptiscalerClient.Views
                             _persistenceService.SaveGames(savedGames);
 
                             bool hasApiKey = !string.IsNullOrWhiteSpace(_componentService.Config.SteamGridDBApiKey);
-                            var stillMissing = savedGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+                            var stillMissing = savedGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || GameMetadataService.IsIconCover(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
 
                             if (totalCovers > 0 && !hasApiKey && stillMissing > 0)
                             {
@@ -5190,6 +5273,7 @@ namespace OptiscalerClient.Views
 
                 var gamesWithoutCovers = targetGames
                     .Where(g => string.IsNullOrEmpty(g.CoverImageUrl) ||
+                                GameMetadataService.IsIconCover(g.CoverImageUrl) ||
                                 g.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
                                 !File.Exists(g.CoverImageUrl))
                     .ToList();
@@ -5242,7 +5326,7 @@ namespace OptiscalerClient.Views
                             var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
                                 ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
                                 : null;
-                            var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, key, fallbackName: folderName);
+                            var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, key, fallbackName: folderName, game: game);
                             if (!string.IsNullOrEmpty(newCover))
                             {
                                 game.CoverImageUrl = newCover;
@@ -5267,8 +5351,8 @@ namespace OptiscalerClient.Views
                 _persistenceService.SaveGames(targetGames);
                 ApplyFilter(_txtSearch?.Text);
 
-                var found = missing.Count(g => !string.IsNullOrEmpty(g.CoverImageUrl));
-                var stillMissing = targetGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+                var found = missing.Count(g => !string.IsNullOrEmpty(g.CoverImageUrl) && !GameMetadataService.IsIconCover(g.CoverImageUrl));
+                var stillMissing = targetGames.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || GameMetadataService.IsIconCover(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
 
                 if (!hasApiKey && stillMissing > 0)
                 {
@@ -5354,6 +5438,8 @@ namespace OptiscalerClient.Views
                             {
                                 scannedGame.CoverImageUrl = existing.CoverImageUrl;
                             }
+
+                            scannedGame.IconImagePath = existing.IconImagePath;
                         }
 
                         // HideWithoutUpscaler: add the game but mark it hidden
@@ -5367,6 +5453,7 @@ namespace OptiscalerClient.Views
                 _allGames = _games.ToList();
                 _hasScanned = true;
                 ApplyFilter(_txtSearch?.Text);
+                _ = ResolveGameIconsAsync(_allGames.ToList());
 
                 if (_overlayScanning != null) _overlayScanning.IsVisible = false;
                 if (_btnScan != null) _btnScan.IsEnabled = true;
@@ -5375,13 +5462,15 @@ namespace OptiscalerClient.Views
                     .Where(g =>
                     {
                         var needsCover = string.IsNullOrEmpty(g.CoverImageUrl) ||
+                                        GameMetadataService.IsIconCover(g.CoverImageUrl) ||
                                         g.CoverImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
                                         !File.Exists(g.CoverImageUrl);
 
                         if (!needsCover) return false;
 
                         var key = !string.IsNullOrEmpty(g.AppId) ? g.AppId : g.Name;
-                        if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key))
+                        if (!string.IsNullOrEmpty(key) && _metadataService.HasSentinel(key) &&
+                            (GameMetadataService.IsIconCover(g.CoverImageUrl) || _metadataService.HasNoIconMarker(key)))
                         {
                             return false;
                         }
@@ -5418,7 +5507,7 @@ namespace OptiscalerClient.Views
                                 var folderName = !string.IsNullOrWhiteSpace(game.InstallPath)
                                     ? System.IO.Path.GetFileName(game.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
                                     : null;
-                                var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName);
+                                var newCover = await _metadataService.FetchAndCacheCoverImageAsync(game.Name, appIdKey, fallbackName: folderName, game: game);
                                 if (!string.IsNullOrEmpty(newCover))
                                 {
                                     game.CoverImageUrl = newCover;
@@ -5448,7 +5537,7 @@ namespace OptiscalerClient.Views
                         RefreshGameLists();
 
                         bool hasApiKey = !string.IsNullOrWhiteSpace(_componentService.Config.SteamGridDBApiKey);
-                        var stillMissing = _games.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
+                        var stillMissing = _games.Count(g => string.IsNullOrEmpty(g.CoverImageUrl) || GameMetadataService.IsIconCover(g.CoverImageUrl) || !File.Exists(g.CoverImageUrl));
 
                         if (!hasApiKey && stillMissing > 0)
                         {
@@ -5511,7 +5600,8 @@ namespace OptiscalerClient.Views
                     var folderName = !string.IsNullOrWhiteSpace(newGame.InstallPath)
                         ? System.IO.Path.GetFileName(newGame.InstallPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar))
                         : null;
-                    newGame.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(newGame.Name, newGame.AppId, fallbackName: folderName);
+                    newGame.CoverImageUrl = await _metadataService.FetchAndCacheCoverImageAsync(newGame.Name, newGame.AppId, fallbackName: folderName, game: newGame);
+                    newGame.IconImagePath = await _metadataService.GetOrExtractIconAsync(newGame);
 
                     _games.Insert(0, newGame);
                     _allGames = _games.ToList();

@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">Riduci a icona</x:String>
+    <x:String x:Key="TxtWindowMaximize">Ingrandisci</x:String>
+    <x:String x:Key="TxtWindowRestore">Ripristina</x:String>
+    <x:String x:Key="TxtWindowClose">Chiudi</x:String>
     <x:String x:Key="TxtBtnScan">⟳  Scansiona giochi</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  Aggiungi manualmente</x:String>
     <x:String x:Key="TxtTipSettings">Impostazioni</x:String>
@@ -113,6 +117,8 @@
     <x:String x:Key="TxtOpenFolder">📂  Apri cartella</x:String>
     <x:String x:Key="TxtOptiStatus">Stato OptiScaler</x:String>
     <x:String x:Key="TxtDetectedComponents">Componenti rilevati</x:String>
+    <x:String x:Key="TxtComponentsShowAll">Mostra tutti</x:String>
+    <x:String x:Key="TxtComponentsShowLess">Mostra meno</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">Conferma disinstallazione</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">Sei sicuro di voler disinstallare OptiScaler?&#x0a;Verranno ripristinati solo i file originali di backup.</x:String>
     <x:String x:Key="TxtUninstall">✕ Disinstalla</x:String>
@@ -138,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Configurazione aggiornata.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Impossibile aggiornare la configurazione:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">È cambiato qualcos'altro — usa Installa/Reinstalla.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Nessuno</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Nessuno — solo swap FSR 4</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Scambio automatico DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Scambio manuale DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Ripristina DLL originale</x:String>
@@ -372,7 +378,6 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDonateTitle">Sostieni lo sviluppo</x:String>
     <x:String x:Key="TxtDonateDesc">OptiScaler Client è gratuito e sviluppato nel mio tempo libero. Se ti ha fatto risparmiare tempo, valuta di sostenerne lo sviluppo su Ko-fi. È del tutto facoltativo e non è mai necessario per usare l'app.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Sostieni su Ko-fi</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">Questa versione include già Fakenvapi e NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Seleziona una versione di Optiscaler oppure una DLL FSR 4 (Scambio).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR 4 Swap predefinito</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Versione predefinita del mod FSR 4 Swap pre-selezionata all'apertura di un gioco. Le GPU RDNA 4 (serie RX 9000) usano automaticamente Nessuno.</x:String>
@@ -816,7 +821,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (solo mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">Permette di usare DLSS Neural Rendering su GPU AMD tramite la mod non ufficiale di danielblnc, opzionalmente combinata con una build non ufficiale di OptiScaler. Sperimentale, non supportata ufficialmente e non collegata agli upscaler propri di OptiScaler — a tuo rischio.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Versione di OptiScaler da installare. Passa automaticamente alla build della community "Modded" (il wrapper di MatheusGViana) quando sopra è selezionato "Mod + OptiScaler".</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Versione di OptiScaler da installare. Scegli "Nessuno" per sostituire solo la DLL FSR 4, senza installare OptiScaler.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">Il mod DLSS Neural Rendering per AMD è già installato per questo gioco.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Disinstallare riavvia il programma di installazione di danielblnc — scegli l'opzione di rimozione quando richiesto.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Prima ci serve la tua copia legittima di nvngx_dlssnr.dll — non possiamo fornirla noi per motivi legali. Puoi ottenerla da qualsiasi gioco con supporto DLSS 5. Richiesta una sola volta e riutilizzata per le installazioni future; puoi aggiornarla in seguito da Impostazioni → Gestisci versioni locali.</x:String>
@@ -835,6 +840,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrModeDanielOnly">Solo il mod di danielblnc (senza OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (wrapper non ufficiale)</x:String>
     <x:String x:Key="TxtSetupNrWrapperWarning">Al momento OptiScaler non offre supporto ufficiale per il Neural Rendering, quindi è necessaria una build wrapped della community (MatheusGViana) per usarlo insieme. Installala a tuo rischio.</x:String>
+    <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">La mod di danielblnc funziona solo nei giochi DirectX 12 che usano FSR 3.1 o superiore. Non funziona in DirectX 11 né in Vulkan.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Versione del mod (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versione della mod DLSS Neural Rendering di danielblnc usata per generare i weights AMD. Necessaria sia per "danielblnc mod only" sia per "Mod + OptiScaler".</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Usa un fork di terze parti non ufficiale (guentra/DLSS-NR-on-AMD-Linux) per eseguire la mod DLSS Neural Rendering di danielblnc su Linux tramite un vero bridge ROCm</x:String>
@@ -938,6 +944,8 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Scegli la DLL FSR 4 preselezionata in Manage e Quick Install. None salta iniezione o scambio.</x:String>
     <x:String x:Key="TxtFrameGeneration">Generazione fotogrammi</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">DLL FSR 4 (Swap)</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Sostituisce la DLL FSR del gioco con FSR 4. INT8: per GPU senza supporto ufficiale a FSR 4. FP8: il modello ufficiale (RDNA 4).&#10;&#10;Funziona con o senza OptiScaler: per sostituire solo la DLL, imposta OptiScaler su "Nessuno". Senza OptiScaler, il gioco deve già includere FSR 3.1 o successivo.</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">Per passare a FSR 4 senza installare OptiScaler, scegli "Nessuno" come versione di OptiScaler e seleziona una DLL FSR 4 (Swap).</x:String>
     <x:String x:Key="TxtFgRoute">Percorso FG</x:String>
     <x:String x:Key="TxtFgOutput">Output FG</x:String>
     <x:String x:Key="TxtMfgMultiplier">Moltiplicatore FG</x:String>
@@ -1033,14 +1041,16 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeMessage">Il programma è passato alla modalità di rendering software a causa di più arresti anomali ricorrenti.&#x0a;&#x0a;Puoi tornare al rendering hardware (consigliato) dalle Impostazioni.</x:String>
     <x:String x:Key="TxtSoftwareRenderingNoticeTitle">Modalità di rendering modificata</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Novità: Intel Xe Frame Generation ora supporta moltiplicatori fino a x6.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Corretto: l'installazione di una versione personalizzata di OptiScaler falliva perché l'installer si aspettava comunque una release da scaricare.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Corretto: su Linux la cartella di OptiScaler veniva creata con un nome che OptiScaler stesso non cerca, facendo ricadere silenziosamente FSR 4 su FSR 3.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Corretto: installare OptiScaler con il metodo di iniezione dxgi andava in conflitto con XeSS e faceva crashare il gioco prima dell'avvio.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Corretto: nelle versioni Nightly la cartella plugins veniva creata fuori dalla cartella di OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Corretto: nelle versioni Nightly lo swap delle DLL FSR 4 veniva applicato fuori dalla cartella di OptiScaler.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• Corretto: il selettore di versione FP8 in FSR 4 DLL Swap restava bloccato se la richiesta a GitHub falliva.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• Corretto: il download di Streamline falliva per un errore nel recupero dei dati del repository da GitHub.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Novità: Il README ora spiega come compilare OptiScaler da solo partendo dai suoi diversi branch.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Migliorato: Barra del titolo ridisegnata per integrarsi con il resto dell'app.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Migliorato: Supporto migliore per handheld e schermi piccoli: gamepad in più finestre, scorrimento e pulsanti touch, tocco per mostrare tooltip e opzioni in griglia, e finestra Gestisci trascinabile o ingrandibile con doppio tocco.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Migliorato: Se non viene trovata una copertina viene mostrata l'icona dell'eseguibile, e la vista Elenco ora usa le icone per un layout più compatto.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• Migliorato: Su Linux l'app ora mostra la propria icona nella barra delle applicazioni.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew6">• Migliorato: Una nuova nota spiega che le DLL di FSR 4 possono essere sostituite senza installare OptiScaler.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew7">• Corretto: La disinstallazione poteva eliminare le DLL FidelityFX del gioco (amd_fidelityfx_*) senza ripristinare gli originali.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew8">• Corretto: Alcuni nomi di cartella venivano ripuliti in modo errato, impedendo di riconoscere quei giochi nella ricerca delle informazioni di compatibilità.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew9">• Corretto: La stessa cartella poteva essere scansionata due volte per lo stesso eseguibile.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew10">• Corretto: Su Windows, una finestra ingrandita impediva la comparsa della barra delle applicazioni nascosta automaticamente.</x:String>
     <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
     <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
     <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
