@@ -227,6 +227,28 @@ namespace OptiscalerClient.Services
         private static readonly string[] ProxyDllNames =
             { "dxgi.dll", "version.dll", "winmm.dll", "d3d12.dll", "dbghelp.dll", "winhttp.dll", "wininet.dll" };
 
+        /// <summary>FidelityFX DLLs a game with native FSR may ship in its own root, shadowing the
+        /// copies a subfolder-layout package installs into "OptiScaler\" (see Step 2.05).</summary>
+        private static readonly string[] ShadowableFfxFileNames =
+            Fsr4Int8DllHelper.KnownFileNames.Append("amd_fidelityfx_dx12.dll").ToArray();
+
+        /// <summary>When <paramref name="destPath"/> sits in gameDir\OptiScaler\ and the game has its own
+        /// copy of the same FidelityFX DLL in gameDir, returns that root copy — it must receive the same
+        /// content, or the game keeps loading its own version. Null otherwise.</summary>
+        private static string? GetShadowedRootCopy(string gameDir, string destPath)
+        {
+            var fileName = Path.GetFileName(destPath);
+            if (!ShadowableFfxFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                return null;
+
+            var destDir = Path.GetFullPath(Path.GetDirectoryName(destPath) ?? "");
+            if (string.Equals(destDir, Path.GetFullPath(gameDir), StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var rootCopy = Path.Combine(gameDir, fileName);
+            return File.Exists(rootCopy) ? rootCopy : null;
+        }
+
         private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
             cacheFiles.FirstOrDefault(f =>
                 Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
@@ -617,6 +639,39 @@ namespace OptiscalerClient.Services
             }
 
             DebugWindow.Log($"[Install] Copied {additionalFileCount} additional files");
+
+            // Step 2.05: packages with the "OptiScaler\" subfolder layout (0.10+/nightly) put their
+            // FidelityFX DLLs there and never touch the game root — but games with native FSR (e.g.
+            // Crimson Desert) ship their own copy of the same DLL next to the exe. Two different
+            // versions of one module name in the process keep the game from launching; the flat 0.9.x
+            // layout never hit this because Step 2 overwrote the game's copy. Do the same here: replace
+            // (with backup, restored on uninstall) only root copies the game actually has.
+            var packageSubfolder = Path.Combine(cachePath, "OptiScaler");
+            if (Directory.Exists(packageSubfolder))
+            {
+                foreach (var ffxName in ShadowableFfxFileNames)
+                {
+                    var sourcePath = Path.Combine(packageSubfolder, ffxName);
+                    var rootPath = Path.Combine(gameDir, ffxName);
+                    if (!File.Exists(sourcePath) || !File.Exists(rootPath))
+                        continue;
+
+                    var preHash = ComputeSha256(rootPath);
+                    _backupStore.BackupFile(storeKey, gameDir, ffxName);
+                    manifest.BackedUpFiles.Add(ffxName);
+
+                    rollbackJournal.CaptureFile(ffxName);
+                    File.Copy(sourcePath, rootPath, true);
+                    manifest.InstalledFiles.Add(ffxName);
+                    TrackManifestFileMutation(
+                        manifest,
+                        relativePath: ffxName,
+                        existedBefore: true,
+                        preInstallHash: preHash,
+                        postInstallHash: ComputeSha256(rootPath));
+                    DebugWindow.Log($"[Install] Replaced game's own {ffxName} in root with the package's version (subfolder layout)");
+                }
+            }
 
             // Step 2.1 (Linux only): make the Agility SDK folder reachable under the exact name
             // OptiScaler looks up. See EnsureAgilitySdkCasingAlias — without this, RDNA3/RDNA4 users
@@ -1414,7 +1469,12 @@ namespace OptiscalerClient.Services
             }
 
             foreach (var (targetPath, sourceContentPath) in files)
+            {
                 CopyWithBackupTracking(manifest!, storeKey, gameDir, targetPath, sourceContentPath);
+                var shadowedRootCopy = GetShadowedRootCopy(gameDir, targetPath);
+                if (shadowedRootCopy != null)
+                    CopyWithBackupTracking(manifest!, storeKey, gameDir, shadowedRootCopy, sourceContentPath);
+            }
 
             var targetFileNames = files.Select(f => Path.GetFileName(f.TargetPath)).ToList();
 
@@ -1474,6 +1534,9 @@ namespace OptiscalerClient.Services
             }
 
             CopyWithBackupTracking(manifest!, storeKey, gameDir, destPath, sourceContentPath);
+            var shadowedRootCopy = GetShadowedRootCopy(gameDir, destPath);
+            if (shadowedRootCopy != null)
+                CopyWithBackupTracking(manifest!, storeKey, gameDir, shadowedRootCopy, sourceContentPath);
 
             manifest!.OperationStatus = "committed";
             manifest.FinishedAtUtc = DateTime.UtcNow.ToString("O");
