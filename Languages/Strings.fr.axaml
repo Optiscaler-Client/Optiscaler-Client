@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">Réduire</x:String>
+    <x:String x:Key="TxtWindowMaximize">Agrandir</x:String>
+    <x:String x:Key="TxtWindowRestore">Restaurer</x:String>
+    <x:String x:Key="TxtWindowClose">Fermer</x:String>
     <x:String x:Key="TxtBtnScan">⟳  Scanner les jeux</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  Ajouter manuellement</x:String>
     <x:String x:Key="TxtTipSettings">Paramètres</x:String>
@@ -113,6 +117,8 @@
     <x:String x:Key="TxtOpenFolder">📂  Ouvrir le dossier</x:String>
     <x:String x:Key="TxtOptiStatus">Statut OptiScaler</x:String>
     <x:String x:Key="TxtDetectedComponents">Composants détectés</x:String>
+    <x:String x:Key="TxtComponentsShowAll">Tout afficher</x:String>
+    <x:String x:Key="TxtComponentsShowLess">Afficher moins</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">Confirmer la désinstallation</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">Êtes-vous sûr de vouloir désinstaller OptiScaler ?&#x0a;Seuls les fichiers originaux sauvegardés seront restaurés.</x:String>
     <x:String x:Key="TxtUninstall">✕ Désinstaller</x:String>
@@ -138,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Configuration mise à jour.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Impossible de mettre à jour la configuration :</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Autre chose a changé — utilisez Installer/Réinstaller à la place.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Aucun</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Aucun — swap FSR 4 uniquement</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Échange automatique de la DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Échange manuel de la DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Restaurer la DLL d'origine</x:String>
@@ -372,7 +378,6 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtDonateTitle">Soutenir le développement</x:String>
     <x:String x:Key="TxtDonateDesc">OptiScaler Client est gratuit et développé sur mon temps libre. S'il vous a fait gagner du temps, vous pouvez envisager de soutenir son développement sur Ko-fi. C'est entièrement facultatif et jamais requis pour utiliser l'application.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Soutenir sur Ko-fi</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">Cette version inclut déjà Fakenvapi et NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Sélectionnez soit une version d'Optiscaler, soit une DLL FSR 4 (Échange).</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">FSR 4 Swap par défaut</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Version du mod FSR 4 Swap présélectionnée à l'ouverture d'un jeu. Les GPU RDNA 4 (série RX 9000) utilisent automatiquement Aucun.</x:String>
@@ -816,7 +821,7 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (mod seul)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">Permet d'utiliser le DLSS Neural Rendering sur les GPU AMD via le mod non officiel de danielblnc, éventuellement combiné à une version non officielle d'OptiScaler. Expérimental, non pris en charge officiellement et sans rapport avec les upscalers propres d'OptiScaler — à vos risques et périls.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Version d'OptiScaler à installer. Passe automatiquement au build communautaire "Modded" (le wrapper de MatheusGViana) quand "Mod + OptiScaler" est sélectionné ci-dessus.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Version d'OptiScaler à installer. Choisissez « Aucun » pour remplacer uniquement la DLL FSR 4, sans installer OptiScaler.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">Le mod DLSS Neural Rendering pour AMD est déjà installé pour ce jeu.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Désinstaller relance l'installateur de danielblnc — choisissez l'option de suppression quand il le demande.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Il nous faut d'abord votre copie légitime de nvngx_dlssnr.dll — nous ne pouvons pas la fournir nous-mêmes pour des raisons légales. Vous pouvez l'obtenir depuis n'importe quel jeu compatible DLSS 5. Demandée une seule fois et réutilisée pour les installations futures ; vous pouvez la mettre à jour plus tard depuis Paramètres → Gérer les versions locales.</x:String>
@@ -938,6 +943,8 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Sélectionnez le DLL FSR 4 présélectionné dans Manage et Quick Install. None ignore l’injection ou l’échange.</x:String>
     <x:String x:Key="TxtFrameGeneration">Génération d'images</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">DLL FSR 4 (Swap)</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Remplace la DLL FSR du jeu par FSR 4. INT8 : pour les GPU sans prise en charge officielle de FSR 4. FP8 : le modèle officiel (RDNA 4).&#10;&#10;Fonctionne avec ou sans OptiScaler : pour ne remplacer que la DLL, réglez OptiScaler sur « Aucun ». Sans OptiScaler, le jeu doit déjà intégrer FSR 3.1 ou plus récent.</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">Pour passer à FSR 4 sans installer OptiScaler, choisissez « Aucun » comme version d'OptiScaler, puis une DLL FSR 4 (Swap).</x:String>
     <x:String x:Key="TxtFgRoute">Chemin FG</x:String>
     <x:String x:Key="TxtFgOutput">Sortie FG</x:String>
     <x:String x:Key="TxtMfgMultiplier">Multiplicateur FG</x:String>

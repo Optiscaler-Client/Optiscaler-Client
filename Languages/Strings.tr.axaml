@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">Simge durumuna küçült</x:String>
+    <x:String x:Key="TxtWindowMaximize">Ekranı kapla</x:String>
+    <x:String x:Key="TxtWindowRestore">Geri yükle</x:String>
+    <x:String x:Key="TxtWindowClose">Kapat</x:String>
     <x:String x:Key="TxtBtnScan">⟳  Oyunları Tara</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  Manuel Ekle</x:String>
     <x:String x:Key="TxtTipSettings">Ayarlar</x:String>
@@ -113,6 +117,8 @@
     <x:String x:Key="TxtOpenFolder">📂  Klasör Aç</x:String>
     <x:String x:Key="TxtOptiStatus">OptiScaler Durumu</x:String>
     <x:String x:Key="TxtDetectedComponents">Algılanan Bileşenler</x:String>
+    <x:String x:Key="TxtComponentsShowAll">Tümünü göster</x:String>
+    <x:String x:Key="TxtComponentsShowLess">Daha az göster</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">Kaldırma İşlemini Onayla</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">OptiScaler'ı kaldırmak istediğinizden emin misiniz?&#x0a;Yalnızca yedeklenen orijinal dosyalar geri yüklenecektir.</x:String>
     <x:String x:Key="TxtUninstall">✕ Kaldır</x:String>
@@ -138,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Yapılandırma güncellendi.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Yapılandırma güncellenemedi:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Başka bir şey değişti — bunun yerine Yükle/Yeniden Yükle kullanın.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Yok</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Yok — yalnızca FSR 4 değiştirme</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Otomatik DLL Değişimi</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Manuel DLL Değişimi</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Orijinal DLL'yi Geri Yükle</x:String>
@@ -372,7 +378,6 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDonateTitle">Geliştirmeyi Destekle</x:String>
     <x:String x:Key="TxtDonateDesc">OptiScaler Client ücretsizdir ve boş zamanlarımda geliştirilir. Size zaman kazandırdıysa, gelişimini Ko-fi üzerinden desteklemeyi düşünebilirsiniz. Bu tamamen isteğe bağlıdır ve uygulamayı kullanmak için asla gerekli değildir.</x:String>
     <x:String x:Key="TxtDonateKofiBtn">Ko-fi'de Destekle</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">Bu sürüm zaten Fakenvapi ve NukemFG içerir</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">Bir Optiscaler sürümü veya bir FSR 4 DLL'i (Değişim) seçin.</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">Varsayılan FSR 4 Swap</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">Oyun açılırken önceden seçilen varsayılan FSR 4 Swap mod sürümü. RDNA 4 GPU'lar (RX 9000 serisi) otomatik olarak Hiçbirini kullanır.</x:String>
@@ -795,7 +800,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (yalnızca mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc'nin resmi olmayan modunu kullanarak AMD GPU'larda DLSS Neural Rendering çalıştırmanızı sağlar, isteğe bağlı olarak resmi olmayan bir OptiScaler sürümüyle birlikte. Deneyseldir, resmi destek kapsamında değildir ve OptiScaler'ın kendi upscaler'larıyla ilgisi yoktur — kullanım sorumluluğu size aittir.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Kurulacak OptiScaler sürümü. Yukarıda "Mod + OptiScaler" seçildiğinde otomatik olarak topluluk derlemesi "Modded"e (MatheusGViana'nın wrapper'ı) geçer.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Kurulacak OptiScaler sürümü. OptiScaler kurmadan yalnızca FSR 4 DLL'sini değiştirmek için "Yok"u seçin.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">AMD DLSS Neural Rendering modu bu oyun için zaten yüklü.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Kaldırmak danielblnc'nin yükleyicisini yeniden çalıştırır — sorulduğunda kaldırma seçeneğini seçin.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Önce kendi yasal nvngx_dlssnr.dll kopyanıza ihtiyacımız var — yasal nedenlerle bunu kendimiz sağlayamıyoruz. Bunu DLSS 5 destekleyen herhangi bir oyundan alabilirsiniz. Yalnızca bir kez sorulur ve gelecekteki kurulumlarda tekrar kullanılır; daha sonra Ayarlar → Yerel Sürümleri Yönet bölümünden güncelleyebilirsiniz.</x:String>
@@ -917,6 +922,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage ve Quick Install'da önceden seçilen FSR 4 DLL'yi belirleyin. None eklemeyi veya değiştirmeyi atlar.</x:String>
     <x:String x:Key="TxtFrameGeneration">Kare oluşturma</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL (Değiştirme)</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Oyunun FSR DLL'sini FSR 4 ile değiştirir. INT8: resmi FSR 4 desteği olmayan GPU'lar için. FP8: resmi model (RDNA 4).&#10;&#10;OptiScaler ile veya olmadan çalışır: yalnızca DLL'yi değiştirmek için OptiScaler'ı "Yok" olarak ayarlayın. OptiScaler olmadan oyunun zaten FSR 3.1 veya daha yenisini içermesi gerekir.</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">OptiScaler kurmadan FSR 4'e geçmek için OptiScaler sürümünde "Yok"u seçin ve bir FSR 4 DLL (Değiştirme) seçin.</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG yolu</x:String>
     <x:String x:Key="TxtFgRouteTooltip">OptiScaler'ın bu oyunda Kare oluşturma için kullandığı giriş yolunu seçer.</x:String>

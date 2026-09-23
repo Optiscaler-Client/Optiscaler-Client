@@ -32,6 +32,10 @@
 
     <!-- MainWindow -->
     <x:String x:Key="TxtAppTitle">Optiscaler Client</x:String>
+    <x:String x:Key="TxtWindowMinimize">最小化</x:String>
+    <x:String x:Key="TxtWindowMaximize">最大化</x:String>
+    <x:String x:Key="TxtWindowRestore">還原</x:String>
+    <x:String x:Key="TxtWindowClose">關閉</x:String>
     <x:String x:Key="TxtBtnScan">⟳  掃描遊戲</x:String>
     <x:String x:Key="TxtBtnAddManual">＋  手動新增</x:String>
     <x:String x:Key="TxtTipSettings">設定</x:String>
@@ -115,6 +119,8 @@
     <x:String x:Key="TxtOpenFolder">📂  開啟資料夾</x:String>
     <x:String x:Key="TxtOptiStatus">OptiScaler狀態</x:String>
     <x:String x:Key="TxtDetectedComponents">偵測到的元件</x:String>
+    <x:String x:Key="TxtComponentsShowAll">顯示全部</x:String>
+    <x:String x:Key="TxtComponentsShowLess">收合</x:String>
     <x:String x:Key="TxtConfirmUninstallTitle">確認解除安裝</x:String>
     <x:String x:Key="TxtConfirmUninstallMsg">您確定要解除安裝OptiScaler嗎？&#x0a;只有備份的原始檔案將被還原。</x:String>
     <x:String x:Key="TxtUninstall">✕ 解除安裝</x:String>
@@ -140,7 +146,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">設定已更新。</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">無法更新設定:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">其他選項已變更——請改用安裝/重新安裝。</x:String>
-    <x:String x:Key="TxtOptiVersionNone">無</x:String>
+    <x:String x:Key="TxtOptiVersionNone">無 — 僅替換 FSR 4</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 自動交換 DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手動交換 DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ 還原原始 DLL</x:String>
@@ -380,7 +386,6 @@
     <x:String x:Key="TxtDonateTitle">支持開發</x:String>
     <x:String x:Key="TxtDonateDesc">OptiScaler Client 是免費的，由我利用業餘時間開發。如果它為你節省了時間，歡迎在 Ko-fi 上支持它的開發。這完全是自願的，絕不是使用本應用程式的必要條件。</x:String>
     <x:String x:Key="TxtDonateKofiBtn">在 Ko-fi 上支持</x:String>
-    <x:String x:Key="TxtBetaIncludesComponents">此版本已包含 Fakenvapi 與 NukemFG</x:String>
     <x:String x:Key="TxtNothingToInstallInfo">請選擇 Optiscaler 版本或 FSR 4 DLL（交換）其中之一。</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultTitle">預設 FSR 4 Swap</x:String>
     <x:String x:Key="TxtFsr4Int8DefaultDesc">開啟遊戲時預先選取的預設 FSR 4 Swap 模組版本。RDNA 4 GPU（RX 9000 系列）會自動使用「無」選項。</x:String>
@@ -812,7 +817,7 @@
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(僅模組)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
     <x:String x:Key="TxtDlssNrOnAmdTooltip">透過 danielblnc 的非官方模組在 AMD GPU 上使用 DLSS Neural Rendering，可選擇與非官方 OptiScaler 建置版本結合使用。此功能為實驗性，不受官方支持，且與 OptiScaler 本身的放大器無關——使用風險自負。</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">要安裝的 OptiScaler 版本。當上方選擇「Mod + OptiScaler」時會自動切換到社群建置的「Modded」（MatheusGViana 的 wrapper）。</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">要安裝的 OptiScaler 版本。選擇「無」可只替換 FSR 4 DLL，而不安裝 OptiScaler。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">此遊戲已安裝適用於 AMD 的 DLSS Neural Rendering 模組。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">解除安裝會重新執行 danielblnc 的安裝程式 — 出現提示時請選擇移除選項。</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">首先需要你自己合法取得的 nvngx_dlssnr.dll —— 基於法律原因我們無法自行提供此檔案。你可以從任何支援 DLSS 5 的遊戲中取得它。只詢問一次，之後的安裝會重複使用；之後可以在 設定 → 管理本機版本 中更新它。</x:String>
@@ -934,6 +939,8 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultText">選擇在 Manage 和 Quick Install 中預先選取的 FSR 4 DLL。None 會略過注入或交換。</x:String>
     <x:String x:Key="TxtFrameGeneration">幀生成</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL（替換）</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">將遊戲的 FSR DLL 替換為 FSR 4。INT8：適用於未獲官方 FSR 4 支援的 GPU。FP8：官方模型（RDNA 4）。&#10;&#10;無論是否安裝 OptiScaler 皆可使用：若只想替換 DLL，請將 OptiScaler 設為「無」。不使用 OptiScaler 時，遊戲需內建 FSR 3.1 或更新版本。</x:String>
+    <x:String x:Key="TxtFsr4SwapOnlyHint">若要在不安裝 OptiScaler 的情況下替換為 FSR 4，請將 OptiScaler 版本設為「無」，並選擇一個 FSR 4 DLL（替換）。</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 路徑</x:String>
     <x:String x:Key="TxtFgRouteTooltip">選擇 OptiScaler 在此遊戲中用於幀生成的輸入路徑。</x:String>
