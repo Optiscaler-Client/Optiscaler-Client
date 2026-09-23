@@ -255,7 +255,10 @@ namespace OptiscalerClient.Views
                     if (string.IsNullOrEmpty(selectedPath) || !Directory.Exists(selectedPath))
                         return;
 
-                    if (!_customFolders.Contains(selectedPath))
+                    // Folder URIs can carry a trailing separator, so "Games" and "Games/" would
+                    // otherwise both be added and scanned twice.
+                    selectedPath = NormalizeFolderPath(selectedPath);
+                    if (!_customFolders.Any(f => NormalizeFolderPath(f) == selectedPath))
                     {
                         _customFolders.Add(selectedPath);
                         RefreshCustomFoldersList();
@@ -264,6 +267,9 @@ namespace OptiscalerClient.Views
             }
             catch (Exception ex) { DebugWindow.Log($"[ScanSources] Add folder failed: {ex.Message}"); }
         }
+
+        private static string NormalizeFolderPath(string path) =>
+            Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 
         private void BtnRemoveFolder_Click(object? sender, RoutedEventArgs e)
         {
