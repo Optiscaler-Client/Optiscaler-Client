@@ -60,6 +60,9 @@ namespace OptiscalerClient
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // App-wide: touch taps open tooltips ("?" help icons), which otherwise need a hover.
+            Helpers.TouchToolTipHelper.Register();
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow = new Views.MainWindow();
