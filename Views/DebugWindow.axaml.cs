@@ -20,6 +20,11 @@ namespace OptiscalerClient.Views
         public static DebugWindow? Instance => _instance;
         public static bool IsLoggingEnabled => _instance != null;
 
+        /// <summary>Session-only testing aid: lets the Manage window be resized like a normal
+        /// window (see ManageGameWindow.Responsive.cs). Off by default; applies to windows opened
+        /// after it's checked.</summary>
+        public static bool MakeManageWindowResizable { get; private set; }
+
         public DebugWindow()
         {
             InitializeComponent();
@@ -83,7 +88,12 @@ namespace OptiscalerClient.Views
             Log(messageFactory());
         }
 
-        private void BtnClear_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void ChkManageResizable_Changed(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            MakeManageWindowResizable = (sender as CheckBox)?.IsChecked == true;
+        }
+
+                private void BtnClear_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             _logContent.Clear();
             _lineLengths.Clear();
