@@ -36,9 +36,11 @@ namespace OptiscalerClient.Helpers
         /// every other AMD GPU needs the INT8 software fallback forced explicitly.</summary>
         public static bool IsRdna4(GpuInfo? gpu)
         {
+            // "R9\d{3}": the Radeon AI PRO R9700 workstation card is RDNA 4 but has no " 9"/"RX 9".
             return gpu != null && gpu.Vendor == GpuVendor.AMD &&
                    (gpu.Name.Contains(" 9", StringComparison.OrdinalIgnoreCase) ||
-                    gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
+                    gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase) ||
+                    Regex.IsMatch(gpu.Name, @"\bR9\d{3}\b", RegexOptions.IgnoreCase));
         }
 
         /// <summary>RDNA 3 desktop (Radeon RX 7000 series) is now also whitelisted by AMD's official
@@ -57,8 +59,12 @@ namespace OptiscalerClient.Helpers
         public static bool IsRdna2(GpuInfo? gpu)
         {
             if (gpu == null || gpu.Vendor != GpuVendor.AMD) return false;
+            // Steam Deck reports "AMD Custom GPU 0405" (LCD) / "0932" (OLED) on both Windows (WMI)
+            // and Linux (amdgpu.ids) - the "Van Gogh" codename never appears in either name.
             return gpu.Name.Contains("RX 6", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("Van Gogh", StringComparison.OrdinalIgnoreCase) ||
+                   gpu.Name.Contains("Custom GPU 0405", StringComparison.OrdinalIgnoreCase) ||
+                   gpu.Name.Contains("Custom GPU 0932", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("660M", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("680M", StringComparison.OrdinalIgnoreCase);
         }
