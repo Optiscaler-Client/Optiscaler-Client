@@ -68,10 +68,21 @@ public class ExclusionService
             var list = new List<ScanExclusion>();
             foreach (var item in arr.EnumerateArray())
             {
+                // PathRegex used to be dropped here, so a regex rule only ever worked in the
+                // built-in defaults. An invalid pattern is skipped rather than kept: IsExcluded
+                // would otherwise throw on every game and abort the whole scan.
+                var regex = item.TryGetProperty("PathRegex", out var r) ? r.GetString() ?? "" : "";
+                if (!string.IsNullOrWhiteSpace(regex))
+                {
+                    try { _ = new Regex(regex); }
+                    catch (ArgumentException) { regex = ""; }
+                }
+
                 list.Add(new ScanExclusion
                 {
                     Name = item.TryGetProperty("Name", out var n) ? n.GetString() ?? "" : "",
-                    PathSegment = item.TryGetProperty("PathSegment", out var p) ? p.GetString() ?? "" : ""
+                    PathSegment = item.TryGetProperty("PathSegment", out var p) ? p.GetString() ?? "" : "",
+                    PathRegex = regex
                 });
             }
             return list;
