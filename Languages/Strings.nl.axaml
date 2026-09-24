@@ -1059,4 +1059,21 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Anti-cheat gedetecteerd</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">Deze game gebruikt anti-cheatbeveiliging. OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen. Gebruik op eigen risico.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} gebruikt anti-cheatbeveiliging.&#x0a;&#x0a;OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen. Ga alleen door als je offline speelt of de game het officieel toestaat.&#x0a;&#x0a;Toch installeren?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Toch installeren</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">Deze games gebruiken anti-cheatbeveiliging:&#x0a;&#x0a;{0}&#x0a;&#x0a;OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Deze games overslaan</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Versie gelezen uit het DLL-bestand op schijf. OptiScaler of de GPU-driver kan tijdens het spelen een andere FSR-versie laden.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">Gebruikte AMD FSR (OptiScaler-log): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">FSR-upscalerversie die OptiScaler in zijn log meldde toen de game voor het laatst draaide.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Verschilt van de DLL op schijf: OptiScaler of de GPU-driver heeft een andere FSR-versie geladen.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Instellingen niet toegepast</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Sommige instellingen zijn niet zoals verwacht naar OptiScaler.ini geschreven, dus de game draait mogelijk met een andere configuratie:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Opnieuw toepassen</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Sommige instellingen konden nog steeds niet worden toegepast. Controleer of OptiScaler.ini niet alleen-lezen is of in een ander programma is geopend:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">OptiScaler.ini kon niet volledig worden geconfigureerd voor: {0}. Open Beheer voor deze games en installeer opnieuw.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">Installatie mislukt voor {0} game(s):&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

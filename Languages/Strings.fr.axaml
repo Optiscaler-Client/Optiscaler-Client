@@ -1059,4 +1059,21 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Anti-triche détecté</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">Ce jeu utilise une protection anti-triche. Injecter OptiScaler ou remplacer des DLL peut entraîner le bannissement de votre compte dans les modes en ligne. À utiliser à vos risques et périls.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} utilise une protection anti-triche.&#x0a;&#x0a;Injecter OptiScaler ou remplacer des DLL peut entraîner le bannissement de votre compte dans les modes en ligne. Ne continuez que si vous jouez hors ligne ou si le jeu l'autorise officiellement.&#x0a;&#x0a;Installer quand même ?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Installer quand même</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">Ces jeux utilisent une protection anti-triche :&#x0a;&#x0a;{0}&#x0a;&#x0a;Injecter OptiScaler ou remplacer des DLL peut entraîner le bannissement de votre compte dans les modes en ligne.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Ignorer ces jeux</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Version lue depuis le fichier DLL sur le disque. OptiScaler ou le pilote GPU peut charger une autre version de FSR à l'exécution.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">AMD FSR utilisé (journal OptiScaler) : {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">Version de l'upscaler FSR indiquée par OptiScaler dans son journal lors du dernier lancement du jeu.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Diffère de la DLL sur le disque : OptiScaler ou le pilote GPU a chargé une autre version de FSR.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Paramètres non appliqués</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Certains paramètres n'ont pas été écrits dans OptiScaler.ini comme prévu, le jeu peut donc fonctionner avec une autre configuration :&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Réappliquer</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Certains paramètres n'ont toujours pas pu être appliqués. Vérifiez qu'OptiScaler.ini n'est pas en lecture seule ou ouvert dans un autre programme :&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">OptiScaler.ini n'a pas pu être entièrement configuré pour : {0}. Ouvrez Gérer pour ces jeux et réinstallez.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">L'installation a échoué pour {0} jeu(x) :&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

@@ -1053,4 +1053,21 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Hile önleyici tespit edildi</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">Bu oyun hile önleyici koruma kullanıyor. OptiScaler enjekte etmek veya DLL değiştirmek çevrimiçi modlarda hesabınızın yasaklanmasına yol açabilir. Riski size aittir.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} hile önleyici koruma kullanıyor.&#x0a;&#x0a;OptiScaler enjekte etmek veya DLL değiştirmek çevrimiçi modlarda hesabınızın yasaklanmasına yol açabilir. Yalnızca çevrimdışı oynuyorsanız veya oyun resmi olarak izin veriyorsa devam edin.&#x0a;&#x0a;Yine de yüklensin mi?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Yine de yükle</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">Bu oyunlar hile önleyici koruma kullanıyor:&#x0a;&#x0a;{0}&#x0a;&#x0a;OptiScaler enjekte etmek veya DLL değiştirmek çevrimiçi modlarda hesabınızın yasaklanmasına yol açabilir.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Bu oyunları atla</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Sürüm diskteki DLL dosyasından okundu. OptiScaler veya GPU sürücüsü çalışma sırasında farklı bir FSR sürümü yükleyebilir.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">Kullanılan AMD FSR (OptiScaler günlüğü): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">OptiScaler'ın oyun son çalıştığında günlüğünde bildirdiği FSR yükseltici sürümü.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Diskteki DLL ile farklı: OptiScaler veya GPU sürücüsü başka bir FSR sürümü yükledi.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Ayarlar uygulanmadı</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Bazı ayarlar OptiScaler.ini dosyasına beklendiği gibi yazılmadı, bu yüzden oyun farklı bir yapılandırmayla çalışabilir:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Yeniden uygula</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Bazı ayarlar hâlâ uygulanamadı. OptiScaler.ini dosyasının salt okunur olmadığını veya başka bir programda açık olmadığını kontrol edin:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">OptiScaler.ini şu oyunlar için tam olarak yapılandırılamadı: {0}. Bu oyunlar için Yönet'i açıp yeniden yükleyin.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">{0} oyun için kurulum başarısız oldu:&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

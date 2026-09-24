@@ -1054,4 +1054,21 @@
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Обнаружен античит</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">Эта игра использует античит. Внедрение OptiScaler или замена DLL может привести к бану аккаунта в онлайн-режимах. Используйте на свой риск.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} использует античит.&#x0a;&#x0a;Внедрение OptiScaler или замена DLL может привести к бану аккаунта в онлайн-режимах. Продолжайте, только если играете офлайн или игра официально это разрешает.&#x0a;&#x0a;Всё равно установить?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Всё равно установить</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">Эти игры используют античит:&#x0a;&#x0a;{0}&#x0a;&#x0a;Внедрение OptiScaler или замена DLL может привести к бану аккаунта в онлайн-режимах.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Пропустить эти игры</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Версия прочитана из DLL-файла на диске. OptiScaler или драйвер GPU могут загрузить другую версию FSR во время работы игры.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">Используемый AMD FSR (лог OptiScaler): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">Версия апскейлера FSR, которую OptiScaler указал в логе при последнем запуске игры.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Отличается от DLL на диске: OptiScaler или драйвер GPU загрузили другую версию FSR.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Настройки не применены</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Некоторые настройки не были записаны в OptiScaler.ini как ожидалось, поэтому игра может работать с другой конфигурацией:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Применить снова</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Некоторые настройки по-прежнему не удалось применить. Убедитесь, что OptiScaler.ini не доступен только для чтения и не открыт в другой программе:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">Не удалось полностью настроить OptiScaler.ini для: {0}. Откройте «Управлять» для этих игр и переустановите.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">Не удалось установить в {0} игр(ы):&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

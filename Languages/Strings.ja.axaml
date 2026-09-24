@@ -1056,4 +1056,21 @@
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">アンチチートを検出しました</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">このゲームはアンチチート保護を使用しています。OptiScalerの注入やDLLの差し替えは、オンラインモードでアカウントBANの原因になる可能性があります。自己責任で使用してください。</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0}はアンチチート保護を使用しています。&#x0a;&#x0a;OptiScalerの注入やDLLの差し替えは、オンラインモードでアカウントBANの原因になる可能性があります。オフラインでプレイする場合、またはゲームが公式に許可している場合のみ続行してください。&#x0a;&#x0a;それでもインストールしますか？</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">それでもインストール</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">次のゲームはアンチチート保護を使用しています：&#x0a;&#x0a;{0}&#x0a;&#x0a;OptiScalerの注入やDLLの差し替えは、オンラインモードでアカウントBANの原因になる可能性があります。</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">これらのゲームをスキップ</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">ディスク上のDLLファイルから読み取ったバージョンです。実行時にはOptiScalerまたはGPUドライバーが別のFSRバージョンを読み込む場合があります。</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">使用中のAMD FSR（OptiScalerログ）：{0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">前回ゲームを実行したときにOptiScalerがログに記録したFSRアップスケーラーのバージョンです。</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">ディスク上のDLLと異なります：OptiScalerまたはGPUドライバーが別のFSRバージョンを読み込みました。</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">設定が適用されていません</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">一部の設定がOptiScaler.iniに正しく書き込まれていないため、ゲームが異なる構成で動作する可能性があります：&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">再適用</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">一部の設定をまだ適用できません。OptiScaler.iniが読み取り専用になっていないか、他のプログラムで開かれていないか確認してください：&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">次のゲームでOptiScaler.iniを完全に構成できませんでした：{0}。これらのゲームの管理画面を開いて再インストールしてください。</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">{0} 件のゲームでインストールに失敗しました：&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

@@ -1056,4 +1056,21 @@
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">偵測到反作弊</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">此遊戲使用反作弊保護。注入 OptiScaler 或替換 DLL 可能導致你的帳號在線上模式中被封鎖。風險自負。</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} 使用反作弊保護。&#x0a;&#x0a;注入 OptiScaler 或替換 DLL 可能導致你的帳號在線上模式中被封鎖。僅在離線遊玩或遊戲官方允許時繼續。&#x0a;&#x0a;仍要安裝嗎？</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">仍然安裝</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">以下遊戲使用反作弊保護：&#x0a;&#x0a;{0}&#x0a;&#x0a;注入 OptiScaler 或替換 DLL 可能導致你的帳號在線上模式中被封鎖。</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">略過這些遊戲</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">從磁碟上的 DLL 檔案讀取的版本。執行時 OptiScaler 或顯示卡驅動程式可能會載入其他 FSR 版本。</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">使用中的 AMD FSR（OptiScaler 記錄）：{0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">上次執行遊戲時 OptiScaler 在記錄中回報的 FSR 超解析度版本。</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">與磁碟上的 DLL 不同：OptiScaler 或顯示卡驅動程式載入了其他 FSR 版本。</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">設定未套用</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">部分設定未如預期寫入 OptiScaler.ini，遊戲可能會以不同的設定執行：&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">重新套用</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">部分設定仍無法套用。請檢查 OptiScaler.ini 是否為唯讀，或是否在其他程式中開啟：&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">無法為以下遊戲完整設定 OptiScaler.ini：{0}。請在這些遊戲的管理視窗中重新安裝。</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">{0} 個遊戲安裝失敗：&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>

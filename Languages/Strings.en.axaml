@@ -1055,4 +1055,21 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Anti-cheat detected</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">This game uses anti-cheat protection. Injecting OptiScaler or swapping DLLs can get your account banned in online modes. Use at your own risk.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} uses anti-cheat protection.&#x0a;&#x0a;Injecting OptiScaler or swapping DLLs can get your account banned in online modes. Only continue if you play offline or the game officially allows it.&#x0a;&#x0a;Install anyway?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Install anyway</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">These games use anti-cheat protection:&#x0a;&#x0a;{0}&#x0a;&#x0a;Injecting OptiScaler or swapping DLLs can get your account banned in online modes.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Skip these games</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Version read from the DLL file on disk. OptiScaler or the GPU driver may load a different FSR version at runtime.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">AMD FSR in use (OptiScaler log): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">FSR upscaler version OptiScaler reported in its log the last time the game ran.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Differs from the DLL on disk: OptiScaler or the GPU driver loaded a different FSR version.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Settings not applied</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Some settings were not written to OptiScaler.ini as expected, so the game may run with a different configuration:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Reapply</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Some settings still could not be applied. Check that OptiScaler.ini is not read-only or open in another program:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">OptiScaler.ini could not be fully configured for: {0}. Open Manage for these games and reinstall.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">Installation failed for {0} game(s):&#x0a;&#x0a;{1}</x:String>
 </ResourceDictionary>
