@@ -1,0 +1,118 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OptiscalerClient.Views.QuickTourWindow"
+        Title="{DynamicResource TxtTourTitle}"
+        Width="560"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        CanResize="False"
+        ShowInTaskbar="False">
+
+    <Panel Margin="16" Name="RootPanel" Opacity="0">
+        <Border CornerRadius="12"
+                Background="{StaticResource BrBgBase}"
+                BoxShadow="0 10 30 0 #A0000000">
+
+            <Grid>
+                <!-- Subtle border overlay (never clipped) -->
+                <Border CornerRadius="12"
+                        BorderBrush="{StaticResource BrBorderSubtle}"
+                        BorderThickness="1"
+                        ZIndex="10"
+                        IsHitTestVisible="False"/>
+
+                <Border CornerRadius="12"
+                        Background="Transparent"
+                        ClipToBounds="True">
+
+                    <Grid RowDefinitions="Auto, Auto, Auto">
+
+                        <!-- Title Bar -->
+                        <Border Grid.Row="0"
+                                Name="TitleBar"
+                                Background="{StaticResource BrBgDeep}"
+                                Padding="24,18"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{DynamicResource TxtTourTitle}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource BrTextPrimary}"/>
+                                <TextBlock Grid.Column="1"
+                                           Name="TxtStepCounter"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource BrAccent}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Step content: populated from the step list in QuickTourWindow.axaml.cs.
+                             PnlStepContent slides/fades between steps; the dots stay put below it. -->
+                        <StackPanel Grid.Row="1" Margin="28,26,28,22" Spacing="18">
+                            <StackPanel Name="PnlStepContent" Spacing="14" MinHeight="290">
+                                <Border Width="56" Height="56"
+                                        CornerRadius="28"
+                                        HorizontalAlignment="Left"
+                                        Background="{StaticResource BrBgCard}"
+                                        BorderBrush="{StaticResource BrBorderSubtle}"
+                                        BorderThickness="1">
+                                    <TextBlock Name="TxtStepIcon"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               FontSize="26"
+                                               Foreground="{StaticResource BrAccent}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Name="TxtStepTitle"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrTextPrimary}"/>
+                                <StackPanel Name="PnlStepText" Spacing="8"/>
+                            </StackPanel>
+                            <StackPanel Name="PnlStepDots"
+                                        Orientation="Horizontal"
+                                        Spacing="6"/>
+                        </StackPanel>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,18"
+                                Background="{StaticResource BrBgDeep}"
+                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Button Name="BtnSkip"
+                                        Grid.Column="0"
+                                        Content="{DynamicResource TxtBtnSkip}"
+                                        Classes="BtnBase"
+                                        Padding="16,10"
+                                        FontSize="13"
+                                        Click="BtnSkip_Click"/>
+                                <Button Name="BtnBack"
+                                        Grid.Column="2"
+                                        Content="{DynamicResource TxtTourBack}"
+                                        Classes="BtnBase"
+                                        Padding="16,10"
+                                        Margin="0,0,8,0"
+                                        FontSize="13"
+                                        Click="BtnBack_Click"/>
+                                <Button Name="BtnNext"
+                                        Grid.Column="3"
+                                        Classes="BtnPrimary"
+                                        Padding="24,10"
+                                        FontSize="13"
+                                        Click="BtnNext_Click"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</Window>

@@ -94,6 +94,9 @@
               "textKey": "TxtHelpGSStep4Text"
             }
           ]
+        },
+        {
+          "type": "tour-button"
         }
       ]
     },

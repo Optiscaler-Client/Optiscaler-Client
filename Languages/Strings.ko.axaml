@@ -719,12 +719,16 @@
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
-    <x:String x:Key="TxtOptiPatcherTooltip">지원 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 OptiScaler용 ASI 플러그인입니다. Intel Arc 사용자의 D3D12 오류와 Dxgi 스푸핑으로 인한 성능 저하 또는 크래시를 방지합니다.</x:String>
+    <x:String x:Key="TxtOptiPatcherTooltip">지원되는 게임이 GPU 스푸핑 없이 DLSS/DLSS-FG 입력을 제공하도록 하는 OptiScaler 플러그인입니다. AMD와 Intel에서 스푸핑으로 인한 D3D12 오류, 충돌, 성능 저하를 막아 줍니다.&#10;&#10;Compatibility List에서 게임이 지원됨으로 표시되면 최신 버전이 자동으로 선택됩니다. 다른 게임에서는 "None"으로 두세요.</x:String>
+    <x:String x:Key="TxtInjectionTooltip">게임이 OptiScaler를 불러오도록 게임 폴더에서 사용하는 파일 이름입니다. 대부분의 게임은 dxgi.dll로 동작합니다. 게임에서 OptiScaler가 보이지 않거나 게임이 충돌하면 다른 이름(예: winmm.dll, version.dll)을 시도해 보세요.&#10;&#10;게임에 권장 이름이 있으면 Compatibility List에서 자동으로 선택됩니다.</x:String>
+    <x:String x:Key="TxtFrameGenerationTooltip">이 게임에서 추가 프레임을 생성하는 방식을 설정합니다. OptiScaler가 데이터를 가져오는 경로, 출력 기술(FSR FG, XeFG, DLSS-G…), 배수를 정합니다.&#10;&#10;Auto는 GPU와 게임에 맞는 옵션을 고릅니다. 바꾸려면 버튼을 클릭하세요.</x:String>
+    <x:String x:Key="TxtFakenvapiTooltip">AMD/Intel GPU에서 Nvidia API를 에뮬레이션해 게임이 Nvidia Reflex를 쓸 수 있게 합니다(AMD Anti-Lag 2 또는 LatencyFleX로 변환). 일부 프레임 생성 구성에 필요합니다.&#10;&#10;OptiScaler 0.9 이전 버전이나 사용자 빌드에서만 표시됩니다. 최신 버전에는 이미 포함되어 있습니다.</x:String>
+    <x:String x:Key="TxtNukemFGTooltip">DLSS 프레임 생성을 FSR 3 프레임 생성으로 바꾸는 Nukem의 모드(dlssg-to-fsr3)로, DLSS-G를 지원하는 게임에서 어떤 GPU로든 프레임 생성을 쓸 수 있습니다.&#10;&#10;OptiScaler 0.9 이전 버전이나 사용자 빌드에서만 표시됩니다. 최신 버전에는 이미 포함되어 있습니다.</x:String>
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">지원 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 OptiScaler용 ASI 플러그인입니다. Intel Arc 사용자의 D3D12 오류와 Dxgi 스푸핑으로 인한 성능 저하 또는 크래시를 방지합니다. 자동을 선택하면 호환성 목록에서 해당 게임에 필요하다고 표시할 때 최신 버전을 자동으로 설치합니다. 특정 버전이나 없음을 선택하면 항상 그것을 대신 사용합니다.</x:String>
     <x:String x:Key="TxtProfileLbl">프로필 (.ini)</x:String>
-    <x:String x:Key="TxtProfileTooltip">프로필은 저장된 OptiScaler .ini 구성입니다. 이 게임에 OptiScaler를 설치할 때 특정 설정 세트를 재사용하려면 프로필을 선택하세요.</x:String>
+    <x:String x:Key="TxtProfileTooltip">프로필은 설치 시 적용되는 OptiScaler 설정(OptiScaler.ini)을 저장한 것입니다. 프로필 섹션에서 만들고 편집하면 같은 구성을 여러 게임에 재사용할 수 있습니다.&#10;&#10;설치 후에는 눈 아이콘으로 생성된 OptiScaler.ini를 볼 수 있습니다.</x:String>
     <x:String x:Key="TxtSpoofingLbl">스푸핑</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">OptiScaler의 DXGI, Streamline, Vulkan GPU 스푸핑(DLSS 전용 게임이 AMD/Intel에서 작동하도록 Nvidia GPU인 척하는 기능)을 함께 재정의합니다. '자동'은 OptiScaler의 기본 동작과 동일합니다: AMD/Intel에서는 활성화, Nvidia에서는 비활성화.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">게임이 Nvidia GPU가 있다고 믿게 해 DLSS 옵션을 켜도록 하고, OptiScaler가 이를 FSR이나 XeSS로 연결합니다. DLSS만 지원하는 게임을 AMD/Intel에서 쓸 때 필요합니다. DXGI, Streamline, Vulkan에 적용됩니다.&#10;&#10;Auto: AMD/Intel에서는 켜짐, Nvidia에서는 꺼짐(OptiScaler 기본값). 게임이 충돌하거나 D3D12 오류가 나면 꺼 보거나, 지원되는 게임이라면 OptiPatcher를 사용하세요.</x:String>
     <x:String x:Key="TxtViewIniTooltip">설치된 OptiScaler.ini를 봅니다(읽기 전용)</x:String>
     <x:String x:Key="TxtViewIniSearchWatermark">키 또는 값 검색...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">글자 크기 키우기</x:String>
@@ -801,8 +805,8 @@
     <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">현재 Linux에서는 사용할 수 없습니다.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (모드만)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc의 비공식 모드를 통해 AMD GPU에서 DLSS Neural Rendering을 사용할 수 있습니다(선택적으로 비공식 OptiScaler 빌드와 결합 가능). 실험적 기능이며 공식 지원 대상이 아니고 OptiScaler 자체 업스케일러와는 무관합니다 — 본인 책임 하에 사용하세요.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">설치할 OptiScaler 버전입니다. "없음"을 선택하면 OptiScaler를 설치하지 않고 FSR 4 DLL만 교체합니다.</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc의 비공식 모드로 AMD GPU에서 DLSS Neural Rendering을 실행합니다. AMD 전용입니다.&#10;&#10;• danielblnc 모드만: 모드만 설치합니다.&#10;• Mod + OptiScaler: 비공식 OptiScaler 빌드와 함께 사용합니다.&#10;&#10;실험적이고 지원되지 않으며 OptiScaler 자체 업스케일러와는 무관합니다. 사용에 따른 책임은 본인에게 있습니다.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">설치할 OptiScaler 버전입니다.&#10;&#10;• Stable: 검증된 릴리스로, 대부분의 게임에 권장됩니다.&#10;• Beta: 새로운 기능과 수정이 포함된 사전 릴리스입니다.&#10;• Nightly: 자동 개발 빌드로, 불안정할 수 있습니다.&#10;&#10;OptiScaler 없이 FSR 4 DLL만 교체하려면 "없음 — FSR 4 교체만"을 선택하세요. 기본으로 선택되는 버전은 설정에서 바꿀 수 있습니다.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">이 게임에는 AMD용 DLSS Neural Rendering 모드가 이미 설치되어 있습니다.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">제거하면 danielblnc의 설치 프로그램이 다시 실행됩니다 — 표시되면 제거 옵션을 선택하세요.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">먼저 정품 nvngx_dlssnr.dll이 필요합니다 — 법적인 이유로 저희가 직접 제공할 수 없습니다. DLSS 5를 지원하는 게임에서 얻을 수 있습니다. 한 번만 요청되며 이후 설치에서 재사용됩니다. 나중에 설정 → 로컬 버전 관리에서 업데이트할 수 있습니다.</x:String>
@@ -823,7 +827,7 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">현재 OptiScaler는 Neural Rendering을 공식적으로 지원하지 않으므로, 함께 사용하려면 커뮤니티에서 래핑한 빌드(MatheusGViana)가 필요합니다. 본인 책임하에 설치하세요.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc의 모드는 FSR 3.1 이상을 사용하는 DirectX 12 게임에서만 작동합니다. DirectX 11과 Vulkan에서는 작동하지 않습니다.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">모드 버전 (danielblnc)</x:String>
-    <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD 웨이트를 생성하는 데 사용되는 danielblnc의 DLSS Neural Rendering 모드 버전입니다. "danielblnc mod only"와 "Mod + OptiScaler" 모두에 필요합니다.</x:String>
+    <x:String x:Key="TxtSetupNrDanielVersionTooltip">두 모드("danielblnc 모드만", "Mod + OptiScaler") 모두에서 AMD용 가중치를 생성하는 데 쓰는 danielblnc 모드 버전입니다. 모드를 선택하면 사용할 수 있습니다.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">비공식 서드파티 포크(guentra/DLSS-NR-on-AMD-Linux)를 사용해 실제 ROCm 브리지를 통해 danielblnc의 DLSS Neural Rendering 모드를 Linux에서 실행합니다</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linux에서는 danielblnc의 설치 프로그램을 직접 사용하는 대신 guentra의 비공식 포크인 DLSS-NR-on-AMD-Linux를 사용합니다. 이 포크는 모드를 실제 ROCm 런타임에 연결해 Wine/Proton에서도 GPU 검사를 통과할 수 있게 해줍니다. 크레딧: danielblnc/DLSS-NR-on-AMD(모드), guentra/DLSS-NR-on-AMD-Linux(포크).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">설치 중(Linux 포크)...</x:String>
@@ -903,7 +907,7 @@
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, 실험적)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD ("Setup NR" 경유) — 비공식, 실험적, 본인 책임하에 사용</x:String>
     <x:String x:Key="TxtSetupNrDownloadBtn">다운로드</x:String>
-    <x:String x:Key="TxtRenodxTooltip">RenoDX는 ReShade 위에서 동작하는 게임별 HDR/톤 매핑 애드온입니다. '자동'을 선택하면 이 게임에 맞는 애드온을 자동으로 찾아 다운로드합니다.</x:String>
+    <x:String x:Key="TxtRenodxTooltip">게임별 HDR/톤 매핑 애드온입니다. "Auto"는 RenoDX 위키에서 이 게임에 맞는 애드온을 찾아 다운로드합니다.&#10;&#10;게임 폴더에 ReShade(애드온 지원판)가 이미 설치되어 있어야 하며, 자동으로 다운로드할 수 없습니다. ReShade가 OptiScaler와 같은 DLL 이름을 쓰면 기존 설치는 유지됩니다.</x:String>
     <x:String x:Key="TxtExperimentalZoneLbl">실험적 기능</x:String>
     <x:String x:Key="TxtAddRenodxTitle">RenoDX 애드온 추가</x:String>
     <x:String x:Key="TxtRenodxGameNameLbl">게임 이름</x:String>
@@ -925,7 +929,7 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage와 Quick Install에서 미리 선택할 FSR 4 DLL을 고릅니다. None은 주입 또는 교체를 건너뜁니다.</x:String>
     <x:String x:Key="TxtFrameGeneration">프레임 생성</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL (교체)</x:String>
-    <x:String x:Key="TxtFsr4SwapTooltip">게임의 FSR DLL을 FSR 4로 교체합니다. INT8: FSR 4를 공식 지원하지 않는 GPU용. FP8: 공식 모델(RDNA 4).&#10;&#10;OptiScaler 유무와 관계없이 작동합니다. DLL만 교체하려면 OptiScaler를 "없음"으로 설정하세요. OptiScaler 없이 사용하려면 게임에 FSR 3.1 이상이 포함되어 있어야 합니다.</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">더 나은 화질을 위해 게임의 FSR DLL을 FSR 4로 교체합니다.&#10;&#10;• INT8: FSR 4를 공식 지원하지 않는 GPU용.&#10;• FP8: 공식 모델, AMD RDNA 4용.&#10;&#10;OptiScaler 유무와 관계없이 작동합니다. DLL만 교체하려면 OptiScaler에서 "없음 — FSR 4 교체만"을 선택하세요. 이 경우 게임에 FSR 3.1 이상이 이미 포함되어 있어야 합니다.</x:String>
     <x:String x:Key="TxtFsr4SwapOnlyHint">OptiScaler를 설치하지 않고 FSR 4로 교체하려면 OptiScaler 버전에서 "없음"을 고른 뒤 FSR 4 DLL(교체)을 선택하세요.</x:String>
     <x:String x:Key="TxtFgRoute">FG 경로</x:String>
     <x:String x:Key="TxtFgRouteTooltip">이 게임에서 OptiScaler가 프레임 생성에 사용하는 입력 경로를 선택합니다.</x:String>
@@ -989,9 +993,9 @@
     <x:String x:Key="TxtMfgWrongChannelToast">선택한 OptiScaler 버전에서는 MFG가 작동하지 않을 수 있습니다 — Nightly 버전을 권장합니다.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">선택된 DLSS Enabler 버전이 없습니다. 먼저 이 게임의 프레임 생성을 구성하세요.</x:String>
     <x:String x:Key="TxtUpscalingQuality">업스케일링 품질</x:String>
-    <x:String x:Key="TxtUpscalingQualityTooltip">게임의 업스케일링 품질 비율을 재정의합니다. '게임 제어'는 입력 해상도를 게임에 맡깁니다.</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">게임 자체 품질 설정을 무시하고 업스케일러의 내부 렌더링 해상도를 강제합니다. 낮은 프리셋(Performance, Ultra Performance)은 FPS가 높아지지만 이미지가 부드러워지고, Native AA는 전체 해상도로 렌더링하며 안티에일리어싱만 적용합니다.&#10;&#10;"게임 제어"는 게임 설정을 유지하고, "사용자 지정"은 정확한 비율을 지정할 수 있습니다.</x:String>
     <x:String x:Key="TxtOutputUpscaler">출력 업스케일러</x:String>
-    <x:String x:Key="TxtOutputUpscalerTooltip">선택한 프로필 위에서 이 게임에 OptiScaler가 사용하는 업스케일러 백엔드를 재정의합니다. "기본값"은 프로필의 선택을 그대로 유지합니다.</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">게임 메뉴에서 무엇을 골랐든 OptiScaler가 실제로 렌더링에 사용하는 업스케일러(FSR 2/3/4, XeSS, DLSS)입니다. 일부는 GPU에 따라 다릅니다. 예: DLSS는 Nvidia RTX가 필요합니다.&#10;&#10;"기본값"은 선택한 프로필의 설정을 유지합니다.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">한 번도 설정하지 않은 모든 게임에 미리 선택되고, 빠른 설치/일괄 설치로 자동 설치되는 기본 "Setup NR" 모드입니다. 위의 기본 GPU가 AMD일 때만 표시됩니다.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">기본값</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">출력 업스케일러 설정을 적용하지 못했습니다:</x:String>
@@ -1072,4 +1076,20 @@
     <x:String x:Key="TxtIniVerifyReapplyFailed">일부 설정을 여전히 적용할 수 없습니다. OptiScaler.ini가 읽기 전용이 아닌지, 다른 프로그램에서 열려 있지 않은지 확인하세요:&#x0a;&#x0a;{0}</x:String>
     <x:String x:Key="TxtIniVerifyBulkSummary">다음 게임의 OptiScaler.ini를 완전히 구성하지 못했습니다: {0}. 해당 게임의 관리 화면을 열고 다시 설치하세요.</x:String>
     <x:String x:Key="TxtBulkInstallFailedGames">{0}개 게임에서 설치에 실패했습니다:&#x0a;&#x0a;{1}</x:String>
+
+    <!-- Quick tour, contextual help & sidebar labels -->
+    <x:String x:Key="TxtNavGames">게임</x:String>
+    <x:String x:Key="TxtContextHelpTip">이 섹션의 도움말 열기</x:String>
+    <x:String x:Key="TxtTourTitle">빠른 둘러보기</x:String>
+    <x:String x:Key="TxtTourHelpDesc">기본 단계와 나머지 기능의 위치를 간단히 안내합니다.</x:String>
+    <x:String x:Key="TxtTourStartBtn">둘러보기 시작</x:String>
+    <x:String x:Key="TxtTourBack">뒤로</x:String>
+    <x:String x:Key="TxtTourNext">다음</x:String>
+    <x:String x:Key="TxtTourStep3Text">• 원하는 대로 옵션을 조정한 뒤 '자동 설치'를 클릭하세요.&#x0a;• 옵션이 궁금하다면 옆의 (?) 아이콘에 마우스를 올려 보세요.&#x0a;• 자세한 내용은 각 섹션의 도움말 버튼이나 도움말 페이지를 확인하세요.&#x0a;• 이 둘러보기는 도움말 &gt; 시작하기에서 언제든지 다시 볼 수 있습니다.</x:String>
+    <x:String x:Key="TxtTourStepExtrasLabel">4단계: 기본 그 이상</x:String>
+    <x:String x:Key="TxtTourStepExtrasText">• 게임 관리 창에는 Frame Generation, FSR4 swap, OptiPatcher 같은 고급 옵션과 RenoDX, Neural Rendering (AMD용) 같은 실험적 기능이 있습니다.&#x0a;• 실험적 기능은 설정에서 활성화할 수 있습니다.&#x0a;• 프로필로 구성을 저장해 여러 게임에서 재사용할 수 있습니다.&#x0a;• 일괄 설치는 구성을 여러 게임에 한 번에 적용합니다.</x:String>
+
+    <!-- Empty library state -->
+    <x:String x:Key="TxtEmptyLibraryTitle">라이브러리가 비어 있습니다</x:String>
+    <x:String x:Key="TxtEmptyLibraryHint">게임 스캔을 눌러 시스템에 설치된 게임을 감지하거나, 수동으로 추가를 눌러 직접 게임을 추가하세요.</x:String>
 </ResourceDictionary>

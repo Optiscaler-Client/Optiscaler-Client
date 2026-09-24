@@ -738,12 +738,16 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
-    <x:String x:Key="TxtOptiPatcherTooltip">Plugin ASI per OptiScaler che espone gli input DLSS/DLSS-FG senza spoofing nei giochi supportati. Aiuta gli utenti Intel Arc a evitare errori D3D12 e previene cali di prestazioni o crash causati dallo spoofing Dxgi.</x:String>
+    <x:String x:Key="TxtOptiPatcherTooltip">Plugin di OptiScaler che fa esporre ai giochi supportati gli input DLSS/DLSS-FG senza spoofing della GPU. Su AMD e Intel evita errori D3D12, crash e cali di prestazioni causati dallo spoofing.&#10;&#10;Se la Compatibility List indica il gioco come supportato, viene selezionata automaticamente l'ultima versione. Lascia "None" per gli altri giochi.</x:String>
+    <x:String x:Key="TxtInjectionTooltip">Nome del file che OptiScaler usa nella cartella del gioco affinché il gioco lo carichi. dxgi.dll funziona nella maggior parte dei giochi; se OptiScaler non compare nel gioco o il gioco si chiude, provane un altro (ad es. winmm.dll o version.dll).&#10;&#10;Viene preselezionato dalla Compatibility List quando il gioco ne ha uno consigliato.</x:String>
+    <x:String x:Key="TxtFrameGenerationTooltip">Configura come vengono generati i frame extra in questo gioco: il percorso da cui OptiScaler prende i dati, la tecnologia di output (FSR FG, XeFG, DLSS-G…) e il moltiplicatore.&#10;&#10;Auto sceglie un'opzione adatta alla tua GPU e al gioco. Fai clic sul pulsante per cambiarla.</x:String>
+    <x:String x:Key="TxtFakenvapiTooltip">Emula l'API Nvidia su GPU AMD/Intel così i giochi possono usare Nvidia Reflex, tradotto in AMD Anti-Lag 2 o LatencyFleX. Alcune configurazioni di frame generation ne hanno bisogno.&#10;&#10;Mostrato solo per versioni di OptiScaler precedenti alla 0.9 o build personalizzate; le versioni recenti lo includono già.</x:String>
+    <x:String x:Key="TxtNukemFGTooltip">Mod di Nukem (dlssg-to-fsr3) che sostituisce DLSS Frame Generation con FSR 3 Frame Generation, così i giochi con DLSS-G possono usare la frame generation su qualsiasi GPU.&#10;&#10;Mostrato solo per versioni di OptiScaler precedenti alla 0.9 o build personalizzate; le versioni recenti lo includono già.</x:String>
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">Plugin ASI per OptiScaler che espone gli input DLSS/DLSS-FG senza spoofing nei giochi supportati. Aiuta gli utenti Intel Arc a evitare errori D3D12 e previene cali di prestazioni o crash causati dallo spoofing Dxgi. Automatico installa automaticamente l'ultima versione quando la lista di compatibilità indica che un gioco ne ha bisogno; scegli una versione specifica, o Nessuno, per usare sempre quella al suo posto.</x:String>
     <x:String x:Key="TxtProfileLbl">Profilo (.ini)</x:String>
-    <x:String x:Key="TxtProfileTooltip">Un profilo è una configurazione .ini di OptiScaler salvata. Selezionane uno per riutilizzare un insieme specifico di impostazioni durante l'installazione di OptiScaler per questo gioco.</x:String>
+    <x:String x:Key="TxtProfileTooltip">Un profilo è un insieme salvato di impostazioni di OptiScaler (OptiScaler.ini) applicato durante l'installazione. Creali e modificali nella sezione Profili per riutilizzare la stessa configurazione su più giochi.&#10;&#10;Dopo l'installazione, l'icona dell'occhio mostra l'OptiScaler.ini risultante.</x:String>
     <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">Sovrascrive lo spoofing GPU di OptiScaler per DXGI, Streamline e Vulkan insieme (finge di essere una GPU Nvidia così i giochi solo DLSS funzionano su AMD/Intel). Auto corrisponde al comportamento predefinito di OptiScaler: attivo su AMD/Intel, disattivato su Nvidia.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Fa credere al gioco che tu abbia una GPU Nvidia, così attiva le opzioni DLSS che OptiScaler poi reindirizza a FSR o XeSS. Necessario su AMD/Intel nei giochi che offrono solo DLSS. Si applica a DXGI, Streamline e Vulkan.&#10;&#10;Auto: attivo su AMD/Intel, disattivato su Nvidia (predefinito di OptiScaler). Se il gioco si chiude o mostra errori D3D12, prova a disattivarlo o usa OptiPatcher se il gioco è supportato.</x:String>
     <x:String x:Key="TxtViewIniTooltip">Mostra il file OptiScaler.ini installato (solo lettura)</x:String>
     <x:String x:Key="TxtViewIniSearchWatermark">Cerca chiavi o valori...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">Aumenta dimensione testo</x:String>
@@ -820,8 +824,8 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">Non ancora disponibile su Linux.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (solo mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">Permette di usare DLSS Neural Rendering su GPU AMD tramite la mod non ufficiale di danielblnc, opzionalmente combinata con una build non ufficiale di OptiScaler. Sperimentale, non supportata ufficialmente e non collegata agli upscaler propri di OptiScaler — a tuo rischio.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Versione di OptiScaler da installare. Scegli "Nessuno" per sostituire solo la DLL FSR 4, senza installare OptiScaler.</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">Esegue DLSS Neural Rendering su GPU AMD usando la mod non ufficiale di danielblnc. Solo AMD.&#10;&#10;• Solo mod di danielblnc: installa solo la mod.&#10;• Mod + OptiScaler: la combina con una build non ufficiale di OptiScaler.&#10;&#10;Sperimentale, non supportato e non legato agli upscaler di OptiScaler; usalo a tuo rischio.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Versione di OptiScaler da installare.&#10;&#10;• Stable: versioni testate, consigliate per la maggior parte dei giochi.&#10;• Beta: versioni preliminari con funzioni e correzioni più recenti.&#10;• Nightly: build di sviluppo automatiche, possono essere instabili.&#10;&#10;Scegli "Nessuno — solo swap FSR 4" per sostituire solo la DLL di FSR 4 senza installare OptiScaler. La versione selezionata di default si cambia nelle Impostazioni.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">Il mod DLSS Neural Rendering per AMD è già installato per questo gioco.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Disinstallare riavvia il programma di installazione di danielblnc — scegli l'opzione di rimozione quando richiesto.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Prima ci serve la tua copia legittima di nvngx_dlssnr.dll — non possiamo fornirla noi per motivi legali. Puoi ottenerla da qualsiasi gioco con supporto DLSS 5. Richiesta una sola volta e riutilizzata per le installazioni future; puoi aggiornarla in seguito da Impostazioni → Gestisci versioni locali.</x:String>
@@ -842,7 +846,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrWrapperWarning">Al momento OptiScaler non offre supporto ufficiale per il Neural Rendering, quindi è necessaria una build wrapped della community (MatheusGViana) per usarlo insieme. Installala a tuo rischio.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">La mod di danielblnc funziona solo nei giochi DirectX 12 che usano FSR 3.1 o superiore. Non funziona in DirectX 11 né in Vulkan.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Versione del mod (danielblnc)</x:String>
-    <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versione della mod DLSS Neural Rendering di danielblnc usata per generare i weights AMD. Necessaria sia per "danielblnc mod only" sia per "Mod + OptiScaler".</x:String>
+    <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versione della mod di danielblnc, usata per generare i pesi AMD in entrambe le modalità ("Solo mod di danielblnc" e "Mod + OptiScaler"). Disponibile dopo aver scelto una modalità.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Usa un fork di terze parti non ufficiale (guentra/DLSS-NR-on-AMD-Linux) per eseguire la mod DLSS Neural Rendering di danielblnc su Linux tramite un vero bridge ROCm</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Su Linux viene usato il fork non ufficiale di guentra, DLSS-NR-on-AMD-Linux (non direttamente l'installer di danielblnc), che collega la mod a un runtime ROCm reale così che il suo controllo GPU possa superare Wine/Proton. Crediti: danielblnc/DLSS-NR-on-AMD (la mod) e guentra/DLSS-NR-on-AMD-Linux (il fork).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Installazione in corso (fork Linux)...</x:String>
@@ -922,7 +926,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, sperimentale)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD tramite "Setup NR" — non ufficiale, sperimentale, a proprio rischio</x:String>
     <x:String x:Key="TxtSetupNrDownloadBtn">Scarica</x:String>
-    <x:String x:Key="TxtRenodxTooltip">RenoDX è un addon HDR/tone-mapping specifico per gioco che funziona sopra ReShade. "Auto" cerca di trovare e scaricare automaticamente l'addon corretto per questo gioco.</x:String>
+    <x:String x:Key="TxtRenodxTooltip">Addon HDR/tone-mapping specifico per ogni gioco. "Auto" trova e scarica l'addon giusto per questo gioco dalla wiki di RenoDX.&#10;&#10;Richiede ReShade (con supporto addon) già installato nella cartella del gioco; non può essere scaricato automaticamente. Se ReShade usa lo stesso nome DLL di OptiScaler, l'installazione esistente viene conservata.</x:String>
     <x:String x:Key="TxtExperimentalZoneLbl">SPERIMENTALE</x:String>
     <x:String x:Key="TxtAddRenodxTitle">Aggiungi addon RenoDX</x:String>
     <x:String x:Key="TxtRenodxGameNameLbl">Nome del gioco</x:String>
@@ -944,7 +948,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Scegli la DLL FSR 4 preselezionata in Manage e Quick Install. None salta iniezione o scambio.</x:String>
     <x:String x:Key="TxtFrameGeneration">Generazione fotogrammi</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">DLL FSR 4 (Swap)</x:String>
-    <x:String x:Key="TxtFsr4SwapTooltip">Sostituisce la DLL FSR del gioco con FSR 4. INT8: per GPU senza supporto ufficiale a FSR 4. FP8: il modello ufficiale (RDNA 4).&#10;&#10;Funziona con o senza OptiScaler: per sostituire solo la DLL, imposta OptiScaler su "Nessuno". Senza OptiScaler, il gioco deve già includere FSR 3.1 o successivo.</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Sostituisce la DLL FSR del gioco con FSR 4 per una migliore qualità d'immagine.&#10;&#10;• INT8: per GPU senza supporto ufficiale a FSR 4.&#10;• FP8: il modello ufficiale, per AMD RDNA 4.&#10;&#10;Funziona con o senza OptiScaler: imposta OptiScaler su "Nessuno — solo swap FSR 4" per sostituire solo la DLL. In quel caso il gioco deve già includere FSR 3.1 o successivo.</x:String>
     <x:String x:Key="TxtFsr4SwapOnlyHint">Per passare a FSR 4 senza installare OptiScaler, scegli "Nessuno" come versione di OptiScaler e seleziona una DLL FSR 4 (Swap).</x:String>
     <x:String x:Key="TxtFgRoute">Percorso FG</x:String>
     <x:String x:Key="TxtFgOutput">Output FG</x:String>
@@ -1018,7 +1022,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtHelpGMFgAdvancedTitle">Percorsi avanzati</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedText">Mostra i percorsi manuali e sperimentali. Lascialo disattivato a meno che tu non sappia che il gioco richiede un percorso specifico.</x:String>
     <x:String x:Key="TxtUpscalingQuality">Qualità di upscaling</x:String>
-    <x:String x:Key="TxtUpscalingQualityTooltip">Sovrascrive il rapporto di qualità di upscaling del gioco. Controllato dal gioco lascia la risoluzione di input al gioco.</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Forza la risoluzione di rendering interna dell'upscaler, ignorando l'impostazione di qualità del gioco. I preset più bassi (Performance, Ultra Performance) danno più FPS ma un'immagine meno nitida; Native AA renderizza a piena risoluzione e applica solo l'antialiasing.&#10;&#10;"Controllato dal gioco" mantiene l'impostazione del gioco. "Personalizzato" permette di impostare un rapporto esatto.</x:String>
     <x:String x:Key="TxtQualityGameControlled">Controllato dal gioco</x:String>
     <x:String x:Key="TxtCustom">Personalizzato</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Qualità di upscaling personalizzata</x:String>
@@ -1028,7 +1032,7 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtResolutionEstimateNote">Stima basata sulla risoluzione dello schermo attuale. Il gioco potrebbe usare una risoluzione di output diversa.</x:String>
     <x:String x:Key="TxtUpscalingQualityApplyError">Impossibile applicare la configurazione della qualità di upscaling:</x:String>
     <x:String x:Key="TxtOutputUpscaler">Upscaler di output</x:String>
-    <x:String x:Key="TxtOutputUpscalerTooltip">Sovrascrive il backend di upscaling usato da OptiScaler per questo gioco, sopra il profilo selezionato. "Predefinito" lascia invariata la scelta del profilo.</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">Upscaler che OptiScaler usa davvero per il rendering (FSR 2/3/4, XeSS o DLSS), qualunque sia quello selezionato nel menu del gioco. Alcuni dipendono dalla GPU, ad es. DLSS richiede una Nvidia RTX.&#10;&#10;"Predefinito" mantiene la scelta del profilo selezionato.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Modalità "Setup NR" predefinita da preselezionare per ogni gioco mai configurato, e da installare automaticamente con Installazione rapida / Installazione multipla. Mostrata solo se la GPU predefinita sopra è AMD.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Predefinito</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Impossibile applicare la configurazione dell'upscaler di output:</x:String>
@@ -1076,4 +1080,20 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtIniVerifyReapplyFailed">Alcune impostazioni non possono ancora essere applicate. Verifica che OptiScaler.ini non sia di sola lettura o aperto in un altro programma:&#x0a;&#x0a;{0}</x:String>
     <x:String x:Key="TxtIniVerifyBulkSummary">Non è stato possibile configurare completamente OptiScaler.ini per: {0}. Apri Gestisci per questi giochi e reinstalla.</x:String>
     <x:String x:Key="TxtBulkInstallFailedGames">Installazione non riuscita per {0} gioco/i:&#x0a;&#x0a;{1}</x:String>
+
+    <!-- Quick tour, contextual help & sidebar labels -->
+    <x:String x:Key="TxtNavGames">Giochi</x:String>
+    <x:String x:Key="TxtContextHelpTip">Apri la guida di questa sezione</x:String>
+    <x:String x:Key="TxtTourTitle">Tour rapido</x:String>
+    <x:String x:Key="TxtTourHelpDesc">Una breve panoramica dei passaggi di base e di dove trovare tutto il resto.</x:String>
+    <x:String x:Key="TxtTourStartBtn">Avvia il tour</x:String>
+    <x:String x:Key="TxtTourBack">Indietro</x:String>
+    <x:String x:Key="TxtTourNext">Avanti</x:String>
+    <x:String x:Key="TxtTourStep3Text">• Regola le opzioni a tuo piacimento e fai clic su 'Installazione automatica'.&#x0a;• Dubbi su un'opzione? Passa il cursore sull'icona (?) accanto.&#x0a;• Per maggiori dettagli, usa il pulsante di aiuto di ogni sezione o visita la pagina Guida.&#x0a;• Puoi ripetere questo tour in qualsiasi momento da Guida &gt; Introduzione.</x:String>
+    <x:String x:Key="TxtTourStepExtrasLabel">Passaggio 4: Oltre le basi</x:String>
+    <x:String x:Key="TxtTourStepExtrasText">• La finestra di gestione del gioco offre opzioni avanzate come Frame Generation, FSR4 swap, OptiPatcher e funzioni sperimentali come RenoDX e Neural Rendering (per AMD).&#x0a;• Le funzioni sperimentali si attivano dalle Impostazioni.&#x0a;• I profili permettono di salvare una configurazione e riutilizzarla su più giochi.&#x0a;• L'installazione di massa applica una configurazione a più giochi contemporaneamente.</x:String>
+
+    <!-- Empty library state -->
+    <x:String x:Key="TxtEmptyLibraryTitle">La tua libreria è vuota</x:String>
+    <x:String x:Key="TxtEmptyLibraryHint">Premi Scansiona giochi per rilevare i giochi installati nel sistema, oppure usa Aggiungi manualmente per aggiungerne uno tu stesso.</x:String>
 </ResourceDictionary>

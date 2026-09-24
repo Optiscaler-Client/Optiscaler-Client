@@ -99,6 +99,7 @@ namespace OptiscalerClient.Views
         private int _gamesHeaderTier = -1;
         private Avalonia.Controls.Shapes.Path? _txtGamepadIcon;
         private Border? _pnlNoUpscalersFound;
+        private Border? _pnlEmptyLibrary;
         private CheckBox? _chkHideNoUpscaler;
         private CheckBox? _chkOnlyInstalled;
         private CheckBox? _chkOnlyFavorites;
@@ -400,6 +401,7 @@ namespace OptiscalerClient.Views
                 _pnlHeaderBadges = this.FindControl<WrapPanel>("PnlHeaderBadges");
                 _gamesSearchGrid = this.FindControl<Grid>("GamesSearchGrid");
                 _pnlNoUpscalersFound = this.FindControl<Border>("PnlNoUpscalersFound");
+                _pnlEmptyLibrary = this.FindControl<Border>("PnlEmptyLibrary");
                 _chkHideNoUpscaler = this.FindControl<CheckBox>("ChkHideNoUpscaler");
                 _chkOnlyInstalled = this.FindControl<CheckBox>("ChkOnlyInstalled");
                 _chkOnlyFavorites = this.FindControl<CheckBox>("ChkOnlyFavorites");
@@ -423,6 +425,7 @@ namespace OptiscalerClient.Views
                 _txtToastSecondaryMessage = this.FindControl<TextBlock>("TxtToastSecondaryMessage");
 
                 bool hadSavedGames = LoadSavedGames(_windowLifetimeCts.Token);
+                UpdateEmptyLibraryState();
                 _ = LoadGpuInfoAsync();
                 _compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
                 if (CompatibilityListService.IsRefreshInProgress)
@@ -461,6 +464,9 @@ namespace OptiscalerClient.Views
                     _componentService.SaveConfiguration();
                 }
 
+                // Before the initial scan prompt, so first-time users see the tour before scanning.
+                await ShowQuickTourIfNeededAsync();
+
                 if (!hadSavedGames)
                 {
                     if (_componentService.Config.HasCompletedInitialScan)
@@ -494,6 +500,24 @@ namespace OptiscalerClient.Views
                 // Scans should only run when the user explicitly clicks Scan Games.
             }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Loaded handler failed: {ex.Message}"); }
+        }
+
+        private async Task ShowQuickTourIfNeededAsync()
+        {
+            if (_componentService.Config.HasSeenQuickTour) return;
+
+            // Loaded fires before the first frame: wait until the main window has actually been painted
+            // and startup work has settled, otherwise the tour opens over a black window and stutters in.
+            var firstFrame = new TaskCompletionSource();
+            RequestAnimationFrame(_ => RequestAnimationFrame(_ => firstFrame.TrySetResult()));
+            await firstFrame.Task;
+            await Task.Delay(400);
+            if (_windowLifetimeCts.IsCancellationRequested) return;
+
+            DebugWindow.Log("[Startup] Showing quick tour.");
+            await new QuickTourWindow(this).ShowDialog(this);
+            _componentService.Config.HasSeenQuickTour = true;
+            _componentService.SaveConfiguration();
         }
 
         private void GamepadHelper_GamepadConnectionChanged(object? sender, bool isConnected)
@@ -809,8 +833,19 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// Shows the "scan your games" empty state while the library has never been populated
+        /// (e.g. the initial scan prompt was dismissed). A scan with no results uses PnlNoUpscalersFound instead.
+        /// </summary>
+        private void UpdateEmptyLibraryState()
+        {
+            if (_pnlEmptyLibrary != null)
+                _pnlEmptyLibrary.IsVisible = !_hasScanned && (_allGames == null || _allGames.Count == 0);
+        }
+
         private void ApplyFilter(string? searchText)
         {
+            UpdateEmptyLibraryState();
             if (_allGames == null) return;
 
             // In edit mode show all games (including hidden) so the user can reveal them.
@@ -2058,6 +2093,31 @@ namespace OptiscalerClient.Views
         {
             SwitchToView("ViewHelp");
             PopulateHelpContent();
+        }
+
+        /// <summary>Opens the Help view directly on the given help page (see assets/configs/help-pages.json).</summary>
+        public void NavigateToHelp(string pageId)
+        {
+            _currentHelpPageId = pageId;
+            var nav = this.FindControl<RadioButton>("NavHelp");
+            if (nav != null) nav.IsChecked = true;
+            SwitchToView("ViewHelp");
+            PopulateHelpContent();
+        }
+
+        private void BtnContextHelp_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Control { Tag: string pageId })
+                NavigateToHelp(pageId);
+        }
+
+        private async void BtnQuickTour_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await new QuickTourWindow(this).ShowDialog(this);
+            }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] Quick tour dialog failed: {ex.Message}"); }
         }
 
         private void NavSettings_Click(object sender, RoutedEventArgs e)
@@ -3951,6 +4011,9 @@ namespace OptiscalerClient.Views
                 case "guide-button":
                     RenderGuideButton(container);
                     break;
+                case "tour-button":
+                    RenderQuickTourButton(container);
+                    break;
                 case "app-info":
                     RenderAppInfo(container);
                     break;
@@ -3999,6 +4062,41 @@ namespace OptiscalerClient.Views
             button.Click += BtnGuide_Click2;
 
             container.Children.Add(title);
+            container.Children.Add(button);
+        }
+
+        private void RenderQuickTourButton(StackPanel container)
+        {
+            var title = new TextBlock
+            {
+                Text = GetResourceString("TxtTourTitle", "Quick tour"),
+                FontSize = 18,
+                FontWeight = FontWeight.SemiBold,
+                Margin = new Thickness(0, 0, 0, 8),
+                Foreground = this.FindResource("BrTextPrimary") as IBrush
+            };
+
+            var desc = new TextBlock
+            {
+                Text = GetResourceString("TxtTourHelpDesc", "A short walkthrough of the basic steps and where to find everything else."),
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 12),
+                Foreground = this.FindResource("BrTextSecondary") as IBrush
+            };
+
+            var button = new Button
+            {
+                Content = GetResourceString("TxtTourStartBtn", "Start quick tour"),
+                Padding = new Thickness(16, 12),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Margin = new Thickness(0, 0, 0, 32)
+            };
+            button.Classes.Add("BtnBase");
+            button.Click += BtnQuickTour_Click;
+
+            container.Children.Add(title);
+            container.Children.Add(desc);
             container.Children.Add(button);
         }
 
@@ -5608,6 +5706,7 @@ namespace OptiscalerClient.Views
                     _persistenceService.SaveGames(_games);
 
                     RefreshGameLists();
+                    UpdateEmptyLibraryState();
                 }
             }
             catch (Exception ex)

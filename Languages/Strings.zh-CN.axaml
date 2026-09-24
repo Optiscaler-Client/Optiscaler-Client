@@ -725,12 +725,16 @@
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
-    <x:String x:Key="TxtOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支持的游戏中无需欺骗即可暴露 DLSS/DLSS-FG 输入。帮助 Intel Arc 用户避免 D3D12 错误，并防止 Dxgi 欺骗导致的性能开销或崩溃。</x:String>
+    <x:String x:Key="TxtOptiPatcherTooltip">OptiScaler 插件，让受支持的游戏在不伪装 GPU 的情况下提供 DLSS/DLSS-FG 输入。在 AMD 和 Intel 上可避免伪装导致的 D3D12 错误、崩溃和性能损失。&#10;&#10;如果 Compatibility List 将游戏标记为受支持，会自动选择最新版本。其他游戏请保持“None”。</x:String>
+    <x:String x:Key="TxtInjectionTooltip">OptiScaler 在游戏文件夹中使用的文件名，以便游戏加载它。大多数游戏使用 dxgi.dll 即可；如果游戏中没有出现 OptiScaler 或游戏崩溃，请尝试其他名称（如 winmm.dll 或 version.dll）。&#10;&#10;如果游戏有推荐的文件名，会根据 Compatibility List 自动预选。</x:String>
+    <x:String x:Key="TxtFrameGenerationTooltip">设置此游戏中额外帧的生成方式：OptiScaler 获取数据的路径、输出技术（FSR FG、XeFG、DLSS-G…）以及倍数。&#10;&#10;Auto 会根据你的 GPU 和游戏选择合适的选项。点击按钮即可更改。</x:String>
+    <x:String x:Key="TxtFakenvapiTooltip">在 AMD/Intel GPU 上模拟 Nvidia API，使游戏可以使用 Nvidia Reflex（转换为 AMD Anti-Lag 2 或 LatencyFleX）。部分帧生成配置需要它。&#10;&#10;仅在 0.9 之前的 OptiScaler 版本或自定义构建中显示；新版本已内置。</x:String>
+    <x:String x:Key="TxtNukemFGTooltip">Nukem 的模组（dlssg-to-fsr3），将 DLSS 帧生成替换为 FSR 3 帧生成，使支持 DLSS-G 的游戏可在任何 GPU 上使用帧生成。&#10;&#10;仅在 0.9 之前的 OptiScaler 版本或自定义构建中显示；新版本已内置。</x:String>
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">OptiScaler 的 ASI 插件，在受支持的游戏中无需欺骗即可暴露 DLSS/DLSS-FG 输入。帮助 Intel Arc 用户避免 D3D12 错误，并防止 Dxgi 欺骗导致的性能开销或崩溃。自动会在兼容性列表标记某游戏需要时自动安装最新版本；选择特定版本或"无"则始终改用该选项。</x:String>
     <x:String x:Key="TxtProfileLbl">配置文件 (.ini)</x:String>
-    <x:String x:Key="TxtProfileTooltip">配置文件是已保存的 OptiScaler .ini 配置。选择一个配置文件，可在为此游戏安装 OptiScaler 时重复使用一组特定的设置。</x:String>
+    <x:String x:Key="TxtProfileTooltip">配置文件是安装时应用的一组已保存的 OptiScaler 设置（OptiScaler.ini）。在配置文件页面中创建和编辑，即可在多个游戏中复用同一配置。&#10;&#10;安装后，眼睛图标可查看生成的 OptiScaler.ini。</x:String>
     <x:String x:Key="TxtSpoofingLbl">伪装</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">一并覆盖 OptiScaler 的 DXGI、Streamline 与 Vulkan GPU 伪装（伪装成 Nvidia GPU，使仅支持 DLSS 的游戏可在 AMD/Intel 上运行）。"自动"与 OptiScaler 自身的默认行为一致：AMD/Intel 上启用，Nvidia 上禁用。</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">让游戏以为你使用的是 Nvidia GPU，从而开启 DLSS 选项，再由 OptiScaler 将其转为 FSR 或 XeSS。在只提供 DLSS 的游戏中，AMD/Intel 需要此功能。适用于 DXGI、Streamline 和 Vulkan。&#10;&#10;Auto：在 AMD/Intel 上启用，在 Nvidia 上禁用（OptiScaler 默认）。如果游戏崩溃或出现 D3D12 错误，可尝试禁用，或在游戏支持时使用 OptiPatcher。</x:String>
     <x:String x:Key="TxtViewIniTooltip">查看已安装的 OptiScaler.ini（只读）</x:String>
     <x:String x:Key="TxtViewIniSearchWatermark">搜索键或值...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">放大文字</x:String>
@@ -817,8 +821,8 @@
     <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">目前在 Linux 上不可用。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(仅模组)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">通过 danielblnc 的非官方模组在 AMD GPU 上使用 DLSS Neural Rendering，可选与非官方 OptiScaler 构建版本结合使用。此功能为实验性，不受官方支持，且与 OptiScaler 自身的放大器无关——使用风险自负。</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">要安装的 OptiScaler 版本。选择"无"可只替换 FSR 4 DLL，而不安装 OptiScaler。</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">使用 danielblnc 的非官方模组在 AMD GPU 上运行 DLSS Neural Rendering。仅限 AMD。&#10;&#10;• 仅 danielblnc 模组：只安装该模组。&#10;• Mod + OptiScaler：与非官方 OptiScaler 构建结合使用。&#10;&#10;实验性功能，不受支持，且与 OptiScaler 自身的超分辨率无关；风险自负。</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">要安装的 OptiScaler 版本。&#10;&#10;• Stable：经过测试的版本，推荐大多数游戏使用。&#10;• Beta：包含较新功能和修复的预发布版本。&#10;• Nightly：自动构建的开发版本，可能不稳定。&#10;&#10;选择“无 — 仅替换 FSR 4”可只替换 FSR 4 DLL 而不安装 OptiScaler。默认选中的版本可在设置中更改。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">此游戏已安装适用于 AMD 的 DLSS Neural Rendering 模组。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">卸载将重新运行 danielblnc 的安装程序 — 出现提示时请选择移除选项。</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">首先需要你自己合法获得的 nvngx_dlssnr.dll —— 出于法律原因我们无法自行提供该文件。你可以从任何支持 DLSS 5 的游戏中获取它。只询问一次，之后的安装会重复使用；之后可以在 设置 → 管理本地版本 中更新它。</x:String>
@@ -839,7 +843,7 @@
     <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支持 Neural Rendering，因此需要使用社区打包的版本（MatheusGViana）才能配合使用。安装风险自负。</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc 的模组仅适用于使用 FSR 3.1 或更高版本的 DirectX 12 游戏。在 DirectX 11 和 Vulkan 中无法使用。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
-    <x:String x:Key="TxtSetupNrDanielVersionTooltip">用于生成 AMD 权重的 danielblnc DLSS Neural Rendering 模组版本。“danielblnc mod only” 和 “Mod + OptiScaler” 都需要它。</x:String>
+    <x:String x:Key="TxtSetupNrDanielVersionTooltip">danielblnc 模组的版本，在两种模式（“仅 danielblnc 模组”和“Mod + OptiScaler”）中都用于生成 AMD 权重。选择模式后可用。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">在 Linux 上,这会使用 guentra 的非官方分支 DLSS-NR-on-AMD-Linux(而非直接使用 danielblnc 的安装程序),它将模组桥接到真正的 ROCm 运行时,使其 GPU 检测能在 Wine/Proton 下通过。鸣谢:danielblnc/DLSS-NR-on-AMD(模组本体)与 guentra/DLSS-NR-on-AMD-Linux(分支)。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">正在安装(Linux 分支)...</x:String>
@@ -919,7 +923,7 @@
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering（AMD，实验性）</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD，通过 "Setup NR" 安装 — 非官方、实验性，风险自负</x:String>
     <x:String x:Key="TxtSetupNrDownloadBtn">下载</x:String>
-    <x:String x:Key="TxtRenodxTooltip">RenoDX 是运行在 ReShade 之上的逐游戏 HDR/色调映射插件。选择“自动”会尝试自动查找并下载适合该游戏的插件。</x:String>
+    <x:String x:Key="TxtRenodxTooltip">针对单个游戏的 HDR/色调映射插件。“Auto”会从 RenoDX Wiki 查找并下载适合此游戏的插件。&#10;&#10;需要游戏文件夹中已安装 ReShade（支持插件的版本），且无法自动下载。如果 ReShade 与 OptiScaler 使用相同的 DLL 名称，将保留现有安装。</x:String>
     <x:String x:Key="TxtExperimentalZoneLbl">实验性</x:String>
     <x:String x:Key="TxtAddRenodxTitle">添加 RenoDX 附加组件</x:String>
     <x:String x:Key="TxtRenodxGameNameLbl">游戏名称</x:String>
@@ -941,7 +945,7 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultText">选择在 Manage 和 Quick Install 中预选的 FSR 4 DLL。None 会跳过注入或交换。</x:String>
     <x:String x:Key="TxtFrameGeneration">帧生成</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL（替换）</x:String>
-    <x:String x:Key="TxtFsr4SwapTooltip">将游戏的 FSR DLL 替换为 FSR 4。INT8：适用于未获官方 FSR 4 支持的 GPU。FP8：官方模型（RDNA 4）。&#10;&#10;无论是否安装 OptiScaler 都可使用：如只想替换 DLL，请将 OptiScaler 设为"无"。不使用 OptiScaler 时，游戏需自带 FSR 3.1 或更高版本。</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">将游戏的 FSR DLL 替换为 FSR 4，以获得更好的画质。&#10;&#10;• INT8：适用于没有官方 FSR 4 支持的 GPU。&#10;• FP8：官方模型，适用于 AMD RDNA 4。&#10;&#10;可搭配或不搭配 OptiScaler 使用：将 OptiScaler 设为“无 — 仅替换 FSR 4”即可只替换 DLL。此时游戏必须已包含 FSR 3.1 或更高版本。</x:String>
     <x:String x:Key="TxtFsr4SwapOnlyHint">如需在不安装 OptiScaler 的情况下替换为 FSR 4，请将 OptiScaler 版本设为"无"，并选择一个 FSR 4 DLL（替换）。</x:String>
     <x:String x:Key="TxtOptiScalerLbl">OptiScaler</x:String>
     <x:String x:Key="TxtFgRoute">FG 路径</x:String>
@@ -1016,7 +1020,7 @@
     <x:String x:Key="TxtHelpGMFgAdvancedTitle">高级路径</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedText">显示手动和实验性路径。除非你确定游戏需要特定路径，否则请保持关闭。</x:String>
     <x:String x:Key="TxtUpscalingQuality">超分辨率质量</x:String>
-    <x:String x:Key="TxtUpscalingQualityTooltip">覆盖游戏的超分辨率质量比例。"由游戏控制"会将输入分辨率的选择留给游戏。</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">忽略游戏自身的画质设置，强制指定超分辨率的内部渲染分辨率。较低的预设（Performance、Ultra Performance）帧数更高但画面更柔和；Native AA 以全分辨率渲染，仅应用抗锯齿。&#10;&#10;“由游戏控制”保留游戏的设置，“自定义”可设置精确比例。</x:String>
     <x:String x:Key="TxtQualityGameControlled">由游戏控制</x:String>
     <x:String x:Key="TxtCustom">自定义</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">自定义超分辨率质量</x:String>
@@ -1026,7 +1030,7 @@
     <x:String x:Key="TxtResolutionEstimateNote">基于当前屏幕分辨率的估算值。游戏实际使用的输出分辨率可能不同。</x:String>
     <x:String x:Key="TxtUpscalingQualityApplyError">无法应用超分辨率质量配置：</x:String>
     <x:String x:Key="TxtOutputUpscaler">输出放大器</x:String>
-    <x:String x:Key="TxtOutputUpscalerTooltip">在所选配置文件之上，覆盖此游戏使用的 OptiScaler 放大器后端。"默认"会保留配置文件本身的选择不变。</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">无论游戏菜单中选择了哪个，OptiScaler 实际用于渲染画面的超分辨率技术（FSR 2/3/4、XeSS 或 DLSS）。部分取决于你的 GPU，例如 DLSS 需要 Nvidia RTX。&#10;&#10;“默认”保留所选配置文件中的选择。</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">为每个从未配置过的游戏预先选择，并通过快速安装/批量安装自动安装的默认"Setup NR"模式。仅在上方的默认 GPU 为 AMD 时显示。</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">默认</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">无法应用输出放大器配置：</x:String>
@@ -1072,4 +1076,20 @@
     <x:String x:Key="TxtIniVerifyReapplyFailed">部分设置仍无法应用。请检查 OptiScaler.ini 是否为只读，或是否在其他程序中打开：&#x0a;&#x0a;{0}</x:String>
     <x:String x:Key="TxtIniVerifyBulkSummary">无法为以下游戏完整配置 OptiScaler.ini：{0}。请在这些游戏的管理窗口中重新安装。</x:String>
     <x:String x:Key="TxtBulkInstallFailedGames">{0} 个游戏安装失败：&#x0a;&#x0a;{1}</x:String>
+
+    <!-- Quick tour, contextual help & sidebar labels -->
+    <x:String x:Key="TxtNavGames">游戏</x:String>
+    <x:String x:Key="TxtContextHelpTip">打开此部分的帮助</x:String>
+    <x:String x:Key="TxtTourTitle">快速导览</x:String>
+    <x:String x:Key="TxtTourHelpDesc">简要介绍基本步骤以及其他功能所在的位置。</x:String>
+    <x:String x:Key="TxtTourStartBtn">开始导览</x:String>
+    <x:String x:Key="TxtTourBack">上一步</x:String>
+    <x:String x:Key="TxtTourNext">下一步</x:String>
+    <x:String x:Key="TxtTourStep3Text">• 按需调整选项，然后点击“自动安装”。&#x0a;• 不确定某个选项？将鼠标悬停在旁边的 (?) 图标上。&#x0a;• 如需了解更多，请使用每个部分的帮助按钮或访问帮助页面。&#x0a;• 你可以随时在 帮助 &gt; 入门 中重新查看此导览。</x:String>
+    <x:String x:Key="TxtTourStepExtrasLabel">第 4 步：进阶功能</x:String>
+    <x:String x:Key="TxtTourStepExtrasText">• 游戏管理窗口中有 Frame Generation、FSR4 swap、OptiPatcher 等高级选项，以及 RenoDX 和 Neural Rendering（适用于 AMD）等实验性功能。&#x0a;• 实验性功能可在设置中启用。&#x0a;• 配置文件可以保存一套设置并在多个游戏中复用。&#x0a;• 批量安装可将一套设置一次应用到多个游戏。</x:String>
+
+    <!-- Empty library state -->
+    <x:String x:Key="TxtEmptyLibraryTitle">你的游戏库是空的</x:String>
+    <x:String x:Key="TxtEmptyLibraryHint">点击“扫描游戏”以检测系统中已安装的游戏，或使用“手动添加”自行添加游戏。</x:String>
 </ResourceDictionary>

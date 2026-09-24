@@ -264,6 +264,11 @@ namespace OptiscalerClient.Models
         public string? LastSeenAppVersion { get; set; } = null;
 
         /// <summary>
+        /// Whether the quick tour has already been shown automatically. It can still be reopened from Help.
+        /// </summary>
+        public bool HasSeenQuickTour { get; set; } = false;
+
+        /// <summary>
         /// UTC timestamp of the last successful GitHub API check.
         /// Persisted so that the 15-minute cooldown survives app restarts.
         /// </summary>

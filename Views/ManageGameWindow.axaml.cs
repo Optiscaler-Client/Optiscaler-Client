@@ -2541,7 +2541,7 @@ namespace OptiscalerClient.Views
             var upscalingQuality = this.FindControl<StackPanel>("PanelUpscalingQuality");
             var outputUpscaler = this.FindControl<StackPanel>("PanelOutputUpscaler");
             var spoofingHost = this.FindControl<StackPanel>("PanelSpoofingHost");
-            var injectionLabel = this.FindControl<TextBlock>("LblInjectionMethod");
+            var injectionLabel = this.FindControl<StackPanel>("LblInjectionMethod");
 
             if (opti == null || extras == null || injection == null || patcher == null
                 || profile == null || frameGeneration == null || upscalingQuality == null
@@ -3823,6 +3823,13 @@ namespace OptiscalerClient.Views
         private bool _isAnimatingClose = false;
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated();
+
+        private void BtnHelp_Click(object? sender, RoutedEventArgs e)
+        {
+            Close();
+            if (_ownerWindow is MainWindow mainWindow)
+                mainWindow.NavigateToHelp("game-management");
+        }
 
         private async Task CloseAnimated()
         {

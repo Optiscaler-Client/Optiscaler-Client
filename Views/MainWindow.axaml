@@ -86,6 +86,26 @@
                 </ControlTemplate>
             </Setter>
         </Style>
+        <!-- Contextual "?" button in view headers: opens the related Help page (Tag = help page id) -->
+        <Style Selector="Button.ContextHelpBtn">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{StaticResource BrBgSurface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextSecondary}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Content" Value="&#xF63E;"/>
+        </Style>
+        <Style Selector="Button.ContextHelpBtn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
+        </Style>
         <Style Selector="RadioButton.NavBtnStyle:checked /template/ Border#Indicator">
             <Setter Property="IsVisible" Value="True"/>
         </Style>
@@ -298,8 +318,8 @@
                 <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center">
                     <Image Source="avares://OptiscalerClient/assets/icon.png" Width="32" Height="32" Margin="0,0,0,24" RenderOptions.BitmapInterpolationMode="HighQuality"/>
 
-                    <RadioButton Name="NavGames" GroupName="SidebarNav" Classes="NavBtnStyle" Content="&#xEEB9;" ToolTip.Tip="Games" IsChecked="True" Click="NavGames_Click"/>
-                    <RadioButton Name="NavProfiles" GroupName="SidebarNav" Classes="NavBtnStyle" Content="&#xF710;" ToolTip.Tip="Profiles" Click="NavProfiles_Click"/>
+                    <RadioButton Name="NavGames" GroupName="SidebarNav" Classes="NavBtnStyle" Content="&#xEEB9;" ToolTip.Tip="{DynamicResource TxtNavGames}" IsChecked="True" Click="NavGames_Click"/>
+                    <RadioButton Name="NavProfiles" GroupName="SidebarNav" Classes="NavBtnStyle" Content="&#xF710;" ToolTip.Tip="{DynamicResource TxtProfViewTitle}" Click="NavProfiles_Click"/>
                 </StackPanel>
 
                 <!-- Bottom actions: Settings, Help -->
@@ -557,6 +577,31 @@
                                                            VerticalAlignment="Center"
                                                            HorizontalAlignment="Center"/>
                                             </Grid>
+                                     </Button>
+
+                                     <!-- Separator -->
+                                     <Border Width="1" Height="18" Background="{StaticResource BrBorderSubtle}" Margin="2,0"/>
+
+                                     <!-- Contextual help -->
+                                     <Button Name="BtnGamesHelp"
+                                             Width="32"
+                                             Height="28"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             Padding="0"
+                                             HorizontalContentAlignment="Center"
+                                             VerticalContentAlignment="Center"
+                                             Tag="main-window"
+                                             ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
+                                             Click="BtnContextHelp_Click">
+                                         <Grid Width="18" Height="18">
+                                             <TextBlock Text="&#xF63D;"
+                                                        FontFamily="{StaticResource FontIcons}"
+                                                        FontSize="16"
+                                                        Foreground="{StaticResource BrTextPrimary}"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center"/>
+                                         </Grid>
                                      </Button>
                                  </StackPanel>
                              </Border>
@@ -1479,6 +1524,71 @@
                      </StackPanel>
                  </Border>
 
+                 <!-- Empty library: shown before the first scan (e.g. the initial scan prompt was closed) -->
+                 <Border Name="PnlEmptyLibrary"
+                         Grid.Row="3"
+                         IsVisible="False"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Center"
+                         Margin="24">
+                     <StackPanel Spacing="0" HorizontalAlignment="Center" MaxWidth="460">
+                         <!-- Icon: gamepad in a soft ring with a scan badge on the corner -->
+                         <Grid Width="148" Height="148" HorizontalAlignment="Center" Margin="0,0,0,26">
+                             <Ellipse Width="148" Height="148"
+                                      Stroke="{StaticResource BrAccent}"
+                                      StrokeThickness="1.5"
+                                      Opacity="0.25"/>
+                             <Ellipse Width="124" Height="124"
+                                      Fill="{StaticResource BrAccent}"
+                                      Opacity="0.08"/>
+                             <Border Width="104" Height="104"
+                                     CornerRadius="52"
+                                     Background="{StaticResource BrBgCard}"
+                                     BorderBrush="{StaticResource BrBorderSubtle}"
+                                     BorderThickness="1"
+                                     BoxShadow="0 8 24 0 #40000000">
+                                 <TextBlock Text="&#xEEBC;"
+                                            FontFamily="{StaticResource FontIcons}"
+                                            FontSize="54"
+                                            Foreground="{StaticResource BrAccent}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                             </Border>
+                             <Border Width="42" Height="42"
+                                     CornerRadius="21"
+                                     Background="{StaticResource BrAccent}"
+                                     BorderBrush="{StaticResource BrBgBase}"
+                                     BorderThickness="4"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Bottom"
+                                     Margin="0,0,16,16">
+                                 <TextBlock Text="&#xF191;"
+                                            FontFamily="{StaticResource FontIcons}"
+                                            FontSize="18"
+                                            Foreground="White"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                             </Border>
+                         </Grid>
+
+                         <TextBlock Text="{DynamicResource TxtEmptyLibraryTitle}"
+                                    FontSize="22"
+                                    FontWeight="SemiBold"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    HorizontalAlignment="Center"
+                                    Foreground="{StaticResource BrTextPrimary}"/>
+                         <TextBlock Text="{DynamicResource TxtEmptyLibraryHint}"
+                                    FontSize="{StaticResource FontSizeBody}"
+                                    LineHeight="20"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,10,0,0"
+                                    Foreground="{StaticResource BrTextSecondary}"/>
+                     </StackPanel>
+                 </Border>
+
                  <!-- Ghost canvas: floating drag visuals sit here, above all content -->
                  <Canvas Name="DragGhostCanvas"
                          Grid.Row="0" Grid.RowSpan="4"
@@ -1507,6 +1617,7 @@
                          BorderBrush="{StaticResource BrBorderSubtle}"
                          BorderThickness="0,0,0,1"
                          Padding="24,18">
+                     <Grid ColumnDefinitions="*,Auto">
                      <StackPanel VerticalAlignment="Center">
                          <TextBlock Text="{DynamicResource TxtProfViewTitle}"
                                     FontSize="20"
@@ -1517,6 +1628,13 @@
                                     Foreground="{StaticResource BrTextSecondary}"
                                     Margin="0,2,0,0"/>
                      </StackPanel>
+                     <Button Grid.Column="1"
+                                 Classes="ContextHelpBtn"
+                                 Tag="profiles"
+                                 VerticalAlignment="Center"
+                                 ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
+                                 Click="BtnContextHelp_Click"/>
+                     </Grid>
                  </Border>
 
                  <!-- Content: action sidebar (left) + profile list (right) -->
@@ -1797,9 +1915,15 @@
                  </Grid.RowDefinitions>
 
                  <Border Grid.Row="0" Background="{StaticResource BrBgDeep}" BorderBrush="{StaticResource BrBorderSubtle}" BorderThickness="0,0,0,1" Padding="24,18">
-                     <StackPanel>
-                         <TextBlock Text="{DynamicResource TxtSettingsTitle}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}"/>
-                     </StackPanel>
+                     <Grid ColumnDefinitions="*,Auto">
+                         <TextBlock Text="{DynamicResource TxtSettingsTitle}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
+                         <Button Grid.Column="1"
+                                 Classes="ContextHelpBtn"
+                                 Tag="settings"
+                                 VerticalAlignment="Center"
+                                 ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
+                                 Click="BtnContextHelp_Click"/>
+                     </Grid>
                  </Border>
 
                  <ScrollViewer Grid.Row="1"
