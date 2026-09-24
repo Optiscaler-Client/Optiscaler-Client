@@ -96,7 +96,7 @@ namespace OptiscalerClient.Services
         /// EnumerateDirectories skips it, File.Exists = true). Enumerating entries and keeping
         /// anything that is a directory OR a link is what still sees it — otherwise the alias is
         /// invisible to the very sweep meant to remove it and survives the uninstall.</summary>
-        private static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
+        internal static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
         {
             if (!Directory.Exists(parentDir)) yield break;
 
@@ -119,7 +119,7 @@ namespace OptiscalerClient.Services
 
         /// <summary>True when <paramref name="path"/> is a symlink — including a dangling one, which
         /// only <see cref="FileInfo.LinkTarget"/> still reports (see ResolveKnownDirectoriesIgnoreCase).</summary>
-        private static bool IsLink(string path)
+        internal static bool IsLink(string path)
         {
             try { return new FileInfo(path).LinkTarget != null; }
             catch (Exception ex)

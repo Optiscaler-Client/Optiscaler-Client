@@ -7,7 +7,8 @@ namespace OptiscalerClient.Services;
 [SupportedOSPlatform("linux")]
 public class LinuxGpuDetectionService : IGpuDetectionService
 {
-    public GpuInfo[] DetectGPUs()
+    // Virtual so tests can supply a fixed GPU list to the selection helpers below.
+    public virtual GpuInfo[] DetectGPUs()
     {
         try
         {
@@ -117,7 +118,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// vendor string (e.g. "Advanced Micro Devices, Inc. [AMD/ATI] Navi 48 [Radeon RX ...]"), which
     /// is what fastfetch/neofetch-style tools show and what fits in a UI badge.
     /// </summary>
-    private static string BuildCleanGpuName(GpuVendor vendor, string deviceField)
+    internal static string BuildCleanGpuName(GpuVendor vendor, string deviceField)
     {
         var marketingName = ExtractBracketedMarketingName(deviceField);
         var vendorLabel = vendor switch
@@ -131,7 +132,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         return string.IsNullOrEmpty(vendorLabel) ? marketingName : $"{vendorLabel} {marketingName}".Trim();
     }
 
-    private static string ExtractBracketedMarketingName(string deviceField)
+    internal static string ExtractBracketedMarketingName(string deviceField)
     {
         var match = Regex.Match(deviceField, @"\[([^\[\]]+)\]\s*$");
         return match.Success ? match.Groups[1].Value.Trim() : deviceField.Trim();
@@ -147,7 +148,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// Reads the PCI revision of the device as an uppercase hex string without the "0x" prefix
     /// (sysfs exposes e.g. "0xc0" -> "C0"), which is the form amdgpu.ids uses.
     /// </summary>
-    private static string? GetPciRevision(string devicePath)
+    internal static string? GetPciRevision(string devicePath)
     {
         try
         {
@@ -172,13 +173,16 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// </summary>
     private static string? LookupAmdgpuIds(string deviceId, string? revisionId)
     {
+        var idsFile = _amdgpuIdsPaths.FirstOrDefault(File.Exists);
+        return idsFile == null ? null : LookupAmdgpuIds(deviceId, revisionId, idsFile);
+    }
+
+    internal static string? LookupAmdgpuIds(string deviceId, string? revisionId, string idsFile)
+    {
         if (string.IsNullOrEmpty(revisionId)) return null;
 
         try
         {
-            var idsFile = _amdgpuIdsPaths.FirstOrDefault(File.Exists);
-            if (idsFile == null) return null;
-
             foreach (var line in File.ReadLines(idsFile))
             {
                 if (line.Length == 0 || line.StartsWith('#')) continue;
@@ -209,6 +213,17 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         {
             var busId = GetPciBusId(devicePath);
             var output = RunProcess("nvidia-smi", "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
+            return MatchNvidiaSmiName(output, busId);
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Picks the name for <paramref name="busId"/> out of nvidia-smi's
+    /// "pci.bus_id,name" CSV output.</summary>
+    internal static string? MatchNvidiaSmiName(string? output, string? busId)
+    {
+        try
+        {
             if (string.IsNullOrWhiteSpace(output)) return null;
 
             string? firstName = null;
@@ -234,7 +249,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         catch { return null; }
     }
 
-    private static string? GetPciBusId(string devicePath)
+    internal static string? GetPciBusId(string devicePath)
     {
         try
         {
@@ -260,11 +275,14 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// </summary>
     private static (string? VendorName, string? DeviceName) LookupPciIds(string vendorId, string deviceId)
     {
+        var idsFile = _pciIdsPaths.FirstOrDefault(File.Exists);
+        return idsFile == null ? (null, null) : LookupPciIds(vendorId, deviceId, idsFile);
+    }
+
+    internal static (string? VendorName, string? DeviceName) LookupPciIds(string vendorId, string deviceId, string idsFile)
+    {
         try
         {
-            var idsFile = _pciIdsPaths.FirstOrDefault(File.Exists);
-            if (idsFile == null) return (null, null);
-
             string? vendorName = null;
             string? deviceName = null;
             bool inVendor = false;
