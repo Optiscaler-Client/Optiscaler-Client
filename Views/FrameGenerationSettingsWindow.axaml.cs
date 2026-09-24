@@ -218,7 +218,9 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
     /// XeFg (x2..x6, via the XeFGUnlock.asi plugin — auto-installed at Install time when needed,
     /// see ManageGameWindow's installXeFGUnlock). Anything beyond x2 on DLSS-G requires DLSS
     /// Enabler, which <see cref="ApplyAutoNvngxReplacement"/> selects automatically, so no
-    /// capability lookup is needed here.</summary>
+    /// capability lookup is needed here. Auto also offers x2..x6 when the game supports the
+    /// XeFG + DLSS-G via Streamline pairing: picking above x2 switches to it (see
+    /// <see cref="ApplyAutoHighMultiplierPairing"/>).</summary>
     private void PopulateFgMultiplier(MultiFrameGenerationMode selected)
     {
         var combo = this.FindControl<ComboBox>("CmbMfgMultiplier");
@@ -231,7 +233,8 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
             modes = [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
             if (_capabilities.SupportsDynamicMfg) modes.Add(MultiFrameGenerationMode.Dynamic);
         }
-        else if (output == FrameGenerationOutput.XeFg)
+        else if (output == FrameGenerationOutput.XeFg ||
+                 (output == FrameGenerationOutput.Auto && SupportsAutoHighMultiplierPairing()))
         {
             modes = [MultiFrameGenerationMode.X2, MultiFrameGenerationMode.X3, MultiFrameGenerationMode.X4, MultiFrameGenerationMode.X5, MultiFrameGenerationMode.X6];
         }
@@ -250,6 +253,34 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         combo.IsEnabled = !IsOutputDisabledSelected() && modes.Count > 1;
         SelectTag(combo, selected);
         UpdateDynamicTargetFpsVisibility();
+    }
+
+    /// <summary>Output=Auto only resolves to x2, so multipliers above it need an explicit pairing:
+    /// XeFG output (x3..x6 through XeFGUnlock) fed by the game's native DLSS-G via Streamline.
+    /// Only offered when this game actually supports both — otherwise the saved route would fail
+    /// BuildIniSettings' availability check at install time.</summary>
+    private bool SupportsAutoHighMultiplierPairing()
+        => _capabilities.AvailableOutputs.Contains(FrameGenerationOutput.XeFg) &&
+           _capabilities.AvailableRoutes.Contains(FrameGenerationRoute.DlssGStreamline);
+
+    /// <summary>With Output=Auto, a multiplier above x2 switches Output to XeFG and Route to
+    /// DLSS-G via Streamline, keeping the picked multiplier. Must run with _isUpdating set so the
+    /// Output/Route handlers don't reset the multiplier back to x2. It runs from the multiplier's own
+    /// SelectionChanged, so it must NOT repopulate CmbMfgMultiplier (Avalonia crashes when a
+    /// ComboBox's Items are cleared inside its own SelectionChanged) — and doesn't need to: XeFG
+    /// offers the same x2..x6 list Auto is already showing.</summary>
+    private void ApplyAutoHighMultiplierPairing()
+    {
+        var multiplier = GetSelectedTag<MultiFrameGenerationMode>("CmbMfgMultiplier");
+        if (GetSelectedTag<FrameGenerationOutput>("CmbFgOutput") != FrameGenerationOutput.Auto ||
+            multiplier is not (MultiFrameGenerationMode.X3 or MultiFrameGenerationMode.X4 or MultiFrameGenerationMode.X5 or MultiFrameGenerationMode.X6) ||
+            !SupportsAutoHighMultiplierPairing())
+            return;
+
+        var outputCombo = this.FindControl<ComboBox>("CmbFgOutput");
+        if (outputCombo != null) SelectTag(outputCombo, FrameGenerationOutput.XeFg);
+        PopulateRoutes(FrameGenerationRoute.DlssGStreamline, outputIsNukem: false);
+        UpdateDlssStreamlineRouteInfo();
     }
 
     private void UpdateDynamicTargetFpsVisibility()
@@ -515,6 +546,7 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
         _isUpdating = true;
         try
         {
+            ApplyAutoHighMultiplierPairing();
             ApplyAutoNvngxReplacement();
             UpdateDynamicTargetFpsVisibility();
             UpdateDependentControlState();
