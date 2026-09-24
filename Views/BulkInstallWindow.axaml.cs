@@ -330,6 +330,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // interaction before CheckForUpdatesAsync below resolves) saw the 3-column tab row/empty
         // combo the network refresh was about to replace, instead of the real cached channels.
         PopulateAllVersionSelectors();
+        var defaultSelections = SnapshotVersionSelections();
 
         // Always ask the service to refresh. It observes the normal cooldown, except when a
         // newly introduced channel (such as Nightly) is missing from an older local cache.
@@ -339,8 +340,30 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         // Re-populate with whatever the check refreshed (or the same cached data if the check was
         // skipped/failed) — mirrors ManageGameWindow's own second PopulateVersionSelectors call.
-        Dispatcher.UIThread.Post(PopulateAllVersionSelectors);
+        // Repopulating resets every combo to its default, silently discarding anything the user
+        // picked while the check was in flight: put those picks back (untouched combos keep the
+        // refreshed default, so a newly fetched latest version still wins there).
+        Dispatcher.UIThread.Post(() =>
+        {
+            var userSelections = SnapshotVersionSelections();
+            PopulateAllVersionSelectors();
+            foreach (var (comboName, tag) in userSelections)
+            {
+                if (tag == null || tag == defaultSelections.GetValueOrDefault(comboName)) continue;
+                var cmb = this.FindControl<ComboBox>(comboName);
+                var item = cmb?.Items.OfType<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == tag);
+                if (item != null) cmb!.SelectedItem = item;
+            }
+        });
     }
+
+    private static readonly string[] VersionComboNames =
+        { "CmbOptiVersion", "CmbExtrasVersion", "CmbOptiPatcherVersion", "CmbFakenvapiVersion", "CmbNukemFGVersion" };
+
+    private Dictionary<string, string?> SnapshotVersionSelections() =>
+        VersionComboNames.ToDictionary(
+            name => name,
+            name => (this.FindControl<ComboBox>(name)?.SelectedItem as ComboBoxItem)?.Tag?.ToString());
 
     private void PopulateOptiVersionCombo()
     {
@@ -665,6 +688,46 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var selectedGames = _gameItems.Where(g => g.IsSelected && g.CanInstall).ToList();
         if (selectedGames.Count == 0) return;
 
+        // Anti-cheat games need an explicit choice: skip them (default) or accept the ban risk.
+        // Install/Cancel stay locked during the (async) scan: closing the window mid-scan used to let
+        // this handler carry on and install into games from a window that no longer existed.
+        var btnInstallScan = this.FindControl<Button>("BtnInstall");
+        var btnCancelScan = this.FindControl<Button>("BtnCancel");
+        _isInstalling = true;
+        if (btnInstallScan != null) btnInstallScan.IsEnabled = false;
+        if (btnCancelScan != null) btnCancelScan.IsEnabled = false;
+        List<BulkGameItem> antiCheatGames;
+        try
+        {
+            antiCheatGames = await Task.Run(() => selectedGames.Where(g => AntiCheatHelper.IsPresent(g.Game.InstallPath)).ToList());
+        }
+        finally
+        {
+            _isInstalling = false;
+            if (btnCancelScan != null) btnCancelScan.IsEnabled = true;
+            UpdateSelectionCount();
+        }
+        if (antiCheatGames.Count > 0)
+        {
+            var antiCheatDialog = new ConfirmDialog(this,
+                GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"),
+                string.Format(GetResourceString("TxtAntiCheatBulkMsg",
+                    "These games use anti-cheat protection:\n\n{0}\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes."),
+                    string.Join("\n", antiCheatGames.Select(g => $"• {g.Name}"))),
+                confirmText: GetResourceString("TxtAntiCheatSkipGames", "Skip these games"),
+                thirdButtonText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway"));
+            if (await antiCheatDialog.ShowDialog<bool>(this))
+            {
+                foreach (var g in antiCheatGames) g.IsSelected = false;
+                selectedGames = selectedGames.Except(antiCheatGames).ToList();
+                if (selectedGames.Count == 0) return;
+            }
+            else if (!antiCheatDialog.ThirdButtonClicked)
+            {
+                return;
+            }
+        }
+
         var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
         var cmbInjectionMethod = this.FindControl<ComboBox>("CmbInjectionMethod");
         var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
@@ -876,6 +939,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             }
         }
 
+        var iniFailedGames = new List<string>();
+        var failedGames = new List<string>();
         foreach (var gameItem in selectedGames)
         {
             currentGame++;
@@ -965,12 +1030,21 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                 }
 
-                // Get cache paths
-                var optiCacheDir = _componentService.GetOptiScalerCachePath(versionForGame);
+                // Download what isn't cached yet (both return the cached folder right away when it
+                // is, so only the first game of the batch pays for it). The combos list every
+                // published version, but this used to install from the cache path only: any version
+                // never downloaded before failed for every game with "Updates cache directory not found".
+                var downloadProgress = new Progress<double>(p =>
+                    Dispatcher.UIThread.Post(() => { if (progressBar != null) { progressBar.IsIndeterminate = false; progressBar.Value = p; } }));
+                if (txtProgressStatus != null)
+                    txtProgressStatus.Text = string.Format(GetResourceString("TxtInstallingFormat", "Downloading OptiScaler v{0}... {1}%"), versionForGame, 0);
+                var optiCacheDir = await _componentService.DownloadOptiScalerAsync(versionForGame, downloadProgress);
                 var installFakenvapiForGame = installFakenvapi;
                 var fakeCacheDir = installFakenvapiForGame
-                    ? _componentService.GetFakenvapiCachePath(selectedFakenvapiVersion!)
+                    ? await _componentService.DownloadFakenvapiAsync(selectedFakenvapiVersion!, downloadProgress)
                     : "";
+                if (txtProgressStatus != null) txtProgressStatus.Text = $"Installing {gameItem.Name}...";
+                if (progressBar != null) progressBar.Value = (currentGame - 1) * 100.0 / totalGames;
                 var nukemCacheDir = installNukemFG
                     ? _componentService.GetNukemFGCachePath(selectedNukemFGVersion!)
                     : "";
@@ -1233,6 +1307,15 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                 }
 
+                // No per-game prompt in a batch: reapply once silently, report what still fails.
+                var verifyDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+                var iniMismatches = await Task.Run(() =>
+                {
+                    var mismatches = _installService.VerifyIniSettings(verifyDir);
+                    return mismatches.Count == 0 ? mismatches : _installService.ReapplyIniSettings(verifyDir);
+                });
+                if (iniMismatches.Count > 0) iniFailedGames.Add(gameItem.Name);
+
                 gameItem.IsInstalled = true;
                 gameItem.CanInstall = false;
                 gameItem.IsSelected = false;
@@ -1240,6 +1323,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             catch (Exception ex)
             {
                 DebugWindow.Log($"[BulkInstall] Failed to install {gameItem.Name}: {ex.Message}");
+                failedGames.Add($"• {gameItem.Name}: {ex.Message}");
             }
 
             await Task.Delay(100); // Small delay between installations
@@ -1258,11 +1342,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         UpdateSelectionCount();
 
         // Show completion dialog
-        var completedCount = totalGames;
+        // Failures used to be logged only, while this dialog still reported every game as installed.
+        var completedCount = totalGames - failedGames.Count;
         await new ConfirmDialog(
             this,
             "Bulk Installation Complete",
-            $"Successfully installed OptiScaler on {completedCount} game{(completedCount != 1 ? "s" : "")}.",
+            $"Successfully installed OptiScaler on {completedCount} game{(completedCount != 1 ? "s" : "")}." +
+            (iniFailedGames.Count == 0 ? "" : "\n\n" + string.Format(GetResourceString("TxtIniVerifyBulkSummary",
+                "OptiScaler.ini could not be fully configured for: {0}. Open Manage for these games and reinstall."), string.Join(", ", iniFailedGames))) +
+            (failedGames.Count == 0 ? "" : "\n\n" + string.Format(GetResourceString("TxtBulkInstallFailedGames",
+                "Installation failed for {0} game(s):\n\n{1}"), failedGames.Count, string.Join("\n", failedGames))),
             isAlert: true
         ).ShowDialog<bool>(this);
 

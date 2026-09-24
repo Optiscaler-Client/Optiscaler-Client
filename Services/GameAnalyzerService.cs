@@ -30,6 +30,13 @@ public class GameAnalyzerService
 
     private static readonly string[] _dlssNames = new[] { "nvngx_dlss.dll" };
     private static readonly string[] _dlssFrameGenNames = new[] { "nvngx_dlssg.dll" };
+    // FSR upscaler DLLs report the FSR version itself as their file version (4.0.3.0, 4.1.1.0);
+    // the SDK-level ones in _fsrNames below report an unrelated SDK build (loader 2.1.0.x) that only
+    // looks comparable. See the FSR step in AnalyzeGame.
+    private static readonly string[] _fsrUpscalerNames = new[] {
+        Fsr4Int8DllHelper.LegacyFileName,
+        Fsr4Int8DllHelper.CurrentFileName
+    };
     private static readonly string[] _fsrNames = new[] {
         "amd_fidelityfx_dx12.dll",
         "amd_fidelityfx_vk.dll",
@@ -59,7 +66,16 @@ public class GameAnalyzerService
     private const string _dlssNrOnAmdMarkerName = "dlssnr_on_amd_weights.bin";
 
     private static readonly HashSet<string> _allTargetFileNames;
-    private static readonly string _diskCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache.json");
+    // Bump the file name whenever detection logic changes what a cached entry would contain:
+    // entries are keyed only by the directory's write stamp, so an old result would otherwise
+    // survive the update for every game whose folder didn't change (v2: FSR upscaler tiering,
+    // v3: HasAntiCheat).
+    private static readonly string _diskCachePath = Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache_v3.json");
+    private static readonly string[] _legacyDiskCachePaths =
+    {
+        Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache.json"),
+        Path.Combine(AppPaths.GetAppDataRoot(), "analysis_cache_v2.json")
+    };
     private static volatile bool _diskCacheLoaded = false;
 
     static GameAnalyzerService()
@@ -75,6 +91,7 @@ public class GameAnalyzerService
         foreach (var n in _fsrNames) _allTargetFileNames.Add(n);
         foreach (var n in _xessNames) _allTargetFileNames.Add(n);
         foreach (var n in _optiscalerInjectionNames) _allTargetFileNames.Add(n);
+        foreach (var n in AntiCheatHelper.Files) _allTargetFileNames.Add(n);
         _allTargetFileNames.Add(_dlssNrOnAmdMarkerName);
     }
 
@@ -133,6 +150,7 @@ public class GameAnalyzerService
         game.XessViaOptiscaler = false;
         game.IsOptiscalerInstalled = false;
         game.OptiscalerVersion = null; // Will be repopulated from manifest or log
+        game.HasAntiCheat = false;
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
         game.IsDlssNrOnAmdInstalled = false; // DlssNrOnAmdVersion is NOT reset here — no on-disk
@@ -147,6 +165,8 @@ public class GameAnalyzerService
             // ── Single-pass file collection ──────────────────────────────────────────
             // Traverse the game directory once and classify all relevant files by name.
             var collectedFiles = CollectRelevantFiles(game.InstallPath);
+            game.HasAntiCheat = collectedFiles.Keys.Any(AntiCheatHelper.IsAntiCheatFile)
+                                || AntiCheatHelper.DeclaredInSteamScript(game.InstallPath);
 
             // ── Detect OptiScaler ──────────────────────────────────────────────────
             // Do this first so we can ignore its installed files when looking for native DLLs
@@ -205,7 +225,7 @@ public class GameAnalyzerService
                                     var extInstallDir = !string.IsNullOrEmpty(extManifest.InstalledGameDirectory) && Directory.Exists(extManifest.InstalledGameDirectory)
                                         ? extManifest.InstalledGameDirectory
                                         : candidate!;
-                                    foreach (var f in extManifest.InstalledFiles)
+                                    foreach (var f in ClientWrittenFiles(extManifest))
                                         ignoredFiles.Add(Path.GetFullPath(Path.Combine(extInstallDir, f)));
                                     blockHeuristicFallbackDetection = true;
                                     DebugWindow.Log($"[Analyzer] Priority 0 (external store) detected OptiScaler {extManifest.OptiscalerVersion} for '{game.Name}'");
@@ -286,7 +306,7 @@ public class GameAnalyzerService
 
                                 if (!string.IsNullOrEmpty(originDir))
                                 {
-                                    foreach (var relFile in manifest.InstalledFiles)
+                                    foreach (var relFile in ClientWrittenFiles(manifest))
                                     {
                                         ignoredFiles.Add(Path.GetFullPath(Path.Combine(originDir, relFile)));
                                     }
@@ -389,7 +409,13 @@ public class GameAnalyzerService
             FindBestVersionFromCollected(game, collectedFiles, _dlssFrameGenNames, ignoredFiles, (g, path, ver) => { g.DlssFrameGenPath = path; g.DlssFrameGenVersion = ver; });
 
             // FSR
-            FindBestVersionFromCollected(game, collectedFiles, _fsrNames, ignoredFiles, (g, path, ver) => { g.FsrPath = path; g.FsrVersion = ver; }, g => g.FsrViaOptiscaler = true);
+            // Upscaler DLLs decide whenever one exists (native or OptiScaler's); the SDK-level DLLs are
+            // only a fallback. Comparing both by number let a game-owned loader (2.1.0) outrank the
+            // upscaler OptiScaler had just replaced and pass as native: Death Stranding 2 went from a
+            // native FSR 4.0.3 to OptiScaler's 4.1.1 but showed a plain native badge ("4.1 (2.1.0.0)").
+            Action<Game, string, string> setFsr = (g, path, ver) => { g.FsrPath = path; g.FsrVersion = ver; };
+            if (!FindBestVersionFromCollected(game, collectedFiles, _fsrUpscalerNames, ignoredFiles, setFsr, g => g.FsrViaOptiscaler = true))
+                FindBestVersionFromCollected(game, collectedFiles, _fsrNames, ignoredFiles, setFsr, g => g.FsrViaOptiscaler = true);
 
             // XeSS
             FindBestVersionFromCollected(game, collectedFiles, _xessNames, ignoredFiles, (g, path, ver) => { g.XessPath = path; g.XessVersion = ver; }, g => g.XessViaOptiscaler = true);
@@ -404,6 +430,16 @@ public class GameAnalyzerService
 
         SaveAnalysisCache(game, normalizedInstallPath, directoryWriteStamp);
     }
+
+    /// <summary>
+    /// Every file the client wrote under this manifest. InstalledFiles alone misses the ones only
+    /// tracked as created/overwritten (e.g. InjectExtrasDll's FSR 4 Swap DLL next to OptiScaler), which
+    /// then passed for game-native files: a native FSR 4.0.3 upgraded to 4.1 showed the plain badge.
+    /// </summary>
+    private static IEnumerable<string> ClientWrittenFiles(Models.InstallationManifest manifest) =>
+        manifest.InstalledFiles
+            .Concat(manifest.FilesCreated.Select(f => f.RelativePath))
+            .Concat(manifest.FilesOverwritten.Select(f => f.RelativePath));
 
     private static bool TryApplyCachedAnalysis(Game game, string installPath, DateTime directoryWriteStamp)
     {
@@ -429,7 +465,8 @@ public class GameAnalyzerService
         }
     }
 
-    private static void FindBestVersionFromCollected(Game game, Dictionary<string, List<string>> collectedFiles, string[] filePatterns, HashSet<string> ignoredFiles, Action<Game, string, string> updateAction, Action<Game>? markViaOptiscaler = null)
+    /// <summary>True when a version was found and reported.</summary>
+    private static bool FindBestVersionFromCollected(Game game, Dictionary<string, List<string>> collectedFiles, string[] filePatterns, HashSet<string> ignoredFiles, Action<Game, string, string> updateAction, Action<Game>? markViaOptiscaler = null)
     {
         var highestVer = new Version(0, 0);
         string? bestPath = null;
@@ -485,14 +522,56 @@ public class GameAnalyzerService
         if (bestPath != null && bestVerStr != null)
         {
             updateAction(game, bestPath, bestVerStr);
+            return true;
         }
-        else if (bestIgnoredPath != null && bestIgnoredVerStr != null)
+        if (bestIgnoredPath != null && bestIgnoredVerStr != null)
         {
             // No native install, but OptiScaler provides its own copy - still report the
             // version, just flagged as not native.
             updateAction(game, bestIgnoredPath, bestIgnoredVerStr);
             markViaOptiscaler?.Invoke(game);
+            return true;
         }
+        return false;
+    }
+
+    /// <summary>
+    /// FSR upscaler version OptiScaler itself reported the last time the game ran - what actually
+    /// ran, unlike FsrVersion (the highest DLL version on disk), which a driver override or an
+    /// INT8/custom amdxc64 setup can make wrong. Reads OptiScaler's FfxApi proxy line
+    /// ("FfxApi Dx12 SR version: 4.0.2"); the first match is the upscaler (the denoiser/radiance
+    /// cache reuse the same text further down). Null when there is no log, the log predates the
+    /// current OptiScaler.ini (stale from a previous install), or the game never loaded FFX (DX11/Vulkan).
+    /// </summary>
+    public static string? ReadFsrRuntimeVersion(string gameDir)
+    {
+        const string marker = "FfxApi Dx12 SR version:";
+        try
+        {
+            var logPath = new[] { gameDir, Path.Combine(gameDir, "OptiScaler") }
+                .Select(d => Path.Combine(d, "OptiScaler.log"))
+                .FirstOrDefault(File.Exists);
+            if (logPath == null) return null;
+
+            var iniPath = GameInstallationService.ResolveOptiScalerIniPath(gameDir);
+            if (File.Exists(iniPath) && File.GetLastWriteTimeUtc(logPath) < File.GetLastWriteTimeUtc(iniPath))
+                return null;
+
+            // Shared read: the game may still be running and writing to it.
+            using var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            // ponytail: capped scan - FFX init is logged early; raise if a trace-level log buries it deeper.
+            for (int i = 0; i < 50_000 && reader.ReadLine() is { } line; i++)
+            {
+                var idx = line.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0) return line[(idx + marker.Length)..].Trim();
+            }
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log($"[Analyzer] Failed to read FSR runtime version from OptiScaler.log: {ex.Message}");
+        }
+        return null;
     }
 
     private static Dictionary<string, List<string>> CollectRelevantFiles(string path)
@@ -539,6 +618,8 @@ public class GameAnalyzerService
 
             try
             {
+                foreach (var legacy in _legacyDiskCachePaths)
+                    if (File.Exists(legacy)) File.Delete(legacy);
                 if (!File.Exists(_diskCachePath)) return;
                 var json = File.ReadAllText(_diskCachePath);
                 var loaded = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, AnalysisCacheEntry>>(json);
@@ -907,6 +988,7 @@ public class GameAnalyzerService
         public bool XessViaOptiscaler { get; set; }
         public bool IsOptiscalerInstalled { get; set; }
         public string? OptiscalerVersion { get; set; }
+        public bool HasAntiCheat { get; set; }
 
         public static AnalysisCacheEntry FromGame(Game game, DateTime directoryWriteStampUtc)
         {
@@ -925,7 +1007,8 @@ public class GameAnalyzerService
                 XessPath = game.XessPath,
                 XessViaOptiscaler = game.XessViaOptiscaler,
                 IsOptiscalerInstalled = game.IsOptiscalerInstalled,
-                OptiscalerVersion = game.OptiscalerVersion
+                OptiscalerVersion = game.OptiscalerVersion,
+                HasAntiCheat = game.HasAntiCheat
             };
         }
 
@@ -944,6 +1027,7 @@ public class GameAnalyzerService
             game.XessViaOptiscaler = XessViaOptiscaler;
             game.IsOptiscalerInstalled = IsOptiscalerInstalled;
             game.OptiscalerVersion = OptiscalerVersion;
+            game.HasAntiCheat = HasAntiCheat;
         }
     }
 }

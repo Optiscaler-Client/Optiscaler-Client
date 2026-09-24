@@ -91,6 +91,9 @@ public class Game
 
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
+
+    // Set by GameAnalyzerService (AntiCheatHelper); drives the warning badge on the Games view cover.
+    public bool HasAntiCheat { get; set; }
     public string? Fsr4ExtraVersion { get; set; }
 
     // "Setup NR" experimental feature — danielblnc's standalone AMD DLSS Neural Rendering mod.

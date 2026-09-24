@@ -2216,19 +2216,29 @@ namespace OptiscalerClient.Views
             cmb.SelectedIndex = targetIndex;
         }
 
-        private void CheckIfAntiCheat()
-        {
-            const string anticheatName = "start_protected_game.exe";
-            var anticheatPanel = this.FindControl<Border>("EasyAntiCheat");
+        private bool _antiCheatFound;
 
-            bool antiCheatFound = !string.IsNullOrEmpty(_game?.InstallPath) &&
-                         File.Exists(System.IO.Path.Combine(_game.InstallPath, anticheatName));
+        private async void CheckIfAntiCheat()
+        {
+            var installPath = _game?.InstallPath;
+            _antiCheatFound = await Task.Run(() => AntiCheatHelper.IsPresent(installPath));
+            var anticheatPanel = this.FindControl<Border>("EasyAntiCheat");
 
             if (anticheatPanel != null)
             {
-                anticheatPanel.IsVisible = antiCheatFound;
-                anticheatPanel.IsEnabled = antiCheatFound;
+                anticheatPanel.IsVisible = _antiCheatFound;
+                anticheatPanel.IsEnabled = _antiCheatFound;
             }
+        }
+
+        /// <summary>True when there's no anti-cheat, or the user explicitly accepted the ban risk.</summary>
+        private async Task<bool> ConfirmAntiCheatRiskAsync()
+        {
+            if (!_antiCheatFound) return true;
+            var msg = string.Format(GetResourceString("TxtAntiCheatConfirmMsg",
+                "{0} uses anti-cheat protection.\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes. Only continue if you play offline or the game officially allows it.\n\nInstall anyway?"), _game.Name);
+            return await new ConfirmDialog(this, GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"), msg,
+                confirmText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway")).ShowDialog<bool>(this);
         }
 
         private void UpdateCheckboxStatesForVersion(ComboBox? cmb)
@@ -4462,6 +4472,8 @@ namespace OptiscalerClient.Views
 
         private async Task ExecuteInstallAsync(bool isManualMode)
         {
+            if (!await ConfirmAntiCheatRiskAsync()) return;
+
             // Mode B ("daniel-and-opti") commits the daniel-mod files (and Game state) as soon as
             // that step succeeds, well before the OptiScaler half below even starts — cancelling or
             // failing anywhere after that (the manual-install folder picker, a corrupt-artifact
@@ -5568,6 +5580,9 @@ namespace OptiscalerClient.Views
                 // and awaiting it here would delay the Wine-override reminder dialog right below until
                 // the toast finished animating, instead of both appearing together.
                 _ = ShowToastAsync(string.Format(successFormat, installedComponents));
+
+                await ConfirmDialog.VerifyIniAfterInstallAsync(this,
+                    overrideGameDir ?? resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(_game) ?? _game.InstallPath);
 
                 // Setup NR's "Mod + OptiScaler" (Mode B) on Linux just ran through guentra's fork,
                 // whose generated launch.sh already sets everything the mod's own DLLs need
@@ -6876,19 +6891,30 @@ namespace OptiscalerClient.Views
                 components.Add(MakeUpscalerEntry(dlssDisplay, _game.DlssViaOptiscaler));
             }
 
+            // Normalized on-disk FSR version, compared against the runtime one below.
+            string? fsrDiskVersion = null;
             if (!string.IsNullOrEmpty(_game.FsrVersion))
             {
                 var fsrMap = GetFsrVersionMap();
                 string fsrDisplay;
                 if (TryLookupVersionMap(fsrMap, _game.FsrVersion, out var fsrNormal))
+                {
+                    fsrDiskVersion = fsrNormal;
                     fsrDisplay = VersionDisplayEquals(fsrNormal, _game.FsrVersion)
                         ? $"AMD FSR: {fsrNormal}"
                         : $"AMD FSR: {fsrNormal} ({_game.FsrVersion})";
+                }
                 else
+                {
+                    fsrDiskVersion = _game.FsrVersion;
                     fsrDisplay = $"AMD FSR: {_game.FsrVersion}";
+                }
                 if (_game.FsrIsSwapped)
                     fsrDisplay += " (swapped)";
-                components.Add(MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler, _game.FsrIsSwapped));
+                var fsrEntry = MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler, _game.FsrIsSwapped);
+                var diskTip = GetResourceString("TxtFsrDiskVersionTip",
+                    "Version read from the DLL file on disk. OptiScaler or the GPU driver may load a different FSR version at runtime.");
+                components.Add(fsrEntry with { Tooltip = fsrEntry.Tooltip == null ? diskTip : $"{fsrEntry.Tooltip}\n{diskTip}" });
             }
 
             if (!string.IsNullOrEmpty(_game.XessVersion))
@@ -6945,6 +6971,39 @@ namespace OptiscalerClient.Views
 
             var lstComponents = this.FindControl<ListBox>("LstComponents");
             if (lstComponents != null) lstComponents.ItemsSource = components;
+
+            if (_game.IsOptiscalerInstalled)
+                _ = AppendFsrRuntimeEntryAsync(components, fsrDiskVersion);
+        }
+
+        /// <summary>
+        /// Adds the FSR version OptiScaler reported in its log (what actually ran) next to the
+        /// on-disk one, flagged when the two differ. Async: the log can be large.
+        /// </summary>
+        private async Task AppendFsrRuntimeEntryAsync(ObservableCollection<ComponentEntry> components, string? fsrDiskVersion)
+        {
+            var game = _game;
+            var runtime = await Task.Run(() =>
+                GameAnalyzerService.ReadFsrRuntimeVersion(new GameInstallationService().DetermineInstallDirectory(game) ?? game.InstallPath));
+            if (string.IsNullOrEmpty(runtime)) return;
+
+            var text = string.Format(GetResourceString("TxtFsrRuntimeLabel", "AMD FSR in use (OptiScaler log): {0}"), runtime);
+            var tooltip = GetResourceString("TxtFsrRuntimeTip", "FSR upscaler version OptiScaler reported in its log the last time the game ran.");
+            if (fsrDiskVersion != null && !FsrVersionsMatch(runtime, fsrDiskVersion))
+            {
+                text = "⚠ " + text;
+                tooltip += "\n" + GetResourceString("TxtFsrRuntimeMismatchTip",
+                    "Differs from the DLL on disk: OptiScaler or the GPU driver loaded a different FSR version.");
+            }
+            components.Add(new ComponentEntry(text, false, false, tooltip));
+        }
+
+        /// <summary>Compares major.minor.patch only - disk versions carry a build number / hotfix letter the log doesn't.</summary>
+        private static bool FsrVersionsMatch(string a, string b)
+        {
+            static string Core(string v) => string.Join('.', Regex.Replace(v, "^FSR\\s*", "", RegexOptions.IgnoreCase)
+                .Split(' ')[0].Split('.').Take(3).Select(p => new string(p.TakeWhile(char.IsDigit).ToArray())));
+            return Core(a) == Core(b);
         }
 
         private static Dictionary<string, string> GetFsrVersionMap()
@@ -7520,7 +7579,8 @@ namespace OptiscalerClient.Views
 
                 NeedsScan = true;
                 UpdateStatus();
-                await ShowToastAsync(GetResourceString("TxtConfigOnlyUpdateApplied", "Configuration updated."));
+                _ = ShowToastAsync(GetResourceString("TxtConfigOnlyUpdateApplied", "Configuration updated."));
+                await ConfirmDialog.VerifyIniAfterInstallAsync(this, installService.DetermineInstallDirectory(_game) ?? _game.InstallPath);
             }
             catch (Exception ex)
             {

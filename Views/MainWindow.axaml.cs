@@ -5896,6 +5896,16 @@ namespace OptiscalerClient.Views
                         // the nvngx/Defender-exclusion modal.
                         SetQuickInstallLoading(button);
 
+                        // Same risk confirmation as Manage - Quick Install used to skip the anti-cheat warning entirely.
+                        if (await Task.Run(() => AntiCheatHelper.IsPresent(selectedGame.InstallPath)))
+                        {
+                            var antiCheatMsg = string.Format(GetResourceString("TxtAntiCheatConfirmMsg",
+                                "{0} uses anti-cheat protection.\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes. Only continue if you play offline or the game officially allows it.\n\nInstall anyway?"), selectedGame.Name);
+                            if (!await new ConfirmDialog(this, GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"), antiCheatMsg,
+                                    confirmText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway")).ShowDialog<bool>(this))
+                                return;
+                        }
+
                         // AMD DLSS Neural Rendering ("Setup NR") default — see
                         // ManageDefaultVersionsWindow and DlssNrOnAmdService.InstallForQuickPathAsync.
                         // Only ever configured when the default GPU is AMD (see that window's own
@@ -6455,6 +6465,9 @@ namespace OptiscalerClient.Views
                         });
 
                         await HideToastAfterAsync(1500);
+
+                        await ConfirmDialog.VerifyIniAfterInstallAsync(this,
+                            resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath);
                     }
                 }
                 catch (Exception ex)

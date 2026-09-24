@@ -803,6 +803,10 @@ namespace OptiscalerClient.Services
             }
 
             // Step 2.5: Generate OptiScaler.ini from profile if provided (skip for Default profile)
+            // Recorded before the write so a failed write shows up in VerifyIniSettings instead of
+            // only in the debug log.
+            ResetExpectedIni(Path.Combine(gameDir, "OptiScaler.ini"),
+                effectiveProfile != null && effectiveProfile.IniSettings.Count > 0 ? effectiveProfile.IniSettings : null);
             if (effectiveProfile != null && effectiveProfile.IniSettings.Count > 0)
             {
                 try
@@ -842,6 +846,17 @@ namespace OptiscalerClient.Services
             // for these keys already, matching what a freshly generated ini would otherwise leave in
             // place, so this is a harmless no-op when the user hasn't touched the selector.
             ApplySpoofingSettings(game, dxgiSpoofing, gameDir);
+
+            // Info-level file log so Manage can show which FSR version OptiScaler actually loaded
+            // (GameAnalyzerService.ReadFsrRuntimeVersion). OptiScaler truncates it on every launch.
+            // Only fills in "auto" - an explicit profile value is left alone.
+            var currentIni = ReadIni(ResolveOptiScalerIniPath(gameDir));
+            if (IsAutoOrMissing(currentIni, "Log", "LogToFile"))
+            {
+                ModifyOptiScalerIni(gameDir, "LogToFile", "true", "Log");
+                if (IsAutoOrMissing(currentIni, "Log", "LogLevel"))
+                    ModifyOptiScalerIni(gameDir, "LogLevel", "2", "Log");
+            }
 
             // Step 2.6: RenoDX (experimental, opt-in) and/or re-enabling a ReShade install that Step 1
             // preserved as ReShade64.dll. Runs AFTER Step 2.5 deliberately: LoadReshade is force-set
@@ -3279,6 +3294,7 @@ namespace OptiscalerClient.Services
                 if (!found)
                     lines.Add("LoadAsiPlugins=true");
                 File.WriteAllLines(iniPath, lines);
+                ForgetExpectedIniKey(iniPath, "LoadAsiPlugins"); // written section-agnostic, see above
                 DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: LoadAsiPlugins=true ({asiFileName})");
             }
             else
@@ -3334,6 +3350,7 @@ namespace OptiscalerClient.Services
         {
             var iniPath = ResolveOptiScalerIniPath(gameDir);
             var sectionHeader = $"[{section}]";
+            RecordExpectedIni(iniPath, section, key, value);
 
             if (!File.Exists(iniPath))
             {
@@ -3403,6 +3420,117 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Failed to modify OptiScaler.ini, creating new: {ex.Message}");
                 File.WriteAllText(iniPath, $"{sectionHeader}\n{key}={value}\n");
             }
+        }
+
+        // ── OptiScaler.ini verification ─────────────────────────────────────────────
+        // Every value an install writes (profile + narrow patches) is recorded per ini path, so
+        // VerifyIniSettings can confirm afterwards that the file OptiScaler will read really holds
+        // them - a swallowed profile write or ModifyOptiScalerIni's rewrite fallback would otherwise
+        // leave the game on a different config with nothing but a debug-log line.
+        // ponytail: in-memory only (lost on restart) - persist next to the manifest if verification
+        // ever needs to cover installs from a previous session.
+        private static readonly Dictionary<string, Dictionary<string, (string Section, string Key, string Value)>> _expectedIni =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static string IniEntryId(string section, string key) => $"{section}|{key}";
+
+        private static void ResetExpectedIni(string iniPath, Dictionary<string, Dictionary<string, string>>? settings)
+        {
+            var entries = new Dictionary<string, (string Section, string Key, string Value)>(StringComparer.OrdinalIgnoreCase);
+            if (settings != null)
+                foreach (var (section, keys) in settings)
+                    foreach (var (key, value) in keys)
+                        entries[IniEntryId(section, key)] = (section, key, value);
+            lock (_expectedIni) _expectedIni[Path.GetFullPath(iniPath)] = entries;
+        }
+
+        private static void RecordExpectedIni(string iniPath, string section, string key, string value)
+        {
+            lock (_expectedIni)
+            {
+                var full = Path.GetFullPath(iniPath);
+                if (!_expectedIni.TryGetValue(full, out var entries))
+                    _expectedIni[full] = entries = new(StringComparer.OrdinalIgnoreCase);
+                entries[IniEntryId(section, key)] = (section, key, value);
+            }
+        }
+
+        private static void ForgetExpectedIniKey(string iniPath, string key)
+        {
+            lock (_expectedIni)
+            {
+                if (!_expectedIni.TryGetValue(Path.GetFullPath(iniPath), out var entries)) return;
+                foreach (var id in entries.Where(e => e.Value.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Select(e => e.Key).ToList())
+                    entries.Remove(id);
+            }
+        }
+
+        /// <summary>Section|Key -> value (first occurrence, like ModifyOptiScalerIni). Empty if missing/unreadable.</summary>
+        private static Dictionary<string, string> ReadIni(string iniPath)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(iniPath)) return result;
+            try
+            {
+                string section = "";
+                foreach (var raw in File.ReadLines(iniPath))
+                {
+                    var line = raw.Trim();
+                    if (line.Length == 0 || line.StartsWith(';')) continue;
+                    if (line.StartsWith('[') && line.EndsWith(']')) { section = line[1..^1]; continue; }
+                    var eq = line.IndexOf('=');
+                    if (eq <= 0) continue;
+                    result.TryAdd(IniEntryId(section, line[..eq].Trim()), line[(eq + 1)..].Trim());
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[IniVerify] Failed to read {iniPath}: {ex.Message}");
+            }
+            return result;
+        }
+
+        private static bool IsAutoOrMissing(Dictionary<string, string> ini, string section, string key) =>
+            !ini.TryGetValue(IniEntryId(section, key), out var value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase);
+
+        private static List<(string Section, string Key, string Value)> GetIniMismatches(string iniPath)
+        {
+            List<(string Section, string Key, string Value)> expected;
+            lock (_expectedIni)
+            {
+                if (!_expectedIni.TryGetValue(Path.GetFullPath(iniPath), out var entries)) return new();
+                expected = entries.Values.ToList();
+            }
+
+            var actual = ReadIni(iniPath);
+            return expected
+                .Where(e => !string.Equals(actual.GetValueOrDefault(IniEntryId(e.Section, e.Key)), e.Value.Trim(), StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Compares OptiScaler.ini against every value recorded during the last install for this game
+        /// dir. Returns one line per mismatch ("[Section] Key: expected X, found Y"); empty = all good,
+        /// or nothing was recorded this session.
+        /// </summary>
+        public List<string> VerifyIniSettings(string gameDir)
+        {
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
+            var actual = ReadIni(iniPath);
+            var lines = GetIniMismatches(iniPath)
+                .Select(e => $"[{e.Section}] {e.Key}: expected {e.Value}, found {actual.GetValueOrDefault(IniEntryId(e.Section, e.Key)) ?? "-"}")
+                .ToList();
+            if (lines.Count > 0)
+                DebugWindow.Log($"[IniVerify] {lines.Count} mismatch(es) in {iniPath}: {string.Join("; ", lines)}");
+            return lines;
+        }
+
+        /// <summary>Rewrites every recorded value VerifyIniSettings flags, then returns a fresh verification.</summary>
+        public List<string> ReapplyIniSettings(string gameDir)
+        {
+            foreach (var (section, key, value) in GetIniMismatches(ResolveOptiScalerIniPath(gameDir)))
+                ModifyOptiScalerIni(gameDir, key, value, section);
+            return VerifyIniSettings(gameDir);
         }
     }
 }

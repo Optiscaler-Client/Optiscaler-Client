@@ -452,26 +452,35 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <!-- EasyAntiCheat Detection -->
+                            <!-- Anti-cheat detection (AntiCheatHelper) - same warning look as PanelModdedWarning -->
                             <Border Name="EasyAntiCheat"
-                                    Background="{StaticResource BrBgCard}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    Background="#2E2410"
+                                    BorderBrush="{StaticResource BrWarning}"
                                     BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusLarge}"
-                                    Padding="16,12"
+                                    CornerRadius="6"
+                                    Padding="10,6"
                                     Margin="0,8,0,0"
                                     IsVisible="False">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="⚠ Anti Cheat Detected"
-                                                   Foreground="{StaticResource BrTextPrimary}"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                               Text="&#xF4A4;"
+                                               FontFamily="{StaticResource FontIcons}"
+                                               Foreground="{StaticResource BrWarning}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,8,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{DynamicResource TxtAntiCheatTitle}"
+                                                   Foreground="{StaticResource BrWarning}"
                                                    FontWeight="SemiBold"
                                                    FontSize="{StaticResource FontSizeBody}"/>
-                                        <TextBlock Text="This game uses anti-cheat protection, use OptiScaler at your own risk"
-                                                   Foreground="{StaticResource BrTextSecondary}"
+                                        <TextBlock Text="{DynamicResource TxtAntiCheatDesc}"
+                                                   Foreground="{StaticResource BrWarning}"
+                                                   TextWrapping="Wrap"
                                                    FontSize="{StaticResource FontSizeCaption}"/>
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>

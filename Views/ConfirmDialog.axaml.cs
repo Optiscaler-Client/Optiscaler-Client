@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OptiscalerClient.Views
@@ -259,6 +260,35 @@ namespace OptiscalerClient.Views
             if (rootPanel != null) rootPanel.Opacity = 0;
             await Task.Delay(220);
             Close(result);
+        }
+
+        private static string Res(string key, string fallback) =>
+            Application.Current?.TryFindResource(key, out var res) == true ? res?.ToString() ?? fallback : fallback;
+
+        /// <summary>
+        /// Post-install check shared by Manage and Quick Install: if OptiScaler.ini doesn't hold what
+        /// the install wrote (GameInstallationService.VerifyIniSettings), offers to reapply it.
+        /// </summary>
+        public static async Task VerifyIniAfterInstallAsync(Window owner, string gameDir)
+        {
+            var installService = new Services.GameInstallationService();
+            var mismatches = await Task.Run(() => installService.VerifyIniSettings(gameDir));
+            if (mismatches.Count == 0) return;
+
+            var title = Res("TxtIniVerifyTitle", "Settings not applied");
+            var msg = string.Format(Res("TxtIniVerifyMsg",
+                "Some settings were not written to OptiScaler.ini as expected, so the game may run with a different configuration:\n\n{0}"),
+                string.Join("\n", mismatches.Take(15)));
+            var reapply = await new ConfirmDialog(owner, title, msg, confirmText: Res("TxtIniVerifyReapply", "Reapply")).ShowDialog<bool>(owner);
+            if (!reapply) return;
+
+            var remaining = await Task.Run(() => installService.ReapplyIniSettings(gameDir));
+            if (remaining.Count == 0) return;
+
+            var failMsg = string.Format(Res("TxtIniVerifyReapplyFailed",
+                "Some settings still could not be applied. Check that OptiScaler.ini is not read-only or open in another program:\n\n{0}"),
+                string.Join("\n", remaining.Take(15)));
+            await new ConfirmDialog(owner, title, failMsg, isAlert: true).ShowDialog<bool>(owner);
         }
     }
 }

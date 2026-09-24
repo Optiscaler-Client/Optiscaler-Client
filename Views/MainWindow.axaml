@@ -1129,18 +1129,34 @@
                                                              <ColumnDefinition Width="*"/>
                                                          </Grid.ColumnDefinitions>
 
-                                                         <Border Grid.Column="0"
-                                                                 Background="#BF10131A"
-                                                                 BorderBrush="{StaticResource BrBorderSubtle}"
-                                                                 BorderThickness="1"
-                                                                 CornerRadius="6"
-                                                                 Padding="8,3"
-                                                                 HorizontalAlignment="Left">
-                                                             <TextBlock Text="{Binding Platform}"
-                                                                        FontSize="10"
-                                                                        FontWeight="SemiBold"
-                                                                        Foreground="{StaticResource BrTextPrimary}"/>
-                                                         </Border>
+                                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                                                                     HorizontalAlignment="Left">
+                                                             <Border Background="#BF10131A"
+                                                                     BorderBrush="{StaticResource BrBorderSubtle}"
+                                                                     BorderThickness="1"
+                                                                     CornerRadius="6"
+                                                                     Padding="8,3">
+                                                                 <TextBlock Text="{Binding Platform}"
+                                                                            FontSize="10"
+                                                                            FontWeight="SemiBold"
+                                                                            Foreground="{StaticResource BrTextPrimary}"/>
+                                                             </Border>
+                                                             <!-- Anti-cheat warning (Game.HasAntiCheat) -->
+                                                             <Border Background="#E62E2410"
+                                                                     BorderBrush="{StaticResource BrWarning}"
+                                                                     BorderThickness="1"
+                                                                     CornerRadius="6"
+                                                                     Padding="6,2"
+                                                                     IsVisible="{Binding HasAntiCheat}"
+                                                                     ToolTip.Tip="{DynamicResource TxtAntiCheatDesc}">
+                                                                 <TextBlock Text="&#xF4A4;"
+                                                                            FontFamily="{StaticResource FontIcons}"
+                                                                            FontSize="12"
+                                                                            FontWeight="Bold"
+                                                                            Foreground="{StaticResource BrWarning}"
+                                                                            VerticalAlignment="Center"/>
+                                                             </Border>
+                                                         </StackPanel>
                                                      </Grid>
 
                                                      <Border Background="#E61E1530"
