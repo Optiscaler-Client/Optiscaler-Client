@@ -73,26 +73,14 @@
             <Setter Property="Height" Value="48"/>
             <Setter Property="Width" Value="48"/>
             <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
             <Setter Property="FontSize" Value="20"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.18"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.18"/>
-                </Transitions>
-            </Setter>
             <Setter Property="Template">
                 <ControlTemplate>
                     <Border Name="RootBorder" Background="{TemplateBinding Background}" CornerRadius="8">
                         <Grid>
-                            <Border Name="Indicator" Width="3" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource BrAccent}" CornerRadius="1.5" Margin="2,0,0,0">
-                                <Border.Transitions>
-                                    <Transitions>
-                                        <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
-                                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                                    </Transitions>
-                                </Border.Transitions>
-                            </Border>
+                            <Border Name="Indicator" Width="3" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource BrAccent}" IsVisible="False" CornerRadius="1.5" Margin="2,0,0,0"/>
                             <TextBlock Text="{TemplateBinding Content}" FontFamily="{StaticResource FontIcons}" FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip.Tip="{TemplateBinding ToolTip.Tip}"/>
                         </Grid>
                     </Border>
@@ -126,14 +114,8 @@
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
             <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
         </Style>
-        <Style Selector="RadioButton.NavBtnStyle /template/ Border#Indicator">
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="RenderTransform" Value="scaleY(0.3)"/>
-        </Style>
         <Style Selector="RadioButton.NavBtnStyle:checked /template/ Border#Indicator">
-            <Setter Property="Opacity" Value="1"/>
-            <Setter Property="RenderTransform" Value="scaleY(1.0)"/>
-            <Setter Property="BoxShadow" Value="0 0 8 0 #608B73F8"/>
+            <Setter Property="IsVisible" Value="True"/>
         </Style>
         <Style Selector="RadioButton.NavBtnStyle:checked">
             <Setter Property="Foreground" Value="{StaticResource BrAccent}"/>
@@ -142,6 +124,7 @@
         <Style Selector="RadioButton.NavBtnStyle:pointerover">
             <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <!-- Gamepad / keyboard focus ring for sidebar nav buttons.
              Inset BoxShadow is never clipped by parent containers. -->

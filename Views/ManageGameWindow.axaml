@@ -107,21 +107,28 @@
         <Border Name="BdManageFrame"
                 CornerRadius="12"
                 Background="{StaticResource BrBgBase}"
-                BoxShadow="0 8 32 0 #80000000"
+                BoxShadow="0 24 64 -8 #CC000000, 0 0 24 0 #158B73F8"
                 BorderBrush="{StaticResource BrBorderSubtle}"
                 BorderThickness="1">
-            <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
-                <!-- LEFT COLUMN -->
-                <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
-                    <StackPanel Grid.Row="0" Spacing="12">
-                    <Border Classes="ImageCard"
-                            Name="BdGameCover"
-                            HorizontalAlignment="Stretch"
-                            Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
-                            MaxWidth="320"
-                            MaxHeight="460"
-                            ClipToBounds="True"
-                            Background="{StaticResource BrBgElevated}">
+            <Panel>
+                <!-- Ambient Glow Layer -->
+                <Border CornerRadius="12"
+                        Background="{StaticResource BrAmbientGlow}"
+                        IsHitTestVisible="False"/>
+
+                <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
+                    <!-- LEFT COLUMN -->
+                    <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
+                        <StackPanel Grid.Row="0" Spacing="12">
+                        <Border Classes="ImageCard"
+                                Name="BdGameCover"
+                                HorizontalAlignment="Stretch"
+                                Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
+                                MaxWidth="320"
+                                MaxHeight="460"
+                                ClipToBounds="True"
+                                Background="{StaticResource BrBgElevated}"
+                                BoxShadow="0 8 24 -4 #60000000">
                             <Grid>
                                 <!-- Same no-cover fallback as the Games grid cards; the cover hides it once loaded. -->
                                 <TextBlock Text="🎮"
@@ -228,6 +235,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #35000000"
                             Margin="0,6,0,10"
                             Padding="16,10">
                         <StackPanel>
@@ -249,6 +257,7 @@
                                                    Foreground="{StaticResource BrTextPrimary}"
                                                    VerticalAlignment="Center"/>
                                         <TextBlock Name="TxtVersion"
+                                                   Classes="Mono"
                                                    Text=""
                                                    FontSize="{StaticResource FontSizeBodyLarge}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -371,6 +380,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #25000000"
                             Padding="12,10"
                             Margin="0,0,0,10">
                         <StackPanel Name="PnlDetectedComponents" Spacing="8">
@@ -429,6 +439,7 @@
                                                 CornerRadius="{StaticResource RadiusPill}"
                                                 Padding="10,6"
                                                 Margin="0,0,6,6"
+                                                BoxShadow="0 2 8 0 #20000000"
                                                 Classes.ViaOptiscaler="{Binding ViaOptiscaler}"
                                                 Classes.Swapped="{Binding IsSwapped}"
                                                 ToolTip.Tip="{Binding Tooltip}">
@@ -451,7 +462,7 @@
                                                     <Setter Property="BorderBrush" Value="{StaticResource BrWarning}"/>
                                                 </Style>
                                             </Border.Styles>
-                                            <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}"/>
+                                            <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}" FontWeight="SemiBold"/>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -497,6 +508,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #35000000"
                             Padding="14,12">
                         <DockPanel>
                         <!-- Action row: pinned below the scroll area so Install stays reachable on small screens.
@@ -1351,6 +1363,7 @@
                         BorderBrush="{StaticResource BrBorderSubtle}"
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusLarge}"
+                        BoxShadow="0 4 16 -4 #35000000"
                         ClipToBounds="True">
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Stays in Row 0, top-aligned, in both states. Expanded: the clipboard
@@ -1915,6 +1928,7 @@
                     </Border>
                 </Grid>
             </Grid>
+            </Panel>
         </Border>
 
         <!-- Dim backdrop shown behind child dialogs -->
