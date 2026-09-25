@@ -285,25 +285,19 @@
              ListBoxItem's own bounds. Same reasoning already documented for
              the sidebar nav buttons' focus ring above ("Inset BoxShadow is
              never clipped by parent containers"). -->
-        <Style Selector="ListBox#LstGames ListBoxItem:focus /template/ ContentPresenter">
+        <Style Selector="ListBox#LstGames ListBoxItem:focus /template/ ContentPresenter,
+                         ListBox#LstGames ListBoxItem:focus-visible /template/ ContentPresenter,
+                         ListBox#LstGames ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
-        <Style Selector="ListBox#LstGamesGrid ListBoxItem:focus /template/ ContentPresenter">
+        <Style Selector="ListBox#LstGamesGrid ListBoxItem:focus /template/ ContentPresenter,
+                         ListBox#LstGamesGrid ListBoxItem:focus-visible /template/ ContentPresenter,
+                         ListBox#LstGamesGrid ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style Selector="ListBox#LstGames ListBoxItem:focus Border.GameCard">
-            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
-            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
-            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #8B73F8"/>
-        </Style>
-        <Style Selector="ListBox#LstGamesGrid ListBoxItem:focus Border.GameGridCard">
-            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
-            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
-            <Setter Property="BoxShadow" Value="inset 0 0 0 2 #8B73F8"/>
         </Style>
     </Window.Styles>
 
@@ -711,7 +705,7 @@
                                HorizontalScrollBarVisibility="Disabled"
                                PointerWheelChanged="GameListScrollViewer_PointerWheelChanged">
                      <ListBox Name="LstGames"
-                              Margin="12,6,12,12"
+                              Margin="24,6,24,12"
                               ClipToBounds="False"
                               Background="Transparent"
                               BorderThickness="0"
@@ -728,6 +722,8 @@
                                   <Setter Property="Padding" Value="0,4,0,4"/>
                                   <Setter Property="ClipToBounds" Value="False"/>
                                   <Setter Property="Background" Value="Transparent"/>
+                                  <Setter Property="Focusable" Value="True"/>
+                                  <Setter Property="FocusAdorner" Value="{x:Null}"/>
                               </Style>
                               <Style Selector="ListBoxItem /template/ ContentPresenter">
                                   <Setter Property="ClipToBounds" Value="False"/>
@@ -735,50 +731,72 @@
                               <Style Selector="ListBoxItem:pointerover">
                                   <Setter Property="ZIndex" Value="10"/>
                               </Style>
-                              <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                                  <Setter Property="Background" Value="Transparent"/>
+                              <Style Selector="ListBoxItem:focus, ListBoxItem:focus-visible, ListBoxItem:focus-within">
+                                  <Setter Property="ZIndex" Value="10"/>
                               </Style>
-                              <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+                              <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                                               ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                                               ListBoxItem:focus /template/ ContentPresenter#PART_ContentPresenter,
+                                               ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
                                   <Setter Property="Background" Value="Transparent"/>
+                                  <Setter Property="BorderBrush" Value="Transparent"/>
+                                  <Setter Property="BorderThickness" Value="0"/>
+                              </Style>
+
+                              <!-- Base Game Card -->
+                              <Style Selector="Border.GameCard">
+                                  <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                  <Setter Property="BoxShadow" Value="0 4 16 -4 #35000000, 0 1 2 0 #10FFFFFF"/>
+                                  <Setter Property="Transitions">
+                                      <Transitions>
+                                          <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                                          <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                                          <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
+                                          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                      </Transitions>
+                                  </Setter>
+                              </Style>
+
+                              <!-- Game Card: Mouse Pointer Over -->
+                              <Style Selector="Border.GameCard:pointerover, ListBoxItem:pointerover Border.GameCard">
+                                  <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                  <Setter Property="Background"  Value="{StaticResource BrBgElevated}"/>
+                                  <Setter Property="RenderTransform" Value="translateY(-3px)"/>
+                                  <Setter Property="BoxShadow" Value="0 16 36 -6 #80000000, 0 0 18 1 #258B73F8"/>
+                              </Style>
+                              <Style Selector="Border.GameCard:pointerover Border.GameThumb, ListBoxItem:pointerover Border.GameCard Border.GameThumb">
+                                  <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                  <Setter Property="BoxShadow" Value="0 6 16 -2 #60000000, 0 0 12 0 #358B73F8"/>
+                              </Style>
+
+                              <!-- Game Card: Gamepad / Keyboard Focus (Levitation + Subtle Purple Glow) -->
+                              <Style Selector="ListBoxItem:focus Border.GameCard,
+                                               ListBoxItem:focus-visible Border.GameCard,
+                                               ListBoxItem:focus-within Border.GameCard">
+                                  <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                  <Setter Property="Background"  Value="{StaticResource BrBgElevated}"/>
+                                  <Setter Property="RenderTransform" Value="translateY(-3px)"/>
+                                  <Setter Property="BoxShadow" Value="0 16 36 -6 #80000000, 0 0 18 2 #558B73F8"/>
+                              </Style>
+                              <Style Selector="ListBoxItem:focus Border.GameCard Border.GameThumb,
+                                               ListBoxItem:focus-visible Border.GameCard Border.GameThumb,
+                                               ListBoxItem:focus-within Border.GameCard Border.GameThumb">
+                                  <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                  <Setter Property="BoxShadow" Value="0 6 16 -2 #60000000, 0 0 12 0 #358B73F8"/>
                               </Style>
                           </ListBox.Styles>
 
-
-                         <ListBox.ItemTemplate>
-                             <DataTemplate x:DataType="models:Game">
-                                 <!-- Game Card -->
-                                 <Border Classes="GameCard"
-                                         ClipToBounds="False"
-                                         Background="{StaticResource BrBgCard}"
-                                         BorderBrush="{StaticResource BrBorderSubtle}"
-                                         BorderThickness="1"
-                                         CornerRadius="{StaticResource RadiusLarge}"
-                                         RenderTransformOrigin="50%,50%"
-                                         Padding="20,16">
-                                     <Border.Styles>
-                                         <Style Selector="Border.GameCard">
-                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
-                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #35000000, 0 1 2 0 #10FFFFFF"/>
-                                             <Setter Property="Transitions">
-                                                 <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
-                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                                                 </Transitions>
-                                             </Setter>
-                                         </Style>
-                                         <Style Selector="Border.GameCard:pointerover">
-                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
-                                             <Setter Property="Background"  Value="{StaticResource BrBgElevated}"/>
-                                             <Setter Property="RenderTransform" Value="translateY(-3px)"/>
-                                             <Setter Property="BoxShadow" Value="0 16 36 -6 #80000000, 0 0 18 1 #258B73F8"/>
-                                         </Style>
-                                         <Style Selector="Border.GameCard:pointerover Border.GameThumb">
-                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
-                                             <Setter Property="BoxShadow" Value="0 6 16 -2 #60000000, 0 0 12 0 #358B73F8"/>
-                                         </Style>
-                                     </Border.Styles>
+                          <ListBox.ItemTemplate>
+                              <DataTemplate x:DataType="models:Game">
+                                  <!-- Game Card -->
+                                  <Border Classes="GameCard"
+                                          ClipToBounds="False"
+                                          Background="{StaticResource BrBgCard}"
+                                          BorderBrush="{StaticResource BrBorderSubtle}"
+                                          BorderThickness="1"
+                                          CornerRadius="{StaticResource RadiusLarge}"
+                                          RenderTransformOrigin="50%,50%"
+                                          Padding="20,16">
 
                                          <Grid>
                                              <!-- Glowing indicator strip when OptiScaler is active on this game -->
@@ -1070,7 +1088,7 @@
                                PointerWheelChanged="GameListScrollViewer_PointerWheelChanged"
                                IsVisible="False">
                      <ListBox Name="LstGamesGrid"
-                              Margin="12,6,12,12"
+                              Margin="24,6,24,12"
                               ClipToBounds="False"
                               Background="Transparent"
                               BorderThickness="0"
@@ -1090,9 +1108,11 @@
                                  <Setter Property="ClipToBounds" Value="False"/>
                              </Style>
                              <Style Selector="ListBoxItem">
-                                 <Setter Property="Padding" Value="0,6,12,6"/>
+                                 <Setter Property="Padding" Value="6,6,6,6"/>
                                  <Setter Property="ClipToBounds" Value="False"/>
                                  <Setter Property="Background" Value="Transparent"/>
+                                 <Setter Property="Focusable" Value="True"/>
+                                 <Setter Property="FocusAdorner" Value="{x:Null}"/>
                              </Style>
                              <Style Selector="ListBoxItem /template/ ContentPresenter">
                                  <Setter Property="ClipToBounds" Value="False"/>
@@ -1100,11 +1120,48 @@
                              <Style Selector="ListBoxItem:pointerover">
                                  <Setter Property="ZIndex" Value="10"/>
                              </Style>
-                             <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-                                 <Setter Property="Background" Value="Transparent"/>
+                             <Style Selector="ListBoxItem:focus, ListBoxItem:focus-visible, ListBoxItem:focus-within">
+                                 <Setter Property="ZIndex" Value="10"/>
                              </Style>
-                             <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+                             <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                                              ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter,
+                                              ListBoxItem:focus /template/ ContentPresenter#PART_ContentPresenter,
+                                              ListBoxItem:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
                                  <Setter Property="Background" Value="Transparent"/>
+                                 <Setter Property="BorderBrush" Value="Transparent"/>
+                                 <Setter Property="BorderThickness" Value="0"/>
+                             </Style>
+
+                             <!-- Base Game Grid Card -->
+                             <Style Selector="Border.GameGridCard">
+                                 <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                 <Setter Property="BoxShadow" Value="0 6 20 -4 #40000000, 0 1 2 0 #10FFFFFF"/>
+                                 <Setter Property="Transitions">
+                                     <Transitions>
+                                         <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                                         <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                                         <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
+                                         <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                     </Transitions>
+                                 </Setter>
+                             </Style>
+
+                             <!-- Game Grid Card: Mouse Pointer Over -->
+                             <Style Selector="Border.GameGridCard:pointerover, ListBoxItem:pointerover Border.GameGridCard">
+                                 <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                 <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+                                 <Setter Property="RenderTransform" Value="translateY(-5px)"/>
+                                 <Setter Property="BoxShadow" Value="0 20 44 -8 #90000000, 0 0 20 2 #288B73F8"/>
+                             </Style>
+
+                             <!-- Game Grid Card: Gamepad / Keyboard Focus (Levitation + Subtle Purple Glow) -->
+                             <Style Selector="ListBoxItem:focus Border.GameGridCard,
+                                              ListBoxItem:focus-visible Border.GameGridCard,
+                                              ListBoxItem:focus-within Border.GameGridCard">
+                                 <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                 <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+                                 <Setter Property="RenderTransform" Value="translateY(-5px)"/>
+                                 <Setter Property="BoxShadow" Value="0 20 44 -8 #90000000, 0 0 20 2 #608B73F8"/>
                              </Style>
                          </ListBox.Styles>
 
@@ -1121,26 +1178,6 @@
                                          PointerEntered="GameGridCard_PointerEntered"
                                          PointerExited="GameGridCard_PointerExited"
                                          Tapped="GameGridCard_Tapped">
-                                     <Border.Styles>
-                                         <Style Selector="Border.GameGridCard">
-                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
-                                             <Setter Property="BoxShadow" Value="0 6 20 -4 #40000000, 0 1 2 0 #10FFFFFF"/>
-                                             <Setter Property="Transitions">
-                                                 <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
-                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                                                 </Transitions>
-                                             </Setter>
-                                         </Style>
-                                         <Style Selector="Border.GameGridCard:pointerover">
-                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
-                                             <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
-                                             <Setter Property="RenderTransform" Value="translateY(-5px)"/>
-                                             <Setter Property="BoxShadow" Value="0 20 44 -8 #90000000, 0 0 24 2 #288B73F8"/>
-                                         </Style>
-                                     </Border.Styles>
 
                                      <Grid Name="GridCardRoot">
                                          <StackPanel Spacing="10" Margin="8">
@@ -1330,7 +1367,8 @@
                                                     Content="{DynamicResource TxtQuickInstall}"
                                                     Click="BtnFastInstall_Click"
                                                     Loaded="BtnFastInstall_Loaded"/>
-                                            <Button MinWidth="96"
+                                            <Button Name="BtnManageGameGrid"
+                                                    MinWidth="96"
                                                     HorizontalAlignment="Center"
                                                     HorizontalContentAlignment="Center"
                                                     Classes="BtnPrimary"

@@ -93,9 +93,9 @@ public partial class GamepadNavigationHelper
         _isGamesActionMode = true;
         _gamesActionIsGrid = isGrid;
         _gamesActionItemIndex = clampedIndex;
-        _gamesActionButtonIndex = 0;
+        _gamesActionButtonIndex = 2;
 
-        favorite?.Focus(NavigationMethod.Directional);
+        manage?.Focus(NavigationMethod.Directional);
     }
 
     private void ExitGamesActionMode(bool restoreGameFocus = true)
@@ -122,7 +122,7 @@ public partial class GamepadNavigationHelper
 
         _isGamesActionMode = false;
         _gamesActionItemIndex = -1;
-        _gamesActionButtonIndex = 0;
+        _gamesActionButtonIndex = 2;
 
         if (restoreGameFocus && list != null && indexToRestore >= 0 && list.ItemCount > 0)
         {
@@ -210,7 +210,10 @@ public partial class GamepadNavigationHelper
 
         var buttons = actions.GetVisualDescendants().OfType<Button>().ToList();
         quickInstall = buttons.ElementAtOrDefault(0);
-        manage = buttons.ElementAtOrDefault(1);
+        manage = card.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(x => x.Name == "BtnManageGameGrid")
+            ?? buttons.ElementAtOrDefault(1);
         return favorite != null && quickInstall != null && manage != null;
     }
 

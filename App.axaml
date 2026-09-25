@@ -665,6 +665,13 @@
             <Setter Property="BorderThickness" Value="2"/>
         </Style>
 
+        <!-- Primary button: white focus ring so it stands out against the violet background -->
+        <Style Selector="Button.BtnPrimary:focus /template/ ContentPresenter,
+                         Button.BtnPrimary:focus-visible /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="White"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
         <!-- IconGhost: tiny circular icon buttons (eye/zoom toggles) — the 2px accent ring above
              reads as a rendering glitch on a 16-26px circle instead of a visible-focus outline, so
              these opt out of it. Everything else keeps the ring (gamepad navigation relies on it to
