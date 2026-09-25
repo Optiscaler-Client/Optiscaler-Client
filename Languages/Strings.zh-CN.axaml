@@ -145,7 +145,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">配置已更新。</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">无法更新配置:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">其他选项已更改——请改用安装/重新安装。</x:String>
-    <x:String x:Key="TxtOptiVersionNone">无 — 仅替换 FSR 4</x:String>
+    <x:String x:Key="TxtOptiVersionNone">无</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 自动交换 DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 手动交换 DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ 还原原始 DLL</x:String>
@@ -542,14 +542,14 @@
     <x:String x:Key="TxtHelpExpRenodxText">在 ReShade 之上运行的每游戏 HDR/色调映射附加组件。请注意，由于知识产权原因，我们无法自动下载其基础版本，但可以下载每游戏的附加组件。“自动”功能会直接从 RenoDX wiki 自动解析并下载适合当前游戏的附加组件；要求 ReShade 已经安装在游戏文件夹中。</x:String>
     <x:String x:Key="TxtHelpExpRenodxLinkLabel">GitHub 上的 RenoDX ↗</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLabel">AMD 上的 DLSS 神经渲染</x:String>
-    <x:String x:Key="TxtHelpExpDlssNrText">在 AMD GPU 上运行 danielblnc 的非官方 DLSS 神经渲染模组，可选择与非官方社区 OptiScaler 包装器构建（MatheusGViana）结合使用，以便 OptiScaler 和神经渲染可以一起运行——OptiScaler 本身尚未官方支持神经渲染。</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">在 AMD GPU 上运行 danielblnc 的非官方 DLSS Neural Rendering 模组，并可通过 GoldenNights 的 AMD-NR-bridge 与官方 OptiScaler 构建一起使用 - OptiScaler 本身尚未正式支持 Neural Rendering。</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLinkLabel">GitHub 上的 DLSS-NR-on-AMD ↗</x:String>
     <x:String x:Key="TxtHelpExpDllTitle">为什么我们不提供 NVIDIA 的 DLL</x:String>
     <x:String x:Key="TxtHelpExpDllContent">DLSS 神经渲染需要 nvngx_dlssnr.dll，这是 NVIDIA 拥有的文件。我们不被允许重新分发它，因此应用程序永远不会下载或捆绑它。您必须提供自己的合法副本，从任何已经附带 DLSS 5 的游戏中提取。该文件仅需提供一次，会被缓存以供将来安装重用。</x:String>
     <x:String x:Key="TxtHelpExpSupportTitle">支持级别</x:String>
     <x:String x:Key="TxtHelpExpSupportContent">这里的所有内容都是在本项目和 OptiScaler 之外维护的第三方模组或社区构建。我们将它们连接起来，缓存其发布版本，并努力保持工作流程顺畅，但我们无法控制它们的发布节奏、错误，或与每个游戏或 GPU 的兼容性。我们将尽最大努力提供支持，但其深度和测试程度不如 OptiScaler 自身的特性。</x:String>
     <x:String x:Key="TxtHelpExpWarningTitle">非官方构建 ⚠️</x:String>
-    <x:String x:Key="TxtHelpExpWarningContent">“Mod + OptiScaler” 包装器构建未经 OptiScaler 项目分发或验证。它直接从其 GitHub 发布页面下载，如果发布包含校验和，则会进行验证，但内容本身未受我们或 OptiScaler 审核。安装风险自负。</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">“Mod + OptiScaler”使用的 AMD-NR-bridge 是第三方插件，不由 OptiScaler 项目分发或验证。它直接从其 GitHub 发布页下载，并在发布提供校验和时进行校验，但内容本身未经我们或 OptiScaler 审核。安装风险自负。</x:String>
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
     <x:String x:Key="TxtHelpProfTitle">创建和管理配置文件</x:String>
@@ -818,10 +818,9 @@
     <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">仅 danielblnc 模组(分支)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">模组 + OptiScaler</x:String>
 
-    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">目前在 Linux 上不可用。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix">(仅模组)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix">(+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">使用 danielblnc 的非官方模组在 AMD GPU 上运行 DLSS Neural Rendering。仅限 AMD。&#10;&#10;• 仅 danielblnc 模组：只安装该模组。&#10;• Mod + OptiScaler：与非官方 OptiScaler 构建结合使用。&#10;&#10;实验性功能，不受支持，且与 OptiScaler 自身的超分辨率无关；风险自负。</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">使用 danielblnc 的非官方模组在 AMD GPU 上运行 DLSS Neural Rendering。仅限 AMD。&#10;&#10;• 仅 danielblnc 模组：只安装模组。&#10;• Mod + OptiScaler：通过 AMD-NR-bridge 与所选的官方 OptiScaler 版本结合。&#10;&#10;实验性功能，不受支持，与 OptiScaler 自身的超分无关；使用风险自负。</x:String>
     <x:String x:Key="TxtOptiScalerVersionTooltip">要安装的 OptiScaler 版本。&#10;&#10;• Stable：经过测试的版本，推荐大多数游戏使用。&#10;• Beta：包含较新功能和修复的预发布版本。&#10;• Nightly：自动构建的开发版本，可能不稳定。&#10;&#10;选择“无 — 仅替换 FSR 4”可只替换 FSR 4 DLL 而不安装 OptiScaler。默认选中的版本可在设置中更改。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">此游戏已安装适用于 AMD 的 DLSS Neural Rendering 模组。</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">卸载将重新运行 danielblnc 的安装程序 — 出现提示时请选择移除选项。</x:String>
@@ -840,12 +839,18 @@
     <x:String x:Key="TxtSetupNrDeleteWeightsMsg">确定要删除已缓存的权重吗？下一次"Mod + OptiScaler"安装（任何游戏）都会重新运行 danielblnc 的安装程序以重新生成它们。</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">仅安装 danielblnc 的模组（不含 OptiScaler）</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">模组 + OptiScaler（非官方 wrapper）</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">目前 OptiScaler 尚未正式支持 Neural Rendering，因此需要使用社区打包的版本（MatheusGViana）才能配合使用。安装风险自负。</x:String>
+    <x:String x:Key="TxtSetupNrBridgeInfo">在所选的官方 OptiScaler 版本之上使用 GoldenNights 的 AMD-NR-bridge（第三方，未经我们审核）。它会将超分设置为 FSR，且帧生成仅支持 OptiScaler 自身的 FSR FG 输出。安装风险自负。</x:String>
+    <x:String x:Key="TxtSetupNrLegacyWrapperInfo">此游戏仍在使用已停止维护的 MatheusGViana OptiScaler 构建。重新安装即可迁移到所选的官方 OptiScaler 版本 + AMD-NR-bridge。</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionLbl">AMD-NR-bridge 版本</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionTooltip">“Mod + OptiScaler”使用的 GoldenNights/AMD-NR-bridge 版本。它让 danielblnc 的模组能与官方 OptiScaler 构建一起运行。从其 GitHub 发布页下载，从不随应用打包。</x:String>
+    <x:String x:Key="TxtSetupNrBridgeNoRelease">没有可用的 AMD-NR-bridge 版本。</x:String>
+    <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">无法下载 AMD-NR-bridge：{0}</x:String>
+    <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">无法应用 AMD-NR-bridge：{0}&#10;&#10;OptiScaler 本身已安装。请在“管理”中重新安装以重试。</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc 的模组仅适用于使用 FSR 3.1 或更高版本的 DirectX 12 游戏。在 DirectX 11 和 Vulkan 中无法使用。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">danielblnc 模组的版本，在两种模式（“仅 danielblnc 模组”和“Mod + OptiScaler”）中都用于生成 AMD 权重。选择模式后可用。</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(guentra/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">在 Linux 上,这会使用 guentra 的非官方分支 DLSS-NR-on-AMD-Linux(而非直接使用 danielblnc 的安装程序),它将模组桥接到真正的 ROCm 运行时,使其 GPU 检测能在 Wine/Proton 下通过。鸣谢:danielblnc/DLSS-NR-on-AMD(模组本体)与 guentra/DLSS-NR-on-AMD-Linux(分支)。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(bulacha3/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">在 Linux 上,这会使用 bulacha3 的非官方分支 DLSS-NR-on-AMD-Linux(而非直接使用 danielblnc 的安装程序),它将模组桥接到真正的 ROCm 运行时,使其 GPU 检测能在 Wine/Proton 下通过。鸣谢:danielblnc/DLSS-NR-on-AMD(模组本体)与 bulacha3/DLSS-NR-on-AMD-Linux(分支)。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">正在安装(Linux 分支)...</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">正在下载 Linux 分支...</x:String>
@@ -865,7 +870,22 @@
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">请清除游戏的启动选项</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">模组已卸载。请删除你为它粘贴的启动选项(Steam:属性 → 通用 → 启动选项)——它们仍然指向刚刚被删除的启动脚本,在清除之前游戏无法启动。</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 分支(guentra)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 分支(bulacha3)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqTitle">缺少依赖</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqBuildTools">Linux 分支需要 gcc 和 g++ 来为你的 GPU 编译优化后端。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqPython">Linux 分支需要 Python 3.11 或更高版本。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqRunCommand">将此命令粘贴到终端中运行，然后重新安装：</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqNoCommand">请使用发行版的包管理器安装，然后重新安装。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperNoRelease">无法从 GitHub 获取 Linux 分支的版本列表。你可能处于离线状态，或已达到 GitHub 每小时的请求上限，请稍后再试。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperUninstallFailedFormat">无法卸载模组：{0}&#10;&#10;请完全关闭游戏（如果 Steam 仍显示正在运行，也请点击“停止”），然后重试。</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseTitle">关闭 Steam</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseContinueBtn">Steam 已关闭，继续</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseAddMsg">该模组通过一个启动脚本运行，需要把它添加到此游戏的 Steam 启动选项中。请完全关闭 Steam 以便自动添加（会保留你现有的启动选项），或者复制下面这一行自行添加。</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseRemoveMsg">需要从此游戏的 Steam 启动选项中移除该模组的启动脚本。请完全关闭 Steam 以便自动移除（会保留你的其他启动选项）。</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsApplied">已在 Steam 中添加启动选项。</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">已从 Steam 中移除启动选项。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc 模组</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblnc 的 AMD GPU 版 DLSS Neural Rendering 模组，通过 bulacha3 的 Linux 分支安装。选择一个版本即可与上方所选的 OptiScaler 版本一起安装；若只想安装模组，请将 OptiScaler 设为“无”。在此处选择“无”会移除模组。</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper 版本（社区，非官方）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">运行安装程序</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">下载并准备</x:String>
@@ -1037,9 +1057,9 @@
     <x:String x:Key="TxtHelpGMDlssNrDllText">该模组需要你自己合法获取的 NVIDIA nvngx_dlssnr.dll 文件，可从任意支持 DLSS 5 的游戏中提取。出于法律原因，我们无法自行提供此文件。只会询问一次，并缓存供以后安装使用。</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtHelpGMDlssNrLabel">AMD 上的 DLSS Neural Rendering（实验性）🧪</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrModesText">“无”将其禁用。“仅 danielblnc 模组”只安装 AMD Neural Rendering 模组。“模组 + OptiScaler”还会替换为非官方社区包装版本，让 OptiScaler 和 Neural Rendering 能够同时运行。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">“无”表示禁用。“仅 danielblnc 模组”只安装 AMD Neural Rendering 模组。“Mod + OptiScaler”会安装模组、所选的官方 OptiScaler 版本（Stable、Beta 或 Nightly）以及 AMD-NR-bridge，使两者可以一起运行。</x:String>
     <x:String x:Key="TxtHelpGMDlssNrModesTitle">模式</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrText">这同样属于实验区域（参见“实验性”帮助页面）。它会在 AMD 显卡上运行 danielblnc 的非官方 DLSS Neural Rendering 模组，由于 OptiScaler 本身尚不支持 Neural Rendering，因此可选择与非官方社区版 OptiScaler 包装版本结合使用。</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">同样属于实验区（参见“实验”帮助页）。在 AMD GPU 上运行 danielblnc 的非官方 DLSS Neural Rendering 模组，并可通过 GoldenNights 的 AMD-NR-bridge 与官方 OptiScaler 构建一起使用。</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionText">选择要使用的 danielblnc 模组版本，或保持为最新可用版本。</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionTitle">模组版本</x:String>
     <x:String x:Key="TxtHelpGMFgStreamlineText">选择用于 DLSS-G 帧生成的特定 NVIDIA Streamline SDK 版本，或保持为最新版本。</x:String>

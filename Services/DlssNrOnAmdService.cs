@@ -667,14 +667,14 @@ namespace OptiscalerClient.Services
             if (!IsModeBOutputCached()) CacheModeBOutput(session, danielVersion);
 
             // Resolve the pending mode regardless of outcome — the wizard step is "used up" either
-            // way, a failed wrapper install shouldn't leave a stale pending flag prompting a repeat.
+            // way, a failed OptiScaler/bridge step shouldn't leave a stale pending flag prompting a repeat.
             game.PendingDlssNrOnAmdMode = null;
             game.PendingDlssNrOnAmdVersion = null;
 
             // Mode B (daniel-and-opti): the weights are generated — the caller (ManageGameWindow's
             // Install button) is expected to fall through to its own normal InstallOptiScaler
-            // afterwards once it sees this return true — we only run danielblnc's setup here, not the
-            // wrapper itself.
+            // afterwards once it sees this return true, then apply AMD-NR-bridge — we only run
+            // danielblnc's setup here.
             game.IsDlssNrOnAmdInstalled = true;
             game.DlssNrOnAmdVersion = danielVersion;
             game.InstalledDlssNrOnAmdMode = isModeB ? "daniel-and-opti" : "daniel-only";
@@ -1140,24 +1140,39 @@ namespace OptiscalerClient.Services
         /// possible, for Quick Install / Bulk Install. Returns NotApplicable when there's nothing to
         /// do (mode is "none"/unrecognized, or the game already has the mod), Skipped when the user
         /// declined the one unavoidable prompt (caller should fall back to a plain OptiScaler
-        /// install), or Success/Failed once an install was actually attempted — Success carries the
-        /// registered wrapper OptiScaler version name to install when <paramref name="mode"/> is
-        /// "daniel-and-opti" (the caller must install that build, with dxgi.dll injection, instead of
-        /// its own normally-configured OptiScaler version).</summary>
+        /// install), or Success/Failed once an install was actually attempted. On Success for
+        /// "daniel-and-opti", Game.AmdNrBridgeVersion is set to the AMD-NR-bridge release to use: the
+        /// caller installs its own normally-configured OptiScaler version (never as dbghelp.dll, which
+        /// the mod uses) and then calls AmdNrBridgeService.EnsureAppliedAsync.</summary>
         /// <param name="danielVersionOverride">Release picked in the calling window (Bulk Install's
         /// own Setup NR selector) instead of the one pinned in Settings. Null falls back to the
         /// pinned default, then to latest.</param>
-        /// <param name="wrapperVersionOverride">Same, for the Mode B wrapper build.</param>
-        public async Task<(QuickPathResult Result, string? WrapperVersionName)> InstallForQuickPathAsync(
+        /// <param name="bridgeVersionOverride">Same, for AMD-NR-bridge.</param>
+        public async Task<QuickPathResult> InstallForQuickPathAsync(
             Window owner, Game game, string mode, ComponentManagementService componentService,
-            string? danielVersionOverride = null, string? wrapperVersionOverride = null)
+            string? danielVersionOverride = null, string? bridgeVersionOverride = null)
         {
-            if (mode != "daniel-only" && mode != "daniel-and-opti") return (QuickPathResult.NotApplicable, null);
-            if (game.IsDlssNrOnAmdInstalled) return (QuickPathResult.NotApplicable, null);
+            if (mode != "daniel-only" && mode != "daniel-and-opti") return QuickPathResult.NotApplicable;
+            if (game.IsDlssNrOnAmdInstalled) return QuickPathResult.NotApplicable;
 
             var isModeB = mode == "daniel-and-opti";
+
+            // Linux: bulacha3's fork instead of danielblnc's Windows installer — same flow as Manage
+            // (LinuxNrInstallHelper). The pinned version only applies when it's a fork release (a
+            // danielblnc tag pinned on Windows isn't one); otherwise the latest.
+            if (!OperatingSystem.IsWindows())
+            {
+                var pinned = danielVersionOverride ?? componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+                var forkReleases = await new DlssNrLinuxWrapperService().GetReleasesAsync();
+                if (!string.IsNullOrEmpty(pinned) && !forkReleases.Any(r => string.Equals(r.Version, pinned, StringComparison.OrdinalIgnoreCase)))
+                    pinned = null;
+                var (ok, _) = await Helpers.LinuxNrInstallHelper.InstallAsync(owner, game, pinned, isModeB);
+                if (ok) return QuickPathResult.Success;
+                return IsNvngxDlssNrCached() ? QuickPathResult.Failed : QuickPathResult.Skipped;
+            }
+
             var gameDir = new GameInstallationService().DetermineInstallDirectory(game);
-            if (string.IsNullOrEmpty(gameDir)) return (QuickPathResult.Failed, null);
+            if (string.IsNullOrEmpty(gameDir)) return QuickPathResult.Failed;
 
             if (!IsNvngxDlssNrCached())
             {
@@ -1166,7 +1181,7 @@ namespace OptiscalerClient.Services
                 if (!IsNvngxDlssNrCached())
                 {
                     DebugWindow.Log("[SetupNr] Quick path: nvngx_dlssnr.dll still not provided — skipping the mod for this game.");
-                    return (QuickPathResult.Skipped, null);
+                    return QuickPathResult.Skipped;
                 }
             }
 
@@ -1182,31 +1197,29 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrEmpty(danielVersion))
             {
                 DebugWindow.Log("[SetupNr] Quick path: no danielblnc/DLSS-NR-on-AMD release available.");
-                return (QuickPathResult.Failed, null);
+                return QuickPathResult.Failed;
             }
 
-            string? wrapperVersionName = null;
+            // Mode B: download AMD-NR-bridge up front so a missing/broken release fails before the
+            // mod touches the game folder. It is applied by the caller, after OptiScaler.
+            string? bridgeVersion = null;
             if (isModeB)
             {
-                var wrapperReleases = await componentService.GetAmdWrapperReleasesAsync();
-                var pinnedWrapper = wrapperVersionOverride ?? componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
-                var wrapperRawVersion = (!string.IsNullOrEmpty(pinnedWrapper) &&
-                        wrapperReleases.Any(r => string.Equals(r.Version, pinnedWrapper, StringComparison.OrdinalIgnoreCase)))
-                    ? pinnedWrapper
-                    : wrapperReleases.FirstOrDefault()?.Version;
-                if (string.IsNullOrEmpty(wrapperRawVersion))
+                var bridgeService = new AmdNrBridgeService();
+                bridgeVersion = await bridgeService.ResolveVersionAsync(bridgeVersionOverride ?? componentService.Config.DefaultAmdNrBridgeVersion);
+                if (string.IsNullOrEmpty(bridgeVersion))
                 {
-                    DebugWindow.Log("[SetupNr] Quick path: no MatheusGViana/dlss-5-amd-project release available.");
-                    return (QuickPathResult.Failed, null);
+                    DebugWindow.Log("[SetupNr] Quick path: no GoldenNights/AMD-NR-bridge release available.");
+                    return QuickPathResult.Failed;
                 }
                 try
                 {
-                    wrapperVersionName = await componentService.DownloadAndImportAmdWrapperVersionAsync(wrapperRawVersion);
+                    await bridgeService.DownloadAsync(bridgeVersion);
                 }
                 catch (Exception ex)
                 {
-                    DebugWindow.Log($"[SetupNr] Quick path: wrapper build download/import failed: {ex.Message}");
-                    return (QuickPathResult.Failed, null);
+                    DebugWindow.Log($"[SetupNr] Quick path: AMD-NR-bridge download failed: {ex.Message}");
+                    return QuickPathResult.Failed;
                 }
             }
 
@@ -1214,7 +1227,8 @@ namespace OptiscalerClient.Services
             {
                 var ok = TryUseCachedModeBOutput(game, gameDir, danielVersion);
                 DebugWindow.Log($"[SetupNr] Quick path: reused cached Mode B output for '{gameDir}' -> {(ok ? "success" : "failed")}.");
-                return (ok ? QuickPathResult.Success : QuickPathResult.Failed, wrapperVersionName);
+                if (ok) game.AmdNrBridgeVersion = bridgeVersion;
+                return ok ? QuickPathResult.Success : QuickPathResult.Failed;
             }
 
             // First-ever run on this machine (or Mode A, which is never cached) — stage and run the
@@ -1230,7 +1244,7 @@ namespace OptiscalerClient.Services
             catch (Exception ex)
             {
                 DebugWindow.Log($"[SetupNr] Quick path: could not download/stage danielblnc's installer: {ex.Message}");
-                return (QuickPathResult.Failed, wrapperVersionName);
+                return QuickPathResult.Failed;
             }
 
             if (OperatingSystem.IsWindows() && !game.DlssNrDefenderExclusionAdded)
@@ -1256,12 +1270,14 @@ namespace OptiscalerClient.Services
                 else
                 {
                     DebugWindow.Log("[SetupNr] Quick path: user declined the Defender exclusion — skipping the mod for this game.");
-                    return (QuickPathResult.Skipped, wrapperVersionName);
+                    return QuickPathResult.Skipped;
                 }
             }
 
             var result = await RunAutomatedInstallAsync(game, gameDir, danielVersion, isModeB);
-            return (result == AutomatedInstallResult.Success ? QuickPathResult.Success : QuickPathResult.Failed, wrapperVersionName);
+            if (result != AutomatedInstallResult.Success) return QuickPathResult.Failed;
+            if (isModeB) game.AmdNrBridgeVersion = bridgeVersion;
+            return QuickPathResult.Success;
         }
 
         private static string FindString(string key, string fallback)

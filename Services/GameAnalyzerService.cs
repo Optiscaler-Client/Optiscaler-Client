@@ -64,6 +64,8 @@ public class GameAnalyzerService
     // no PE version resource to read, so unlike the arrays above this is a plain presence marker,
     // not fed through FindBestVersionFromCollected. See Game.IsDlssNrOnAmdInstalled.
     private const string _dlssNrOnAmdMarkerName = "dlssnr_on_amd_weights.bin";
+    // AMD-NR-bridge's plugin (see AmdNrBridgeService) — presence only, like the marker above.
+    private const string _amdNrBridgeMarkerName = AmdNrBridgeService.BridgeAsiFileName;
 
     private static readonly HashSet<string> _allTargetFileNames;
     // Bump the file name whenever detection logic changes what a cached entry would contain:
@@ -93,6 +95,7 @@ public class GameAnalyzerService
         foreach (var n in _optiscalerInjectionNames) _allTargetFileNames.Add(n);
         foreach (var n in AntiCheatHelper.Files) _allTargetFileNames.Add(n);
         _allTargetFileNames.Add(_dlssNrOnAmdMarkerName);
+        _allTargetFileNames.Add(_amdNrBridgeMarkerName);
     }
 
     public static void InvalidateCacheForPath(string? installPath)
@@ -153,6 +156,7 @@ public class GameAnalyzerService
         game.HasAntiCheat = false;
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
+        game.IsAmdNrBridgeInstalled = false;
         game.IsDlssNrOnAmdInstalled = false; // DlssNrOnAmdVersion is NOT reset here — no on-disk
         // version marker to repopulate it from (see _dlssNrOnAmdMarkerName), so it stays whatever
         // the "Setup NR" wizard itself last recorded rather than being clobbered to null every scan.
@@ -422,6 +426,7 @@ public class GameAnalyzerService
 
             // "Setup NR" — plain presence check, no version to extract (see _dlssNrOnAmdMarkerName).
             game.IsDlssNrOnAmdInstalled = collectedFiles.ContainsKey(_dlssNrOnAmdMarkerName);
+            game.IsAmdNrBridgeInstalled = collectedFiles.ContainsKey(_amdNrBridgeMarkerName);
         }
         catch (Exception ex)
         {

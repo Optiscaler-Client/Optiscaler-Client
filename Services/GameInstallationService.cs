@@ -1074,55 +1074,10 @@ namespace OptiscalerClient.Services
                 ApplyOutputUpscalerSettings(game, gameDir);
             }
 
-            // "Mod + OptiScaler" (danielblnc's AMD Neural Rendering mod + this wrapper build): by
-            // this point in the flow, ManageGameWindow's daniel-mod step has already set
-            // InstalledDlssNrOnAmdMode before falling through to this same install. The wrapper's own
-            // OptiScaler.ini ships [DlssNr] Enabled=false — flip just that key as the final INI layer
-            // so neural rendering actually turns on immediately instead of requiring the user to find
-            // and enable it by hand. Skipped when Frame Generation is also configured: the wrapper's own
-            // README says Neural Rendering ships disabled in fresh installs specifically because it
-            // isn't fully vetted yet, and stacking it with FG's own Streamline/DLSS Enabler hooks has
-            // been observed to crash the game on launch — leave the wrapper's safer default alone for
-            // that combination instead of forcing it on. Also skipped on Linux: this is the wrapper's
-            // OWN separate AMD neural-rendering pass ("AMD PreSR Multipass", amd_presr.log/amd_bridge.log)
-            // — not danielblnc's actual mod, which hooks D3D12/DXGI itself independently and works fine
-            // regardless of this key. Confirmed directly on a real Linux/Proton setup: this pass does its
-            // own D3D12-LUID-to-HIP device matching and fails ("No HIP adapter matches D3D12 LUID") even
-            // though HIP itself loads and enumerates the GPU correctly — a VKD3D-Proton/HIP LUID quirk
-            // this wrapper feature (built and tested for native Windows) doesn't account for. Leaving it
-            // at its shipped default costs nothing there: the real neural rendering already comes from
-            // danielblnc's mod via guentra's Linux fork.
-            var fgConfigured = game.FrameGenerationSettings != null && game.FrameGenerationSettings.Route != FrameGenerationRoute.Disabled;
-            if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti" && !fgConfigured && OperatingSystem.IsWindows())
-            {
-                rollbackJournal.CaptureFile("OptiScaler.ini");
-                ModifyOptiScalerIni(gameDir, "Enabled", "true", "DlssNr");
-                DebugWindow.Log($"[Install] Enabled [DlssNr] in OptiScaler.ini for {game.Name} (Mod + OptiScaler).");
-            }
-            else if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti" && !OperatingSystem.IsWindows())
-            {
-                DebugWindow.Log($"[Install] Linux — leaving [DlssNr] Enabled at the wrapper's own default instead of forcing it on (its own separate AMD PreSR pass doesn't match D3D12/HIP LUIDs correctly under Wine/Proton; danielblnc's actual mod works independently of this key).");
-            }
-            else if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
-            {
-                DebugWindow.Log($"[Install] Frame Generation is configured for {game.Name} — leaving [DlssNr] Enabled at the wrapper's own default instead of forcing it on (known-unstable combination).");
-            }
-
-            // "Mod + OptiScaler": the wrapper's own [Menu] FGShortcutKey ships at "auto", which its own
-            // OptiScaler.ini comments document as 0x23 (VK_END) — the exact same key danielblnc's mod
-            // uses to open its own menu. With both loaded, OptiScaler's shortcut hook claims the
-            // keypress first and the mod's menu never opens (confirmed directly: pressing End did
-            // nothing visible with both installed). Not Windows/Linux-specific — this is a plain
-            // keybinding collision in the shared wrapper build, so it applies on every OS. Setting it to
-            // -1 (no shortcut) rather than picking another key: Frame Generation stays reachable from
-            // OptiScaler's own overlay menu (still opened by its separate, non-conflicting ShortcutKey,
-            // default Insert), so nothing is lost by freeing up End for the mod alone.
-            if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
-            {
-                rollbackJournal.CaptureFile("OptiScaler.ini");
-                ModifyOptiScalerIni(gameDir, "FGShortcutKey", "-1", "Menu");
-                DebugWindow.Log($"[Install] Set [Menu] FGShortcutKey=-1 in OptiScaler.ini for {game.Name} (Mod + OptiScaler) — its default (End) collided with danielblnc's own menu hotkey.");
-            }
+            // "Mod + OptiScaler" needs no INI layer here: AmdNrBridgeService.EnsureAppliedAsync sets
+            // the values AMD-NR-bridge needs (FSR upscaler, FGShortcutKey=-1, ...) after this install,
+            // from each caller. The [DlssNr] Enabled / FGShortcutKey layers that used to live here were
+            // specific to the discontinued MatheusGViana wrapper build.
 
             // Save manifest to external store
             manifest.ExpectedFinalMarkers = manifest.ExpectedFinalMarkers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -3059,6 +3014,33 @@ namespace OptiscalerClient.Services
                 return null;
             }
 
+            var mainExe = DetermineMainExecutable(game);
+            var bestMatchDir = mainExe != null ? Path.GetDirectoryName(mainExe) : null;
+            if (bestMatchDir != null && Directory.Exists(bestMatchDir))
+            {
+                return bestMatchDir;
+            }
+
+            // Fallback to the main install path, if nothing else works
+            return game.InstallPath;
+        }
+
+        /// <summary>
+        /// The game's main executable — the one DetermineInstallDirectory's folder comes from —
+        /// found by scanning the install folder (Unreal's Binaries\Win64 first, launcher/crash
+        /// reporter/setup stubs excluded, then name, size and nearby upscaler DLLs). Null when none
+        /// can be found. Also used to tell the Linux NR fork which exe to patch (--exe) instead of
+        /// letting it give up on folders with several executables.
+        /// </summary>
+        public string? DetermineMainExecutable(Game game)
+        {
+            if (string.IsNullOrEmpty(game.InstallPath) || !Directory.Exists(game.InstallPath))
+            {
+                return !string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath)
+                    ? game.ExecutablePath
+                    : null;
+            }
+
             // Rule 1: Try to extract in the same folder as the main .exe, scan to find it.
             string[] allExes = Array.Empty<string>();
             try
@@ -3082,7 +3064,7 @@ namespace OptiscalerClient.Services
                 .ToArray();
             var candidateExes = binariesWin64Exes.Length > 0 ? binariesWin64Exes : allExes;
 
-            string? bestMatchDir = null;
+            string? bestMatch = null;
 
             if (candidateExes.Length > 0)
             {
@@ -3165,37 +3147,28 @@ namespace OptiscalerClient.Services
                     }
                 }
 
-                if (bestExe != null)
-                {
-                    bestMatchDir = Path.GetDirectoryName(bestExe);
-                }
+                bestMatch = bestExe;
 
                 // Fallback: If no match by name, check known ExecutablePath
-                if (bestMatchDir == null)
+                if (bestMatch == null)
                 {
                     if (!string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath))
                     {
-                        bestMatchDir = Path.GetDirectoryName(game.ExecutablePath);
+                        bestMatch = game.ExecutablePath;
                     }
                     else if (binariesWin64Exes.Length == 1)
                     {
-                        bestMatchDir = Path.GetDirectoryName(binariesWin64Exes[0]);
+                        bestMatch = binariesWin64Exes[0];
                     }
                 }
             }
             else if (allExes.Length == 0 && !string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath))
             {
                 // Fallback if Directory.GetFiles fails but we have an ExecutablePath
-                bestMatchDir = Path.GetDirectoryName(game.ExecutablePath);
+                bestMatch = game.ExecutablePath;
             }
 
-            if (bestMatchDir != null && Directory.Exists(bestMatchDir))
-            {
-                return bestMatchDir;
-            }
-
-            // Fallback to the main install path, if nothing else works
-            return game.InstallPath;
+            return bestMatch;
         }
 
 
@@ -3442,6 +3415,16 @@ namespace OptiscalerClient.Services
                     foreach (var (key, value) in keys)
                         entries[IniEntryId(section, key)] = (section, key, value);
             lock (_expectedIni) _expectedIni[Path.GetFullPath(iniPath)] = entries;
+        }
+
+        /// <summary>Records OptiScaler.ini values written by something other than this service (e.g.
+        /// AmdNrBridgeService) as expected, so VerifyIniSettings doesn't flag them and
+        /// ReapplyIniSettings doesn't undo them.</summary>
+        public static void RecordExternalIniValues(string gameDir, IEnumerable<(string Section, string Key, string Value)> values)
+        {
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
+            foreach (var (section, key, value) in values)
+                RecordExpectedIni(iniPath, section, key, value);
         }
 
         private static void RecordExpectedIni(string iniPath, string section, string key, string value)

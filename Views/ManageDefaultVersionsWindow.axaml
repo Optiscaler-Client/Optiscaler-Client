@@ -140,20 +140,6 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiDefaultCustom_Click"/>
-                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while
-                                             the Setup NR default mode = "Mod + OptiScaler" — the only
-                                             "channel" available in that state, mirrors ManageGameWindow's
-                                             own BtnOptiModded. -->
-                                        <Button Name="BtnOptiDefaultModded"
-                                                Grid.Column="0" Grid.ColumnSpan="4"
-                                                Content="Modded"
-                                                Classes="BtnPrimary"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"
-                                                FontSize="11"
-                                                Padding="8,5"
-                                                IsVisible="False"
-                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbDefaultOptiScalerVersion"
                                               Classes="BtnSelector"
@@ -650,10 +636,12 @@
                                                  pins it for a single game. Disabled while mode = none. -->
                                             <StackPanel Name="PanelDefaultDlssNrDanielVersion" Grid.Column="2">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                    <TextBlock Name="TxtDefaultDlssNrDanielVersionLbl"
+                                                               Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
                                                                Foreground="{StaticResource BrTextSecondary}"
                                                                FontSize="{StaticResource FontSizeCaption}"/>
-                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                    <Border Name="BdDefaultDlssNrDanielVersionHelp"
+                                                            Background="{StaticResource BrBgElevated}"
                                                             BorderBrush="{StaticResource BrBorderSubtle}"
                                                             BorderThickness="1" CornerRadius="8"
                                                             Width="16" Height="16"
@@ -666,6 +654,38 @@
                                                     </Border>
                                                 </StackPanel>
                                                 <ComboBox Name="CmbDefaultDlssNrDanielVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          IsEnabled="False"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- AMD-NR-bridge release pinned for "Mod + OptiScaler" Quick/Bulk
+                                             installs — same as ManageGameWindow's CmbAmdNrBridgeVersion.
+                                             Visible only while that mode is selected. -->
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                            <StackPanel Name="PanelDefaultAmdNrBridgeVersion" Grid.Column="2" IsVisible="False">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtSetupNrBridgeVersionLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtSetupNrBridgeVersionTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbDefaultAmdNrBridgeVersion"
                                                           Margin="0,4,0,0"
                                                           HorizontalAlignment="Stretch"
                                                           Classes="BtnSelector"

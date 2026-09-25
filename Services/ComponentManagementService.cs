@@ -260,7 +260,6 @@ namespace OptiscalerClient.Services
             LoadDlssEnablerMirrorCache();
             LoadStreamlineReleasesCache();
             LoadRenodxCache();
-            LoadAmdWrapperReleasesCache();
         }
 
         private void LoadConfiguration()
@@ -817,11 +816,9 @@ namespace OptiscalerClient.Services
                         await Task.Delay(150);
                         var streamlineTask = FetchStreamlineReleasesAsync();
                         await Task.Delay(150);
-                        var amdWrapperTask = FetchAmdWrapperReleasesAsync();
-                        await Task.Delay(150);
                         var xeFGUnlockTask = FetchXeFGUnlockReleasesAsync();
 
-                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask, streamlineTask, amdWrapperTask, xeFGUnlockTask);
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask, streamlineTask, xeFGUnlockTask);
 
                         var stableEntries = await optiVersionsTask;
                         var betaEntries = await optiBetasTask;
@@ -871,18 +868,6 @@ namespace OptiscalerClient.Services
                         }
 
                         MergeStreamlineReleases(await streamlineTask);
-
-                        // DlssNrOnAmdRelease has no IsLatest flag (GitHub already returns newest-first,
-                        // and this list is small enough to just replace wholesale each check — same
-                        // approach DlssNrOnAmdService.GetReleasesAsync uses for the same record type).
-                        var newAmdWrapper = await amdWrapperTask;
-                        if (newAmdWrapper.Count > 0)
-                        {
-                            _amdWrapperReleasesCache.Releases = newAmdWrapper;
-                            _amdWrapperReleasesCache.LastUpdated = DateTime.Now;
-                            SaveAmdWrapperReleasesCache();
-                            _cachedAmdWrapperReleases = newAmdWrapper;
-                        }
 
                     }
                     catch (Exception apiEx)
@@ -3503,12 +3488,11 @@ namespace OptiscalerClient.Services
         public System.Collections.Generic.HashSet<string> CustomVersions
             => new(_config.CustomOptiScalerVersions, StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>True for OptiScaler builds downloaded through Setup NR's "Mod + OptiScaler" flow
-        /// (MatheusGViana/dlss-5-amd-project — see DownloadAndImportAmdWrapperVersionAsync), which
-        /// registers them as Custom versions under this name prefix so the install flow can find them
-        /// on disk. They're an internal implementation detail of that wizard, not something the user
-        /// manually imported, so any UI listing "Custom" versions for the user to pick from should
-        /// exclude them (see CacheManagementWindow's separate "Modded" tab).</summary>
+        /// <summary>True for OptiScaler builds that Setup NR's "Mod + OptiScaler" used to download from
+        /// the discontinued MatheusGViana/dlss-5-amd-project and register as Custom versions under this
+        /// prefix (that mode now uses official builds + AMD-NR-bridge). Still recognised so those
+        /// legacy builds stay out of the user's Custom list and can be removed from
+        /// CacheManagementWindow's "Modded" tab.</summary>
         public static bool IsAmdWrapperVersion(string version) =>
             version.StartsWith("custom-amd-presr-", StringComparison.OrdinalIgnoreCase);
 
@@ -3525,11 +3509,8 @@ namespace OptiscalerClient.Services
         }
 
         /// <summary>
-        /// Shared extraction+registration core for both a locally-picked archive
-        /// (<see cref="ImportCustomOptiScalerVersionAsync"/>) and a downloaded one (e.g. a community
-        /// AMD Neural Rendering wrapper release) — same target layout (Cache/OptiScaler/{versionName}/)
-        /// and CustomOptiScalerVersions registration, just with the version name supplied directly
-        /// instead of derived from the source file's own name.
+        /// Extraction+registration core for <see cref="ImportCustomOptiScalerVersionAsync"/> — target
+        /// layout Cache/OptiScaler/{versionName}/ plus CustomOptiScalerVersions registration.
         /// </summary>
         private async Task ExtractArchiveToCustomOptiScalerVersionAsync(string archivePath, string versionName)
         {
@@ -3578,240 +3559,6 @@ namespace OptiscalerClient.Services
                 _cachedOptiScalerVersions.Add(versionName);
         }
 
-        // ── AMD Neural Rendering community wrapper (MatheusGViana/dlss-5-amd-project) ───
-        // Part of the "Setup NR" experimental feature: an unofficial OptiScaler build with an
-        // integrated (AMD-redirected) DLSS Neural Rendering pass. Listed/downloaded the same way as
-        // DLSS Enabler's Mirror source, but the extracted result is registered as a normal Custom
-        // OptiScaler version — GameInstallationService.RedistributionRestrictedFileNames already
-        // guarantees its bundled weights are never actually copied into a game folder.
-
-        private const string AmdWrapperRepoOwner = "MatheusGViana";
-        private const string AmdWrapperRepoName = "dlss-5-amd-project";
-
-        // Cached in memory for the rest of this process and on disk (see
-        // LoadAmdWrapperReleasesCache/SaveAmdWrapperReleasesCache) — populated by
-        // FetchAmdWrapperReleasesAsync, one of the parallel tasks in CheckForUpdatesAsync, so this
-        // list is kept fresh across app launches the same way as every other component (OptiScaler,
-        // Fakenvapi, Streamline, ...) instead of only refreshing when the user happens to open
-        // "Mod + OptiScaler". Sha256 is deliberately NOT fetched here (unlike before) — checking it
-        // for every release on every startup would mean one extra request per release just to
-        // populate a dropdown; DownloadAndImportAmdWrapperVersionAsync resolves it lazily, only for
-        // the one version actually being installed.
-        private static System.Collections.Generic.List<DlssNrOnAmdRelease>? _cachedAmdWrapperReleases = null;
-        private static DlssNrOnAmdReleasesCache _amdWrapperReleasesCache = new();
-
-        /// <summary>Lists releases of the community AMD Neural Rendering OptiScaler wrapper,
-        /// newest-first (GitHub's own release order) — memory/disk cache first, falling back to a
-        /// live fetch only if neither has anything yet (e.g. the startup batch hasn't completed, or
-        /// this is the very first launch after enabling the experimental feature).</summary>
-        public async Task<System.Collections.Generic.List<DlssNrOnAmdRelease>> GetAmdWrapperReleasesAsync()
-        {
-            if (_cachedAmdWrapperReleases != null) return _cachedAmdWrapperReleases;
-            if (_amdWrapperReleasesCache.Releases.Count > 0)
-            {
-                _cachedAmdWrapperReleases = _amdWrapperReleasesCache.Releases;
-                return _cachedAmdWrapperReleases;
-            }
-
-            var releases = await FetchAmdWrapperReleasesAsync();
-            if (releases.Count > 0)
-            {
-                _cachedAmdWrapperReleases = releases;
-                _amdWrapperReleasesCache.Releases = releases;
-                _amdWrapperReleasesCache.LastUpdated = DateTime.Now;
-                SaveAmdWrapperReleasesCache();
-            }
-            return releases;
-        }
-
-        /// <summary>Cheap variant of the listing above: tag + .zip asset URL only, no per-release
-        /// checksum fetch. Called from CheckForUpdatesAsync's startup batch (see FetchStreamlineReleasesAsync
-        /// for the identical shape) so this list refreshes the same way as every other component.</summary>
-        private async Task<System.Collections.Generic.List<DlssNrOnAmdRelease>> FetchAmdWrapperReleasesAsync()
-        {
-            var releases = new System.Collections.Generic.List<DlssNrOnAmdRelease>();
-            try
-            {
-                var url = $"https://api.github.com/repos/{AmdWrapperRepoOwner}/{AmdWrapperRepoName}/releases?per_page=30";
-                var response = await GetWithRetryAsync(() => _httpClient, url);
-                DebugWindow.Log($"[AmdWrapperVersions] GET {url} -> HTTP {(int)response.StatusCode}");
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind != JsonValueKind.Array) return releases;
-
-                foreach (var element in doc.RootElement.EnumerateArray())
-                {
-                    if (!element.TryGetProperty("tag_name", out var tagProp)) continue;
-                    var version = tagProp.GetString();
-                    if (string.IsNullOrEmpty(version)) continue;
-                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-                        version = version.Substring(1);
-
-                    if (!element.TryGetProperty("assets", out var assets)) continue;
-
-                    string? zipUrl = null, zipName = null;
-                    foreach (var asset in assets.EnumerateArray())
-                    {
-                        if (!asset.TryGetProperty("name", out var nameProp) ||
-                            !asset.TryGetProperty("browser_download_url", out var urlProp))
-                            continue;
-                        var name = nameProp.GetString() ?? "";
-                        var assetUrl = urlProp.GetString();
-                        if (assetUrl != null && name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                        {
-                            zipUrl = assetUrl;
-                            zipName = name;
-                            break;
-                        }
-                    }
-
-                    if (zipUrl == null || zipName == null) continue;
-                    releases.Add(new DlssNrOnAmdRelease(version, zipUrl, zipName, null));
-                }
-
-                DebugWindow.Log($"[AmdWrapperVersions] {AmdWrapperRepoOwner}/{AmdWrapperRepoName} -> {releases.Count} usable release(s)");
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[AmdWrapperVersions] Release listing failed: {ex.Message}");
-            }
-            return releases;
-        }
-
-        /// <summary>Fetches the SHA256 for one specific release's zip asset by re-querying that single
-        /// tag (mirrors DownloadStreamlineAsync's per-tag fallback shape) — only called at download
-        /// time, for the one version actually being installed, since FetchAmdWrapperReleasesAsync no
-        /// longer fetches checksums for the whole list.</summary>
-        private async Task<string?> FetchAmdWrapperChecksumAsync(string version, string zipAssetName)
-        {
-            foreach (var prefix in new[] { "v", "" })
-            {
-                try
-                {
-                    var apiUrl = $"https://api.github.com/repos/{AmdWrapperRepoOwner}/{AmdWrapperRepoName}/releases/tags/{prefix}{version}";
-                    var resp = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
-                    if (!resp.IsSuccessStatusCode) continue;
-
-                    using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-                    if (!doc.RootElement.TryGetProperty("assets", out var assets)) continue;
-
-                    foreach (var asset in assets.EnumerateArray())
-                    {
-                        if (!asset.TryGetProperty("name", out var nameProp) ||
-                            !asset.TryGetProperty("browser_download_url", out var urlProp))
-                            continue;
-                        var name = nameProp.GetString() ?? "";
-                        var assetUrl = urlProp.GetString();
-                        if (assetUrl == null || !name.Contains("sha256", StringComparison.OrdinalIgnoreCase) ||
-                            !name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        var checksumResp = await GetWithRetryAsync(() => _httpClient, assetUrl, maxRetries: 1, timeoutSeconds: 15);
-                        if (!checksumResp.IsSuccessStatusCode) continue;
-                        var checksumsText = await checksumResp.Content.ReadAsStringAsync();
-                        foreach (var line in checksumsText.Split('\n'))
-                        {
-                            var parts = line.Trim().Split(new[] { ' ', '*' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (parts.Length >= 2 && parts[^1].EndsWith(zipAssetName, StringComparison.OrdinalIgnoreCase))
-                                return parts[0];
-                        }
-                    }
-                }
-                catch (Exception ex) { DebugWindow.Log($"[AmdWrapperVersions] Checksum lookup for v{version} failed: {ex.Message}"); }
-            }
-            return null;
-        }
-
-        private void LoadAmdWrapperReleasesCache()
-        {
-            if (_amdWrapperReleasesCache.Releases.Count > 0) return;
-            var file = Path.Combine(_baseDir, "amd_wrapper_releases_cache.json");
-            if (!File.Exists(file)) return;
-            try
-            {
-                var json = File.ReadAllText(file);
-                var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.DlssNrOnAmdReleasesCache);
-                if (loaded != null)
-                {
-                    _amdWrapperReleasesCache = loaded;
-                    DebugWindow.Log($"[AmdWrapperVersions] Loaded {_amdWrapperReleasesCache.Releases.Count} release(s) from local cache (last updated: {_amdWrapperReleasesCache.LastUpdated}).");
-                }
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[AmdWrapperVersions] Failed to load cache: {ex.Message}");
-            }
-        }
-
-        private void SaveAmdWrapperReleasesCache()
-        {
-            try
-            {
-                var file = Path.Combine(_baseDir, "amd_wrapper_releases_cache.json");
-                var json = JsonSerializer.Serialize(_amdWrapperReleasesCache, OptimizerContext.Default.DlssNrOnAmdReleasesCache);
-                File.WriteAllText(file, json);
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[AmdWrapperVersions] Failed to save cache: {ex.Message}");
-            }
-        }
-
-        /// <summary>Downloads the given AMD wrapper release (verifying SHA256 when the release
-        /// publishes one — same "mini security check" as DlssNrOnAmdService.DownloadAsync) and
-        /// registers it as a Custom OptiScaler version. Returns the registered version name.</summary>
-        public async Task<string> DownloadAndImportAmdWrapperVersionAsync(string version, IProgress<double>? progress = null)
-        {
-            var versionName = "custom-amd-presr-" + SanitizeVersionName(version);
-
-            // Already downloaded and extracted by an earlier call (this run or a previous session) —
-            // nothing to redo. Without this check, every "Mod + OptiScaler" selection
-            // (PopulateModdedVersionComboAsync's background prefetch, and ExecuteInstallAsync's own
-            // await before falling through to the OptiScaler install) re-hit GitHub and re-extracted
-            // the whole zip unconditionally, stalling Install for several seconds with no visible
-            // progress even though the result was already sitting on disk.
-            if (CustomVersions.Contains(versionName) && Directory.Exists(Path.Combine(_cacheDir, "OptiScaler", versionName)))
-            {
-                DebugWindow.Log($"[AmdWrapperDownload] {versionName} already imported — skipping re-download.");
-                return versionName;
-            }
-
-            var releases = await GetAmdWrapperReleasesAsync();
-            var release = releases.FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
-                ?? throw new VersionUnavailableException(version, "Release not found or has no .zip asset.");
-
-            var tempZip = Path.Combine(Path.GetTempPath(), $"AmdWrapper_{Guid.NewGuid()}.zip");
-            try
-            {
-                await StreamToFileAsync(() => _httpClient, release.DownloadUrl, tempZip, progress);
-
-                // The cached listing no longer carries a checksum (see FetchAmdWrapperReleasesAsync) —
-                // resolve it here, for just this one version, right before verifying.
-                var expectedSha256 = release.Sha256 ?? await FetchAmdWrapperChecksumAsync(release.Version, release.AssetName);
-                if (!string.IsNullOrEmpty(expectedSha256))
-                {
-                    var actual = ComputeSha256(tempZip);
-                    if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
-                        throw new InvalidOperationException(
-                            $"Downloaded file hash mismatch for {release.AssetName} — expected {expectedSha256}, got {actual}. Discarded.");
-                    DebugWindow.Log($"[AmdWrapperDownload] SHA256 verified for {release.AssetName}");
-                }
-                else
-                {
-                    DebugWindow.Log($"[AmdWrapperDownload] No published checksum for {release.AssetName} — skipped verification.");
-                }
-
-                await ExtractArchiveToCustomOptiScalerVersionAsync(tempZip, versionName);
-                return versionName;
-            }
-            finally
-            {
-                try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { /* best effort */ }
-            }
-        }
-
         private static void ExtractEntry(string? key, string targetDir, string commonPrefix, Action<Stream> writeAction)
         {
             var entryKey = (key ?? "").Replace('/', Path.DirectorySeparatorChar);
@@ -3839,13 +3586,6 @@ namespace OptiscalerClient.Services
             foreach (var c in name)
                 sb.Append(invalid.Contains(c) ? '_' : c);
             return sb.ToString();
-        }
-
-        private static string ComputeSha256(string filePath)
-        {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            using var stream = File.OpenRead(filePath);
-            return Convert.ToHexString(sha256.ComputeHash(stream)).ToLowerInvariant();
         }
 
         private static string FindCommonArchivePrefix(System.Collections.Generic.List<string?> keys)

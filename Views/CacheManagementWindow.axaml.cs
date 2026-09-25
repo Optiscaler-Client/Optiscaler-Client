@@ -25,6 +25,7 @@ namespace OptiscalerClient.Views
         private readonly ComponentManagementService _componentService;
         private readonly DlssNrOnAmdService _dlssNrService = new();
         private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
+        private readonly AmdNrBridgeService _amdNrBridgeService = new();
         private bool _isAnimatingClose;
         private string _currentSection = "opti";
         private string _currentOptiTab = "opti-stable";
@@ -812,8 +813,21 @@ namespace OptiscalerClient.Views
             var isLinux = !OperatingSystem.IsWindows();
             var linuxVersions = isLinux ? _dlssNrLinuxWrapperService.GetDownloadedVersions() : new List<string>();
             var linuxSizes = linuxVersions.ToDictionary(v => v, v => GetDirectorySizeBytes(_dlssNrLinuxWrapperService.GetCachePath(v)));
+            // AMD-NR-bridge ("Mod + OptiScaler") downloads — deleting one is harmless: installs
+            // download it again, and uninstalling doesn't need it.
+            var bridgeVersions = _amdNrBridgeService.GetDownloadedVersions();
+            var bridgeSizes = bridgeVersions.ToDictionary(v => v, v => GetDirectorySizeBytes(_amdNrBridgeService.GetCachePath(v)));
 
-            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum() + linuxSizes.Values.Sum()));
+            content.Children.Add(CreateTotalSizeBadge(sizes.Values.Sum() + linuxSizes.Values.Sum() + bridgeSizes.Values.Sum()));
+
+            if (bridgeVersions.Count > 0)
+            {
+                content.Children.Add(MakeSectionDivider("GoldenNights/AMD-NR-bridge"));
+                foreach (var ver in bridgeVersions)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isAmdNrBridge: true, sizeBytes: bridgeSizes[ver]));
+                if (versions.Count > 0 || linuxVersions.Count > 0)
+                    content.Children.Add(MakeSectionDivider("danielblnc/DLSS-NR-on-AMD"));
+            }
 
             if (versions.Count == 0 && linuxVersions.Count == 0)
             {
@@ -821,7 +835,7 @@ namespace OptiscalerClient.Views
                 return;
             }
 
-            if (isLinux) content.Children.Add(MakeSectionDivider("danielblnc/DLSS-NR-on-AMD"));
+            if (isLinux && bridgeVersions.Count == 0) content.Children.Add(MakeSectionDivider("danielblnc/DLSS-NR-on-AMD"));
             if (versions.Count == 0 && isLinux)
                 content.Children.Add(MakeEmptyLabel("No danielblnc/DLSS-NR-on-AMD versions cached."));
             foreach (var ver in versions)
@@ -830,9 +844,9 @@ namespace OptiscalerClient.Views
             if (isLinux)
             {
                 content.Children.Add(MakeSectionDivider(
-                    Application.Current?.FindResource("TxtSetupNrLinuxWrapperCacheSection") as string ?? "Linux Fork (guentra)"));
+                    Application.Current?.FindResource("TxtSetupNrLinuxWrapperCacheSection") as string ?? "Linux Fork (bulacha3)"));
                 if (linuxVersions.Count == 0)
-                    content.Children.Add(MakeEmptyLabel("No guentra/DLSS-NR-on-AMD-Linux versions cached."));
+                    content.Children.Add(MakeEmptyLabel("No bulacha3/DLSS-NR-on-AMD-Linux versions cached."));
                 foreach (var ver in linuxVersions)
                     content.Children.Add(CreateVersionCard(ver, isExtras: false, isDlssNrLinuxWrapper: true, sizeBytes: linuxSizes[ver]));
             }
@@ -1402,7 +1416,7 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, bool isDlssNrLinuxWrapper = false, long? sizeBytes = null)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, bool isDlssNrLinuxWrapper = false, bool isAmdNrBridge = false, long? sizeBytes = null)
         {
             var grid = new Grid
             {
@@ -1451,7 +1465,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd, IsDlssNrLinuxWrapper = isDlssNrLinuxWrapper }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd, IsDlssNrLinuxWrapper = isDlssNrLinuxWrapper, IsAmdNrBridge = isAmdNrBridge }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -1534,7 +1548,8 @@ namespace OptiscalerClient.Views
             var streamline  = _componentService.GetDownloadedStreamlineVersions();
             var renodx      = _componentService.GetAllCachedRenodxEntries();
             var dlssNrOnAmd = _dlssNrService.GetDownloadedVersions();
-            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count + dlssNrOnAmd.Count;
+            var amdNrBridge = _amdNrBridgeService.GetDownloadedVersions();
+            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count + dlssNrOnAmd.Count + amdNrBridge.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
         }
 
@@ -1555,6 +1570,7 @@ namespace OptiscalerClient.Views
             public bool IsRenodx { get; set; }
             public bool IsDlssNrOnAmd { get; set; }
             public bool IsDlssNrLinuxWrapper { get; set; }
+            public bool IsAmdNrBridge { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -1602,9 +1618,14 @@ namespace OptiscalerClient.Views
                     title = "Delete danielblnc/DLSS-NR-on-AMD Version";
                     msg = $"Are you sure you want to delete danielblnc's mod '{info.Version}' from cache?";
                 }
+                else if (info.IsAmdNrBridge)
+                {
+                    title = "Delete AMD-NR-bridge Version";
+                    msg = $"Are you sure you want to delete AMD-NR-bridge '{info.Version}' from cache?";
+                }
                 else if (info.IsDlssNrLinuxWrapper)
                 {
-                    title = "Delete guentra/DLSS-NR-on-AMD-Linux Version";
+                    title = "Delete bulacha3/DLSS-NR-on-AMD-Linux Version";
                     msg = $"Are you sure you want to delete the Linux fork '{info.Version}' from cache?";
                 }
                 else
@@ -1640,6 +1661,8 @@ namespace OptiscalerClient.Views
                             _dlssNrService.DeleteCache(info.Version);
                         else if (info.IsDlssNrLinuxWrapper)
                             _dlssNrLinuxWrapperService.DeleteCache(info.Version);
+                        else if (info.IsAmdNrBridge)
+                            _amdNrBridgeService.DeleteCache(info.Version);
                         else
                             _componentService.DeleteOptiScalerCache(info.Version);
 

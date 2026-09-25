@@ -144,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Konfiguracja zaktualizowana.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Nie można zaktualizować konfiguracji:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Coś innego się zmieniło — użyj zamiast tego Zainstaluj/Zainstaluj ponownie.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Brak — tylko zamiana FSR 4</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Brak</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Automatyczna zamiana DLL</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Ręczna zamiana DLL</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Przywróć oryginalny DLL</x:String>
@@ -531,9 +531,9 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpGMSpoofingLabel">Spoofing 🎭</x:String>
     <x:String x:Key="TxtHelpGMSpoofingText">Zastępuje własny spoofing GPU OptiScaler dla tej gry — DXGI, Streamline i Vulkan razem — który udaje GPU Nvidia, aby gry obsługujące wyłącznie DLSS działały na AMD/Intel. Auto podąża za domyślnym zachowaniem OptiScaler (włączone na AMD/Intel, wyłączone na Nvidia); zastąp to dla danej gry, jeśli tytuł wymaga odwrotnego zachowania.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrLabel">DLSS Neural Rendering na AMD (Eksperymentalne) 🧪</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrText">Również część Strefy eksperymentalnej (zobacz stronę pomocy „Eksperymentalne”). Uruchamia nieoficjalny mod DLSS Neural Rendering autorstwa danielblnc na GPU AMD, opcjonalnie połączony z nieoficjalną, społecznościową kompilacją wrapper OptiScaler, ponieważ sam OptiScaler nie obsługuje jeszcze Neural Rendering.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">Również część Strefy eksperymentalnej (zobacz stronę pomocy „Eksperymentalne”). Uruchamia nieoficjalny mod DLSS Neural Rendering od danielblnc na GPU AMD, opcjonalnie razem z oficjalną kompilacją OptiScalera przez AMD-NR-bridge od GoldenNights.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrModesTitle">Tryby</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrModesText">„Brak” wyłącza tę funkcję. „Tylko mod danielblnc” instaluje wyłącznie mod Neural Rendering dla AMD. „Mod + OptiScaler” dodatkowo podmienia na nieoficjalną, społecznościową kompilację wrapper, dzięki czemu OptiScaler i Neural Rendering mogą działać razem.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">„Brak” wyłącza funkcję. „Tylko mod danielblnc” instaluje wyłącznie mod Neural Rendering dla AMD. „Mod + OptiScaler” instaluje mod, wybraną oficjalną wersję OptiScalera (Stable, Beta lub Nightly) i AMD-NR-bridge, aby działały razem.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllText">Mod wymaga Twojej własnej, legalnej kopii pliku nvngx_dlssnr.dll firmy NVIDIA, wyodrębnionej z dowolnej gry obsługującej już DLSS 5. Nie możemy sami udostępnić tego pliku z powodów prawnych. Jest on pytany tylko raz i buforowany do przyszłych instalacji.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionTitle">Wersja moda</x:String>
@@ -554,14 +554,14 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtHelpExpRenodxText">Opcjonalny dodatek HDR/tone-mapping dla danej gry, działający na bazie ReShade. Należy pamiętać, że ze względu na prawa własności intelektualnej nie możemy automatycznie pobierać jego podstawowych wersji, ale możemy pobierać dodatki dla poszczególnych gier. „Auto” automatycznie wyszukuje i pobiera odpowiedni dodatek dla bieżącej gry bezpośrednio z wiki RenoDX; wymaga wcześniejszej instalacji ReShade w folderze gry.</x:String>
     <x:String x:Key="TxtHelpExpRenodxLinkLabel">RenoDX na GitHub ↗</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLabel">DLSS Neural Rendering na AMD</x:String>
-    <x:String x:Key="TxtHelpExpDlssNrText">Uruchamia nieoficjalny mod DLSS Neural Rendering autorstwa danielblnc na GPU AMD, opcjonalnie połączony z nieoficjalną, społecznościową kompilacją wrapper OptiScaler (MatheusGViana), dzięki czemu OptiScaler i Neural Rendering mogą działać razem - sam OptiScaler nie ma jeszcze oficjalnego wsparcia dla Neural Rendering.</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">Uruchamia nieoficjalny mod DLSS Neural Rendering od danielblnc na GPU AMD, opcjonalnie razem z oficjalną kompilacją OptiScalera przez AMD-NR-bridge od GoldenNights - sam OptiScaler nie ma jeszcze oficjalnej obsługi Neural Rendering.</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLinkLabel">DLSS-NR-on-AMD na GitHub ↗</x:String>
     <x:String x:Key="TxtHelpExpDllTitle">Dlaczego nie możemy udostępnić DLL firmy NVIDIA</x:String>
     <x:String x:Key="TxtHelpExpDllContent">DLSS Neural Rendering wymaga pliku nvngx_dlssnr.dll, należącego do firmy NVIDIA. Nie wolno nam go redystrybuować, więc aplikacja nigdy go nie pobiera ani nie dołącza. Dostarczasz własną, legalną kopię, wyodrębnioną z dowolnej gry, która już obsługuje DLSS 5. Jest pytany tylko raz i buforowany do ponownego użycia w przyszłych instalacjach.</x:String>
     <x:String x:Key="TxtHelpExpSupportTitle">Poziom wsparcia</x:String>
     <x:String x:Key="TxtHelpExpSupportContent">Wszystko, co się tu znajduje, to mod stron trzecich lub kompilacja społecznościowa utrzymywana poza tym projektem i poza OptiScaler. Integrujemy je, buforujemy ich wydania i staramy się zapewnić płynny przebieg pracy, ale nie mamy kontroli nad ich tempem wydań, błędami ani tym, jak dobrze współpracują z każdą grą czy GPU. Wsparcie jest udzielane najlepiej jak to możliwe i nie jest tak dogłębne ani przetestowane jak własne funkcje OptiScaler.</x:String>
     <x:String x:Key="TxtHelpExpWarningTitle">Nieoficjalne kompilacje ⚠️</x:String>
-    <x:String x:Key="TxtHelpExpWarningContent">Kompilacja wrapper „Mod + OptiScaler” nie jest dystrybuowana ani weryfikowana przez projekt OptiScaler. Jest pobierana bezpośrednio z jej wydań na GitHub, a jej suma kontrolna jest weryfikowana, gdy wydanie ją publikuje, ale sama zawartość nie jest audytowana ani przez nas, ani przez OptiScaler. Instaluj na własne ryzyko.</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">AMD-NR-bridge, używany przez „Mod + OptiScaler”, to zewnętrzna wtyczka, której projekt OptiScaler nie rozpowszechnia ani nie weryfikuje. Jest pobierana bezpośrednio z wydań na GitHubie, a suma kontrolna jest sprawdzana, gdy wydanie ją publikuje, ale sama zawartość nie jest sprawdzana ani przez nas, ani przez OptiScaler. Instalujesz na własne ryzyko.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -821,10 +821,9 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">Tylko mod danielblnc (fork)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">Mod + OptiScaler</x:String>
 
-    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">Obecnie niedostępne na Linuksie.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (tylko mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">Uruchamia DLSS Neural Rendering na GPU AMD za pomocą nieoficjalnego moda danielblnc. Tylko AMD.&#10;&#10;• Tylko mod danielblnc: instaluje wyłącznie mod.&#10;• Mod + OptiScaler: łączy go z nieoficjalną kompilacją OptiScalera.&#10;&#10;Eksperymentalne, bez wsparcia i niezwiązane z upscalerami OptiScalera; używasz na własne ryzyko.</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">Uruchamia DLSS Neural Rendering na GPU AMD za pomocą nieoficjalnego moda danielblnc. Tylko AMD.&#10;&#10;• Tylko mod danielblnc: instaluje wyłącznie mod.&#10;• Mod + OptiScaler: łączy go z wybraną oficjalną wersją OptiScalera przez AMD-NR-bridge.&#10;&#10;Eksperymentalne, bez wsparcia i niezwiązane z własnymi upscalerami OptiScalera; używasz na własne ryzyko.</x:String>
     <x:String x:Key="TxtOptiScalerVersionTooltip">Wersja OptiScalera do zainstalowania.&#10;&#10;• Stable: przetestowane wydania, zalecane dla większości gier.&#10;• Beta: wersje wstępne z nowszymi funkcjami i poprawkami.&#10;• Nightly: automatyczne kompilacje deweloperskie, mogą być niestabilne.&#10;&#10;Wybierz "Brak — tylko zamiana FSR 4", aby tylko podmienić DLL FSR 4 bez instalowania OptiScalera. Domyślnie wybieraną wersję zmienisz w Ustawieniach.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">Mod DLSS Neural Rendering dla AMD jest już zainstalowany dla tej gry.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Odinstalowanie ponownie uruchamia instalator danielblnc — wybierz opcję usunięcia, gdy o to poprosi.</x:String>
@@ -843,12 +842,18 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrDeleteWeightsMsg">Czy na pewno chcesz usunąć zapisane wagi? Następna instalacja "Mod + OptiScaler" (na dowolnej grze) ponownie uruchomi instalator danielblnc, aby je odtworzyć.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">Tylko mod danielblnc (bez OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (nieoficjalny wrapper)</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler obecnie nie ma oficjalnego wsparcia dla Neural Rendering, dlatego do jego użycia razem wymagana jest wersja opakowana przez społeczność (MatheusGViana). Instalujesz na własne ryzyko.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeInfo">Używa AMD-NR-bridge od GoldenNights (zewnętrzny, niesprawdzony przez nas) na wybranej oficjalnej wersji OptiScalera. Ustawia upscaler na FSR i obsługuje tylko własne generowanie klatek OptiScalera z wyjściem FSR FG. Instalujesz na własne ryzyko.</x:String>
+    <x:String x:Key="TxtSetupNrLegacyWrapperInfo">Ta gra nadal używa porzuconej kompilacji OptiScalera od MatheusGViana. Zainstaluj ponownie, aby przejść na wybraną oficjalną wersję OptiScalera z AMD-NR-bridge.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionLbl">Wersja AMD-NR-bridge</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionTooltip">Wydanie GoldenNights/AMD-NR-bridge używane przez „Mod + OptiScaler”. Pozwala modowi danielblnc działać razem z oficjalną kompilacją OptiScalera. Pobierane z wydań na GitHubie, nigdy nie dołączane do aplikacji.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeNoRelease">Brak dostępnego wydania AMD-NR-bridge.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">Nie udało się pobrać AMD-NR-bridge: {0}</x:String>
+    <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">Nie udało się zastosować AMD-NR-bridge: {0}&#10;&#10;Sam OptiScaler został zainstalowany. Zainstaluj ponownie z poziomu Zarządzaj, aby spróbować jeszcze raz.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">Mod danielblnc działa tylko w grach DirectX 12 korzystających z FSR 3.1 lub nowszego. Nie działa w DirectX 11 ani Vulkan.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Wersja moda (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Wersja moda danielblnc, używana do generowania wag dla AMD w obu trybach ("Tylko mod danielblnc" i "Mod + OptiScaler"). Dostępna po wybraniu trybu.</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Korzysta z nieoficjalnego forka firm trzecich (guentra/DLSS-NR-on-AMD-Linux), aby uruchomić moda DLSS Neural Rendering autorstwa danielblnc na Linuksie za pomocą prawdziwego mostka ROCm</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">W systemie Linux używany jest nieoficjalny fork guentry, DLSS-NR-on-AMD-Linux (a nie bezpośrednio instalator danielblnc), który łączy moda z prawdziwym środowiskiem uruchomieniowym ROCm, dzięki czemu sprawdzenie GPU może faktycznie przejść pod Wine/Proton. Podziękowania: danielblnc/DLSS-NR-on-AMD (mod) oraz guentra/DLSS-NR-on-AMD-Linux (fork).</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Korzysta z nieoficjalnego forka firm trzecich (bulacha3/DLSS-NR-on-AMD-Linux), aby uruchomić moda DLSS Neural Rendering autorstwa danielblnc na Linuksie za pomocą prawdziwego mostka ROCm</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">W systemie Linux używany jest nieoficjalny fork guentry, DLSS-NR-on-AMD-Linux (a nie bezpośrednio instalator danielblnc), który łączy moda z prawdziwym środowiskiem uruchomieniowym ROCm, dzięki czemu sprawdzenie GPU może faktycznie przejść pod Wine/Proton. Podziękowania: danielblnc/DLSS-NR-on-AMD (mod) oraz bulacha3/DLSS-NR-on-AMD-Linux (fork).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Instalowanie (fork Linux)...</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Pobieranie forka Linux...</x:String>
@@ -868,7 +873,22 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">Wyczyść opcje uruchamiania gry</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">Mod został odinstalowany. Usuń opcje uruchamiania, które dla niego wkleiłeś (Steam: Właściwości → Ogólne → Opcje uruchamiania) — nadal wskazują na właśnie usunięty skrypt uruchamiający, a gra nie wystartuje, dopóki ich nie usuniesz.</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Fork Linux (guentra)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Fork Linux (bulacha3)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqTitle">Brakujące wymagania</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqBuildTools">Fork dla Linuksa potrzebuje gcc i g++, aby skompilować zoptymalizowany backend dla Twojego GPU.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqPython">Fork dla Linuksa wymaga Pythona 3.11 lub nowszego.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqRunCommand">Wklej to polecenie w terminalu, a następnie ponownie uruchom instalację:</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqNoCommand">Zainstaluj go menedżerem pakietów swojej dystrybucji, a następnie ponownie uruchom instalację.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperNoRelease">Nie udało się pobrać z GitHuba listy wersji forka dla Linuksa. Możesz być offline lub osiągnięto godzinny limit zapytań GitHuba — spróbuj ponownie za jakiś czas.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperUninstallFailedFormat">Nie udało się odinstalować moda: {0}&#10;&#10;Całkowicie zamknij grę (także przyciskiem „Zatrzymaj” w Steam, jeśli nadal widnieje jako uruchomiona) i spróbuj ponownie.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseTitle">Zamknij Steam</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseContinueBtn">Steam jest zamknięty, kontynuuj</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseAddMsg">Mod działa przez skrypt uruchomieniowy, który trzeba dodać do opcji uruchamiania tej gry w Steam. Całkowicie zamknij Steam, aby dodać go automatycznie (obecne opcje zostaną zachowane) — albo skopiuj poniższą linię i dodaj ją samodzielnie.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseRemoveMsg">Skrypt uruchomieniowy moda trzeba usunąć z opcji uruchamiania tej gry w Steam. Całkowicie zamknij Steam, aby usunąć go automatycznie (pozostałe opcje zostaną zachowane).</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsApplied">Dodano opcje uruchamiania w Steam.</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Usunięto opcje uruchamiania ze Steam.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — mod danielblnc</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModTooltip">Mod DLSS Neural Rendering od danielblnc dla GPU AMD, instalowany przez fork dla Linuksa od bulacha3. Wybierz wersję, aby zainstalować go razem z wybraną wyżej wersją OptiScalera; ustaw OptiScaler na „Brak”, aby zainstalować tylko mod. „Brak” tutaj usuwa mod.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Wersja wrappera OptiScaler (społeczność, nieoficjalna)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Uruchom instalator</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Pobierz i przygotuj</x:String>

@@ -31,10 +31,7 @@ namespace OptiscalerClient.Views
         private GamepadDialogNavigationHelper? _gamepadHelper;
         private readonly DlssNrOnAmdService _dlssNrService = new();
         private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
-        /// <summary>Whether CmbDefaultOptiScalerVersion currently shows the "Modded" wrapper releases
-        /// (Setup NR default mode = "daniel-and-opti") instead of the normal Stable/Beta/Nightly/
-        /// Custom channels — see SetOptiDefaultTabsForModdedMode.</summary>
-        private bool _isDlssNrOnAmdModdedActive;
+        private readonly AmdNrBridgeService _amdNrBridgeService = new();
 
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => _gamepadHelper;
 
@@ -694,6 +691,23 @@ namespace OptiscalerClient.Views
             var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
             if (cmb == null) return;
 
+            // Linux: same as Manage — no mode selector; the mod version combo ("None" or a version)
+            // is the whole control and Quick/Bulk Install put the default OptiScaler next to it.
+            if (!OperatingSystem.IsWindows())
+            {
+                if (dlssNrModePanel != null) dlssNrModePanel.IsVisible = false;
+                if (dlssNrVersionPanel != null) Grid.SetColumn(dlssNrVersionPanel, 1);
+                if (this.FindControl<TextBlock>("TxtDefaultDlssNrDanielVersionLbl") is { } modLbl)
+                    modLbl.Text = GetResourceString("TxtSetupNrLinuxModLbl", "Neural Rendering (AMD) — danielblnc mod");
+                if (this.FindControl<Border>("BdDefaultDlssNrDanielVersionHelp") is { } modHelp)
+                    ToolTip.SetTip(modHelp, GetResourceString("TxtSetupNrLinuxModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs, installed through bulacha3's Linux fork. Pick a version to install it together with the OptiScaler version selected above; set OptiScaler to \"None\" to install only the mod. \"None\" here removes the mod."));
+                SetDefaultOptionsLocked(false);
+                SetDefaultAmdNrBridgePanelVisible(false);
+                if (showDlssNr) _ = PopulateDefaultDlssNrDanielVersionComboAsync();
+                return;
+            }
+
             // On Linux, "daniel-only" runs guentra/DLSS-NR-on-AMD-Linux's fork instead of danielblnc's
             // own installer — labeled explicitly, same as ManageGameWindow's CmbSetupNr.
             var danielOnlyItem = cmb.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-only");
@@ -702,18 +716,6 @@ namespace OptiscalerClient.Views
                 danielOnlyItem.Content = OperatingSystem.IsWindows()
                     ? GetResourceString("TxtSetupNrModeDanielOnlyShort", "danielblnc mod only")
                     : GetResourceString("TxtSetupNrModeDanielOnlyShortLinux", "danielblnc mod only (fork)");
-            }
-
-            // Locked on Linux — see ManageGameWindow.CmbSetupNr's identical lock for the full reasoning:
-            // confirmed directly that the mod produces zero effect there once OptiScaler is also loaded
-            // (device/hook conflict between the two, not fixable via any ini setting).
-            var danielAndOptiItem = cmb.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-and-opti");
-            if (danielAndOptiItem != null)
-            {
-                danielAndOptiItem.IsEnabled = OperatingSystem.IsWindows();
-                ToolTip.SetTip(danielAndOptiItem, OperatingSystem.IsWindows() ? null : GetResourceString(
-                    "TxtSetupNrDanielAndOptiLinuxBrokenTooltip",
-                    "Not available on Linux at the moment."));
             }
 
             cmb.SelectionChanged -= CmbDefaultDlssNrOnAmdMode_SelectionChanged;
@@ -735,13 +737,13 @@ namespace OptiscalerClient.Views
             // principle, as ManageGameWindow.PopulateVersionSelectors' targetSetupNrTag gate).
             // SelectedItem above still reflects the real stored value (untouched) so BtnSave_Click
             // doesn't silently overwrite it back to "none" just because the zone was hidden when
-            // saved — only the visible side effects (locking, the Modded tab swap) are suppressed.
+            // saved — only the visible side effects (locking, the bridge selector) are suppressed.
             if (showDlssNr)
                 ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
             else
             {
                 SetDefaultOptionsLocked(false);
-                SetOptiDefaultTabsForModdedMode(false);
+                SetDefaultAmdNrBridgePanelVisible(false);
             }
         }
 
@@ -774,9 +776,8 @@ namespace OptiscalerClient.Views
 
         /// <summary>Mirrors CmbSetupNr_SelectionChanged's own consequences in ManageGameWindow: the
         /// Daniel version combo enables/populates, "daniel-only" locks every other default (the mod
-        /// runs standalone, with no OptiScaler involved), and "daniel-and-opti" switches
-        /// CmbDefaultOptiScalerVersion over to the Modded wrapper releases (see
-        /// SetOptiDefaultTabsForModdedMode) exactly like CmbOptiVersion does there.</summary>
+        /// runs standalone, with no OptiScaler involved), and "daniel-and-opti" shows the
+        /// AMD-NR-bridge version selector exactly like CmbAmdNrBridgeVersion there.</summary>
         private void ApplyDlssNrOnAmdModeSelection(string? tag)
         {
             var mode = tag ?? "none";
@@ -786,24 +787,16 @@ namespace OptiscalerClient.Views
             if (warningPanel != null) warningPanel.IsVisible = mode == "daniel-only" && !OperatingSystem.IsWindows();
 
             var cmbDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
+            SetDefaultAmdNrBridgePanelVisible(mode == AmdNrBridgeService.BridgeMode);
             if (mode == "none")
             {
                 if (cmbDaniel != null) { cmbDaniel.IsEnabled = false; cmbDaniel.Items.Clear(); }
-                SetOptiDefaultTabsForModdedMode(false);
                 return;
             }
 
             _ = PopulateDefaultDlssNrDanielVersionComboAsync();
-
-            if (mode == "daniel-and-opti")
-            {
-                SetOptiDefaultTabsForModdedMode(true);
-                _ = PopulateDefaultModdedOptiVersionComboAsync();
-            }
-            else
-            {
-                SetOptiDefaultTabsForModdedMode(false);
-            }
+            if (mode == AmdNrBridgeService.BridgeMode)
+                _ = PopulateDefaultAmdNrBridgeVersionComboAsync();
         }
 
         /// <summary>Populates CmbDefaultDlssNrDanielVersion from danielblnc's own releases — same
@@ -829,14 +822,66 @@ namespace OptiscalerClient.Views
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[DefaultVersions] Could not list {(isLinux ? "guentra/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
+                DebugWindow.Log($"[DefaultVersions] Could not list {(isLinux ? "bulacha3/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
                 releases = new List<DlssNrOnAmdRelease>();
             }
 
             ToolTip.SetTip(cmb, isLinux
                 ? GetResourceString("TxtSetupNrLinuxWrapperTooltip",
-                    "On Linux this uses guentra's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and guentra/DLSS-NR-on-AMD-Linux (the fork).")
+                    "On Linux this uses bulacha3's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and bulacha3/DLSS-NR-on-AMD-Linux (the fork).")
                 : null);
+
+            if (releases.Count == 0)
+            {
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmb.SelectedIndex = 0;
+                return;
+            }
+
+            // Linux: "None" first — the combo is the whole mod control there (see
+            // PopulateDefaultDlssNrOnAmdModeCombo); selected when the saved mode is "none".
+            var offset = 0;
+            if (isLinux)
+            {
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtSetupNrModeNone", "None"), Tag = "none" });
+                offset = 1;
+            }
+            for (int i = 0; i < releases.Count; i++)
+                cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+            var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+            var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
+            cmb.SelectedIndex = isLinux && (_componentService.Config.DefaultDlssNrOnAmdMode ?? "none") == "none"
+                ? 0
+                : (targetIndex >= 0 ? targetIndex : 0) + offset;
+            cmb.IsEnabled = true;
+        }
+
+        private void SetDefaultAmdNrBridgePanelVisible(bool visible)
+        {
+            if (this.FindControl<Control>("PanelDefaultAmdNrBridgeVersion") is { } panel) panel.IsVisible = visible;
+        }
+
+        /// <summary>Populates CmbDefaultAmdNrBridgeVersion from GoldenNights/AMD-NR-bridge's releases —
+        /// same "pick one, defaulting to latest" shape as the Daniel version combo above.</summary>
+        private async Task PopulateDefaultAmdNrBridgeVersionComboAsync()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbDefaultAmdNrBridgeVersion");
+            if (cmb == null) return;
+
+            cmb.Items.Clear();
+            cmb.IsEnabled = false;
+
+            List<DlssNrOnAmdRelease> releases;
+            try
+            {
+                releases = await _amdNrBridgeService.GetReleasesAsync();
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[DefaultVersions] Could not list AMD-NR-bridge releases: {ex.Message}");
+                releases = new List<DlssNrOnAmdRelease>();
+            }
 
             if (releases.Count == 0)
             {
@@ -848,80 +893,10 @@ namespace OptiscalerClient.Views
             for (int i = 0; i < releases.Count; i++)
                 cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
 
-            var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
+            var saved = _componentService.Config.DefaultAmdNrBridgeVersion;
             var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
             cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
             cmb.IsEnabled = true;
-        }
-
-        /// <summary>Mirrors ManageGameWindow's SetOptiTabsForModdedMode — hides Stable/Beta/Nightly/
-        /// Custom and shows the plain "Modded" indicator instead, since that's the only "channel"
-        /// available while Setup NR default mode = "daniel-and-opti".</summary>
-        private void SetOptiDefaultTabsForModdedMode(bool modded)
-        {
-            if (_isDlssNrOnAmdModdedActive == modded) return;
-            _isDlssNrOnAmdModdedActive = modded;
-
-            var btnStable = this.FindControl<Button>("BtnOptiDefaultStable");
-            var btnBeta = this.FindControl<Button>("BtnOptiDefaultBeta");
-            var btnNightly = this.FindControl<Button>("BtnOptiDefaultNightly");
-            var btnCustom = this.FindControl<Button>("BtnOptiDefaultCustom");
-            var btnModded = this.FindControl<Button>("BtnOptiDefaultModded");
-            if (btnStable != null) btnStable.IsVisible = !modded;
-            if (btnBeta != null) btnBeta.IsVisible = !modded;
-            if (btnNightly != null) btnNightly.IsVisible = !modded;
-            if (btnCustom != null) btnCustom.IsVisible = !modded && _componentService.CustomVersions.Count > 0;
-            if (btnModded != null) btnModded.IsVisible = modded;
-
-            // Leaving Modded — restore whatever normal channel/version was showing before, same as
-            // reopening this window fresh would.
-            if (!modded)
-                PopulateDefaultOptiScalerVersionCombo(showBeta: _optiDefaultShowingBeta, showNightly: _optiDefaultShowingNightly, showCustom: _optiDefaultShowingCustom, restoreSaved: true);
-        }
-
-        /// <summary>Populates CmbDefaultOptiScalerVersion with MatheusGViana/dlss-5-amd-project's
-        /// releases while Setup NR default mode = "daniel-and-opti" — same source and "pick one,
-        /// defaulting to latest" shape as ManageGameWindow's PopulateModdedVersionComboAsync. Tags are
-        /// the raw release version (e.g. "1.7.3"), not a registered custom-version name: Quick/Bulk
-        /// Install resolve and download the actual wrapper build at install time (see
-        /// DlssNrOnAmdService.InstallForQuickPathAsync) — this combo only pins which release to use.</summary>
-        private async Task PopulateDefaultModdedOptiVersionComboAsync()
-        {
-            var cmb = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
-            if (cmb == null || !_isDlssNrOnAmdModdedActive) return;
-
-            cmb.SelectionChanged -= CmbDefaultOptiScalerVersion_SelectionChanged;
-            cmb.Items.Clear();
-            cmb.IsEnabled = false;
-
-            List<DlssNrOnAmdRelease> releases;
-            try
-            {
-                releases = await _componentService.GetAmdWrapperReleasesAsync();
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[DefaultVersions] Could not list MatheusGViana wrapper releases: {ex.Message}");
-                releases = new List<DlssNrOnAmdRelease>();
-            }
-
-            if (releases.Count == 0)
-            {
-                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
-                cmb.SelectedIndex = 0;
-            }
-            else
-            {
-                for (int i = 0; i < releases.Count; i++)
-                    cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
-
-                var saved = _componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
-                var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
-                cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
-                cmb.IsEnabled = true;
-            }
-
-            cmb.SelectionChanged += CmbDefaultOptiScalerVersion_SelectionChanged;
         }
 
         // ── Profile ─────────────────────────────────────────────────────────
@@ -1193,12 +1168,8 @@ namespace OptiscalerClient.Views
         {
             // Save OptiScaler version. This window is now the sole owner of the pinned default —
             // Manage Local Versions no longer has an "always use latest" toggle to defer to.
-            // While Setup NR default mode = "daniel-and-opti", CmbDefaultOptiScalerVersion shows
-            // Modded wrapper releases instead (see SetOptiDefaultTabsForModdedMode) — that selection
-            // is a different setting (DefaultDlssNrOnAmdWrapperVersion, saved further below) and must
-            // never overwrite the user's actual non-modded OptiScaler default.
             var cmbOpti = this.FindControl<ComboBox>("CmbDefaultOptiScalerVersion");
-            if (!_isDlssNrOnAmdModdedActive && cmbOpti?.SelectedItem is ComboBoxItem optiItem)
+            if (cmbOpti?.SelectedItem is ComboBoxItem optiItem)
             {
                 var ver = optiItem.Tag?.ToString();
                 if (ver == "auto")
@@ -1293,15 +1264,27 @@ namespace OptiscalerClient.Views
             var cmbDlssNrDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
             if (cmbDlssNrDaniel?.SelectedItem is ComboBoxItem danielItem && danielItem.Tag is string danielVer)
             {
-                _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
+                if (!OperatingSystem.IsWindows())
+                {
+                    // Linux: the mod combo is the whole control — "None" turns the default off, a
+                    // version means "mod + the default OptiScaler" for Quick/Bulk Install. Only when the
+                    // combo is actually shown, so a hidden zone never rewrites the saved default.
+                    if (cmbDlssNrDaniel.IsVisible && cmbDlssNrDaniel.IsEffectivelyVisible)
+                    {
+                        _componentService.Config.DefaultDlssNrOnAmdMode = danielVer == "none" ? "none" : "daniel-and-opti";
+                        if (danielVer != "none") _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
+                    }
+                }
+                else
+                {
+                    _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
+                }
             }
 
-            // CmbDefaultOptiScalerVersion doubles as the Modded-wrapper-version picker while
-            // _isDlssNrOnAmdModdedActive — its Tag here is the raw wrapper release version (e.g.
-            // "1.7.3"), not a registered custom-version name (see PopulateDefaultModdedOptiVersionComboAsync).
-            if (_isDlssNrOnAmdModdedActive && cmbOpti?.SelectedItem is ComboBoxItem wrapperItem && wrapperItem.Tag is string wrapperVer)
+            var cmbBridge = this.FindControl<ComboBox>("CmbDefaultAmdNrBridgeVersion");
+            if (cmbBridge?.IsEnabled == true && cmbBridge.SelectedItem is ComboBoxItem bridgeItem && bridgeItem.Tag is string bridgeVer)
             {
-                _componentService.Config.DefaultDlssNrOnAmdWrapperVersion = wrapperVer;
+                _componentService.Config.DefaultAmdNrBridgeVersion = bridgeVer;
             }
 
             // Save Profile

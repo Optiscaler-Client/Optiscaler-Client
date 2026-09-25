@@ -197,10 +197,13 @@ namespace OptiscalerClient.Models
         /// <summary>Pinned danielblnc/DLSS-NR-on-AMD release for DefaultDlssNrOnAmdMode. Null/not found
         /// in the current release list means "use the latest available" at install time.</summary>
         public string? DefaultDlssNrOnAmdDanielVersion { get; set; } = null;
-        /// <summary>Pinned MatheusGViana/dlss-5-amd-project (the "Modded" OptiScaler wrapper) release,
-        /// only meaningful when DefaultDlssNrOnAmdMode is "daniel-and-opti". Null/not found means "use
-        /// the latest available" at install time.</summary>
+        /// <summary>Obsolete: pinned MatheusGViana/dlss-5-amd-project wrapper release. That project
+        /// was discontinued and "daniel-and-opti" now installs an official OptiScaler build plus
+        /// AMD-NR-bridge (see DefaultAmdNrBridgeVersion). Kept only so existing config files load.</summary>
         public string? DefaultDlssNrOnAmdWrapperVersion { get; set; } = null;
+        /// <summary>Pinned GoldenNights/AMD-NR-bridge release for "daniel-and-opti". Null/not found
+        /// means "use the latest available" at install time.</summary>
+        public string? DefaultAmdNrBridgeVersion { get; set; } = null;
         /// <summary>
         /// The default upscaling quality preset to pre-select in ManageGameWindow. Null means
         /// "Game controlled" (no override).

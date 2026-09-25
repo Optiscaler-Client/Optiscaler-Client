@@ -116,6 +116,15 @@ public class Game
     public string? PendingDlssNrOnAmdMode { get; set; }
     public string? PendingDlssNrOnAmdVersion { get; set; }
 
+    // "Mod + OptiScaler" (daniel-and-opti) through GoldenNights/AMD-NR-bridge (see AmdNrBridgeService)
+    // instead of the discontinued MatheusGViana wrapper build. AmdNrBridgeVersion is the release
+    // applied last; AmdNrBridgeIniChanges the OptiScaler.ini values it changed with their originals,
+    // kept from the first apply so uninstall can put them back. IsAmdNrBridgeInstalled is detected
+    // by GameAnalyzerService from the plugin on disk.
+    public string? AmdNrBridgeVersion { get; set; }
+    public List<AmdNrBridgeIniChange>? AmdNrBridgeIniChanges { get; set; }
+    public bool IsAmdNrBridgeInstalled { get; set; }
+
     // Linux only (see DlssNrLinuxWrapperService) — guentra/DLSS-NR-on-AMD-Linux's installer needs a
     // Wine/Proton runner folder, which it can only auto-resolve when the machine has exactly one
     // installed; otherwise the user is asked once and the choice is cached here per game so later

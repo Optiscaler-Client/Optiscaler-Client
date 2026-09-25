@@ -3664,6 +3664,8 @@ namespace OptiscalerClient.Views
         {
             try { await new DlssNrOnAmdService().GetReleasesAsync(); }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] DlssNrOnAmdService refresh failed: {ex.Message}"); }
+            try { await new AmdNrBridgeService().GetReleasesAsync(); }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] AmdNrBridgeService refresh failed: {ex.Message}"); }
         }
 
         /// <summary>
@@ -5932,7 +5934,15 @@ namespace OptiscalerClient.Views
                         if (selectedGame.IsDlssNrOnAmdInstalled && selectedGame.InstalledDlssNrOnAmdMode == "daniel-and-opti")
                         {
                             var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
-                            if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                            if (danielGameDir != null)
+                            {
+                                // AMD-NR-bridge first: it restores the OptiScaler.ini values it changed.
+                                AmdNrBridgeService.RemoveFromGame(selectedGame, danielGameDir);
+                                if (OperatingSystem.IsWindows())
+                                    new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                                else if (!await LinuxNrInstallHelper.UninstallAsync(this, selectedGame, danielGameDir))
+                                    return; // the fork refused — nothing was removed, error already shown
+                            }
                             selectedGame.IsDlssNrOnAmdInstalled = false;
                             selectedGame.DlssNrOnAmdVersion = null;
                             selectedGame.InstalledDlssNrOnAmdMode = null;
@@ -5974,7 +5984,13 @@ namespace OptiscalerClient.Views
                         // ManageGameWindow.UninstallDanielModOnly (CmbSetupNr's "none" case / the
                         // dedicated "Uninstall mod" button there).
                         var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
-                        if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                        if (danielGameDir != null)
+                        {
+                            if (OperatingSystem.IsWindows())
+                                new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                            else if (!await LinuxNrInstallHelper.UninstallAsync(this, selectedGame, danielGameDir))
+                                return; // the fork refused — nothing was removed, error already shown
+                        }
 
                         selectedGame.IsDlssNrOnAmdInstalled = false;
                         selectedGame.DlssNrOnAmdVersion = null;
@@ -6012,12 +6028,12 @@ namespace OptiscalerClient.Views
                         // is a *different* switch (in this same window's Settings), so turning it off
                         // must disable this default's effect immediately, not just hide the UI that
                         // configured it — re-checked here rather than trusting the stored value alone.
-                        string? modeBWrapperVersion = null;
+                        bool modeBBridge = false;
                         var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
                         if (_componentService.Config.ShowExperimentalFeatures &&
                             !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none")
                         {
-                            var (dlssNrResult, wrapperVersion) = await new DlssNrOnAmdService()
+                            var dlssNrResult = await new DlssNrOnAmdService()
                                 .InstallForQuickPathAsync(this, selectedGame, dlssNrDefaultMode, _componentService);
 
                             if (dlssNrDefaultMode == "daniel-only")
@@ -6036,6 +6052,8 @@ namespace OptiscalerClient.Views
                                 }
                                 else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success)
                                 {
+                                    if (!OperatingSystem.IsWindows())
+                                        await LinuxNrInstallHelper.ApplyLaunchOptionsAsync(this, selectedGame);
                                     RefreshGameLists();
                                     _persistenceService.SaveGames(_games);
                                     ShowToast(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
@@ -6045,30 +6063,24 @@ namespace OptiscalerClient.Views
                             }
 
                             if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success && dlssNrDefaultMode == "daniel-and-opti")
-                                modeBWrapperVersion = wrapperVersion;
+                                modeBBridge = true;
                         }
+
+                        // Linux: a game that already had the mod gets OptiScaler next to it the same way.
+                        if (!OperatingSystem.IsWindows() && selectedGame.IsDlssNrOnAmdInstalled)
+                            modeBBridge = true;
 
                         // Determine version to install: use configured default, fall back to latest per channel
                         string versionToInstall;
 
-                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
+                        var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
+                        if (!string.IsNullOrEmpty(configuredDefault))
                         {
-                            // "Mod + OptiScaler" just installed (or reused) the mod — install the
-                            // matching wrapper build instead of the normally configured version,
-                            // same override ManageGameWindow.ExecuteInstallAsync applies for Mode B.
-                            versionToInstall = modeBWrapperVersion;
+                            versionToInstall = configuredDefault;
                         }
                         else
                         {
-                            var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
-                            if (!string.IsNullOrEmpty(configuredDefault))
-                            {
-                                versionToInstall = configuredDefault;
-                            }
-                            else
-                            {
-                                versionToInstall = _componentService.LatestStableVersion ?? "";
-                            }
+                            versionToInstall = _componentService.LatestStableVersion ?? "";
                         }
 
                         if (string.IsNullOrEmpty(versionToInstall))
@@ -6273,7 +6285,7 @@ namespace OptiscalerClient.Views
                         // "dbghelp" (see DlssNrOnAmdService.DriveInstallerAsync) — force dxgi.dll for
                         // OptiScaler's own slot regardless of any other configured default so the two
                         // never collide.
-                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
+                        if (modeBBridge)
                             injectionMethod = "dxgi.dll";
 
                         // Install with default settings (backup always enabled)
@@ -6533,6 +6545,28 @@ namespace OptiscalerClient.Views
                         catch (Exception ex)
                         {
                             DebugWindow.Log($"[QuickInstall] Failed to apply default Frame Generation/Quality/Output Upscaler settings: {ex.Message}");
+                        }
+
+                        // "Mod + OptiScaler": AMD-NR-bridge goes last, over every OptiScaler.ini layer above.
+                        if (modeBBridge)
+                        {
+                            try
+                            {
+                                var bridgeGameDir = resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+                                if (OperatingSystem.IsWindows())
+                                    await new AmdNrBridgeService().EnsureAppliedAsync(selectedGame, bridgeGameDir);
+                                else
+                                    // Linux: no bridge — OptiScaler's ini values + Steam launch options.
+                                    await LinuxNrInstallHelper.FinishWithOptiScalerAsync(this, selectedGame, bridgeGameDir, injectionMethod);
+                            }
+                            catch (Exception ex)
+                            {
+                                DebugWindow.Log($"[QuickInstall] AMD-NR-bridge could not be applied: {ex.Message}");
+                                await new ConfirmDialog(this, GetResourceString("TxtWarning", "Warning"),
+                                    string.Format(GetResourceString("TxtSetupNrBridgeApplyFailedFormat",
+                                        "AMD-NR-bridge could not be applied: {0}\n\nOptiScaler itself was installed. Reinstall from Manage to try again."), ex.Message),
+                                    isAlert: true).ShowDialog<bool>(this);
+                            }
                         }
 
                         // Update game status

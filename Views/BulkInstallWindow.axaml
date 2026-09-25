@@ -269,19 +269,6 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiCustom_Click"/>
-                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while
-                                             Setup NR = "Mod + OptiScaler" — the only "channel" available
-                                             in that state, so it's an indicator rather than a real tab. -->
-                                        <Button Name="BtnOptiModded"
-                                                Grid.Column="0" Grid.ColumnSpan="4"
-                                                Content="Modded"
-                                                Classes="BtnPrimary"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"
-                                                FontSize="11"
-                                                Padding="8,5"
-                                                IsVisible="False"
-                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbOptiVersion"
                                               HorizontalAlignment="Stretch"
@@ -608,11 +595,13 @@
 
                                             <StackPanel Name="PanelDlssNrDanielVersion" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                    <TextBlock Name="TxtDlssNrDanielVersionLbl"
+                                                               Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
                                                                Foreground="{StaticResource BrTextSecondary}"
                                                                FontSize="12"
                                                                VerticalAlignment="Center"/>
-                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                    <Border Name="BdDlssNrDanielVersionHelp"
+                                                            Background="{StaticResource BrBgElevated}"
                                                             BorderBrush="{StaticResource BrBorderSubtle}"
                                                             BorderThickness="1" CornerRadius="8"
                                                             Width="14" Height="14"
