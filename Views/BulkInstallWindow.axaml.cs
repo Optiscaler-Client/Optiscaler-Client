@@ -2618,6 +2618,9 @@ public class BulkGameItem : INotifyPropertyChanged
     public string Platform { get; set; } = "";
     public string? CoverPath { get; set; }
     public string? OptiscalerVersion { get; set; }
+    public string OptiscalerBadgeText => string.IsNullOrWhiteSpace(OptiscalerVersion)
+        ? "✦ OptiScaler"
+        : $"✦ OptiScaler {OptiscalerVersion.Trim()}";
     public bool IsOptiscalerInstalled { get; set; }
 
     public bool IsSelected

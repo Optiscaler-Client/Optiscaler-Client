@@ -92,6 +92,11 @@ public class Game
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
 
+    [JsonIgnore]
+    public string OptiscalerBadgeText => string.IsNullOrWhiteSpace(OptiscalerVersion)
+        ? "✦ OptiScaler"
+        : $"✦ OptiScaler {OptiscalerVersion.Trim()}";
+
     // Set by GameAnalyzerService (AntiCheatHelper); drives the warning badge on the Games view cover.
     public bool HasAntiCheat { get; set; }
     public string? Fsr4ExtraVersion { get; set; }
