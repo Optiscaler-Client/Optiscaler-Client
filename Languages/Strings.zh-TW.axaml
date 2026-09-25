@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">最大化</x:String>
     <x:String x:Key="TxtWindowRestore">還原</x:String>
     <x:String x:Key="TxtWindowClose">關閉</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  掃描遊戲</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  手動新增</x:String>
+    <x:String x:Key="TxtBtnScan">掃描遊戲</x:String>
+    <x:String x:Key="TxtBtnAddManual">手動新增</x:String>
     <x:String x:Key="TxtTipSettings">設定</x:String>
     <x:String x:Key="TxtTipComponent">元件版本</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  更新NukemFG</x:String>

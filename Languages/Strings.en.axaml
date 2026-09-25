@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">Maximize</x:String>
     <x:String x:Key="TxtWindowRestore">Restore</x:String>
     <x:String x:Key="TxtWindowClose">Close</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  Scan Games</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  Add Manually</x:String>
+    <x:String x:Key="TxtBtnScan">Scan Games</x:String>
+    <x:String x:Key="TxtBtnAddManual">Add Manually</x:String>
     <x:String x:Key="TxtBtnBulkInstall">Bulk Install</x:String>
     <x:String x:Key="TxtBtnFilters">Filters</x:String>
     <x:String x:Key="TxtTipSettings">Settings</x:String>

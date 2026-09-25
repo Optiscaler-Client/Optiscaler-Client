@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">Ekranı kapla</x:String>
     <x:String x:Key="TxtWindowRestore">Geri yükle</x:String>
     <x:String x:Key="TxtWindowClose">Kapat</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  Oyunları Tara</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  Manuel Ekle</x:String>
+    <x:String x:Key="TxtBtnScan">Oyunları Tara</x:String>
+    <x:String x:Key="TxtBtnAddManual">Manuel Ekle</x:String>
     <x:String x:Key="TxtTipSettings">Ayarlar</x:String>
     <x:String x:Key="TxtTipComponent">Bileşen Sürümleri</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  NukemFG'yi Güncelle</x:String>

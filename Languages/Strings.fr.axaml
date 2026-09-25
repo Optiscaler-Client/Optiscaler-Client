@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">Agrandir</x:String>
     <x:String x:Key="TxtWindowRestore">Restaurer</x:String>
     <x:String x:Key="TxtWindowClose">Fermer</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  Scanner les jeux</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  Ajouter manuellement</x:String>
+    <x:String x:Key="TxtBtnScan">Scanner les jeux</x:String>
+    <x:String x:Key="TxtBtnAddManual">Ajouter manuellement</x:String>
     <x:String x:Key="TxtTipSettings">Paramètres</x:String>
     <x:String x:Key="TxtTipComponent">Versions des composants</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  Mettre à jour NukemFG</x:String>

@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">최대화</x:String>
     <x:String x:Key="TxtWindowRestore">이전 크기로 복원</x:String>
     <x:String x:Key="TxtWindowClose">닫기</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  게임 스캔</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  수동으로 추가</x:String>
+    <x:String x:Key="TxtBtnScan">게임 스캔</x:String>
+    <x:String x:Key="TxtBtnAddManual">수동으로 추가</x:String>
     <x:String x:Key="TxtTipSettings">설정</x:String>
     <x:String x:Key="TxtTipComponent">구성 요소 버전</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  NukemFG 업데이트</x:String>
