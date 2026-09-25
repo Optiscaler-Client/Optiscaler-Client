@@ -588,7 +588,7 @@ namespace OptiscalerClient.Views
             if (_isControllerModeActive == active) return;
             _isControllerModeActive = active;
 
-            var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+            var txtX = this.FindControl<Control>("TxtCloseIconX");
             var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
             if (txtX != null) txtX.IsVisible = !active;
             if (badgeB != null) badgeB.IsVisible = active;
@@ -1377,6 +1377,8 @@ namespace OptiscalerClient.Views
             if (experimentalZone != null) experimentalZone.IsVisible = showExperimental;
             var experimentalChip = this.FindControl<Control>("BorderExperimentalChip");
             if (experimentalChip != null) experimentalChip.IsVisible = showExperimental;
+            var gridExperimentalZone = this.FindControl<Grid>("GridExperimentalZone");
+            if (gridExperimentalZone != null) gridExperimentalZone.IsVisible = showExperimental;
             if (showExperimental)
                 PopulateRenodxComboBox(componentService);
 
@@ -2547,6 +2549,7 @@ namespace OptiscalerClient.Views
                 || outputUpscaler == null || spoofingHost == null)
                 return;
 
+            int optionRowCount;
             if (useCompactLayout)
             {
                 // Opti / FSR4 / injection, then patcher / Output Upscaler / Quality, then Frame
@@ -2561,17 +2564,14 @@ namespace OptiscalerClient.Views
                     Grid.SetRow(ordered[i], i / cols);
                     Grid.SetColumn(ordered[i], i % cols);
                 }
+                optionRowCount = (ordered.Count + cols - 1) / cols;
             }
             else
             {
                 // Fakenvapi and/or NukemFG selectors are visible (pre-0.9/Custom OptiScaler builds),
                 // which is one or two extra panels than the compact case has room for in 3 rows (up
                 // to 11 total incl. Spoofing). Lay them out in a fixed logical order instead of
-                // hand-picking (row, col) per panel — wrap to a new row every 3 — so it can never
-                // again silently run out of cells the way it did when Output Upscaler landed on top
-                // of the Uninstall row and Spoofing got squeezed into Profile's column. 6 options
-                // rows are reserved in the grid (see the .axaml RowDefinitions): ceil(11/3) = 4 rows
-                // at 3 columns, ceil(11/2) = 6 at 2, so it always fits.
+                // hand-picking (row, col) per panel — wrap to a new row every 3.
                 var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
                 var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
                 var ordered = new List<StackPanel> { opti, extras };
@@ -2590,6 +2590,35 @@ namespace OptiscalerClient.Views
                     Grid.SetRow(ordered[i], i / cols);
                     Grid.SetColumn(ordered[i], i % cols);
                 }
+                optionRowCount = (ordered.Count + cols - 1) / cols;
+            }
+
+            var optionsGrid = this.FindControl<Grid>("GridInstallOptions");
+            var experimentalZone = this.FindControl<Grid>("GridExperimentalZone");
+            var uninstallBtn = this.FindControl<Button>("BtnUninstall");
+
+            int nextRow = optionRowCount;
+            bool isExperimentalVisible = experimentalZone is { IsVisible: true };
+
+            if (experimentalZone != null)
+            {
+                Grid.SetRow(experimentalZone, nextRow);
+                Grid.SetColumn(experimentalZone, 0);
+                Grid.SetColumnSpan(experimentalZone, cols);
+                if (isExperimentalVisible)
+                    nextRow++;
+            }
+
+            if (uninstallBtn != null)
+            {
+                Grid.SetRow(uninstallBtn, nextRow);
+                Grid.SetColumn(uninstallBtn, cols - 1);
+                nextRow++;
+            }
+
+            if (optionsGrid != null)
+            {
+                optionsGrid.RowDefinitions = new RowDefinitions(string.Join(",", Enumerable.Repeat("Auto", nextRow)));
             }
 
             // Pushes the injection combo down to line up with the Opti/FSR4 combos (which have a tab

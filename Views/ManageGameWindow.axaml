@@ -133,11 +133,10 @@
                                 <Image Name="ImgGameCover" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Border Classes="ImageOverlay">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
-                                        <TextBlock Text="&#xF493;"
-                                                   FontFamily="{StaticResource FontIcons}"
-                                                   FontSize="22"
-                                                   Foreground="{StaticResource BrTextPrimary}"
-                                                   HorizontalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource Icon.Camera}"
+                                                  Width="22" Height="22"
+                                                  Foreground="{StaticResource BrTextPrimary}"
+                                                  HorizontalAlignment="Center"/>
                                         <TextBlock Text="{DynamicResource TxtEditImage}"
                                                    Foreground="{StaticResource BrTextPrimary}"
                                                    FontSize="{StaticResource FontSizeBody}"/>
@@ -178,11 +177,7 @@
                                         Classes="BtnBase"
                                         Padding="10,6"
                                         Click="BtnEditTitle_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="&#xF3DD;"
-                                                   FontFamily="{StaticResource FontIcons}"
-                                                   FontSize="12"/>
-                                    </StackPanel>
+                                    <PathIcon Data="{StaticResource Icon.Pencil}" Width="12" Height="12"/>
                                 </Button>
                             </Grid>
 
@@ -216,9 +211,7 @@
                                 ToolTip.Tip="{DynamicResource TxtOpenFolder}"
                                 VerticalAlignment="Center"
                                 Click="BtnOpenFolder_Click">
-                            <TextBlock Text="&#xF419;"
-                                       FontFamily="{StaticResource FontIcons}"
-                                       FontSize="14"/>
+                            <PathIcon Data="{StaticResource Icon.Folder}" Width="14" Height="14"/>
                         </Button>
                     </Grid>
                 </Grid>
@@ -267,23 +260,22 @@
                                         Classes="IconBtn"
                                         ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
                                         Click="BtnHelp_Click">
-                                    <TextBlock Text="&#xF63E;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="16"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.Help}"
+                                              Width="15" Height="15"
+                                              Foreground="{StaticResource BrTextSecondary}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                                 </Button>
                                 <Button Name="BtnClose"
                                         Classes="IconBtn"
                                         Click="BtnClose_Click">
                                     <Panel>
-                                        <TextBlock Name="TxtCloseIconX"
-                                                   Text="{OnPlatform '&#xE711;', Linux='✕'}"
-                                                   FontFamily="{OnPlatform 'Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI', Linux='sans-serif'}"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
+                                        <PathIcon Name="TxtCloseIconX"
+                                                  Data="{StaticResource Icon.Close}"
+                                                  Width="12" Height="12"
+                                                  Foreground="{StaticResource BrTextSecondary}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
                                         <Border Name="BadgeCloseGamepadB"
                                                 Background="#E05252"
                                                 CornerRadius="10"
@@ -356,7 +348,7 @@
                                             Margin="8,0,0,0"
                                             VerticalAlignment="Center"
                                             Click="BtnToastClose_Click">
-                                        <TextBlock Text="&#x2715;" FontSize="10" Foreground="{StaticResource BrTextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource Icon.Close}" Width="10" Height="10" Foreground="{StaticResource BrTextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Button>
                                 </Grid>
                                 <ProgressBar Name="PrgToastDuration"
@@ -473,21 +465,19 @@
                                     Margin="0,8,0,0"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="{StaticResource BrWarning}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock Text="{DynamicResource TxtAntiCheatTitle}"
                                                    Foreground="{StaticResource BrWarning}"
                                                    FontWeight="SemiBold"
                                                    FontSize="{StaticResource FontSizeBody}"/>
                                         <TextBlock Text="{DynamicResource TxtAntiCheatDesc}"
-                                                   Foreground="{StaticResource BrWarning}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
                                                    TextWrapping="Wrap"
                                                    FontSize="{StaticResource FontSizeCaption}"/>
                                     </StackPanel>
@@ -576,14 +566,12 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtFsr4SwapOnlyHint}"
                                                Foreground="#4A90E2"
@@ -611,14 +599,12 @@
                                      window's edge. The Grid's "*" column gives it a real bound to wrap
                                      against. -->
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="{StaticResource BrWarning}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Name="TxtAmdNrBridgeInfo"
                                                Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrBridgeInfo}"
@@ -642,14 +628,12 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrDanielOnlyDx12Info}"
                                                Foreground="#4A90E2"
@@ -676,14 +660,12 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="{StaticResource BrWarning}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrLinuxWrapperWarning}"
                                                Foreground="{StaticResource BrWarning}"
@@ -706,20 +688,21 @@
                                     Padding="10,6"
                                     Margin="0,0,0,10"
                                     IsVisible="False">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource TxtNothingToInstallInfo}"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtNothingToInstallInfo}"
                                                Foreground="#4A90E2"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                VerticalAlignment="Center"
                                                TextWrapping="Wrap"/>
-                                </StackPanel>
+                                </Grid>
                             </Border>
 
                             <!-- Options (3 columns, or 2 on narrow widths — see ManageGameWindow.Responsive.cs):
@@ -733,27 +716,8 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <!-- 4th options row, used only in the non-compact layout (Fakenvapi
-                                         and/or NukemFG selectors visible — older/Custom OptiScaler
-                                         builds) — see UpdateOptionsLayout. The compact layout never
-                                         places anything here, so it collapses to zero height. -->
-                                    <RowDefinition Height="Auto"/>
-                                    <!-- 5th/6th options rows: only used by the 2-column layout (up to
-                                         11 panels → 6 rows); empty rows collapse to zero height. -->
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <!-- Experimental zone (RenoDX today, future experimental options
-                                         go here too) — its own row, always after the regular options
-                                         and before Uninstall, hidden entirely unless
-                                         Config.ShowExperimentalFeatures is on. -->
-                                    <RowDefinition Height="Auto"/>
-                                    <!-- Uninstall / Restore original DLL lives here, and is hidden
-                                         until OptiScaler is actually installed. MinHeight keeps the
-                                         row from collapsing while it's hidden, so the action row
-                                         below doesn't jump up against the selectors and back down
-                                         again the moment the game gets installed. Matches the
-                                         buttons' own height (Padding="14,7" around a ~20px line). -->
-                                    <RowDefinition Height="Auto" MinHeight="34"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -1140,7 +1104,7 @@
                                      underneath it instead of just sitting inside the box. Declared after
                                      BorderExperimentalZone in this same Grid cell so it paints on top
                                      (Grid children z-order by declaration order). -->
-                                <Grid Name="GridExperimentalZone" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                <Grid Name="GridExperimentalZone" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,12,0,0">
                                     <Border Name="BorderExperimentalZone"
                                             BorderBrush="{StaticResource BrExperimental}"
                                             BorderThickness="1"
@@ -1354,7 +1318,7 @@
 
                                 <!-- Row 7, last column : Uninstall button -->
                                 <Button Name="BtnUninstall"
-                                        Grid.Row="7" Grid.Column="2"
+                                        Grid.Row="4" Grid.Column="2"
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
@@ -1605,11 +1569,10 @@
                                                            Foreground="{StaticResource BrAccent}"
                                                            FontSize="{StaticResource FontSizeBody}"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="&#xE12E;"
-                                                           FontFamily="{StaticResource FontIcons}"
-                                                           FontSize="12"
-                                                           Foreground="{StaticResource BrAccent}"
-                                                           VerticalAlignment="Center"/>
+                                                <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                          Width="11" Height="11"
+                                                          Foreground="{StaticResource BrAccent}"
+                                                          VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
 
@@ -1625,11 +1588,10 @@
                                                            Foreground="{StaticResource BrAccent}"
                                                            FontSize="{StaticResource FontSizeBody}"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="&#xE12E;"
-                                                           FontFamily="{StaticResource FontIcons}"
-                                                           FontSize="12"
-                                                           Foreground="{StaticResource BrAccent}"
-                                                           VerticalAlignment="Center"/>
+                                                <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                          Width="11" Height="11"
+                                                          Foreground="{StaticResource BrAccent}"
+                                                          VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -1656,16 +1618,14 @@
                                 <!-- Icon + trailing "external link" arrow side by side, same
                                      layout as the header's clipboard+arrow toggle button. -->
                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xF7A9;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="14"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="&#xE12E;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="10"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.Book}"
+                                              Width="14" Height="14"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                              Width="10" Height="10"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <!-- Only shown once PopulateWikiDetailsAsync resolves this game's own
@@ -1677,16 +1637,14 @@
                                     IsVisible="{Binding IsVisible, ElementName=BtnGameWikiLink}"
                                     Click="BtnGameWikiLink_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xEEB9;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="14"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="&#xE12E;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="10"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.Games}"
+                                              Width="14" Height="14"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                              Width="10" Height="10"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -1707,7 +1665,7 @@
                         <StackPanel Spacing="0">
                             <!-- Title -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#x26A0;" Foreground="{StaticResource BrAccentWarm}" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Warning}" Foreground="{StaticResource BrAccentWarm}" Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtCorruptInstallTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
@@ -1738,7 +1696,7 @@
                         <StackPanel Spacing="0">
                             <!-- Title -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#x26A0;" Foreground="{StaticResource BrAccentWarm}" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Warning}" Foreground="{StaticResource BrAccentWarm}" Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtFolderCleanupTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
@@ -1806,7 +1764,7 @@
                             MaxWidth="480">
                         <StackPanel Spacing="0">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource FontIcons}" Foreground="{StaticResource BrAccent}" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Layers}" Foreground="{StaticResource BrAccent}" Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtFsr4SwapSelectTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 

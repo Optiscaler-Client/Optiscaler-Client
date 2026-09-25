@@ -98,11 +98,18 @@
             <Setter Property="Foreground" Value="{StaticResource BrTextSecondary}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Content" Value="&#xF63E;"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <PathIcon Data="{StaticResource Icon.Help}" Width="15" Height="15" Foreground="{TemplateBinding Foreground}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
         </Style>
-        <Style Selector="Button.ContextHelpBtn:pointerover /template/ ContentPresenter">
+        <Style Selector="Button.ContextHelpBtn:pointerover">
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
             <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
         </Style>
@@ -482,14 +489,13 @@
                                      </Style>
                                  </TextBox.Styles>
                              </TextBox>
-                             <TextBlock IsHitTestVisible="False"
-                                        Text="&#xF68F;"
-                                        FontFamily="{StaticResource FontIcons}"
-                                        Foreground="{StaticResource BrTextSecondary}"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Left"
-                                        Margin="12,0,0,0"
-                                        FontSize="14"/>
+                             <PathIcon IsHitTestVisible="False"
+                                       Data="{StaticResource Icon.Search}"
+                                       Foreground="{StaticResource BrTextSecondary}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       Margin="12,0,0,0"
+                                       Width="14" Height="14"/>
                              <TextBlock Name="TxtSearchPlaceholder"
                                         IsHitTestVisible="False"
                                         Text="{DynamicResource TxtSearchGames}"
@@ -535,11 +541,7 @@
                                              Foreground="{StaticResource BrTextPrimary}"
                                              ToolTip.Tip="{DynamicResource TxtViewList}"
                                              Click="BtnViewList_Click">
-                                         <Grid Width="14" Height="12" RowDefinitions="Auto,Auto,Auto">
-                                             <Border Grid.Row="0" Height="2" CornerRadius="1" Background="{StaticResource BrTextPrimary}" Margin="0,0,0,3"/>
-                                             <Border Grid.Row="1" Height="2" CornerRadius="1" Background="{StaticResource BrTextPrimary}" Margin="0,0,0,3"/>
-                                             <Border Grid.Row="2" Height="2" CornerRadius="1" Background="{StaticResource BrTextPrimary}"/>
-                                         </Grid>
+                                         <PathIcon Data="{StaticResource Icon.List}" Width="15" Height="15"/>
                                      </Button>
                                      <Button Name="BtnViewGrid"
                                              Width="32"
@@ -549,16 +551,7 @@
                                              Foreground="{StaticResource BrTextPrimary}"
                                              ToolTip.Tip="{DynamicResource TxtViewGrid}"
                                              Click="BtnViewGrid_Click">
-                                         <Grid Width="14" Height="14"
-                                               ColumnDefinitions="Auto,Auto"
-                                               RowDefinitions="Auto,Auto"
-                                               ColumnSpacing="3"
-                                               RowSpacing="3">
-                                             <Border Grid.Row="0" Grid.Column="0" Width="5" Height="5" CornerRadius="1" Background="{StaticResource BrTextPrimary}"/>
-                                             <Border Grid.Row="0" Grid.Column="1" Width="5" Height="5" CornerRadius="1" Background="{StaticResource BrTextPrimary}"/>
-                                             <Border Grid.Row="1" Grid.Column="0" Width="5" Height="5" CornerRadius="1" Background="{StaticResource BrTextPrimary}"/>
-                                             <Border Grid.Row="1" Grid.Column="1" Width="5" Height="5" CornerRadius="1" Background="{StaticResource BrTextPrimary}"/>
-                                         </Grid>
+                                         <PathIcon Data="{StaticResource Icon.Grid}" Width="14" Height="14"/>
                                      </Button>
 
                                      <!-- Separator -->
@@ -594,17 +587,11 @@
                                              Padding="0"
                                              HorizontalContentAlignment="Center"
                                              VerticalContentAlignment="Center"
+                                             Foreground="{StaticResource BrTextPrimary}"
                                              Tag="main-window"
                                              ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
                                              Click="BtnContextHelp_Click">
-                                         <Grid Width="18" Height="18">
-                                             <TextBlock Text="&#xF63D;"
-                                                        FontFamily="{StaticResource FontIcons}"
-                                                        FontSize="16"
-                                                        Foreground="{StaticResource BrTextPrimary}"
-                                                        VerticalAlignment="Center"
-                                                        HorizontalAlignment="Center"/>
-                                         </Grid>
+                                         <PathIcon Data="{StaticResource Icon.Help}" Width="15" Height="15"/>
                                      </Button>
                                  </StackPanel>
                              </Border>
@@ -810,128 +797,60 @@
                                              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
 
                                                  <!-- DLSS badge -->
-                                                 <Border Background="#1A2E1A"
-                                                         BorderBrush="#2D5A2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Dlss"
                                                          IsVisible="{Binding DlssIsNative}">
-                                                     <TextBlock Text="DLSS"
-                                                                Foreground="#7FD481"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="DLSS"/>
                                                  </Border>
 
                                                  <!-- DLSS badge - added by OptiScaler, not native to the game -->
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#2D5A2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Dlss Injected"
                                                          IsVisible="{Binding DlssViaOptiscaler}">
-                                                     <TextBlock Text="DLSS"
-                                                                Foreground="#7FD481"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="DLSS"/>
                                                  </Border>
 
                                                  <!-- FSR badge -->
-                                                 <Border Background="#2E1A1A"
-                                                         BorderBrush="#5A2D2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr"
                                                          IsVisible="{Binding FsrIsNative}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="#E07070"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
 
                                                  <!-- FSR badge - added by OptiScaler, not native to the game -->
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#5A2D2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr Injected"
                                                          IsVisible="{Binding FsrIsViaOptiscalerOnly}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="#E07070"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
 
                                                  <!-- FSR badge - DLL swapped directly, without installing OptiScaler -->
-                                                 <Border Background="#2E2410"
-                                                         BorderBrush="{StaticResource BrWarning}"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr Swapped"
                                                          IsVisible="{Binding FsrIsSwapped}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="{StaticResource BrWarning}"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
 
-                                                 <!-- DLSS Neural Rendering (AMD) badge - danielblnc's mod installed on its own,
-                                                      without OptiScaler (see Setup NR) -->
-                                                 <Border Background="#2A2438"
-                                                         BorderBrush="{StaticResource BrExperimental}"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <!-- DLSS Neural Rendering (AMD) badge -->
+                                                 <Border Classes="Badge Experimental"
                                                          IsVisible="{Binding IsDlssNrOnAmdModOnly}"
                                                          ToolTip.Tip="{DynamicResource TxtDlssNrBadgeTooltip}">
-                                                     <TextBlock Text="NR"
-                                                                Foreground="{StaticResource BrExperimental}"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="NR"/>
                                                  </Border>
 
                                                  <!-- XeSS badge -->
-                                                 <Border Background="#1A1E2E"
-                                                         BorderBrush="#2D3A5A"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Xess"
                                                          IsVisible="{Binding XessIsNative}">
-                                                     <TextBlock Text="XeSS"
-                                                                Foreground="#7080E0"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="XeSS"/>
                                                  </Border>
 
                                                  <!-- XeSS badge - added by OptiScaler, not native to the game -->
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#2D3A5A"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <Border Classes="Badge Xess Injected"
                                                          IsVisible="{Binding XessViaOptiscaler}">
-                                                     <TextBlock Text="XeSS"
-                                                                Foreground="#7080E0"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="XeSS"/>
                                                  </Border>
 
-                                                 <Border Background="#1E1530"
-                                                         BorderBrush="{StaticResource BrAccent}"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="10,3" Margin="0,0,6,0"
+                                                 <!-- OptiScaler Installed badge -->
+                                                 <Border Classes="Badge OptiScaler"
                                                          IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                     <StackPanel Orientation="Horizontal">
-                                                         <TextBlock Text="✦ OptiScaler"
-                                                                    Foreground="{StaticResource BrAccent}"
-                                                                    FontSize="{StaticResource FontSizeCaption}"
-                                                                    FontWeight="Bold"/>
+                                                     <StackPanel Orientation="Horizontal" Spacing="4">
+                                                         <TextBlock Text="✦ OptiScaler" FontWeight="Bold"/>
                                                          <TextBlock Text="{Binding OptiscalerVersion, StringFormat=' {0}'}"
-                                                                    Foreground="{StaticResource BrAccent}"
-                                                                    FontSize="{StaticResource FontSizeCaption}"
                                                                     FontWeight="SemiBold"
                                                                     IsVisible="{Binding OptiscalerVersion, Converter={StaticResource NullToVisibilityConverter}}"/>
                                                      </StackPanel>
@@ -962,12 +881,9 @@
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"/>
                                              </Button>
-                                             <Button Content="&#xF34C;"
-                                                     FontFamily="{StaticResource FontIcons}"
-                                                     Foreground="{StaticResource BrTextSecondary}"
+                                             <Button Foreground="{StaticResource BrTextSecondary}"
                                                      Background="Transparent"
                                                      BorderThickness="0"
-                                                     FontSize="16"
                                                      Padding="10"
                                                      Margin="0,0,10,0"
                                                      ToolTip.Tip="{DynamicResource TxtRemoveGameTip}"
@@ -979,6 +895,7 @@
                                                          <Setter Property="Foreground" Value="{StaticResource BrAccentWarm}"/>
                                                      </Style>
                                                  </Button.Styles>
+                                                 <PathIcon Data="{StaticResource Icon.Delete}" Width="15" Height="15"/>
                                              </Button>
                                              <Button Name="BtnFastInstall"
                                                     Classes="BtnBase NormalModeAction"
@@ -995,13 +912,12 @@
                                                     VerticalAlignment="Center"
                                                     Click="BtnManage_Click">
                                                 <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="0,0,0,0">
-                                                    <TextBlock Grid.Column="0"
-                                                               Text="&#xF6AA;"
-                                                               FontFamily="{StaticResource FontIcons}"
-                                                               FontSize="15"
-                                                               Foreground="{StaticResource BrTextPrimary}"
-                                                               VerticalAlignment="Center"
-                                                               Margin="0,0,8,0"/>
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Settings}"
+                                                              Width="14" Height="14"
+                                                              Foreground="{StaticResource BrTextPrimary}"
+                                                              VerticalAlignment="Center"
+                                                              Margin="0,0,8,0"/>
                                                     <TextBlock Grid.Column="1"
                                                                Text="{DynamicResource TxtManageGame}"
                                                                Foreground="{StaticResource BrTextPrimary}"
@@ -1042,11 +958,7 @@
                                                             <Setter Property="Background" Value="#1AFFFFFF"/>
                                                         </Style>
                                                     </Button.Styles>
-                                                    <TextBlock Text="&#x25B2;"
-                                                               FontSize="11"
-                                                               Foreground="{StaticResource BrTextSecondary}"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
+                                                    <PathIcon Data="{StaticResource Icon.ChevronUp}" Width="12" Height="12" Foreground="{StaticResource BrTextSecondary}"/>
                                                 </Button>
                                                 <Button Name="BtnMoveDown"
                                                         Width="32" Height="32"
@@ -1060,11 +972,7 @@
                                                             <Setter Property="Background" Value="#1AFFFFFF"/>
                                                         </Style>
                                                     </Button.Styles>
-                                                    <TextBlock Text="&#x25BC;"
-                                                               FontSize="11"
-                                                               Foreground="{StaticResource BrTextSecondary}"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
+                                                    <PathIcon Data="{StaticResource Icon.ChevronDown}" Width="12" Height="12" Foreground="{StaticResource BrTextSecondary}"/>
                                                 </Button>
                                                 <Button Name="BtnToggleHide"
                                                         Width="36" Height="32"
@@ -1248,108 +1156,38 @@
                                                         Foreground="{StaticResource BrTextPrimary}"/>
 
                                              <WrapPanel Orientation="Horizontal" ItemHeight="24" VerticalAlignment="Center">
-                                                 <Border Background="#1A2E1A"
-                                                         BorderBrush="#2D5A2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Dlss"
                                                          IsVisible="{Binding DlssIsNative}">
-                                                     <TextBlock Text="DLSS"
-                                                                Foreground="#7FD481"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="DLSS"/>
                                                  </Border>
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#2D5A2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Dlss Injected"
                                                          IsVisible="{Binding DlssViaOptiscaler}">
-                                                     <TextBlock Text="DLSS"
-                                                                Foreground="#7FD481"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="DLSS"/>
                                                  </Border>
-                                                 <Border Background="#2E1A1A"
-                                                         BorderBrush="#5A2D2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr"
                                                          IsVisible="{Binding FsrIsNative}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="#E07070"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#5A2D2D"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr Injected"
                                                          IsVisible="{Binding FsrIsViaOptiscalerOnly}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="#E07070"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
-                                                 <!-- FSR badge - DLL swapped directly, without installing OptiScaler -->
-                                                 <Border Background="#2E2410"
-                                                         BorderBrush="{StaticResource BrWarning}"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Fsr Swapped"
                                                          IsVisible="{Binding FsrIsSwapped}">
-                                                     <TextBlock Text="FSR"
-                                                                Foreground="{StaticResource BrWarning}"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="FSR"/>
                                                  </Border>
-                                                 <!-- DLSS Neural Rendering (AMD) badge - danielblnc's mod installed on its own,
-                                                      without OptiScaler (see Setup NR) -->
-                                                 <Border Background="#2A2438"
-                                                         BorderBrush="{StaticResource BrExperimental}"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Experimental"
                                                          IsVisible="{Binding IsDlssNrOnAmdModOnly}"
                                                          ToolTip.Tip="{DynamicResource TxtDlssNrBadgeTooltip}">
-                                                     <TextBlock Text="NR"
-                                                                Foreground="{StaticResource BrExperimental}"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="NR"/>
                                                  </Border>
-                                                 <Border Background="#1A1E2E"
-                                                         BorderBrush="#2D3A5A"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Xess"
                                                          IsVisible="{Binding XessIsNative}">
-                                                     <TextBlock Text="XeSS"
-                                                                Foreground="#7080E0"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="XeSS"/>
                                                  </Border>
-                                                 <Border Background="Transparent"
-                                                         BorderBrush="#2D3A5A"
-                                                         BorderThickness="1"
-                                                         CornerRadius="6"
-                                                         Padding="8,3"
-                                                         Margin="0,0,6,0"
+                                                 <Border Classes="Badge Xess Injected"
                                                          IsVisible="{Binding XessViaOptiscaler}">
-                                                     <TextBlock Text="XeSS"
-                                                                Foreground="#7080E0"
-                                                                Opacity="0.7"
-                                                                FontSize="{StaticResource FontSizeCaption}"
-                                                                FontWeight="SemiBold"/>
+                                                     <TextBlock Text="XeSS"/>
                                                  </Border>
                                              </WrapPanel>
 
@@ -1401,12 +1239,11 @@
                                                  CornerRadius="6"
                                                  ToolTip.Tip="{DynamicResource TxtRemoveGameTip}"
                                                  Click="BtnRemoveGame_Click">
-                                             <TextBlock Text="&#xF34C;"
-                                                        FontFamily="{StaticResource FontIcons}"
-                                                        FontSize="13"
-                                                        Foreground="{StaticResource BrTextSecondary}"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"/>
+                                             <PathIcon Data="{StaticResource Icon.Delete}"
+                                                       Width="13" Height="13"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
                                          </Button>
 
                                         <StackPanel Name="GridCardHoverActions"
@@ -1433,10 +1270,9 @@
                                                     Click="BtnManage_Click">
                                                 <Button.Content>
                                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                                        <TextBlock Grid.Column="0"
-                                                                   Text="&#xF6AA;"
-                                                                   FontFamily="{StaticResource FontIcons}"
-                                                                   FontSize="14"
+                                                        <PathIcon Grid.Column="0"
+                                                                   Data="{StaticResource Icon.Settings}"
+                                                                   Width="14" Height="14"
                                                                    Foreground="{StaticResource BrTextPrimary}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="0,0,6,0"/>
