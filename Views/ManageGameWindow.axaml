@@ -197,6 +197,7 @@
                                 Margin="0,0,8,0"
                                 VerticalAlignment="Center">
                             <TextBlock Name="TxtInstallPath"
+                                       Classes="Mono"
                                        Text=""
                                        FontSize="{StaticResource FontSizeCaption}"
                                        Foreground="{StaticResource BrTextSecondary}"

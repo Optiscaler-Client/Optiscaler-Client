@@ -154,6 +154,22 @@
             <Setter Property="Background" Value="{StaticResource BrAccentPressed}"/>
         </Style>
 
+        <!-- Secondary button — subtle surface background with subtle border -->
+        <Style Selector="Button.BtnSecondary">
+            <Setter Property="Background" Value="{StaticResource BrBgSurface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
+        </Style>
+        <Style Selector="Button.BtnSecondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
+        </Style>
+        <Style Selector="Button.BtnSecondary:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+
         <!-- Danger button — red -->
         <Style Selector="Button.BtnDanger">
             <Setter Property="Background"  Value="#3D1F1F"/>
@@ -355,6 +371,12 @@
             <Setter Property="Margin"             Value="0,2"/>
         </Style>
 
+        <!-- Typography: Monospace for paths, versions, and technical metadata -->
+        <Style Selector="TextBlock.Mono">
+            <Setter Property="FontFamily" Value="Cascadia Code, JetBrains Mono, Consolas, Courier New, monospace"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}"/>
+        </Style>
+
         <!-- ════════════════════════════════════════════════════════
              DESIGN SYSTEM SURFACES & BADGES
              ════════════════════════════════════════════════════════ -->
@@ -365,6 +387,21 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
             <Setter Property="BoxShadow" Value="0 8 24 -6 #50000000"/>
+        </Style>
+        <Style Selector="Border.Card.Interactive">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.18"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.18"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card.Interactive:pointerover">
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BoxShadow" Value="0 12 28 -6 #70000000, 0 0 12 0 #188B73F8"/>
         </Style>
 
         <Style Selector="Border.SubCard">
@@ -526,11 +563,13 @@
         </Style>
 
         <Style Selector="Border.Badge.OptiScaler">
-            <Setter Property="Background" Value="#248B73F8"/>
-            <Setter Property="BorderBrush" Value="#598B73F8"/>
+            <Setter Property="Background" Value="#2E8B73F8"/>
+            <Setter Property="BorderBrush" Value="#808B73F8"/>
+            <Setter Property="BoxShadow" Value="0 0 10 0 #258B73F8"/>
         </Style>
         <Style Selector="Border.Badge.OptiScaler TextBlock">
-            <Setter Property="Foreground" Value="#A894FF"/>
+            <Setter Property="Foreground" Value="#C2B5FF"/>
+            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
 
         <Style Selector="Border.Badge.Experimental">

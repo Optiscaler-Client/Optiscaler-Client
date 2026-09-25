@@ -75,11 +75,24 @@
             <Setter Property="Margin" Value="0,4"/>
             <Setter Property="FontFamily" Value="{StaticResource FontIcons}"/>
             <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.18"/>
+                </Transitions>
+            </Setter>
             <Setter Property="Template">
                 <ControlTemplate>
                     <Border Name="RootBorder" Background="{TemplateBinding Background}" CornerRadius="8">
                         <Grid>
-                            <Border Name="Indicator" Width="3" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource BrAccent}" IsVisible="False" CornerRadius="1.5" Margin="2,0,0,0"/>
+                            <Border Name="Indicator" Width="3" Height="24" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource BrAccent}" CornerRadius="1.5" Margin="2,0,0,0">
+                                <Border.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                    </Transitions>
+                                </Border.Transitions>
+                            </Border>
                             <TextBlock Text="{TemplateBinding Content}" FontFamily="{StaticResource FontIcons}" FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip.Tip="{TemplateBinding ToolTip.Tip}"/>
                         </Grid>
                     </Border>
@@ -113,8 +126,14 @@
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
             <Setter Property="Foreground" Value="{StaticResource BrTextPrimary}"/>
         </Style>
+        <Style Selector="RadioButton.NavBtnStyle /template/ Border#Indicator">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="RenderTransform" Value="scaleY(0.3)"/>
+        </Style>
         <Style Selector="RadioButton.NavBtnStyle:checked /template/ Border#Indicator">
-            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="RenderTransform" Value="scaleY(1.0)"/>
+            <Setter Property="BoxShadow" Value="0 0 8 0 #608B73F8"/>
         </Style>
         <Style Selector="RadioButton.NavBtnStyle:checked">
             <Setter Property="Foreground" Value="{StaticResource BrAccent}"/>
@@ -253,6 +272,7 @@
         <Style Selector="Border.CardOption">
             <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BoxShadow" Value="0 4 16 -4 #35000000"/>
         </Style>
 
         <Style Selector="Border.InteractiveOption:focus">
@@ -407,18 +427,37 @@
                              <!-- Action buttons. Bottom margin (in addition to the existing right
                                   margin) gives wrapped lines breathing room instead of touching. -->
                              <Button Name="BtnScan"
-                                     Content="{DynamicResource TxtBtnScan}"
-                                     Classes="BtnBase"
-                                     Padding="14,7"
+                                     Classes="BtnPrimary"
+                                     Padding="16,7"
                                      Margin="0,0,10,8"
-                                     Click="BtnScan_Click"/>
+                                     Click="BtnScan_Click">
+                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                     <PathIcon Data="{StaticResource Icon.Refresh}"
+                                               Width="14" Height="14"
+                                               Foreground="White"
+                                               VerticalAlignment="Center"/>
+                                     <TextBlock Text="{DynamicResource TxtBtnScan}"
+                                                Foreground="White"
+                                                FontWeight="SemiBold"
+                                                VerticalAlignment="Center"/>
+                                 </StackPanel>
+                             </Button>
 
                              <Button Name="BtnAddManual"
-                                     Content="{DynamicResource TxtBtnAddManual}"
                                      Classes="BtnBase"
                                      Padding="14,7"
                                      Margin="0,0,10,8"
-                                     Click="BtnAddManual_Click"/>
+                                     Click="BtnAddManual_Click">
+                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                     <PathIcon Data="{StaticResource Icon.Plus}"
+                                               Width="13" Height="13"
+                                               Foreground="{StaticResource BrTextPrimary}"
+                                               VerticalAlignment="Center"/>
+                                     <TextBlock Text="{DynamicResource TxtBtnAddManual}"
+                                                Foreground="{StaticResource BrTextPrimary}"
+                                                VerticalAlignment="Center"/>
+                                 </StackPanel>
+                             </Button>
 
                              <Button Name="BtnBulkInstall"
                                      Classes="BtnBase"
@@ -602,6 +641,8 @@
                                      CornerRadius="{StaticResource RadiusMedium}"
                                      Padding="12,5" Margin="0,0,0,8">
                                  <TextBlock Name="TxtGpuInfo"
+                                            Classes="Mono"
+                                            FontWeight="SemiBold"
                                             FontSize="{StaticResource FontSizeCaption}"
                                             Foreground="{StaticResource BrTextSecondary}"
                                             VerticalAlignment="Center"/>
@@ -687,15 +728,29 @@
                                HorizontalScrollBarVisibility="Disabled"
                                PointerWheelChanged="GameListScrollViewer_PointerWheelChanged">
                      <ListBox Name="LstGames"
-                              Margin="12"
+                              Margin="12,6,12,12"
+                              ClipToBounds="False"
                               Background="Transparent"
                               BorderThickness="0"
                               ScrollViewer.VerticalScrollBarVisibility="Disabled"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                           <ListBox.Styles>
+                              <Style Selector="ListBox /template/ ScrollViewer">
+                                  <Setter Property="ClipToBounds" Value="False"/>
+                              </Style>
+                              <Style Selector="ListBox /template/ ScrollContentPresenter">
+                                  <Setter Property="ClipToBounds" Value="False"/>
+                              </Style>
                               <Style Selector="ListBoxItem">
-                                  <Setter Property="Padding" Value="0,0,0,8"/>
+                                  <Setter Property="Padding" Value="0,4,0,4"/>
+                                  <Setter Property="ClipToBounds" Value="False"/>
                                   <Setter Property="Background" Value="Transparent"/>
+                              </Style>
+                              <Style Selector="ListBoxItem /template/ ContentPresenter">
+                                  <Setter Property="ClipToBounds" Value="False"/>
+                              </Style>
+                              <Style Selector="ListBoxItem:pointerover">
+                                  <Setter Property="ZIndex" Value="10"/>
                               </Style>
                               <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                   <Setter Property="Background" Value="Transparent"/>
@@ -710,6 +765,7 @@
                              <DataTemplate x:DataType="models:Game">
                                  <!-- Game Card -->
                                  <Border Classes="GameCard"
+                                         ClipToBounds="False"
                                          Background="{StaticResource BrBgCard}"
                                          BorderBrush="{StaticResource BrBorderSubtle}"
                                          BorderThickness="1"
@@ -717,27 +773,41 @@
                                          RenderTransformOrigin="50%,50%"
                                          Padding="20,16">
                                      <Border.Styles>
+                                         <Style Selector="Border.GameCard">
+                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #35000000, 0 1 2 0 #10FFFFFF"/>
+                                             <Setter Property="Transitions">
+                                                 <Transitions>
+                                                     <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
+                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                 </Transitions>
+                                             </Setter>
+                                         </Style>
                                          <Style Selector="Border.GameCard:pointerover">
                                              <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
                                              <Setter Property="Background"  Value="{StaticResource BrBgElevated}"/>
                                              <Setter Property="RenderTransform" Value="translateY(-3px)"/>
-                                             <Setter Property="BoxShadow" Value="0 14 30 -6 #66000000, 0 0 14 0 #188B73F8"/>
+                                             <Setter Property="BoxShadow" Value="0 16 36 -6 #80000000, 0 0 18 1 #258B73F8"/>
                                          </Style>
-                                         <Style Selector="Border.GameCard">
-                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
-                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #33000000"/>
-                                             <Setter Property="Transitions">
-                                                 <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.18"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.18"/>
-                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut"/>
-                                                 </Transitions>
-                                             </Setter>
+                                         <Style Selector="Border.GameCard:pointerover Border.GameThumb">
+                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+                                             <Setter Property="BoxShadow" Value="0 6 16 -2 #60000000, 0 0 12 0 #358B73F8"/>
                                          </Style>
                                      </Border.Styles>
 
                                          <Grid>
+                                             <!-- Glowing indicator strip when OptiScaler is active on this game -->
+                                             <Border Width="3.5"
+                                                     HorizontalAlignment="Left"
+                                                     VerticalAlignment="Stretch"
+                                                     Margin="-16,-8,0,-8"
+                                                     CornerRadius="2"
+                                                     Background="{StaticResource BrAccent}"
+                                                     BoxShadow="0 0 12 1 #708B73F8"
+                                                     IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
                                              <Grid.ColumnDefinitions>
                                                  <ColumnDefinition Width="Auto"/> <!-- Icon -->
                                                  <ColumnDefinition Width="*"/>
@@ -745,12 +815,20 @@
                                              </Grid.ColumnDefinitions>
 
                                              <!-- Icon: the game's exe icon, or its cover cropped to a square when there's none -->
-                                             <Border Grid.Column="0" Width="52" Height="52" Margin="0,0,16,0"
+                                             <Border Classes="GameThumb"
+                                                     Grid.Column="0" Width="54" Height="54" Margin="0,0,16,0"
                                                      VerticalAlignment="Center"
-                                                     CornerRadius="10" ClipToBounds="True"
+                                                     CornerRadius="12" ClipToBounds="True"
                                                      Background="{StaticResource BrBgElevated}"
                                                      BorderBrush="{StaticResource BrBorderSubtle}"
-                                                     BorderThickness="1">
+                                                     BorderThickness="1"
+                                                     BoxShadow="0 4 12 -2 #40000000">
+                                                 <Border.Transitions>
+                                                     <Transitions>
+                                                         <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                                                         <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                                                     </Transitions>
+                                                 </Border.Transitions>
                                                  <Grid>
                                                      <!-- Fallback Icon -->
                                                      <TextBlock Text="🎮"
@@ -848,12 +926,9 @@
                                                  <!-- OptiScaler Installed badge -->
                                                  <Border Classes="Badge OptiScaler"
                                                          IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                                         <TextBlock Text="✦ OptiScaler" FontWeight="Bold"/>
-                                                         <TextBlock Text="{Binding OptiscalerVersion, StringFormat=' {0}'}"
-                                                                    FontWeight="SemiBold"
-                                                                    IsVisible="{Binding OptiscalerVersion, Converter={StaticResource NullToVisibilityConverter}}"/>
-                                                     </StackPanel>
+                                                     <TextBlock Text="{Binding OptiscalerBadgeText}"
+                                                                FontWeight="Bold"
+                                                                VerticalAlignment="Center"/>
                                                  </Border>
 
                                              </StackPanel>
@@ -907,20 +982,21 @@
                                                     Click="BtnFastInstall_Click"
                                                     Loaded="BtnFastInstall_Loaded"/>
                                             <Button Name="BtnManageGame"
-                                                    Classes="BtnBase NormalModeAction"
+                                                    Classes="BtnPrimary NormalModeAction"
                                                     Padding="20,8"
                                                     VerticalAlignment="Center"
                                                     Click="BtnManage_Click">
-                                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="0,0,0,0">
+                                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                                     <PathIcon Grid.Column="0"
                                                               Data="{StaticResource Icon.Settings}"
                                                               Width="14" Height="14"
-                                                              Foreground="{StaticResource BrTextPrimary}"
+                                                              Foreground="White"
                                                               VerticalAlignment="Center"
                                                               Margin="0,0,8,0"/>
                                                     <TextBlock Grid.Column="1"
                                                                Text="{DynamicResource TxtManageGame}"
-                                                               Foreground="{StaticResource BrTextPrimary}"
+                                                               Foreground="White"
+                                                               FontWeight="SemiBold"
                                                                VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Button>
@@ -1011,7 +1087,8 @@
                                PointerWheelChanged="GameListScrollViewer_PointerWheelChanged"
                                IsVisible="False">
                      <ListBox Name="LstGamesGrid"
-                              Margin="12"
+                              Margin="12,6,12,12"
+                              ClipToBounds="False"
                               Background="Transparent"
                               BorderThickness="0"
                               HorizontalAlignment="Center"
@@ -1023,9 +1100,22 @@
                              </ItemsPanelTemplate>
                          </ListBox.ItemsPanel>
                          <ListBox.Styles>
+                             <Style Selector="ListBox /template/ ScrollViewer">
+                                 <Setter Property="ClipToBounds" Value="False"/>
+                             </Style>
+                             <Style Selector="ListBox /template/ ScrollContentPresenter">
+                                 <Setter Property="ClipToBounds" Value="False"/>
+                             </Style>
                              <Style Selector="ListBoxItem">
-                                 <Setter Property="Padding" Value="0,0,12,12"/>
+                                 <Setter Property="Padding" Value="0,6,12,6"/>
+                                 <Setter Property="ClipToBounds" Value="False"/>
                                  <Setter Property="Background" Value="Transparent"/>
+                             </Style>
+                             <Style Selector="ListBoxItem /template/ ContentPresenter">
+                                 <Setter Property="ClipToBounds" Value="False"/>
+                             </Style>
+                             <Style Selector="ListBoxItem:pointerover">
+                                 <Setter Property="ZIndex" Value="10"/>
                              </Style>
                              <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                  <Setter Property="Background" Value="Transparent"/>
@@ -1038,6 +1128,7 @@
                          <ListBox.ItemTemplate>
                              <DataTemplate x:DataType="models:Game">
                                  <Border Classes="GameGridCard"
+                                         ClipToBounds="False"
                                          Background="{StaticResource BrBgCard}"
                                          BorderBrush="{StaticResource BrBorderSubtle}"
                                          BorderThickness="1"
@@ -1048,23 +1139,23 @@
                                          PointerExited="GameGridCard_PointerExited"
                                          Tapped="GameGridCard_Tapped">
                                      <Border.Styles>
+                                         <Style Selector="Border.GameGridCard">
+                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                             <Setter Property="BoxShadow" Value="0 6 20 -4 #40000000, 0 1 2 0 #10FFFFFF"/>
+                                             <Setter Property="Transitions">
+                                                 <Transitions>
+                                                     <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25"/>
+                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                 </Transitions>
+                                             </Setter>
+                                         </Style>
                                          <Style Selector="Border.GameGridCard:pointerover">
                                              <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
                                              <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
-                                             <Setter Property="RenderTransform" Value="translateY(-3px)"/>
-                                             <Setter Property="BoxShadow" Value="0 14 30 -6 #66000000, 0 0 14 0 #188B73F8"/>
-                                         </Style>
-                                         <Style Selector="Border.GameGridCard">
-                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
-                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #33000000"/>
-                                             <Setter Property="Transitions">
-                                                 <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.18"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.18"/>
-                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut"/>
-                                                 </Transitions>
-                                             </Setter>
+                                             <Setter Property="RenderTransform" Value="translateY(-5px)"/>
+                                             <Setter Property="BoxShadow" Value="0 20 44 -8 #90000000, 0 0 24 2 #288B73F8"/>
                                          </Style>
                                      </Border.Styles>
 
@@ -1075,7 +1166,8 @@
                                                      ClipToBounds="True"
                                                      Background="{StaticResource BrBgElevated}"
                                                      BorderBrush="{StaticResource BrBorderSubtle}"
-                                                     BorderThickness="1">
+                                                     BorderThickness="1"
+                                                     BoxShadow="0 4 14 -2 #50000000">
                                                  <Grid>
                                                      <TextBlock Text="🎮"
                                                                 FontSize="40"
@@ -1111,39 +1203,32 @@
                                                                      Padding="6,2"
                                                                      IsVisible="{Binding HasAntiCheat}"
                                                                      ToolTip.Tip="{DynamicResource TxtAntiCheatDesc}">
-                                                                 <TextBlock Text="&#xF4A4;"
-                                                                            FontFamily="{StaticResource FontIcons}"
-                                                                            FontSize="12"
-                                                                            FontWeight="Bold"
-                                                                            Foreground="{StaticResource BrWarning}"
-                                                                            VerticalAlignment="Center"/>
+                                                                 <PathIcon Data="{StaticResource Icon.Shield}"
+                                                                           Width="12" Height="12"
+                                                                           Foreground="{StaticResource BrWarning}"
+                                                                           VerticalAlignment="Center"/>
                                                              </Border>
                                                          </StackPanel>
                                                      </Grid>
 
-                                                     <Border Background="#E61E1530"
+                                                     <Border Background="#EB161226"
                                                              BorderBrush="{StaticResource BrAccent}"
                                                              BorderThickness="1"
                                                              CornerRadius="6"
                                                              Padding="8,3"
                                                              Margin="8,0,8,8"
                                                              MaxWidth="189"
+                                                             BoxShadow="0 4 12 0 #50000000, 0 0 10 0 #358B73F8"
                                                              HorizontalAlignment="Left"
                                                              VerticalAlignment="Bottom"
                                                              IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                         <StackPanel Orientation="Horizontal">
-                                                             <TextBlock Text="✦ OptiScaler"
-                                                                        Foreground="{StaticResource BrAccent}"
-                                                                        FontSize="{StaticResource FontSizeCaption}"
-                                                                        FontWeight="Bold"/>
-                                                             <TextBlock Text="{Binding OptiscalerVersion, StringFormat=' {0}'}"
-                                                                        Foreground="{StaticResource BrAccent}"
-                                                                        FontSize="{StaticResource FontSizeCaption}"
-                                                                        FontWeight="SemiBold"
-                                                                        MaxWidth="95"
-                                                                        TextTrimming="CharacterEllipsis"
-                                                                        IsVisible="{Binding OptiscalerVersion, Converter={StaticResource NullToVisibilityConverter}}"/>
-                                                         </StackPanel>
+                                                         <TextBlock Text="{Binding OptiscalerBadgeText}"
+                                                                    Foreground="#C2B5FF"
+                                                                    FontSize="{StaticResource FontSizeCaption}"
+                                                                    FontWeight="Bold"
+                                                                    VerticalAlignment="Center"
+                                                                    MaxWidth="170"
+                                                                    TextTrimming="CharacterEllipsis"/>
                                                      </Border>
                                                  </Grid>
                                              </Border>
@@ -1262,23 +1347,24 @@
                                                     Content="{DynamicResource TxtQuickInstall}"
                                                     Click="BtnFastInstall_Click"
                                                     Loaded="BtnFastInstall_Loaded"/>
-                                            <Button MinWidth="86"
+                                            <Button MinWidth="96"
                                                     HorizontalAlignment="Center"
                                                     HorizontalContentAlignment="Center"
-                                                    Classes="BtnBase"
-                                                    Padding="10,6"
+                                                    Classes="BtnPrimary"
+                                                    Padding="14,7"
                                                     Click="BtnManage_Click">
                                                 <Button.Content>
                                                     <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                                         <PathIcon Grid.Column="0"
                                                                    Data="{StaticResource Icon.Settings}"
                                                                    Width="14" Height="14"
-                                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                                   Foreground="White"
                                                                    VerticalAlignment="Center"
                                                                    Margin="0,0,6,0"/>
                                                         <TextBlock Grid.Column="1"
                                                                    Text="{DynamicResource TxtManageGame}"
-                                                                   Foreground="{StaticResource BrTextPrimary}"
+                                                                   Foreground="White"
+                                                                   FontWeight="SemiBold"
                                                                    VerticalAlignment="Center"/>
                                                     </Grid>
                                                 </Button.Content>
@@ -1407,12 +1493,11 @@
                                      HorizontalAlignment="Right"
                                      VerticalAlignment="Bottom"
                                      Margin="0,0,16,16">
-                                 <TextBlock Text="&#xF191;"
-                                            FontFamily="{StaticResource FontIcons}"
-                                            FontSize="18"
-                                            Foreground="White"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
+                                 <PathIcon Data="{StaticResource Icon.Plus}"
+                                           Width="16" Height="16"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
                              </Border>
                          </Grid>
 
@@ -1789,6 +1874,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -1835,6 +1921,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -1860,10 +1947,10 @@
                                             VerticalAlignment="Center"
                                             Click="BtnManageCache_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xF419;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       FontSize="14"
-                                                       VerticalAlignment="Center"/>
+                                            <PathIcon Data="{StaticResource Icon.Wrench}"
+                                                      Width="14" Height="14"
+                                                      Foreground="{StaticResource BrTextPrimary}"
+                                                      VerticalAlignment="Center"/>
                                             <TextBlock Text="Manage"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -1876,6 +1963,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -1901,10 +1989,10 @@
                                             VerticalAlignment="Center"
                                             Click="BtnManageDefaultVersions_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xF419;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       FontSize="14"
-                                                       VerticalAlignment="Center"/>
+                                            <PathIcon Data="{StaticResource Icon.Wrench}"
+                                                      Width="14" Height="14"
+                                                      Foreground="{StaticResource BrTextPrimary}"
+                                                      VerticalAlignment="Center"/>
                                             <TextBlock Text="Manage"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -1917,6 +2005,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -1942,10 +2031,10 @@
                                             VerticalAlignment="Center"
                                             Click="BtnManageScanSources_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xF419;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       FontSize="14"
-                                                       VerticalAlignment="Center"/>
+                                            <PathIcon Data="{StaticResource Icon.Wrench}"
+                                                      Width="14" Height="14"
+                                                      Foreground="{StaticResource BrTextPrimary}"
+                                                      VerticalAlignment="Center"/>
                                             <TextBlock Text="Manage"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -1958,6 +2047,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -2052,6 +2142,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -2093,6 +2184,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -2134,6 +2226,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -2178,6 +2271,7 @@
                                     BorderBrush="{StaticResource BrBorderSubtle}"
                                     BorderThickness="1"
                                     CornerRadius="{StaticResource RadiusLarge}"
+                                    BoxShadow="0 4 16 -4 #35000000"
                                     Padding="20,16"
                                     Margin="0,0,16,16"
                                     HorizontalAlignment="Left">
@@ -2203,10 +2297,10 @@
                                             VerticalAlignment="Center"
                                             Click="BtnManageProxy_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xF419;"
-                                                       FontFamily="{StaticResource FontIcons}"
-                                                       FontSize="14"
-                                                       VerticalAlignment="Center"/>
+                                            <PathIcon Data="{StaticResource Icon.Wrench}"
+                                                      Width="14" Height="14"
+                                                      Foreground="{StaticResource BrTextPrimary}"
+                                                      VerticalAlignment="Center"/>
                                             <TextBlock Text="Manage"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -2274,6 +2368,7 @@
                         BorderBrush="{StaticResource BrAccent}"
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusLarge}"
+                        BoxShadow="0 24 64 -8 #CC000000"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Padding="60,50">
@@ -2307,6 +2402,7 @@
                      BorderBrush="{StaticResource BrAccent}"
                      BorderThickness="1"
                      CornerRadius="{StaticResource RadiusMedium}"
+                     BoxShadow="0 8 32 -4 #90000000, 0 0 16 0 #208B73F8"
                      Padding="14,10"
                      IsVisible="False"
                      ZIndex="200">
@@ -2343,6 +2439,7 @@
                      BorderBrush="{StaticResource BrBorderSubtle}"
                      BorderThickness="1"
                      CornerRadius="{StaticResource RadiusMedium}"
+                     BoxShadow="0 8 24 -4 #80000000"
                      Padding="12,8"
                      IsVisible="False"
                      ZIndex="210">
@@ -2369,6 +2466,7 @@
                     BorderBrush="{StaticResource BrAccent}"
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusLarge}"
+                    BoxShadow="0 24 64 -8 #CC000000"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Padding="60,50">

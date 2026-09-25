@@ -819,17 +819,11 @@
                                                         CornerRadius="3"
                                                         Padding="6,2"
                                                         IsVisible="{Binding IsOptiscalerInstalled, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="✦ OptiScaler"
-                                                                   Foreground="{StaticResource BrAccent}"
-                                                                   FontSize="8"
-                                                                   FontWeight="Bold"/>
-                                                        <TextBlock Text="{Binding OptiscalerVersion, StringFormat=' {0}'}"
-                                                                   Foreground="{StaticResource BrAccent}"
-                                                                   FontSize="8"
-                                                                   FontWeight="SemiBold"
-                                                                   IsVisible="{Binding OptiscalerVersion, Converter={StaticResource NullToVisibilityConverter}}"/>
-                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding OptiscalerBadgeText}"
+                                                               Foreground="{StaticResource BrAccent}"
+                                                               FontSize="8"
+                                                               FontWeight="Bold"
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
 
                                                 <!-- Installed badge -->

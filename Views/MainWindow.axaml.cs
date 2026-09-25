@@ -2386,16 +2386,17 @@ namespace OptiscalerClient.Views
             {
                 titleRow.Children.Add(new Border
                 {
-                    Background = Application.Current?.FindResource("BrBgElevated") as IBrush ?? Brushes.Transparent,
-                    BorderBrush = Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                    Background = new SolidColorBrush(Color.FromArgb(0x25, 0x8B, 0x73, 0xF8)),
+                    BorderBrush = Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.DimGray,
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(6, 2),
+                    Padding = new Thickness(8, 2),
                     Child = new TextBlock
                     {
                         Text = GetResourceString("TxtDefaultBadge", "Default"),
-                        FontSize = 9,
-                        Foreground = Application.Current?.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray
+                        FontSize = 10,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.Gray
                     }
                 });
             }
@@ -2419,13 +2420,16 @@ namespace OptiscalerClient.Views
                 Background = Application.Current?.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
                 BorderBrush = Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(16, 10),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(16, 12),
                 Child = stack,
                 Tag = profile,
                 Cursor = new Cursor(StandardCursorType.Hand),
-                Focusable = true
+                Focusable = true,
+                BoxShadow = BoxShadows.Parse("0 2 8 -2 #30000000")
             };
+            border.Classes.Add("Card");
+            border.Classes.Add("Interactive");
 
             void SelectCard(object? s)
             {
@@ -2469,7 +2473,10 @@ namespace OptiscalerClient.Views
                     b.BorderBrush = selected
                         ? Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.White
                         : Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray;
-                    b.BorderThickness = selected ? new Thickness(2) : new Thickness(1);
+                    b.BorderThickness = selected ? new Thickness(1.5) : new Thickness(1);
+                    b.BoxShadow = selected
+                        ? BoxShadows.Parse("0 8 24 -4 #70000000, 0 0 14 0 #308B73F8")
+                        : BoxShadows.Parse("0 2 8 -2 #30000000");
                 }
             }
         }
