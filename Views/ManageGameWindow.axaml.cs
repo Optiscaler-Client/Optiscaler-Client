@@ -531,7 +531,8 @@ namespace OptiscalerClient.Views
 
             Dispatcher.UIThread.Post(() =>
             {
-                if (!IsActive) return;
+                if (!IsVisible) return;
+                if (OwnedWindows.Count > 0) return;
                 if (DateTime.UtcNow < _ignoreGamepadInputUntilUtc) return;
 
                 SetControllerModeActive(true);
@@ -575,10 +576,31 @@ namespace OptiscalerClient.Views
             });
         }
 
+        private Point? _lastPointerPositionForModeDetection;
+
         private void ManageGameWindow_PointerMoved(object? sender, PointerEventArgs e)
         {
-            if (!_isControllerModeActive) return;
+            var position = e.GetPosition(this);
 
+            if (!_isControllerModeActive)
+            {
+                _lastPointerPositionForModeDetection = position;
+                return;
+            }
+
+            // Avalonia raises synthetic PointerMoved events on layout changes or popups.
+            // Only genuine mouse movement should switch to mouse mode.
+            if (_lastPointerPositionForModeDetection is { } last)
+            {
+                var delta = position - last;
+                if (Math.Abs(delta.X) < 1.0 && Math.Abs(delta.Y) < 1.0)
+                {
+                    _lastPointerPositionForModeDetection = position;
+                    return;
+                }
+            }
+
+            _lastPointerPositionForModeDetection = position;
             SetControllerModeActive(false);
             TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
         }
@@ -662,10 +684,9 @@ namespace OptiscalerClient.Views
             var currentNode = ResolveFocusedNode(focused, nodes);
             if (currentNode == null)
             {
-                var first = nodes
-                    .OrderBy(n => n.Row)
-                    .ThenBy(n => n.Col)
-                    .First();
+                var first = nodes.FirstOrDefault(n => n.Name == "BtnOptiStable")
+                         ?? nodes.FirstOrDefault(n => n.Name == "CmbOptiVersion")
+                         ?? nodes.OrderBy(n => n.Row).ThenBy(n => n.Col).First();
                 FocusControl(first.Control);
                 return true;
             }
@@ -681,30 +702,49 @@ namespace OptiscalerClient.Views
         {
             var nodes = new List<NavigationNode>();
 
-            AddRootNode(nodes, "BtnEditImage", 1, 1);
-            AddRootNode(nodes, "BtnOptiStable", 1, 2);
-            AddRootNode(nodes, "BtnOptiBeta", 1, 3);
-            AddRootNode(nodes, "BtnOptiNightly", 1, 4);
-            AddRootNode(nodes, "BtnClose", 1, 5);
+            // Row 0: Tabs & Titlebar buttons
+            AddRootNode(nodes, "BtnEditImage", 0, 0);
+            AddRootNode(nodes, "BtnOptiStable", 0, 1);
+            AddRootNode(nodes, "BtnOptiBeta", 0, 2);
+            AddRootNode(nodes, "BtnOptiNightly", 0, 3);
+            AddRootNode(nodes, "BtnOptiCustom", 0, 3);
+            AddRootNode(nodes, "BtnExtrasInt8", 0, 4);
+            AddRootNode(nodes, "BtnExtrasFp8", 0, 5);
+            AddRootNode(nodes, "BtnClose", 0, 7);
 
-            AddRootNode(nodes, "BtnEditTitle", 2, 1);
-            AddRootNode(nodes, "CmbOptiVersion", 2, 2);
-            AddRootNode(nodes, "CmbExtrasVersion", 2, 4);
-            AddRootNode(nodes, "CmbFakenvapiVersion", 2, 5);
+            // Row 1: OptiScaler / FSR 4 Swap / Injection
+            AddRootNode(nodes, "BtnEditTitle", 1, 0);
+            AddRootNode(nodes, "CmbOptiVersion", 1, 2);
+            AddRootNode(nodes, "CmbExtrasVersion", 1, 4);
+            AddRootNode(nodes, "CmbInjectionMethod", 1, 6);
+            AddRootNode(nodes, "CmbFakenvapiVersion", 1, 6);
 
-            AddRootNode(nodes, "CmbInjectionMethod", 3, 3);
-            AddRootNode(nodes, "CmbOptiPatcherVersion", 3, 4);
-            AddRootNode(nodes, "CmbNukemFGVersion", 3, 5);
+            // Row 2: OptiPatcher / Output Upscaler / Upscaling Quality
+            AddRootNode(nodes, "CmbOptiPatcherVersion", 2, 2);
+            AddRootNode(nodes, "CmbOutputUpscaler", 2, 4);
+            AddRootNode(nodes, "CmbUpscalingQuality", 2, 6);
+            AddRootNode(nodes, "CmbNukemFGVersion", 2, 6);
 
-            AddRootNode(nodes, "CmbProfile", 4, 3);
-            AddRootNode(nodes, "BtnFrameGeneration", 4, 4);
-            AddRootNode(nodes, "CmbUpscalingQuality", 4, 5);
-            AddRootNode(nodes, "BtnUninstall", 5, 5);
+            // Row 3: Frame Generation / Profile / Spoofing
+            AddRootNode(nodes, "BtnFrameGeneration", 3, 2);
+            AddRootNode(nodes, "CmbProfile", 3, 4);
+            AddRootNode(nodes, "BtnViewIni", 3, 5);
+            AddRootNode(nodes, "CmbSpoofing", 3, 6);
 
-            AddRootNode(nodes, "BtnOpenFolder", 6, 1);
-            AddRootNode(nodes, "BtnFolderCleanup", 6, 3);
+            // Row 4: Experimental zone
+            AddRootNode(nodes, "CmbRenodxVersion", 4, 2);
+            AddRootNode(nodes, "CmbSetupNr", 4, 4);
+            AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 6);
+            AddRootNode(nodes, "CmbAmdNrBridgeVersion", 4, 6);
+
+            // Row 5: Uninstall
+            AddRootNode(nodes, "BtnUninstall", 5, 6);
+
+            // Row 6: Bottom actions
+            AddRootNode(nodes, "BtnOpenFolder", 6, 0);
+            AddRootNode(nodes, "BtnFolderCleanup", 6, 2);
             AddRootNode(nodes, "BtnInstallManual", 6, 4);
-            AddRootNode(nodes, "BtnInstall", 6, 5);
+            AddRootNode(nodes, "BtnInstall", 6, 6);
 
             return nodes;
         }
@@ -750,9 +790,10 @@ namespace OptiscalerClient.Views
                 if (ReferenceEquals(candidate.Control, current.Control))
                     continue;
 
-                if (IsOptiTabButton(candidate.Name)
-                    && !IsOptiTabButton(current.Name)
-                    && !string.Equals(current.Name, "CmbOptiVersion", StringComparison.Ordinal))
+                if (IsTabButton(candidate.Name)
+                    && !IsTabButton(current.Name)
+                    && !string.Equals(current.Name, "CmbOptiVersion", StringComparison.Ordinal)
+                    && !string.Equals(current.Name, "CmbExtrasVersion", StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -804,7 +845,15 @@ namespace OptiscalerClient.Views
         {
             return string.Equals(controlName, "BtnOptiStable", StringComparison.Ordinal)
                    || string.Equals(controlName, "BtnOptiBeta", StringComparison.Ordinal)
-                   || string.Equals(controlName, "BtnOptiNightly", StringComparison.Ordinal);
+                   || string.Equals(controlName, "BtnOptiNightly", StringComparison.Ordinal)
+                   || string.Equals(controlName, "BtnOptiCustom", StringComparison.Ordinal);
+        }
+
+        private static bool IsTabButton(string controlName)
+        {
+            return IsOptiTabButton(controlName)
+                   || string.Equals(controlName, "BtnExtrasInt8", StringComparison.Ordinal)
+                   || string.Equals(controlName, "BtnExtrasFp8", StringComparison.Ordinal);
         }
 
         private IEnumerable<string> GetRootNeighborCandidates(string currentName, NavigationDirection direction)
@@ -819,76 +868,138 @@ namespace OptiscalerClient.Views
 
             return (currentName, direction) switch
             {
+                // Left Column
+                ("BtnEditImage", NavigationDirection.Down) => new[] { "BtnEditTitle" },
+                ("BtnEditImage", NavigationDirection.Right) => new[] { "BtnOptiStable", "CmbOptiVersion" },
+
+                ("BtnEditTitle", NavigationDirection.Up) => new[] { "BtnEditImage" },
                 ("BtnEditTitle", NavigationDirection.Down) => new[] { "BtnOpenFolder" },
+                ("BtnEditTitle", NavigationDirection.Right) => new[] { "CmbOptiVersion", "CmbOptiPatcherVersion" },
 
-                ("CmbOptiVersion", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
-                ("CmbOptiVersion", NavigationDirection.Left) => new[] { "BtnEditTitle" },
-                ("CmbOptiVersion", NavigationDirection.Down) => new[] { "CmbInjectionMethod", "CmbProfile" },
+                ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
+                ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup", "BtnFrameGeneration" },
 
+                // Top Tabs
+                ("BtnOptiStable", NavigationDirection.Left) => new[] { "BtnEditImage" },
+                ("BtnOptiStable", NavigationDirection.Right) => new[] { "BtnOptiBeta", "BtnOptiNightly", "BtnExtrasInt8" },
                 ("BtnOptiStable", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
-                ("BtnOptiStable", NavigationDirection.Right) => new[] { "BtnOptiBeta", "BtnOptiNightly", "CmbExtrasVersion" },
 
                 ("BtnOptiBeta", NavigationDirection.Left) => new[] { "BtnOptiStable" },
-                ("BtnOptiBeta", NavigationDirection.Right) => new[] { "BtnOptiNightly", "CmbExtrasVersion" },
+                ("BtnOptiBeta", NavigationDirection.Right) => new[] { "BtnOptiNightly", "BtnExtrasInt8" },
                 ("BtnOptiBeta", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
 
                 ("BtnOptiNightly", NavigationDirection.Left) => new[] { "BtnOptiBeta", "BtnOptiStable" },
-                ("BtnOptiNightly", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("BtnOptiNightly", NavigationDirection.Right) => new[] { "BtnExtrasInt8", "BtnExtrasFp8", "CmbInjectionMethod" },
                 ("BtnOptiNightly", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
 
+                ("BtnOptiCustom", NavigationDirection.Left) => new[] { "BtnOptiNightly", "BtnOptiBeta" },
+                ("BtnOptiCustom", NavigationDirection.Right) => new[] { "BtnExtrasInt8" },
+                ("BtnOptiCustom", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
+
+                ("BtnExtrasInt8", NavigationDirection.Left) => new[] { "BtnOptiNightly", "BtnOptiBeta", "BtnOptiStable" },
+                ("BtnExtrasInt8", NavigationDirection.Right) => new[] { "BtnExtrasFp8", "CmbInjectionMethod", "BtnClose" },
+                ("BtnExtrasInt8", NavigationDirection.Down) => new[] { "CmbExtrasVersion" },
+
+                ("BtnExtrasFp8", NavigationDirection.Left) => new[] { "BtnExtrasInt8" },
+                ("BtnExtrasFp8", NavigationDirection.Right) => new[] { "CmbInjectionMethod", "BtnClose" },
+                ("BtnExtrasFp8", NavigationDirection.Down) => new[] { "CmbExtrasVersion" },
+
+                ("BtnClose", NavigationDirection.Left) => new[] { "BtnExtrasFp8", "BtnExtrasInt8", "BtnOptiNightly" },
+                ("BtnClose", NavigationDirection.Down) => new[] { "CmbInjectionMethod", "CmbUpscalingQuality" },
+
+                // Row 1: OptiScaler / FSR 4 Swap / Injection
+                ("CmbOptiVersion", NavigationDirection.Left) => new[] { "BtnEditTitle", "BtnEditImage" },
+                ("CmbOptiVersion", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("CmbOptiVersion", NavigationDirection.Down) => new[] { "CmbOptiPatcherVersion" },
+
+                ("CmbExtrasVersion", NavigationDirection.Up) => new[] { "BtnExtrasInt8", "BtnExtrasFp8" },
                 ("CmbExtrasVersion", NavigationDirection.Left) => new[] { "CmbOptiVersion" },
-                ("CmbExtrasVersion", NavigationDirection.Up) => new[] { "BtnOptiNightly", "BtnOptiBeta", "BtnOptiStable" },
-                ("CmbExtrasVersion", NavigationDirection.Right) => new[] { "CmbFakenvapiVersion" },
-                ("CmbExtrasVersion", NavigationDirection.Down) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Right) => new[] { "CmbInjectionMethod", "CmbFakenvapiVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Down) => new[] { "CmbOutputUpscaler" },
+
+                ("CmbInjectionMethod", NavigationDirection.Up) => new[] { "BtnExtrasFp8", "BtnExtrasInt8", "BtnClose" },
+                ("CmbInjectionMethod", NavigationDirection.Left) => new[] { "CmbExtrasVersion" },
+                ("CmbInjectionMethod", NavigationDirection.Right) => new[] { "BtnClose" },
+                ("CmbInjectionMethod", NavigationDirection.Down) => new[] { "CmbUpscalingQuality" },
 
                 ("CmbFakenvapiVersion", NavigationDirection.Left) => new[] { "CmbExtrasVersion" },
-                ("CmbFakenvapiVersion", NavigationDirection.Down) => new[] { "CmbNukemFGVersion", "BtnInstall" },
+                ("CmbFakenvapiVersion", NavigationDirection.Down) => new[] { "CmbNukemFGVersion", "CmbUpscalingQuality" },
 
-                ("CmbInjectionMethod", NavigationDirection.Up) => new[] { "CmbOptiVersion" },
-                ("CmbInjectionMethod", NavigationDirection.Down) => new[] { "CmbProfile", "BtnFolderCleanup" },
-                ("CmbInjectionMethod", NavigationDirection.Right) => new[] { "CmbOptiPatcherVersion" },
-                ("CmbInjectionMethod", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                // Row 2: OptiPatcher / Output Upscaler / Upscaling Quality
+                ("CmbOptiPatcherVersion", NavigationDirection.Up) => new[] { "CmbOptiVersion" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Right) => new[] { "CmbOutputUpscaler" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Down) => new[] { "BtnFrameGeneration" },
 
-                ("CmbOptiPatcherVersion", NavigationDirection.Left) => new[] { "CmbInjectionMethod" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Right) => new[] { "CmbNukemFGVersion" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Up) => new[] { "CmbExtrasVersion" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnFolderCleanup" },
+                ("CmbOutputUpscaler", NavigationDirection.Up) => new[] { "CmbExtrasVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Left) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Right) => new[] { "CmbUpscalingQuality", "CmbNukemFGVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Down) => new[] { "CmbProfile" },
 
+                ("CmbUpscalingQuality", NavigationDirection.Up) => new[] { "CmbInjectionMethod", "CmbNukemFGVersion" },
+                ("CmbUpscalingQuality", NavigationDirection.Left) => new[] { "CmbOutputUpscaler" },
+                ("CmbUpscalingQuality", NavigationDirection.Down) => new[] { "CmbSpoofing" },
+
+                ("CmbNukemFGVersion", NavigationDirection.Up) => new[] { "CmbFakenvapiVersion", "CmbInjectionMethod" },
                 ("CmbNukemFGVersion", NavigationDirection.Left) => new[] { "CmbOptiPatcherVersion" },
-                ("CmbNukemFGVersion", NavigationDirection.Up) => new[] { "CmbFakenvapiVersion" },
-                ("CmbNukemFGVersion", NavigationDirection.Down) => new[] { "BtnInstall", "BtnInstallManual" },
+                ("CmbNukemFGVersion", NavigationDirection.Right) => new[] { "CmbUpscalingQuality" },
+                ("CmbNukemFGVersion", NavigationDirection.Down) => new[] { "CmbSpoofing" },
 
-                ("CmbProfile", NavigationDirection.Up) => new[] { "CmbInjectionMethod" },
-                ("CmbProfile", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
-                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnFrameGeneration" },
-                ("CmbProfile", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                // Row 3: Frame Generation / Profile / Spoofing
+                ("BtnFrameGeneration", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion" },
+                ("BtnFrameGeneration", NavigationDirection.Left) => new[] { "BtnEditTitle", "BtnOpenFolder" },
+                ("BtnFrameGeneration", NavigationDirection.Right) => new[] { "CmbProfile" },
+                ("BtnFrameGeneration", NavigationDirection.Down) => new[] { "CmbRenodxVersion", "BtnFolderCleanup" },
 
-                ("BtnFrameGeneration", NavigationDirection.Left) => new[] { "CmbProfile" },
-                ("BtnFrameGeneration", NavigationDirection.Right) => new[] { "CmbUpscalingQuality" },
-                ("BtnFrameGeneration", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion", "CmbNukemFGVersion" },
-                ("BtnFrameGeneration", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnInstall" },
+                ("CmbProfile", NavigationDirection.Up) => new[] { "CmbOutputUpscaler" },
+                ("CmbProfile", NavigationDirection.Left) => new[] { "BtnFrameGeneration" },
+                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnViewIni", "CmbSpoofing" },
+                ("CmbProfile", NavigationDirection.Down) => new[] { "CmbSetupNr", "BtnInstallManual" },
 
-                ("CmbUpscalingQuality", NavigationDirection.Left) => new[] { "BtnFrameGeneration" },
-                ("CmbUpscalingQuality", NavigationDirection.Up) => new[] { "CmbNukemFGVersion", "CmbFakenvapiVersion" },
-                ("CmbUpscalingQuality", NavigationDirection.Down) => new[] { "BtnUninstall", "BtnInstall" },
+                ("BtnViewIni", NavigationDirection.Up) => new[] { "CmbOutputUpscaler" },
+                ("BtnViewIni", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("BtnViewIni", NavigationDirection.Right) => new[] { "CmbSpoofing" },
+                ("BtnViewIni", NavigationDirection.Down) => new[] { "CmbSetupNr", "BtnInstallManual" },
 
-                ("BtnUninstall", NavigationDirection.Left) => new[] { "CmbUpscalingQuality", "BtnFrameGeneration", "CmbProfile" },
+                ("CmbSpoofing", NavigationDirection.Up) => new[] { "CmbUpscalingQuality" },
+                ("CmbSpoofing", NavigationDirection.Left) => new[] { "BtnViewIni", "CmbProfile" },
+                ("CmbSpoofing", NavigationDirection.Down) => new[] { "CmbDlssNrDanielVersion", "CmbSetupNr", "BtnUninstall", "BtnInstall" },
+
+                // Row 4: Experimental Zone
+                ("CmbRenodxVersion", NavigationDirection.Up) => new[] { "BtnFrameGeneration" },
+                ("CmbRenodxVersion", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
+                ("CmbRenodxVersion", NavigationDirection.Right) => new[] { "CmbSetupNr" },
+                ("CmbRenodxVersion", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
+
+                ("CmbSetupNr", NavigationDirection.Up) => new[] { "CmbProfile" },
+                ("CmbSetupNr", NavigationDirection.Left) => new[] { "CmbRenodxVersion" },
+                ("CmbSetupNr", NavigationDirection.Right) => new[] { "CmbDlssNrDanielVersion", "BtnUninstall", "BtnInstall" },
+                ("CmbSetupNr", NavigationDirection.Down) => new[] { "BtnInstallManual" },
+
+                ("CmbDlssNrDanielVersion", NavigationDirection.Up) => new[] { "CmbSpoofing" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Left) => new[] { "CmbSetupNr" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Down) => new[] { "CmbAmdNrBridgeVersion", "BtnUninstall", "BtnInstall" },
+
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Up) => new[] { "CmbDlssNrDanielVersion", "CmbSpoofing" },
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Left) => new[] { "CmbSetupNr" },
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Down) => new[] { "BtnUninstall", "BtnInstall" },
+
+                // Row 5: Uninstall
+                ("BtnUninstall", NavigationDirection.Up) => new[] { "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" },
+                ("BtnUninstall", NavigationDirection.Left) => new[] { "BtnInstallManual", "BtnFolderCleanup" },
                 ("BtnUninstall", NavigationDirection.Down) => new[] { "BtnInstall" },
-                ("BtnUninstall", NavigationDirection.Up) => new[] { "BtnFrameGeneration", "CmbNukemFGVersion" },
 
-                ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
-                ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup" },
-
+                // Row 6: Bottom Actions
+                ("BtnFolderCleanup", NavigationDirection.Up) => new[] { "CmbRenodxVersion", "BtnFrameGeneration" },
                 ("BtnFolderCleanup", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
                 ("BtnFolderCleanup", NavigationDirection.Right) => new[] { "BtnInstallManual" },
-                ("BtnFolderCleanup", NavigationDirection.Up) => new[] { "CmbProfile", "CmbInjectionMethod" },
 
+                ("BtnInstallManual", NavigationDirection.Up) => new[] { "CmbSetupNr", "CmbProfile" },
                 ("BtnInstallManual", NavigationDirection.Left) => new[] { "BtnFolderCleanup" },
                 ("BtnInstallManual", NavigationDirection.Right) => new[] { "BtnInstall" },
-                ("BtnInstallManual", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion" },
 
+                ("BtnInstall", NavigationDirection.Up) => new[] { "BtnUninstall", "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" },
                 ("BtnInstall", NavigationDirection.Left) => new[] { "BtnInstallManual" },
-                ("BtnInstall", NavigationDirection.Up) => new[] { "BtnUninstall", "CmbNukemFGVersion" },
 
                 _ => Array.Empty<string>()
             };
@@ -1023,6 +1134,19 @@ namespace OptiscalerClient.Views
 
         private void FocusFirstActiveElement()
         {
+            if (!IsAnyModalVisible())
+            {
+                var nodes = GetRootNavigationNodes();
+                var preferred = nodes.FirstOrDefault(n => n.Name == "BtnOptiStable")
+                             ?? nodes.FirstOrDefault(n => n.Name == "CmbOptiVersion")
+                             ?? nodes.OrderBy(n => n.Row).ThenBy(n => n.Col).FirstOrDefault();
+                if (preferred != null)
+                {
+                    FocusControl(preferred.Control);
+                    return;
+                }
+            }
+
             var focusables = GetFocusableElementsInActiveSurface();
             if (focusables.Count == 0) return;
             FocusControl(focusables[0]);
