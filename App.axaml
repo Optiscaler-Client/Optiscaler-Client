@@ -8,6 +8,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://OptiscalerClient/Languages/Strings.en.axaml" />
+                <ResourceInclude Source="avares://OptiscalerClient/Styles/Icons.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <Color x:Key="BgDeepColor">#0E0E1A</Color>
@@ -352,6 +353,192 @@
             <Setter Property="Padding"            Value="12,8"/>
             <Setter Property="CornerRadius"       Value="{StaticResource RadiusSmall}"/>
             <Setter Property="Margin"             Value="0,2"/>
+        </Style>
+
+        <!-- ════════════════════════════════════════════════════════
+             DESIGN SYSTEM SURFACES & BADGES
+             ════════════════════════════════════════════════════════ -->
+
+        <Style Selector="Border.Card">
+            <Setter Property="Background" Value="{StaticResource BrBgCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
+            <Setter Property="BoxShadow" Value="0 8 24 -6 #50000000"/>
+        </Style>
+
+        <Style Selector="Border.SubCard">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrBorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
+            <Setter Property="Padding" Value="14,10"/>
+        </Style>
+
+        <!-- Callouts (informational banners with 3px accent stroke) -->
+        <Style Selector="Border.Callout">
+            <Setter Property="Background" Value="#148B73F8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
+            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+        <Style Selector="Border.Callout.Warning">
+            <Setter Property="Background" Value="{StaticResource BrWarningSoft}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrWarning}"/>
+        </Style>
+        <Style Selector="Border.Callout.Danger">
+            <Setter Property="Background" Value="{StaticResource BrErrorSoft}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrError}"/>
+        </Style>
+        <Style Selector="Border.Callout.Success">
+            <Setter Property="Background" Value="{StaticResource BrSuccessSoft}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrSuccess}"/>
+        </Style>
+
+        <!-- Icon Tile -->
+        <Style Selector="Border.IconTile">
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="{StaticResource BrAccentSoft}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.IconTile > PathIcon">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Foreground" Value="{StaticResource BrAccent}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Small">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Border.IconTile.Small > PathIcon">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+        </Style>
+        <Style Selector="Border.IconTile.Large">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        <Style Selector="Border.IconTile.Large > PathIcon">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+        </Style>
+        <Style Selector="Border.IconTile.Success">
+            <Setter Property="Background" Value="{StaticResource BrSuccessSoft}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Success > PathIcon">
+            <Setter Property="Foreground" Value="{StaticResource BrSuccess}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Warning">
+            <Setter Property="Background" Value="{StaticResource BrWarningSoft}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Warning > PathIcon">
+            <Setter Property="Foreground" Value="{StaticResource BrWarning}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Danger">
+            <Setter Property="Background" Value="{StaticResource BrErrorSoft}"/>
+        </Style>
+        <Style Selector="Border.IconTile.Danger > PathIcon">
+            <Setter Property="Foreground" Value="{StaticResource BrError}"/>
+        </Style>
+
+        <!-- Standard PathIcon dimensions -->
+        <Style Selector="PathIcon">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+        </Style>
+        <Style Selector="Button PathIcon">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+        </Style>
+
+        <!-- Upscaler & Status Badges -->
+        <Style Selector="Border.Badge">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.Badge TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Border.Badge.Dlss">
+            <Setter Property="Background" Value="#1F5CB87E"/>
+            <Setter Property="BorderBrush" Value="#405CB87E"/>
+        </Style>
+        <Style Selector="Border.Badge.Dlss TextBlock">
+            <Setter Property="Foreground" Value="#7FD481"/>
+        </Style>
+        <Style Selector="Border.Badge.Dlss.Injected">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#405CB87E"/>
+        </Style>
+        <Style Selector="Border.Badge.Dlss.Injected TextBlock">
+            <Setter Property="Foreground" Value="#7FD481"/>
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+
+        <Style Selector="Border.Badge.Fsr">
+            <Setter Property="Background" Value="#1FE06060"/>
+            <Setter Property="BorderBrush" Value="#40E06060"/>
+        </Style>
+        <Style Selector="Border.Badge.Fsr TextBlock">
+            <Setter Property="Foreground" Value="#F08080"/>
+        </Style>
+        <Style Selector="Border.Badge.Fsr.Injected">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#40E06060"/>
+        </Style>
+        <Style Selector="Border.Badge.Fsr.Injected TextBlock">
+            <Setter Property="Foreground" Value="#F08080"/>
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+        <Style Selector="Border.Badge.Fsr.Swapped">
+            <Setter Property="Background" Value="#1FD4A04A"/>
+            <Setter Property="BorderBrush" Value="#40D4A04A"/>
+        </Style>
+        <Style Selector="Border.Badge.Fsr.Swapped TextBlock">
+            <Setter Property="Foreground" Value="#E6B35A"/>
+        </Style>
+
+        <Style Selector="Border.Badge.Xess">
+            <Setter Property="Background" Value="#1F7080E0"/>
+            <Setter Property="BorderBrush" Value="#407080E0"/>
+        </Style>
+        <Style Selector="Border.Badge.Xess TextBlock">
+            <Setter Property="Foreground" Value="#8FA0F8"/>
+        </Style>
+        <Style Selector="Border.Badge.Xess.Injected">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#407080E0"/>
+        </Style>
+        <Style Selector="Border.Badge.Xess.Injected TextBlock">
+            <Setter Property="Foreground" Value="#8FA0F8"/>
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+
+        <Style Selector="Border.Badge.OptiScaler">
+            <Setter Property="Background" Value="#248B73F8"/>
+            <Setter Property="BorderBrush" Value="#598B73F8"/>
+        </Style>
+        <Style Selector="Border.Badge.OptiScaler TextBlock">
+            <Setter Property="Foreground" Value="#A894FF"/>
+        </Style>
+
+        <Style Selector="Border.Badge.Experimental">
+            <Setter Property="Background" Value="#1F8983A6"/>
+            <Setter Property="BorderBrush" Value="#408983A6"/>
+        </Style>
+        <Style Selector="Border.Badge.Experimental TextBlock">
+            <Setter Property="Foreground" Value="#B4AED4"/>
         </Style>
 
         <!-- ════════════════════════════════════════════════════════
