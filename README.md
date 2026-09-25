@@ -71,7 +71,7 @@
 Optional integrations, enabled from **Settings → Experimental**:
 
 - **RenoDx Addons** — Automatically fetches the per-game RenoDx addon for use with ReShade.
-- **Nvidia Neural Rendering Mod for AMD** — Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally combined with MatheusGViana's community OptiScaler wrapper so Neural Rendering and OptiScaler (including Multi Frame Generation) can run together.
+- **Nvidia Neural Rendering Mod for AMD** — Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally together with an official OptiScaler build (Stable, Beta or Nightly) through GoldenNights' AMD-NR-bridge.
 
 ### Profiles
 
@@ -290,7 +290,8 @@ This program is distributed in the hope that it will be useful, but **WITHOUT AN
 - **[NukemFG (DLSSG-to-FSR3)](https://github.com/Nukem9/dlssg-to-fsr3)**: Frame Generation bridge by Nukem.
 - **[DLSS Enabler](https://www.nexusmods.com/site/mods/757)**: DLSS Upscaler/Frame Generation simulation on any DX12 GPU, by artur07305. Distributed via an unofficial mirror since the official builds are Nexus Mods-only.
 - **[DLSS-NR-on-AMD](https://github.com/danielblnc/DLSS-NR-on-AMD)**: Unofficial DLSS Neural Rendering mod for AMD GPUs, by danielblnc.
-- **[dlss-5-amd-project](https://github.com/MatheusGViana/dlss-5-amd-project)**: Community wrapper to run OptiScaler alongside the AMD Neural Rendering mod, by MatheusGViana.
+- **[DLSS-NR-on-AMD-Linux](https://github.com/bulacha3/DLSS-NR-on-AMD-Linux)**: Linux/Proton port of the AMD Neural Rendering mod, by bulacha3 (based on [guentra's original port](https://github.com/guentra/DLSS-NR-on-AMD-Linux), with [lmxxf](https://github.com/lmxxf/dlss5-on-amd-9070xt-porting)'s optimized backend).
+- **[AMD-NR-bridge](https://github.com/GoldenNights/AMD-NR-bridge)**: Plugin that lets the AMD Neural Rendering mod run alongside OptiScaler, by GoldenNights. Downloaded from its own releases, never bundled.
 
 This client application is merely a frontend interface to help users more easily manage and install the amazing work done by the OptiScaler team and other contributors. While OptiScaler Client itself is licensed under GPL-3.0-or-later, the third-party components it downloads and manages may be subject to their own respective licenses.
 

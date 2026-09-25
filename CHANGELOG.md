@@ -1,3 +1,15 @@
+#### [Unreleased] ####
+
+# Changelog
+
+##### Improvements
+
+- "Mod + OptiScaler" (Setup NR, experimental) now installs the **official OptiScaler build of your choice** (Stable, Beta or Nightly) together with danielblnc's mod, through GoldenNights' [AMD-NR-bridge](https://github.com/GoldenNights/AMD-NR-bridge). It replaces MatheusGViana's OptiScaler wrapper build, which has been discontinued.
+  - The AMD-NR-bridge version can be picked in Manage and pinned in Default Versions for Quick Install and Bulk Install.
+  - The bridge is downloaded from its GitHub releases (never bundled) and is removed on uninstall, restoring the `OptiScaler.ini` values it changed.
+  - Games already installed with the old wrapper build keep working; reinstalling from Manage moves them to the official build + AMD-NR-bridge.
+- On Linux, Setup NR now uses [bulacha3's DLSS-NR-on-AMD-Linux](https://github.com/bulacha3/DLSS-NR-on-AMD-Linux) instead of guentra's port, which had stopped at danielblnc's v0.2.12. It tracks the current mod version (0.3.1) and, on Radeon RX 9070 series GPUs, uses lmxxf's faster backend (requires `gcc`/`g++` and Python 3.11+).
+
 #### [1.0.7.2] ####
 
 # What’s Changed
