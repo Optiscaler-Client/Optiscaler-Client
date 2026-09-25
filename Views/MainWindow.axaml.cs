@@ -294,15 +294,15 @@ namespace OptiscalerClient.Views
         /// Test-only constructor. Injects a custom <see cref="IGpuDetectionService"/> instead
         /// of the platform-default one so unit/headless tests can run without real hardware.
         /// </summary>
-        internal MainWindow(IGpuDetectionService? gpuService) : this()
+        internal MainWindow(IGpuDetectionService? gpuService) : this(gpuService, null)
         {
-            // Override the service assigned by the public constructor.
-            _gpuService = gpuService!;
-            // Reset cached GPU so the injected service is actually called.
-            _lastDetectedGpu = null;
         }
 
-        public MainWindow()
+        public MainWindow() : this(null, null)
+        {
+        }
+
+        private MainWindow(IGpuDetectionService? injectedGpuService, object? _)
         {
             InitializeComponent();
             InitializeChrome();
@@ -312,7 +312,7 @@ namespace OptiscalerClient.Views
             _componentService = new ComponentManagementService();
             _metadataService = new GameMetadataService(_componentService);
             App.ChangeLanguage(_componentService.Config.Language);
-            _gpuService = PlatformServiceFactory.CreateGpuDetectionService()!;
+            _gpuService = injectedGpuService ?? PlatformServiceFactory.CreateGpuDetectionService()!;
             _games = new ObservableCollection<Game>();
 
             // Debug Window check
@@ -6678,7 +6678,7 @@ namespace OptiscalerClient.Views
                     _lastDetectedGpu = gpu;
                 }
 
-                Dispatcher.UIThread.Post(() =>
+                void UpdateBadge()
                 {
                     if (gpu != null)
                     {
@@ -6710,7 +6710,12 @@ namespace OptiscalerClient.Views
                         _txtGpuInfo.Foreground = Brushes.Orange;
                         ToolTip.SetTip(_txtGpuInfo, GetResourceString("TxtNoGpuTip", "No GPU was detected on this system"));
                     }
-                });
+                }
+
+                if (Dispatcher.UIThread.CheckAccess())
+                    UpdateBadge();
+                else
+                    Dispatcher.UIThread.Post(UpdateBadge);
             }
             catch (Exception ex)
             {
