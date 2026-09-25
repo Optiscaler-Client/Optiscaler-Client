@@ -331,11 +331,14 @@
         </Border>
 
         <!-- MAIN CONTENT AREA -->
-        <DockPanel Grid.Column="1">
+        <Panel Grid.Column="1">
+            <!-- Ambient Accent Glow: subtle diffuse lighting behind the content area -->
+            <Border Background="{StaticResource BrAmbientGlow}" IsHitTestVisible="False"/>
 
-        <!-- Custom title bar (SystemDecorations="None"): same background as the view headers so it
-             blends in; drag to move, double click to maximize, buttons replace the WM's ones. -->
-        <Grid Name="TitleBar" DockPanel.Dock="Top" Height="38" Background="{StaticResource BrBgDeep}" ColumnDefinitions="*,Auto">
+            <DockPanel>
+
+            <!-- Custom title bar (SystemDecorations="None"): drag to move, double click to maximize -->
+            <Grid Name="TitleBar" DockPanel.Dock="Top" Height="38" Background="Transparent" ColumnDefinitions="*,Auto">
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,0,6,0" VerticalAlignment="Center">
                 <Button Name="BtnWindowMinimize" Classes="WindowBtn" ToolTip.Tip="{DynamicResource TxtWindowMinimize}">
                     <PathIcon Data="{StaticResource IconWindowMinimize}"/>
@@ -728,17 +731,20 @@
                                          Padding="20,16">
                                      <Border.Styles>
                                          <Style Selector="Border.GameCard:pointerover">
-                                             <Setter Property="BorderBrush" Value="{StaticResource BrBorderDefault}"/>
+                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
                                              <Setter Property="Background"  Value="{StaticResource BrBgElevated}"/>
-                                             <Setter Property="RenderTransform" Value="scale(1.007)"/>
+                                             <Setter Property="RenderTransform" Value="translateY(-3px)"/>
+                                             <Setter Property="BoxShadow" Value="0 14 30 -6 #66000000, 0 0 14 0 #188B73F8"/>
                                          </Style>
                                          <Style Selector="Border.GameCard">
-                                             <Setter Property="RenderTransform" Value="scale(1)"/>
+                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #33000000"/>
                                              <Setter Property="Transitions">
                                                  <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.15"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18"/>
+                                                     <BrushTransition Property="Background" Duration="0:0:0.18"/>
+                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.18"/>
+                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22"/>
+                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut"/>
                                                  </Transitions>
                                              </Setter>
                                          </Style>
@@ -1135,17 +1141,20 @@
                                          Tapped="GameGridCard_Tapped">
                                      <Border.Styles>
                                          <Style Selector="Border.GameGridCard:pointerover">
-                                             <Setter Property="BorderBrush" Value="{StaticResource BrBorderDefault}"/>
+                                             <Setter Property="BorderBrush" Value="{StaticResource BrAccent}"/>
                                              <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
-                                             <Setter Property="RenderTransform" Value="scale(1.015)"/>
+                                             <Setter Property="RenderTransform" Value="translateY(-3px)"/>
+                                             <Setter Property="BoxShadow" Value="0 14 30 -6 #66000000, 0 0 14 0 #188B73F8"/>
                                          </Style>
                                          <Style Selector="Border.GameGridCard">
-                                             <Setter Property="RenderTransform" Value="scale(1)"/>
+                                             <Setter Property="RenderTransform" Value="translateY(0px)"/>
+                                             <Setter Property="BoxShadow" Value="0 4 16 -4 #33000000"/>
                                              <Setter Property="Transitions">
                                                  <Transitions>
-                                                     <BrushTransition Property="Background" Duration="0:0:0.15"/>
-                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
-                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18"/>
+                                                     <BrushTransition Property="Background" Duration="0:0:0.18"/>
+                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.18"/>
+                                                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22"/>
+                                                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut"/>
                                                  </Transitions>
                                              </Setter>
                                          </Style>
@@ -2516,6 +2525,7 @@
 
         </Grid>
         </DockPanel>
+        </Panel>
 
         <!-- LOADING RESOURCES OVERLAY (covers full window while version data is being fetched) -->
         <Grid Name="OverlayLoading" Grid.ColumnSpan="2" Background="#CC000000" IsVisible="False" ZIndex="500">

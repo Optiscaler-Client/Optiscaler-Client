@@ -53,6 +53,22 @@
             <SolidColorBrush x:Key="BrWarning" Color="{StaticResource StatusWarningColor}"/>
             <SolidColorBrush x:Key="BrExperimental" Color="{StaticResource ExperimentalColor}"/>
 
+            <!-- Modern Design System & Ambient Tokens -->
+            <SolidColorBrush x:Key="BrHover"        Color="#0DFFFFFF"/>
+            <SolidColorBrush x:Key="BrAccentSoft"   Color="#248B73F8"/>
+            <SolidColorBrush x:Key="BrSuccessSoft"  Color="#245CB87E"/>
+            <SolidColorBrush x:Key="BrErrorSoft"    Color="#24E06060"/>
+            <SolidColorBrush x:Key="BrWarningSoft"  Color="#24D4A04A"/>
+
+            <RadialGradientBrush x:Key="BrAmbientGlow" Center="95%,0%" GradientOrigin="95%,0%" RadiusX="70%" RadiusY="70%">
+                <GradientStop Color="#208B73F8" Offset="0"/>
+                <GradientStop Color="#008B73F8" Offset="1"/>
+            </RadialGradientBrush>
+            <LinearGradientBrush x:Key="BrHeroGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#308B73F8" Offset="0"/>
+                <GradientStop Color="#001E1E30" Offset="0.75"/>
+            </LinearGradientBrush>
+
             <FontFamily x:Key="FontPrimary">Segoe UI Variable, Segoe UI, sans-serif</FontFamily>
             <FontFamily x:Key="FontIcons">avares://OptiscalerClient/assets/FluentSystemIcons-Regular.ttf#FluentSystemIcons-Regular, Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
             <FontFamily x:Key="FontIconsFilled">avares://OptiscalerClient/assets/FluentSystemIcons-Filled.ttf#FluentSystemIcons-Filled</FontFamily>
