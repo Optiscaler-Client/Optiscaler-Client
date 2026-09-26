@@ -4,9 +4,11 @@ using System.Globalization;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using OptiscalerClient.Helpers;
 using OptiscalerClient.Models;
 using OptiscalerClient.Services;
@@ -111,13 +113,24 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
                 root.Opacity = 1;
             }
             _gamepadHelper ??= new GamepadDialogNavigationHelper(this, null);
+            _gamepadHelper.CustomNavigationHandler = HandleGamepadNavigation;
+
             if (owner is IGamepadInputHost host)
-                host.GamepadHelper?.SuspendInput();
+            {
+                _gamepadHelper.SeedGamepadModeActive(host.IsGamepadModeActive);
+                host.SuspendInput();
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                var initialFocus = this.FindControl<ComboBox>("CmbFgOutput");
+                initialFocus?.Focus(NavigationMethod.Directional);
+            }, DispatcherPriority.Loaded);
         };
         Closed += (_, _) =>
         {
             if (owner is IGamepadInputHost host)
-                host.GamepadHelper?.ResumeInput();
+                host.ResumeInput();
             _gamepadHelper?.Dispose();
             _gamepadHelper = null;
         };
@@ -859,4 +872,209 @@ public partial class FrameGenerationSettingsWindow : Window, IGamepadInputHost
 
     private static string Resource(string key, string fallback)
         => Application.Current?.TryFindResource(key, out var value) == true && value is string text ? text : fallback;
+
+    private bool HandleGamepadNavigation(GamepadButton button)
+    {
+        var isUp = button is GamepadButton.DPadUp or GamepadButton.ThumbLeftUp;
+        var isDown = button is GamepadButton.DPadDown or GamepadButton.ThumbLeftDown;
+        var isLeft = button is GamepadButton.DPadLeft or GamepadButton.ThumbLeftLeft;
+        var isRight = button is GamepadButton.DPadRight or GamepadButton.ThumbLeftRight;
+
+        if (!isUp && !isDown && !isLeft && !isRight)
+            return false;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        var focused = topLevel?.FocusManager?.GetFocusedElement() as Visual;
+
+        var cmbFgOutput = this.FindControl<ComboBox>("CmbFgOutput");
+        var cmbMfgMultiplier = this.FindControl<ComboBox>("CmbMfgMultiplier");
+        var pnlDynamicFps = this.FindControl<StackPanel>("PnlDynamicTargetFps");
+        var txtDynamicFps = this.FindControl<TextBox>("TxtDynamicTargetFps");
+        var btnToggleAdvanced = this.FindControl<Button>("BtnToggleAdvanced");
+        var pnlAdvancedContent = this.FindControl<StackPanel>("PnlAdvancedOptionsContent");
+        var cmbFgRoute = this.FindControl<ComboBox>("CmbFgRoute");
+        var chkAdvancedRoutes = this.FindControl<CheckBox>("ChkAdvancedRoutes");
+        var cmbFgNvngxReplacement = this.FindControl<ComboBox>("CmbFgNvngxReplacement");
+        var pnlDlssEnablerVersion = this.FindControl<StackPanel>("PnlDlssEnablerVersion");
+        var btnDlssEnablerMirror = this.FindControl<Button>("BtnDlssEnablerMirror");
+        var btnDlssEnablerCustom = this.FindControl<Button>("BtnDlssEnablerCustom");
+        var cmbDlssEnablerVersion = this.FindControl<ComboBox>("CmbDlssEnablerVersion");
+        var pnlStreamlineVersion = this.FindControl<StackPanel>("PnlStreamlineVersion");
+        var cmbStreamlineVersion = this.FindControl<ComboBox>("CmbStreamlineVersion");
+        var btnCancel = this.FindControl<Button>("BtnCancel");
+        var btnSave = this.FindControl<Button>("BtnSave");
+
+        if (focused == null)
+        {
+            var defaultFocus = (IInputElement?)cmbFgOutput ?? btnSave;
+            defaultFocus?.Focus(NavigationMethod.Directional);
+            return true;
+        }
+
+        Control? FindAncestorOrSelf(Visual? v, params string[] names)
+        {
+            var cur = v;
+            while (cur != null)
+            {
+                if (cur is Control c && c.Name != null && names.Contains(c.Name))
+                    return c;
+                cur = cur.GetVisualParent();
+            }
+            return null;
+        }
+
+        void FocusControl(Control? target)
+        {
+            if (target != null && target.IsEffectivelyVisible && target.IsEnabled)
+            {
+                target.Focus(NavigationMethod.Directional);
+            }
+        }
+
+        Control? GetLowestVisibleAdvancedControl()
+        {
+            if (pnlAdvancedContent?.IsVisible == true)
+            {
+                if (pnlStreamlineVersion?.IsVisible == true && cmbStreamlineVersion?.IsEnabled == true)
+                    return cmbStreamlineVersion;
+                if (pnlDlssEnablerVersion?.IsVisible == true && cmbDlssEnablerVersion?.IsEnabled == true)
+                    return cmbDlssEnablerVersion;
+                if (cmbFgNvngxReplacement?.IsEnabled == true)
+                    return cmbFgNvngxReplacement;
+                if (chkAdvancedRoutes?.IsEnabled == true)
+                    return chkAdvancedRoutes;
+                if (cmbFgRoute?.IsEnabled == true)
+                    return cmbFgRoute;
+            }
+            return btnToggleAdvanced;
+        }
+
+        var matched = FindAncestorOrSelf(focused,
+            "CmbFgOutput", "CmbMfgMultiplier", "TxtDynamicTargetFps",
+            "BtnToggleAdvanced", "CmbFgRoute", "ChkAdvancedRoutes",
+            "CmbFgNvngxReplacement", "BtnDlssEnablerMirror", "BtnDlssEnablerCustom",
+            "CmbDlssEnablerVersion", "CmbStreamlineVersion", "BtnCancel", "BtnSave");
+
+        switch (matched?.Name)
+        {
+            case "CmbFgOutput":
+                if (isRight) FocusControl(cmbMfgMultiplier);
+                else if (isDown)
+                {
+                    if (pnlDynamicFps?.IsVisible == true) FocusControl(txtDynamicFps);
+                    else FocusControl(btnToggleAdvanced);
+                }
+                return true;
+
+            case "CmbMfgMultiplier":
+                if (isLeft) FocusControl(cmbFgOutput);
+                else if (isDown)
+                {
+                    if (pnlDynamicFps?.IsVisible == true) FocusControl(txtDynamicFps);
+                    else FocusControl(btnToggleAdvanced);
+                }
+                return true;
+
+            case "TxtDynamicTargetFps":
+                if (isUp) FocusControl(cmbFgOutput);
+                else if (isDown) FocusControl(btnToggleAdvanced);
+                return true;
+
+            case "BtnToggleAdvanced":
+                if (isUp)
+                {
+                    if (pnlDynamicFps?.IsVisible == true) FocusControl(txtDynamicFps);
+                    else FocusControl(cmbFgOutput);
+                }
+                else if (isDown)
+                {
+                    if (pnlAdvancedContent?.IsVisible == true)
+                    {
+                        if (cmbFgRoute?.IsEnabled == true) FocusControl(cmbFgRoute);
+                        else FocusControl(chkAdvancedRoutes);
+                    }
+                    else FocusControl(btnSave);
+                }
+                return true;
+
+            case "CmbFgRoute":
+                if (isUp) FocusControl(btnToggleAdvanced);
+                else if (isDown) FocusControl(chkAdvancedRoutes);
+                return true;
+
+            case "ChkAdvancedRoutes":
+                if (isUp)
+                {
+                    if (cmbFgRoute?.IsEnabled == true) FocusControl(cmbFgRoute);
+                    else FocusControl(btnToggleAdvanced);
+                }
+                else if (isDown)
+                {
+                    if (cmbFgNvngxReplacement?.IsEnabled == true) FocusControl(cmbFgNvngxReplacement);
+                    else FocusControl(btnSave);
+                }
+                return true;
+
+            case "CmbFgNvngxReplacement":
+                if (isUp) FocusControl(chkAdvancedRoutes);
+                else if (isDown)
+                {
+                    if (pnlDlssEnablerVersion?.IsVisible == true)
+                        FocusControl(_dlssEnablerShowingMirror ? btnDlssEnablerMirror : btnDlssEnablerCustom);
+                    else if (pnlStreamlineVersion?.IsVisible == true)
+                        FocusControl(cmbStreamlineVersion);
+                    else
+                        FocusControl(btnSave);
+                }
+                return true;
+
+            case "BtnDlssEnablerMirror":
+                if (isUp) FocusControl(cmbFgNvngxReplacement);
+                else if (isRight) FocusControl(btnDlssEnablerCustom);
+                else if (isDown) FocusControl(cmbDlssEnablerVersion);
+                return true;
+
+            case "BtnDlssEnablerCustom":
+                if (isUp) FocusControl(cmbFgNvngxReplacement);
+                else if (isLeft) FocusControl(btnDlssEnablerMirror);
+                else if (isDown) FocusControl(cmbDlssEnablerVersion);
+                return true;
+
+            case "CmbDlssEnablerVersion":
+                if (isUp) FocusControl(_dlssEnablerShowingMirror ? btnDlssEnablerMirror : btnDlssEnablerCustom);
+                else if (isDown)
+                {
+                    if (pnlStreamlineVersion?.IsVisible == true)
+                        FocusControl(cmbStreamlineVersion);
+                    else
+                        FocusControl(btnSave);
+                }
+                return true;
+
+            case "CmbStreamlineVersion":
+                if (isUp)
+                {
+                    if (pnlDlssEnablerVersion?.IsVisible == true)
+                        FocusControl(cmbDlssEnablerVersion);
+                    else
+                        FocusControl(cmbFgNvngxReplacement);
+                }
+                else if (isDown) FocusControl(btnSave);
+                return true;
+
+            case "BtnCancel":
+                if (isRight) FocusControl(btnSave);
+                else if (isUp) FocusControl(GetLowestVisibleAdvancedControl());
+                return true;
+
+            case "BtnSave":
+                if (isLeft) FocusControl(btnCancel);
+                else if (isUp) FocusControl(GetLowestVisibleAdvancedControl());
+                return true;
+
+            default:
+                FocusControl(cmbFgOutput);
+                return true;
+        }
+    }
 }
