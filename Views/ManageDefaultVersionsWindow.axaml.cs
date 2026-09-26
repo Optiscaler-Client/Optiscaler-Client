@@ -855,6 +855,27 @@ namespace OptiscalerClient.Views
                 ? 0
                 : (targetIndex >= 0 ? targetIndex : 0) + offset;
             cmb.IsEnabled = true;
+            if (isLinux)
+            {
+                cmb.SelectionChanged -= CmbDefaultDlssNrDanielVersion_SelectionChanged;
+                cmb.SelectionChanged += CmbDefaultDlssNrDanielVersion_SelectionChanged;
+                UpdateLinuxNrInfo();
+            }
+        }
+
+        private void CmbDefaultDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e) => UpdateLinuxNrInfo();
+
+        /// <summary>Linux: with a mod version picked, Quick/Bulk Install put the mod next to the
+        /// default OptiScaler version — say so, same as Manage.</summary>
+        private void UpdateLinuxNrInfo()
+        {
+            var panel = this.FindControl<Border>("PanelDefaultLinuxNrWithOptiInfo");
+            var text = this.FindControl<TextBlock>("TxtDefaultLinuxNrWithOptiInfo");
+            if (panel == null || text == null) return;
+            var modTag = (this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
+            panel.IsVisible = !OperatingSystem.IsWindows() && !string.IsNullOrEmpty(modTag) && modTag != "none";
+            text.Text = GetResourceString("TxtSetupNrLinuxDefaultWithOptiInfo",
+                "On Linux the mod and OptiScaler work together: Quick Install and Bulk Install will install it alongside the default OptiScaler version.");
         }
 
         private void SetDefaultAmdNrBridgePanelVisible(bool visible)

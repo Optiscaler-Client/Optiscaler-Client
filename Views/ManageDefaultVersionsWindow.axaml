@@ -696,6 +696,33 @@
                                             </StackPanel>
                                         </Grid>
 
+                                        <!-- Linux only: the NR mod and OptiScaler run together there — says what Install will
+                                             put in (mod + OptiScaler, or only the mod when OptiScaler is "None"). Text set in code. -->
+                                        <Border Name="PanelDefaultLinuxNrWithOptiInfo"
+                                                Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="#4A90E2"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="10,6"
+                                                Margin="0"
+                                                IsVisible="False">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="{StaticResource Icon.Info}"
+                                                          Foreground="#4A90E2"
+                                                          Width="16" Height="16"
+                                                          VerticalAlignment="Top"
+                                                          Margin="0,2,8,0"/>
+                                                <TextBlock Name="TxtDefaultLinuxNrWithOptiInfo"
+                                                           Grid.Column="1"
+                                                           Foreground="#4A90E2"
+                                                           FontSize="12"
+                                                           FontWeight="Medium"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="Wrap"/>
+                                            </Grid>
+                                        </Border>
+
                                         <!-- Same fork disclosure as ManageGameWindow's
                                              PanelDlssNrLinuxWrapperWarning — visible only while
                                              "daniel-only" is selected on Linux (see
