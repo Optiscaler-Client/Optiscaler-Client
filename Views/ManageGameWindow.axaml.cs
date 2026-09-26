@@ -52,6 +52,22 @@ namespace OptiscalerClient.Views
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => null;
         bool IGamepadInputHost.IsGamepadModeActive => _isControllerModeActive;
 
+        private int _gamepadInputSuspensionCount;
+
+        public void SuspendGamepadInput()
+        {
+            _gamepadInputSuspensionCount++;
+        }
+
+        public void ResumeGamepadInput()
+        {
+            _gamepadInputSuspensionCount = Math.Max(0, _gamepadInputSuspensionCount - 1);
+            _ignoreGamepadInputUntilUtc = DateTime.UtcNow.AddMilliseconds(300);
+        }
+
+        void IGamepadInputHost.SuspendInput() => SuspendGamepadInput();
+        void IGamepadInputHost.ResumeInput() => ResumeGamepadInput();
+
         private readonly Game _game;
         private readonly IGpuDetectionService? _gpuService;
         private Window? _ownerWindow;
@@ -532,6 +548,7 @@ namespace OptiscalerClient.Views
             Dispatcher.UIThread.Post(() =>
             {
                 if (!IsVisible) return;
+                if (_gamepadInputSuspensionCount > 0) return;
                 if (OwnedWindows.Count > 0) return;
                 if (DateTime.UtcNow < _ignoreGamepadInputUntilUtc) return;
 
@@ -728,13 +745,21 @@ namespace OptiscalerClient.Views
             // Row 3: Frame Generation / Profile / Spoofing
             AddRootNode(nodes, "BtnFrameGeneration", 3, 2);
             AddRootNode(nodes, "CmbProfile", 3, 4);
-            AddRootNode(nodes, "BtnViewIni", 3, 5);
             AddRootNode(nodes, "CmbSpoofing", 3, 6);
 
             // Row 4: Experimental zone
             AddRootNode(nodes, "CmbRenodxVersion", 4, 2);
-            AddRootNode(nodes, "CmbSetupNr", 4, 4);
-            AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 6);
+            bool isSetupNrVisible = this.FindControl<Control>("PanelDlssNrOnAmd")?.IsVisible == true;
+            if (isSetupNrVisible)
+            {
+                AddRootNode(nodes, "CmbSetupNr", 4, 4);
+                AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 6);
+            }
+            else
+            {
+                // Linux: CmbDlssNrDanielVersion is moved to Column 1 (middle, under Profile)
+                AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 4);
+            }
             AddRootNode(nodes, "CmbAmdNrBridgeVersion", 4, 6);
 
             // Row 5: Uninstall
@@ -866,6 +891,8 @@ namespace OptiscalerClient.Views
                     return new[] { preferred };
             }
 
+            bool isSetupNrVisible = this.FindControl<Control>("PanelDlssNrOnAmd")?.IsVisible == true;
+
             return (currentName, direction) switch
             {
                 // Left Column
@@ -953,22 +980,23 @@ namespace OptiscalerClient.Views
 
                 ("CmbProfile", NavigationDirection.Up) => new[] { "CmbOutputUpscaler" },
                 ("CmbProfile", NavigationDirection.Left) => new[] { "BtnFrameGeneration" },
-                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnViewIni", "CmbSpoofing" },
-                ("CmbProfile", NavigationDirection.Down) => new[] { "CmbSetupNr", "BtnInstallManual" },
-
-                ("BtnViewIni", NavigationDirection.Up) => new[] { "CmbOutputUpscaler" },
-                ("BtnViewIni", NavigationDirection.Left) => new[] { "CmbProfile" },
-                ("BtnViewIni", NavigationDirection.Right) => new[] { "CmbSpoofing" },
-                ("BtnViewIni", NavigationDirection.Down) => new[] { "CmbSetupNr", "BtnInstallManual" },
+                ("CmbProfile", NavigationDirection.Right) => new[] { "CmbSpoofing" },
+                ("CmbProfile", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr", "BtnInstallManual" }
+                    : new[] { "CmbDlssNrDanielVersion", "BtnInstallManual" },
 
                 ("CmbSpoofing", NavigationDirection.Up) => new[] { "CmbUpscalingQuality" },
-                ("CmbSpoofing", NavigationDirection.Left) => new[] { "BtnViewIni", "CmbProfile" },
-                ("CmbSpoofing", NavigationDirection.Down) => new[] { "CmbDlssNrDanielVersion", "CmbSetupNr", "BtnUninstall", "BtnInstall" },
+                ("CmbSpoofing", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("CmbSpoofing", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbDlssNrDanielVersion", "CmbSetupNr", "BtnUninstall", "BtnInstall" }
+                    : new[] { "BtnUninstall", "BtnInstall" },
 
                 // Row 4: Experimental Zone
                 ("CmbRenodxVersion", NavigationDirection.Up) => new[] { "BtnFrameGeneration" },
                 ("CmbRenodxVersion", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
-                ("CmbRenodxVersion", NavigationDirection.Right) => new[] { "CmbSetupNr" },
+                ("CmbRenodxVersion", NavigationDirection.Right) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbDlssNrDanielVersion" },
                 ("CmbRenodxVersion", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
 
                 ("CmbSetupNr", NavigationDirection.Up) => new[] { "CmbProfile" },
@@ -976,17 +1004,30 @@ namespace OptiscalerClient.Views
                 ("CmbSetupNr", NavigationDirection.Right) => new[] { "CmbDlssNrDanielVersion", "BtnUninstall", "BtnInstall" },
                 ("CmbSetupNr", NavigationDirection.Down) => new[] { "BtnInstallManual" },
 
-                ("CmbDlssNrDanielVersion", NavigationDirection.Up) => new[] { "CmbSpoofing" },
-                ("CmbDlssNrDanielVersion", NavigationDirection.Left) => new[] { "CmbSetupNr" },
-                ("CmbDlssNrDanielVersion", NavigationDirection.Down) => new[] { "CmbAmdNrBridgeVersion", "BtnUninstall", "BtnInstall" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbSpoofing" }
+                    : new[] { "CmbProfile" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbRenodxVersion" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Right) => new[] { "BtnUninstall", "BtnInstall" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbAmdNrBridgeVersion", "BtnUninstall", "BtnInstall" }
+                    : new[] { "BtnInstallManual" },
 
                 ("CmbAmdNrBridgeVersion", NavigationDirection.Up) => new[] { "CmbDlssNrDanielVersion", "CmbSpoofing" },
-                ("CmbAmdNrBridgeVersion", NavigationDirection.Left) => new[] { "CmbSetupNr" },
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbDlssNrDanielVersion" },
                 ("CmbAmdNrBridgeVersion", NavigationDirection.Down) => new[] { "BtnUninstall", "BtnInstall" },
 
                 // Row 5: Uninstall
-                ("BtnUninstall", NavigationDirection.Up) => new[] { "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" },
-                ("BtnUninstall", NavigationDirection.Left) => new[] { "BtnInstallManual", "BtnFolderCleanup" },
+                ("BtnUninstall", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" }
+                    : new[] { "CmbSpoofing", "CmbDlssNrDanielVersion" },
+                ("BtnUninstall", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "BtnInstallManual", "BtnFolderCleanup" }
+                    : new[] { "CmbDlssNrDanielVersion", "BtnInstallManual", "BtnFolderCleanup" },
                 ("BtnUninstall", NavigationDirection.Down) => new[] { "BtnInstall" },
 
                 // Row 6: Bottom Actions
@@ -994,11 +1035,15 @@ namespace OptiscalerClient.Views
                 ("BtnFolderCleanup", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
                 ("BtnFolderCleanup", NavigationDirection.Right) => new[] { "BtnInstallManual" },
 
-                ("BtnInstallManual", NavigationDirection.Up) => new[] { "CmbSetupNr", "CmbProfile" },
+                ("BtnInstallManual", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr", "CmbProfile" }
+                    : new[] { "CmbDlssNrDanielVersion", "CmbProfile" },
                 ("BtnInstallManual", NavigationDirection.Left) => new[] { "BtnFolderCleanup" },
                 ("BtnInstallManual", NavigationDirection.Right) => new[] { "BtnInstall" },
 
-                ("BtnInstall", NavigationDirection.Up) => new[] { "BtnUninstall", "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" },
+                ("BtnInstall", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "BtnUninstall", "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" }
+                    : new[] { "BtnUninstall", "CmbSpoofing", "CmbDlssNrDanielVersion" },
                 ("BtnInstall", NavigationDirection.Left) => new[] { "BtnInstallManual" },
 
                 _ => Array.Empty<string>()
@@ -3277,6 +3322,13 @@ namespace OptiscalerClient.Views
                 var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
                 var dialog = new FrameGenerationSettingsWindow(this, _game, gpu);
                 var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
+                if (_isControllerModeActive)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        this.FindControl<Button>("BtnFrameGeneration")?.Focus(NavigationMethod.Directional);
+                    }, DispatcherPriority.Input);
+                }
                 if (settings == null) return;
 
                 _game.FrameGenerationSettings = settings;
