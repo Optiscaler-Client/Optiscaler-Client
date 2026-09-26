@@ -657,6 +657,33 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Linux only: the NR mod and OptiScaler run together there — says what Install will
+                                 put in (mod + OptiScaler, or only the mod when OptiScaler is "None"). Text set in code. -->
+                            <Border Name="PanelLinuxNrWithOptiInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <TextBlock Name="TxtLinuxNrWithOptiInfo"
+                                               Grid.Column="1"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Shown instead of PanelFsr4SwapOnlyHint/PanelModdedWarning while danielblnc's
                                  mod-only Setup NR mode is pending/installed on Linux — there, "Setup NR"
                                  doesn't run danielblnc's own installer at all, it runs

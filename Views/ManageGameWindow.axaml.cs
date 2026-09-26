@@ -2457,7 +2457,9 @@ namespace OptiscalerClient.Views
                 bridgeInfo.Text = IsLegacyWrapperInstall()
                     ? GetResourceString("TxtSetupNrLegacyWrapperInfo", "This game uses the discontinued MatheusGViana OptiScaler build. Reinstall to switch it to the selected official OptiScaler version with AMD-NR-bridge.")
                     : GetResourceString("TxtSetupNrBridgeInfo", "Uses GoldenNights' AMD-NR-bridge (third-party) on top of the selected official OptiScaler version.");
-            if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !bridgeModeActive && !isNone;
+            // Linux with a mod version picked: the "mod + OptiScaler" note takes the swap hint's place.
+            bool linuxNrInfoShown = UpdateLinuxNrInfo();
+            if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !bridgeModeActive && !isNone && !linuxNrInfoShown;
             if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = bridgeModeActive;
             SetDanielOnlyDx12InfoVisible(danielOnlyActive);
 
@@ -5927,6 +5929,27 @@ namespace OptiscalerClient.Views
             _game.PendingDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode ||
             (_game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode));
 
+        /// <summary>Linux: tells the user what Install will put in when a mod version is picked —
+        /// the mod together with the selected OptiScaler version, or only the mod when OptiScaler is
+        /// "None". Hidden on Windows, with Experimental Features off, or with the mod at "None".
+        /// Returns whether it is shown — it replaces the FSR 4 Swap hint then.</summary>
+        private bool UpdateLinuxNrInfo()
+        {
+            var panel = this.FindControl<Border>("PanelLinuxNrWithOptiInfo");
+            var text = this.FindControl<TextBlock>("TxtLinuxNrWithOptiInfo");
+            if (panel == null || text == null) return false;
+            var modTag = (this.FindControl<ComboBox>("CmbDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
+            var show = !OperatingSystem.IsWindows() &&
+                (_cachedComponentService?.Config.ShowExperimentalFeatures ?? false) &&
+                !string.IsNullOrEmpty(modTag) && modTag != "none" && IsSetupNrGpuAllowed();
+            panel.IsVisible = show;
+            if (!show) return false;
+            text.Text = IsOptiScalerNoneSelected()
+                ? GetResourceString("TxtSetupNrLinuxModOnlyInfo", "OptiScaler is set to \"None\": only the mod will be installed.")
+                : GetResourceString("TxtSetupNrLinuxWithOptiInfo", "On Linux the mod and OptiScaler work together: it will be installed alongside the selected OptiScaler version. Set OptiScaler to \"None\" to install only the mod.");
+            return true;
+        }
+
         private bool IsOptiScalerNoneSelected() => string.Equals(
             (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString(),
             "none", StringComparison.OrdinalIgnoreCase);
@@ -6134,6 +6157,7 @@ namespace OptiscalerClient.Views
                         "On Linux this uses bulacha3's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and bulacha3/DLSS-NR-on-AMD-Linux (the fork).")
                     : null);
             cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
+            UpdateCheckboxStatesForVersion(this.FindControl<ComboBox>("CmbOptiVersion"));
         }
 
         /// <summary>danielblnc's mod only targets AMD GPUs — used to lock (not hide) CmbSetupNr and
@@ -6157,6 +6181,7 @@ namespace OptiscalerClient.Views
 
             if (!OperatingSystem.IsWindows())
             {
+                UpdateCheckboxStatesForVersion(this.FindControl<ComboBox>("CmbOptiVersion"));
                 // Linux: this combo is the whole mod control. "None" removes/cancels the mod (same
                 // path as picking "None" in the Windows mode selector); a version makes it pending —
                 // installed alone or with OptiScaler depending on OptiScaler's own selection (resolved
