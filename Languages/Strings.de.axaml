@@ -889,6 +889,10 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Startoptionen aus Steam entfernt.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc-Mod</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblncs DLSS-Neural-Rendering-Mod für AMD-GPUs, installiert über bulacha3s Linux-Fork. Wähle eine Version, um ihn zusammen mit der oben gewählten OptiScaler-Version zu installieren; stelle OptiScaler auf „Keine“, um nur den Mod zu installieren. „Keine“ hier entfernt den Mod.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Unter Linux laufen der Mod und OptiScaler zusammen: Er wird mit der gewählten OptiScaler-Version installiert. Stelle OptiScaler auf „Keine“, um nur den Mod zu installieren.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler steht auf „Keine“: Es wird nur der Mod installiert.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Unter Linux laufen der Mod und OptiScaler zusammen: Jedes Spiel erhält den Mod zusammen mit der für den Stapel gewählten OptiScaler-Version.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Unter Linux laufen der Mod und OptiScaler zusammen: Quick Install und Bulk Install installieren ihn mit der Standard-OptiScaler-Version.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler-Wrapper-Version (Community, inoffiziell)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Installer ausführen</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Herunterladen und vorbereiten</x:String>

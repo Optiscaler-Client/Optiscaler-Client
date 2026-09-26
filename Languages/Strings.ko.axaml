@@ -870,6 +870,10 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Steam에서 실행 옵션을 제거했습니다.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc 모드</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">AMD GPU용 danielblnc의 DLSS Neural Rendering 모드로, bulacha3의 Linux 포크를 통해 설치됩니다. 버전을 선택하면 위에서 선택한 OptiScaler 버전과 함께 설치됩니다. 모드만 설치하려면 OptiScaler를 "없음"으로 두세요. 여기서 "없음"을 선택하면 모드가 제거됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. 선택한 OptiScaler 버전과 함께 설치됩니다. 모드만 설치하려면 OptiScaler를 "없음"으로 두세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler가 "없음"으로 설정되어 있어 모드만 설치됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. 각 게임에 일괄 설치용으로 선택한 OptiScaler 버전과 함께 모드가 설치됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. Quick Install과 Bulk Install은 기본 OptiScaler 버전과 함께 설치합니다.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler 래퍼 버전 (커뮤니티, 비공식)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">설치 파일 실행</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">다운로드 및 준비</x:String>

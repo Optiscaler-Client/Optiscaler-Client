@@ -889,6 +889,10 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Opzioni di avvio rimosse da Steam.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — mod di danielblnc</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">Mod DLSS Neural Rendering di danielblnc per GPU AMD, installata tramite il fork Linux di bulacha3. Scegli una versione per installarla insieme alla versione di OptiScaler selezionata sopra; imposta OptiScaler su "Nessuno" per installare solo la mod. "Nessuno" qui rimuove la mod.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Su Linux la mod e OptiScaler funzionano insieme: verrà installata con la versione di OptiScaler selezionata. Imposta OptiScaler su "Nessuno" per installare solo la mod.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler è su "Nessuno": verrà installata solo la mod.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Su Linux la mod e OptiScaler funzionano insieme: ogni gioco riceve la mod con la versione di OptiScaler scelta per il gruppo.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Su Linux la mod e OptiScaler funzionano insieme: Quick Install e Bulk Install la installeranno con la versione predefinita di OptiScaler.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Versione del wrapper OptiScaler (community, non ufficiale)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Esegui installer</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Scarica e prepara</x:String>

@@ -887,6 +887,10 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Steam から起動オプションを削除しました。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc Mod</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">AMD GPU 向けの danielblnc による DLSS Neural Rendering Mod。bulacha3 の Linux フォーク経由でインストールします。バージョンを選ぶと、上で選択した OptiScaler バージョンと一緒にインストールされます。Mod だけを入れる場合は OptiScaler を「なし」にしてください。ここで「なし」を選ぶと Mod を削除します。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux では Mod と OptiScaler を併用できます。選択した OptiScaler バージョンと一緒にインストールされます。Mod だけを入れる場合は OptiScaler を「なし」にしてください。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler が「なし」です。Mod のみインストールされます。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux では Mod と OptiScaler を併用できます。各ゲームに、一括インストールで選んだ OptiScaler バージョンと一緒に Mod が入ります。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Linux では Mod と OptiScaler を併用できます。Quick Install と Bulk Install は既定の OptiScaler バージョンと一緒にインストールします。</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScalerラッパーのバージョン（コミュニティ、非公式）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">インストーラーを実行</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">ダウンロードして準備</x:String>

@@ -868,6 +868,10 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Başlatma seçenekleri Steam'den kaldırıldı.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc modu</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblnc'in AMD GPU'lar için DLSS Neural Rendering modu, bulacha3'ün Linux fork'u ile kurulur. Yukarıda seçilen OptiScaler sürümüyle birlikte kurmak için bir sürüm seçin; yalnızca modu kurmak için OptiScaler'ı "Yok" yapın. Buradaki "Yok" modu kaldırır.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux'ta mod ve OptiScaler birlikte çalışır: seçilen OptiScaler sürümüyle birlikte kurulacak. Yalnızca modu kurmak için OptiScaler'ı "Yok" yapın.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler "Yok" olarak ayarlı: yalnızca mod kurulacak.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux'ta mod ve OptiScaler birlikte çalışır: her oyun, toplu işlem için seçilen OptiScaler sürümüyle birlikte modu alır.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Linux'ta mod ve OptiScaler birlikte çalışır: Quick Install ve Bulk Install onu varsayılan OptiScaler sürümüyle birlikte kurar.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper sürümü (topluluk, resmi olmayan)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Yükleyiciyi çalıştır</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">İndir ve hazırla</x:String>

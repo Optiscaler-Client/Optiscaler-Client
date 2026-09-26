@@ -887,6 +887,10 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">已從 Steam 中移除啟動選項。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc 模組</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblnc 的 AMD GPU 版 DLSS Neural Rendering 模組，透過 bulacha3 的 Linux 分支安裝。選擇一個版本即可與上方所選的 OptiScaler 版本一起安裝；若只想安裝模組，請將 OptiScaler 設為「無」。在此處選擇「無」會移除模組。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">在 Linux 上模組與 OptiScaler 可以同時使用：它會與所選的 OptiScaler 版本一起安裝。若只想安裝模組，請將 OptiScaler 設為「無」。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler 已設為「無」：只會安裝模組。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">在 Linux 上模組與 OptiScaler 可以同時使用：每個遊戲都會與本批次所選的 OptiScaler 版本一起安裝模組。</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">在 Linux 上模組與 OptiScaler 可以同時使用：Quick Install 與 Bulk Install 會將其與預設 OptiScaler 版本一起安裝。</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper 版本（社群，非官方）</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">執行安裝程式</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">下載並準備</x:String>

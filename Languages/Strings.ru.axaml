@@ -869,6 +869,10 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Параметры запуска удалены из Steam.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — мод danielblnc</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">Мод DLSS Neural Rendering от danielblnc для видеокарт AMD, устанавливается через Linux-форк bulacha3. Выберите версию, чтобы установить его вместе с выбранной выше версией OptiScaler; выберите для OptiScaler «Нет», чтобы установить только мод. «Нет» здесь удаляет мод.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">В Linux мод и OptiScaler работают вместе: он будет установлен вместе с выбранной версией OptiScaler. Выберите для OptiScaler «Нет», чтобы установить только мод.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">Для OptiScaler выбрано «Нет»: будет установлен только мод.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">В Linux мод и OptiScaler работают вместе: каждая игра получит мод вместе с версией OptiScaler, выбранной для пакета.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">В Linux мод и OptiScaler работают вместе: Quick Install и Bulk Install установят его вместе с версией OptiScaler по умолчанию.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">Версия обёртки OptiScaler (сообщество, неофициально)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Запустить установщик</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Скачать и подготовить</x:String>
