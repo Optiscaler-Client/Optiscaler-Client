@@ -470,16 +470,28 @@
                                  </StackPanel>
                                  <Button.Flyout>
                                      <Flyout Placement="BottomEdgeAlignedLeft">
-                                         <StackPanel Spacing="12" Margin="6" MinWidth="240">
-                                             <CheckBox Name="ChkHideNoUpscaler"
-                                                       Content="{DynamicResource TxtFilterHideNoUpscaler}"
-                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
-                                             <CheckBox Name="ChkOnlyInstalled"
-                                                       Content="{DynamicResource TxtFilterOnlyInstalled}"
-                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
-                                             <CheckBox Name="ChkOnlyFavorites"
-                                                       Content="{DynamicResource TxtFilterOnlyFavorites}"
-                                                       IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                         <StackPanel Spacing="6" Margin="4" MinWidth="250">
+                                             <Border Name="BdFilterHideNoUpscaler" Classes="FilterOption">
+                                                 <CheckBox Name="ChkHideNoUpscaler"
+                                                           HorizontalAlignment="Stretch"
+                                                           Cursor="Hand"
+                                                           Content="{DynamicResource TxtFilterHideNoUpscaler}"
+                                                           IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                             </Border>
+                                             <Border Name="BdFilterOnlyInstalled" Classes="FilterOption">
+                                                 <CheckBox Name="ChkOnlyInstalled"
+                                                           HorizontalAlignment="Stretch"
+                                                           Cursor="Hand"
+                                                           Content="{DynamicResource TxtFilterOnlyInstalled}"
+                                                           IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                             </Border>
+                                             <Border Name="BdFilterOnlyFavorites" Classes="FilterOption">
+                                                 <CheckBox Name="ChkOnlyFavorites"
+                                                           HorizontalAlignment="Stretch"
+                                                           Cursor="Hand"
+                                                           Content="{DynamicResource TxtFilterOnlyFavorites}"
+                                                           IsCheckedChanged="ChkFilters_IsCheckedChanged"/>
+                                             </Border>
                                          </StackPanel>
                                      </Flyout>
                                  </Button.Flyout>
