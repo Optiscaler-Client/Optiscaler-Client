@@ -97,7 +97,7 @@ namespace OptiscalerClient.Views
 
                 _gamepadHelper ??= new GamepadDialogNavigationHelper(this, null);
                 if (owner is IGamepadInputHost host)
-                    host.GamepadHelper?.SuspendInput();
+                    host.SuspendInput();
 
                 this.FindControl<Button>("BtnNext")?.Focus();
             };
@@ -105,7 +105,7 @@ namespace OptiscalerClient.Views
             Closed += (s, e) =>
             {
                 if (owner is IGamepadInputHost closedHost)
-                    closedHost.GamepadHelper?.ResumeInput();
+                    closedHost.ResumeInput();
 
                 _gamepadHelper?.Dispose();
                 _gamepadHelper = null;

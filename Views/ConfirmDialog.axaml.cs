@@ -183,13 +183,13 @@ namespace OptiscalerClient.Views
                 // can still process that same press (e.g. 'B' closing the
                 // owner too). See gamepad_implementation_log.md, section 18.
                 if (owner is IGamepadInputHost host)
-                    host.GamepadHelper?.SuspendInput();
+                    host.SuspendInput();
             };
 
             this.Closed += (s, e) =>
             {
                 if (owner is IGamepadInputHost closedHost)
-                    closedHost.GamepadHelper?.ResumeInput();
+                    closedHost.ResumeInput();
 
                 if (_gamepadHelper != null)
                     _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;

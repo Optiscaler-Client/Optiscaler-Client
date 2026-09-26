@@ -228,4 +228,16 @@ public interface IGamepadInputHost
     /// override this directly, since they have no <see cref="GamepadHelper"/>.
     /// </summary>
     bool IsGamepadModeActive => GamepadHelper?.IsGamepadModeActive ?? false;
+
+    /// <summary>
+    /// Suspends owner gamepad input handling while a child modal dialog is active.
+    /// Default implementation delegates to <see cref="GamepadHelper"/>; bespoke hosts
+    /// override directly.
+    /// </summary>
+    void SuspendInput() => GamepadHelper?.SuspendInput();
+
+    /// <summary>
+    /// Resumes owner gamepad input handling when child modal dialog closes.
+    /// </summary>
+    void ResumeInput() => GamepadHelper?.ResumeInput();
 }

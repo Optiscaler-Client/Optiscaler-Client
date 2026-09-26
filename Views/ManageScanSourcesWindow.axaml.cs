@@ -60,7 +60,7 @@ namespace OptiscalerClient.Views
                 }
 
                 if (owner is IGamepadInputHost host)
-                    host.GamepadHelper?.SuspendInput();
+                    host.SuspendInput();
 
                 // Cap the window's height at "Default Sources" so it never grows to show
                 // Filter Options/Custom Folders too - everything below scrolls instead.
@@ -82,7 +82,7 @@ namespace OptiscalerClient.Views
             this.Closed += (s, e) =>
             {
                 if (owner is IGamepadInputHost closedHost)
-                    closedHost.GamepadHelper?.ResumeInput();
+                    closedHost.ResumeInput();
 
                 _gamepadHelper?.Dispose();
                 _gamepadHelper = null;
