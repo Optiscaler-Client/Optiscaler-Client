@@ -2059,9 +2059,26 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         cmb.IsEnabled = true;
         cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
         UpdateSelectionCount();
+        UpdateLinuxNrInfo();
     }
 
-    private void CmbDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e) => UpdateSelectionCount();
+    private void CmbDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateSelectionCount();
+        UpdateLinuxNrInfo();
+    }
+
+    /// <summary>Linux: with a mod version picked, each game gets the mod next to the batch's
+    /// OptiScaler version — say so, same as Manage.</summary>
+    private void UpdateLinuxNrInfo()
+    {
+        var panel = this.FindControl<Border>("PanelBulkLinuxNrWithOptiInfo");
+        var text = this.FindControl<TextBlock>("TxtBulkLinuxNrWithOptiInfo");
+        if (panel == null || text == null) return;
+        panel.IsVisible = !OperatingSystem.IsWindows() && SelectedSetupNrMode == "daniel-and-opti";
+        text.Text = GetResourceString("TxtSetupNrLinuxBulkWithOptiInfo",
+            "On Linux the mod and OptiScaler work together: each game gets the mod alongside the OptiScaler version selected for the batch.");
+    }
 
     private string GetResourceString(string key, string fallback)
     {
