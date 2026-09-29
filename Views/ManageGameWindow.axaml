@@ -116,6 +116,35 @@
                         Background="{StaticResource BrAmbientGlow}"
                         IsHitTestVisible="False"/>
 
+                <!-- Cover ambience: a few-pixel copy of the cover stretched back up (free blur),
+                     faded out radially so it melts into the frame background. Positioned around
+                     BdGameCover from code (ManageGameWindow.CoverAmbience.cs). The Canvas has no
+                     desired size, so it never affects the window's SizeToContent height. -->
+                <Border CornerRadius="{Binding #BdManageFrame.CornerRadius}"
+                        ClipToBounds="True"
+                        IsHitTestVisible="False">
+                    <Canvas Name="CanvasCoverAmbience">
+                        <Image Name="ImgCoverAmbience"
+                               Stretch="Fill"
+                               Opacity="0"
+                               RenderOptions.BitmapInterpolationMode="HighQuality">
+                            <Image.OpacityMask>
+                                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+                                    <GradientStop Color="#FF000000" Offset="0"/>
+                                    <GradientStop Color="#AC000000" Offset="0.45"/>
+                                    <GradientStop Color="#3D000000" Offset="0.75"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
+                                </RadialGradientBrush>
+                            </Image.OpacityMask>
+                            <Image.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Opacity" Duration="0:0:0.45" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </Image.Transitions>
+                        </Image>
+                    </Canvas>
+                </Border>
+
                 <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
                     <!-- LEFT COLUMN -->
                     <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
@@ -193,8 +222,9 @@
 
                     <!-- Path & Open Folder bottom aligned. Same MaxWidth as the title Grid above
                          so both pick up the identical Stretch centering offset as the cover and
-                         line up with it (see comment on the title Grid). -->
-                    <Grid Grid.Row="1" Name="GridInstallPath" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+                         line up with it (see comment on the title Grid). The top margin keeps a
+                         minimum gap from the title when the column has no leftover height. -->
+                    <Grid Grid.Row="1" Name="GridInstallPath" ColumnDefinitions="*,Auto" MaxWidth="320" Margin="0,14,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
                         <Border Grid.Column="0"
                                 Background="{StaticResource BrBgBase}"
                                 BorderBrush="{StaticResource BrBorderSubtle}"

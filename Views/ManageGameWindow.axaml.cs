@@ -456,6 +456,7 @@ namespace OptiscalerClient.Views
             _compatSidebarScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _compatSidebarScrollTimer.Tick += CompatSidebarScrollTimer_Tick;
 
+            InitializeCoverAmbience();
             SetupUI();
             InitializeGamepadNavigation();
 
