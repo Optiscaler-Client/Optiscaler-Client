@@ -261,6 +261,23 @@ namespace OptiscalerClient.Services
             manifest.PreInstallKeyFiles.Any(k => !k.Existed &&
                 k.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
 
+        /// <summary>True only when a game-ownable FidelityFX DLL on disk is provably the copy we wrote:
+        /// absent before the install AND still byte-identical to what the manifest recorded creating.
+        /// The pre-install snapshot alone is not enough — it goes stale once the user puts the game's
+        /// own DLL back by hand (e.g. AC Black Flag Resynced's amd_fidelityfx_loader_dx12.dll, which
+        /// then got deleted again on every reinstall and the game no longer launched).</summary>
+        private static bool IsProvablyOurFfxCopy(InstallationManifest? manifest, string gameDir, string relativePath)
+        {
+            if (manifest == null || !WasAbsentBeforeInstall(manifest, relativePath))
+                return false;
+
+            var createdHash = manifest.FilesCreated
+                .FirstOrDefault(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase))
+                ?.PostInstallSha256;
+            return !string.IsNullOrEmpty(createdHash) &&
+                   string.Equals(ComputeSha256(Path.Combine(gameDir, relativePath)), createdHash, StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
             cacheFiles.FirstOrDefault(f =>
                 Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
@@ -1788,7 +1805,7 @@ namespace OptiscalerClient.Services
                 foreach (var artifact in KnownOptiscalerArtifacts)
                 {
                     // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
-                    if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(manifest, artifact))
+                    if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(manifest, gameDir, artifact))
                         continue;
 
                     var artifactPath = Path.Combine(gameDir, artifact);
@@ -2095,7 +2112,7 @@ namespace OptiscalerClient.Services
             foreach (var artifact in KnownOptiscalerArtifacts)
             {
                 // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
-                if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(priorManifest, artifact))
+                if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(priorManifest, gameDir, artifact))
                     continue;
 
                 try
@@ -2478,7 +2495,7 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[FolderCleanup] Starting force cleanup for '{game.Name}' at: {gameDir}");
 
-            ForceRemoveAllArtifacts(gameDir, selectedSensitiveFiles);
+            ForceRemoveAllArtifacts(gameDir, manifest, selectedSensitiveFiles);
 
             // Delete the external backup store so future installs start fresh.
             _backupStore.DeleteBackup(storeKey);
@@ -2550,7 +2567,7 @@ namespace OptiscalerClient.Services
             return false;
         }
 
-        private void ForceRemoveAllArtifacts(string gameDir, IEnumerable<string>? extraFilesToDelete = null)
+        private void ForceRemoveAllArtifacts(string gameDir, InstallationManifest? manifest, IEnumerable<string>? extraFilesToDelete = null)
         {
             var dirsToScan = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { gameDir };
             var phoenixDir = DetectCorrectInstallDirectory(gameDir);
@@ -2561,9 +2578,15 @@ namespace OptiscalerClient.Services
 
             foreach (var dir in dirsToScan)
             {
-                // Delete every known artifact file unconditionally
+                // Delete every known artifact file unconditionally — except the game's own FidelityFX
+                // DLLs (loader/upscaler/frame generation...), which native-FSR games ship under the
+                // exact same names: only removed when the manifest proves the copy is ours. The ones
+                // the user may still want gone are opt-in via extraFilesToDelete (SensitiveArtifacts).
                 foreach (var artifact in KnownOptiscalerArtifacts)
                 {
+                    if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(manifest, dir, artifact))
+                        continue;
+
                     var fullPath = Path.Combine(dir, artifact);
                     try
                     {
