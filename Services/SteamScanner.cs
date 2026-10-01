@@ -65,17 +65,18 @@ public class SteamScanner : IGameScanner
         return games;
     }
 
-    private string? GetSteamInstallPath()
+    private string? GetSteamInstallPath() => _overrideSteamPath ?? FindSteamInstallPath();
+
+    /// <summary>Steam's install root on this machine (registry on Windows, known folders on Linux).</summary>
+    internal static string? FindSteamInstallPath()
     {
-        if (_overrideSteamPath is not null)
-            return _overrideSteamPath;
         if (OperatingSystem.IsWindows())
             return GetSteamInstallPathWindows();
         return GetSteamInstallPathLinux();
     }
 
     [SupportedOSPlatform("windows")]
-    private string? GetSteamInstallPathWindows()
+    private static string? GetSteamInstallPathWindows()
     {
         try
         {
@@ -91,7 +92,7 @@ public class SteamScanner : IGameScanner
         }
     }
 
-    private string? GetSteamInstallPathLinux()
+    private static string? GetSteamInstallPathLinux()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var candidates = new[]

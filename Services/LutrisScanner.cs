@@ -113,7 +113,7 @@ public class LutrisScanner : IGameScanner
         return string.IsNullOrWhiteSpace(name) ? slug : name;
     }
 
-    private static IEnumerable<string> GetLutrisConfigDirectories()
+    internal static IEnumerable<string> GetLutrisConfigDirectories()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return new[]
