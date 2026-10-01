@@ -266,13 +266,10 @@ namespace OptiscalerClient.Views
             var rowsPanel = new StackPanel { Spacing = 4 };
             var rowsUi = new List<IniRow>(rows.Count);
 
-            foreach (var (itemKey, originalDiskValue) in rows)
+            // Disk values as-is: the installed ini already has the profile plus every per-game
+            // layer (output upscaler, quality, FG...) on top, which the saved profile doesn't.
+            foreach (var (itemKey, itemValue) in rows)
             {
-                var itemValue = originalDiskValue;
-                if (_currentProfile != null && _currentProfile.IniSettings.TryGetValue(section, out var sectionSettings) && sectionSettings.TryGetValue(itemKey, out var profileValue))
-                {
-                    itemValue = profileValue;
-                }
                 var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("150,*,Auto") };
                 var keyBlock = new TextBlock
                 {
