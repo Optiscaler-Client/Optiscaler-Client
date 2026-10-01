@@ -847,6 +847,7 @@
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">无法下载 AMD-NR-bridge：{0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">无法应用 AMD-NR-bridge：{0}&#10;&#10;OptiScaler 本身已安装。请在“管理”中重新安装以重试。</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc 的模组仅适用于使用 FSR 3.1 或更高版本的 DirectX 12 游戏。在 DirectX 11 和 Vulkan 中无法使用。</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">如需与 OptiScaler 一起使用，请参阅 3zwr1 的 AMD-NR + OptiScaler。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">模组版本（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">danielblnc 模组的版本，在两种模式（“仅 danielblnc 模组”和“Mod + OptiScaler”）中都用于生成 AMD 权重。选择模式后可用。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">通过一个非官方的第三方分支(bulacha3/DLSS-NR-on-AMD-Linux)、经由真正的 ROCm 桥接,在 Linux 上运行 danielblnc 的 DLSS Neural Rendering 模组</x:String>
@@ -886,6 +887,7 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">已从 Steam 中移除启动选项。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc 模组</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblnc 的 AMD GPU 版 DLSS Neural Rendering 模组，通过 bulacha3 的 Linux 分支安装。选择一个版本即可与上方所选的 OptiScaler 版本一起安装；若只想安装模组，请将 OptiScaler 设为“无”。在此处选择“无”会移除模组。</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">danielblnc 为 AMD GPU 制作的 DLSS Neural Rendering 模组。选择一个版本即可安装；由于在 Windows 上两者冲突，选中时 OptiScaler 的选项会保持锁定。在此选择“无”会移除模组。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">在 Linux 上模组与 OptiScaler 可以同时使用：它会与所选的 OptiScaler 版本一起安装。若只想安装模组，请将 OptiScaler 设为“无”。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler 已设为“无”：只会安装模组。</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">在 Linux 上模组与 OptiScaler 可以同时使用：每个游戏都会与本批次所选的 OptiScaler 版本一起安装模组。</x:String>
@@ -908,6 +910,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">下载出错：{0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc 的模组已成功下载,但需要手动安装:&#10;1) 点击"运行安装程序"。&#10;2) 按照终端中显示的步骤操作。重要:当询问使用哪个代理 DLL 时,选择一个与 dxgi.dll 不同的(例如 dbghelp.dll)——之后 OptiScaler 会作为 dxgi.dll 安装,两者需要各自独立的位置。&#10;&#10;检测到安装程序结束后,此窗口会自动关闭并安装 OptiScaler wrapper。</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc 的模组已成功下载,但需要手动安装:&#10;1) 点击"运行安装程序"。&#10;2) 按照终端中显示的步骤操作(它提供的任何代理 DLL 都可以)。&#10;&#10;检测到安装程序结束后,此窗口会自动关闭。</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">从 v0.3.3 起，danielblnc 的模组自带安装程序。安装时会打开该程序，请在其中完成安装。</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">从 v0.3.3 起，danielblnc 的模组自带安装程序。安装时会打开该程序，请在其中完成安装。重要：代理 DLL 请选择与 dxgi.dll 不同的（例如 dbghelp.dll）——之后 OptiScaler 会以 dxgi.dll 安装。</x:String>
     <x:String x:Key="TxtWineOverrideTitle">需要 Wine DLL 覆盖</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">在 Linux/Proton 上,可能需要设置 Wine DLL 覆盖 {0} 才能真正生效 — 否则 Wine 可能会继续使用该文件名的内置版本,而不是刚安装的版本。如果你使用 Steam,请将此内容添加到游戏的启动选项:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">无法确定游戏文件夹。</x:String>

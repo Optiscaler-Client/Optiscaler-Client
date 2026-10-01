@@ -854,6 +854,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">No se pudo descargar AMD-NR-bridge: {0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">No se pudo aplicar AMD-NR-bridge: {0}&#10;&#10;OptiScaler sí se instaló. Reinstala desde Administrar para intentarlo de nuevo.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">El mod de danielblnc solo funciona en juegos DirectX 12 que usan FSR 3.1 o superior. No funciona en DirectX 11 ni Vulkan.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">Para usarlo con OptiScaler, mirá AMD-NR + OptiScaler de 3zwr1.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Versión del mod (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versión del mod de danielblnc, usada para generar los pesos para AMD en ambos modos ("Solo mod de danielblnc" y "Mod + OptiScaler"). Disponible al seleccionar un modo.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Usa un fork de terceros no oficial (bulacha3/DLSS-NR-on-AMD-Linux) para correr el mod DLSS Neural Rendering de danielblnc en Linux mediante un puente real a ROCm</x:String>
@@ -893,6 +894,7 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Opciones de lanzamiento quitadas de Steam.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — mod de danielblnc</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">Mod DLSS Neural Rendering de danielblnc para GPUs AMD, instalado mediante el fork para Linux de bulacha3. Elige una versión para instalarlo junto a la versión de OptiScaler seleccionada arriba; pon OptiScaler en "Ninguno" para instalar solo el mod. "Ninguno" aquí quita el mod.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">Mod de DLSS Neural Rendering de danielblnc para GPUs AMD. Elegí una versión para instalarlo; las opciones de OptiScaler quedan bloqueadas mientras esté seleccionado, porque en Windows entran en conflicto. "Ninguno" acá quita el mod.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">En Linux el mod y OptiScaler funcionan juntos: se instalará junto a la versión de OptiScaler elegida. Pon OptiScaler en "Ninguno" para instalar solo el mod.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler está en "Ninguno": se instalará solo el mod.</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">En Linux el mod y OptiScaler funcionan juntos: cada juego recibe el mod junto a la versión de OptiScaler elegida para el lote.</x:String>
@@ -915,6 +917,8 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtSetupNrDownloadError">Error al descargar: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">El mod de danielblnc se descargó con éxito, pero requiere instalación manual:&#10;1) Hacé clic en "Ejecutar instalador".&#10;2) Seguí los pasos indicados por la terminal. IMPORTANTE: cuando pregunte qué DLL proxy usar, elegí una DISTINTA de dxgi.dll (por ejemplo dbghelp.dll) — OptiScaler se instalará como dxgi.dll después y necesitan slots separados.&#10;&#10;Esta ventana se cierra sola e instala el wrapper de OptiScaler cuando detecta que el instalador terminó.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">El mod de danielblnc se descargó con éxito, pero requiere instalación manual:&#10;1) Hacé clic en "Ejecutar instalador".&#10;2) Seguí los pasos indicados por la terminal (cualquier DLL proxy que ofrezca sirve).&#10;&#10;Esta ventana se cierra sola cuando detecta que el instalador terminó.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">A partir de la v0.3.3, el mod de danielblnc trae su propio instalador. Al instalar se abrirá para que completes la instalación desde ahí.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">A partir de la v0.3.3, el mod de danielblnc trae su propio instalador. Al instalar se abrirá para que completes la instalación desde ahí. IMPORTANTE: como DLL proxy elegí una DISTINTA de dxgi.dll (por ejemplo dbghelp.dll) — OptiScaler se instala después como dxgi.dll.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Se necesita un override de DLL en Wine</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">En Linux/Proton puede que necesites un override de DLL en Wine para que {0} realmente tenga efecto — si no, Wine puede seguir usando su propia versión interna de ese nombre de archivo en vez de la que se acaba de instalar. Si usás Steam, agregá esto a las opciones de lanzamiento del juego:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">No se pudo resolver la carpeta del juego.</x:String>

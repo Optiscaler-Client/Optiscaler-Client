@@ -830,6 +830,7 @@
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">Не удалось загрузить AMD-NR-bridge: {0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">Не удалось применить AMD-NR-bridge: {0}&#10;&#10;Сам OptiScaler установлен. Переустановите через «Управление», чтобы попробовать снова.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">Мод danielblnc работает только в играх на DirectX 12, использующих FSR 3.1 или новее. В DirectX 11 и Vulkan он не работает.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">Для работы вместе с OptiScaler см. AMD-NR + OptiScaler от 3zwr1.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Версия мода (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Версия мода danielblnc, используемая для генерации весов AMD в обоих режимах («Только мод danielblnc» и «Mod + OptiScaler»). Доступна после выбора режима.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Использует неофициальный сторонний форк (bulacha3/DLSS-NR-on-AMD-Linux) для запуска мода DLSS Neural Rendering от danielblnc в Linux через настоящий мост к ROCm</x:String>
@@ -869,6 +870,7 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Параметры запуска удалены из Steam.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — мод danielblnc</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">Мод DLSS Neural Rendering от danielblnc для видеокарт AMD, устанавливается через Linux-форк bulacha3. Выберите версию, чтобы установить его вместе с выбранной выше версией OptiScaler; выберите для OptiScaler «Нет», чтобы установить только мод. «Нет» здесь удаляет мод.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">Мод DLSS Neural Rendering от danielblnc для видеокарт AMD. Выберите версию, чтобы установить его; пока он выбран, параметры OptiScaler заблокированы, так как в Windows они конфликтуют. «Нет» здесь удаляет мод.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">В Linux мод и OptiScaler работают вместе: он будет установлен вместе с выбранной версией OptiScaler. Выберите для OptiScaler «Нет», чтобы установить только мод.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">Для OptiScaler выбрано «Нет»: будет установлен только мод.</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">В Linux мод и OptiScaler работают вместе: каждая игра получит мод вместе с версией OptiScaler, выбранной для пакета.</x:String>
@@ -891,6 +893,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">Ошибка загрузки: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">Мод danielblnc успешно скачан, но требует ручной установки:&#10;1) Нажмите "Запустить установщик".&#10;2) Следуйте шагам в терминале. ВАЖНО: когда он спросит, какую proxy DLL использовать, выберите ЛЮБУЮ, ОТЛИЧНУЮ от dxgi.dll (например dbghelp.dll) — OptiScaler будет установлен как dxgi.dll позже, и им нужны разные слоты.&#10;&#10;Это окно закроется автоматически и установит обёртку OptiScaler, как только обнаружит, что установщик завершил работу.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">Мод danielblnc успешно скачан, но требует ручной установки:&#10;1) Нажмите "Запустить установщик".&#10;2) Следуйте шагам в терминале (подойдёт любая предложенная proxy DLL).&#10;&#10;Это окно закроется автоматически, как только обнаружит, что установщик завершил работу.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">Начиная с v0.3.3 мод danielblnc поставляется со своим установщиком. При установке он откроется, чтобы вы завершили установку в нём.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">Начиная с v0.3.3 мод danielblnc поставляется со своим установщиком. При установке он откроется, чтобы вы завершили установку в нём. ВАЖНО: в качестве прокси-DLL выберите ОТЛИЧНУЮ от dxgi.dll (например, dbghelp.dll) — OptiScaler затем устанавливается как dxgi.dll.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Требуется override DLL в Wine</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">В Linux/Proton может понадобиться override DLL в Wine, чтобы {0} действительно заработал — иначе Wine может продолжать использовать свою встроенную версию этого имени файла вместо только что установленной. Если вы используете Steam, добавьте это в параметры запуска игры:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Не удалось определить папку игры.</x:String>

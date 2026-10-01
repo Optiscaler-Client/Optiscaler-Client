@@ -848,6 +848,7 @@
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">AMD-NR-bridge をダウンロードできませんでした: {0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">AMD-NR-bridge を適用できませんでした: {0}&#10;&#10;OptiScaler 自体はインストールされました。管理画面から再インストールして再試行してください。</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc の Mod は、FSR 3.1 以降を使用する DirectX 12 のゲームでのみ動作します。DirectX 11 と Vulkan では動作しません。</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">OptiScaler と併用するには、3zwr1 の AMD-NR + OptiScaler を参照してください。</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">モッドのバージョン（danielblnc）</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">両方のモード (「danielblnc の MOD のみ」と「Mod + OptiScaler」) で AMD 用の重みを生成するのに使う danielblnc の MOD のバージョンです。モードを選ぶと選択できます。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">非公式のサードパーティ製フォーク(bulacha3/DLSS-NR-on-AMD-Linux)を使い、実際のROCmブリッジ経由でdanielblncのDLSS Neural RenderingモッドをLinuxで動かします</x:String>
@@ -887,6 +888,7 @@
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Steam から起動オプションを削除しました。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc Mod</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">AMD GPU 向けの danielblnc による DLSS Neural Rendering Mod。bulacha3 の Linux フォーク経由でインストールします。バージョンを選ぶと、上で選択した OptiScaler バージョンと一緒にインストールされます。Mod だけを入れる場合は OptiScaler を「なし」にしてください。ここで「なし」を選ぶと Mod を削除します。</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">AMD GPU 向けの danielblnc による DLSS Neural Rendering Mod です。バージョンを選ぶとインストールされます。Windows では OptiScaler と競合するため、選択中は OptiScaler のオプションがロックされます。ここで「なし」を選ぶと Mod が削除されます。</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux では Mod と OptiScaler を併用できます。選択した OptiScaler バージョンと一緒にインストールされます。Mod だけを入れる場合は OptiScaler を「なし」にしてください。</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler が「なし」です。Mod のみインストールされます。</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux では Mod と OptiScaler を併用できます。各ゲームに、一括インストールで選んだ OptiScaler バージョンと一緒に Mod が入ります。</x:String>
@@ -909,6 +911,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">ダウンロードエラー: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblncのmodのダウンロードに成功しましたが、手動インストールが必要です。&#10;1) 「インストーラーを実行」をクリックします。&#10;2) ターミナルに表示される手順に従ってください。重要: 使用するproxy DLLを聞かれたら、dxgi.dll以外のもの(例: dbghelp.dll)を選んでください — 後でOptiScalerがdxgi.dllとしてインストールされるため、別々のスロットが必要です。&#10;&#10;インストーラーの終了を検出すると、このウィンドウは自動的に閉じ、OptiScalerのラッパーをインストールします。</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblncのmodのダウンロードに成功しましたが、手動インストールが必要です。&#10;1) 「インストーラーを実行」をクリックします。&#10;2) ターミナルに表示される手順に従ってください(提示されるどのproxy DLLでも構いません)。&#10;&#10;インストーラーの終了を検出すると、このウィンドウは自動的に閉じます。</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">v0.3.3 以降、danielblnc の Mod には専用のインストーラーが付属しています。インストール時に開くので、そこでインストールを完了してください。</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">v0.3.3 以降、danielblnc の Mod には専用のインストーラーが付属しています。インストール時に開くので、そこでインストールを完了してください。重要：プロキシ DLL には dxgi.dll 以外（例：dbghelp.dll）を選んでください — OptiScaler は後で dxgi.dll としてインストールされます。</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Wine の DLL オーバーライドが必要です</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton では、{0} を実際に機能させるために Wine の DLL オーバーライドが必要な場合があります — そうしないと、Wine はインストールしたばかりのファイルではなく、その名前の組み込みバージョンを使い続けることがあります。Steam を使用している場合は、ゲームの起動オプションに次を追加してください:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">ゲームフォルダを特定できませんでした。</x:String>

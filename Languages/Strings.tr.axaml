@@ -829,6 +829,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">AMD-NR-bridge indirilemedi: {0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">AMD-NR-bridge uygulanamadı: {0}&#10;&#10;OptiScaler'ın kendisi kuruldu. Tekrar denemek için Yönet'ten yeniden kurun.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc'in modu yalnızca FSR 3.1 veya daha yenisini kullanan DirectX 12 oyunlarında çalışır. DirectX 11 ve Vulkan'da çalışmaz.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">OptiScaler ile kullanmak için 3zwr1'in AMD-NR + OptiScaler projesine bakın.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Mod sürümü (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Her iki modda ("Yalnızca danielblnc modu" ve "Mod + OptiScaler") AMD ağırlıklarını oluşturmak için kullanılan danielblnc mod sürümü. Bir mod seçildiğinde kullanılabilir.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">danielblnc'in DLSS Neural Rendering modunu Linux'ta gerçek bir ROCm köprüsü üzerinden çalıştırmak için resmi olmayan üçüncü taraf bir fork (bulacha3/DLSS-NR-on-AMD-Linux) kullanır</x:String>
@@ -868,6 +869,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Başlatma seçenekleri Steam'den kaldırıldı.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc modu</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">danielblnc'in AMD GPU'lar için DLSS Neural Rendering modu, bulacha3'ün Linux fork'u ile kurulur. Yukarıda seçilen OptiScaler sürümüyle birlikte kurmak için bir sürüm seçin; yalnızca modu kurmak için OptiScaler'ı "Yok" yapın. Buradaki "Yok" modu kaldırır.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">AMD GPU'lar için danielblnc'in DLSS Neural Rendering modu. Yüklemek için bir sürüm seçin; Windows'ta ikisi çakıştığı için seçili olduğu sürece OptiScaler seçenekleri kilitli kalır. Burada "Yok" modu kaldırır.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux'ta mod ve OptiScaler birlikte çalışır: seçilen OptiScaler sürümüyle birlikte kurulacak. Yalnızca modu kurmak için OptiScaler'ı "Yok" yapın.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler "Yok" olarak ayarlı: yalnızca mod kurulacak.</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux'ta mod ve OptiScaler birlikte çalışır: her oyun, toplu işlem için seçilen OptiScaler sürümüyle birlikte modu alır.</x:String>
@@ -890,6 +892,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtSetupNrDownloadError">İndirme hatası: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc'nin modu başarıyla indirildi, ancak manuel kurulum gerektiriyor:&#10;1) "Yükleyiciyi çalıştır"a tıklayın.&#10;2) Terminalde gösterilen adımları izleyin. ÖNEMLİ: hangi proxy DLL'in kullanılacağı sorulduğunda dxgi.dll'DEN FARKLI birini seçin (ör. dbghelp.dll) — OptiScaler daha sonra dxgi.dll olarak kurulacak ve ayrı slotlara ihtiyaçları var.&#10;&#10;Yükleyicinin bittiğini algıladığında bu pencere otomatik olarak kapanır ve OptiScaler wrapper'ını kurar.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc'nin modu başarıyla indirildi, ancak manuel kurulum gerektiriyor:&#10;1) "Yükleyiciyi çalıştır"a tıklayın.&#10;2) Terminalde gösterilen adımları izleyin (sunulan herhangi bir proxy DLL işe yarar).&#10;&#10;Yükleyicinin bittiğini algıladığında bu pencere otomatik olarak kapanır.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">v0.3.3'ten itibaren danielblnc'in modu kendi yükleyicisiyle gelir. Kurulum sırasında açılır, kurulumu oradan tamamlayabilirsiniz.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">v0.3.3'ten itibaren danielblnc'in modu kendi yükleyicisiyle gelir. Kurulum sırasında açılır, kurulumu oradan tamamlayabilirsiniz. ÖNEMLİ: proxy DLL olarak dxgi.dll'den FARKLI birini seçin (ör. dbghelp.dll) — OptiScaler daha sonra dxgi.dll olarak yüklenir.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Wine DLL geçersiz kılma gerekiyor</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton'da {0}'in gerçekten etkili olması için bir Wine DLL geçersiz kılmasına ihtiyacınız olabilir — aksi takdirde Wine, az önce yüklenen yerine bu dosya adının kendi yerleşik sürümünü kullanmaya devam edebilir. Steam kullanıyorsanız, bunu oyunun başlatma seçeneklerine ekleyin:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Oyun klasörü belirlenemedi.</x:String>

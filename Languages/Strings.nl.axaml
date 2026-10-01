@@ -850,6 +850,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">Kon AMD-NR-bridge niet downloaden: {0}</x:String>
     <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">AMD-NR-bridge kon niet worden toegepast: {0}&#10;&#10;OptiScaler zelf is geïnstalleerd. Installeer opnieuw via Beheren om het nog eens te proberen.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">De mod van danielblnc werkt alleen in DirectX 12-games die FSR 3.1 of nieuwer gebruiken. Hij werkt niet in DirectX 11 of Vulkan.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">Om het met OptiScaler te gebruiken, zie AMD-NR + OptiScaler van 3zwr1.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Modversie (danielblnc)</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versie van de mod van danielblnc, gebruikt om in beide modi ("Alleen danielblnc-mod" en "Mod + OptiScaler") de AMD-gewichten te genereren. Beschikbaar zodra een modus is gekozen.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Gebruikt een onofficiële externe fork (bulacha3/DLSS-NR-on-AMD-Linux) om danielblncs DLSS Neural Rendering-mod via een echte ROCm-brug op Linux te draaien</x:String>
@@ -889,6 +890,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Startopties verwijderd uit Steam.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — mod van danielblnc</x:String>
     <x:String x:Key="TxtSetupNrLinuxModTooltip">DLSS Neural Rendering-mod van danielblnc voor AMD-GPU's, geïnstalleerd via de Linux-fork van bulacha3. Kies een versie om hem samen met de hierboven gekozen OptiScaler-versie te installeren; zet OptiScaler op "Geen" om alleen de mod te installeren. "Geen" hier verwijdert de mod.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">De DLSS Neural Rendering-mod van danielblnc voor AMD-GPU's. Kies een versie om hem te installeren; de OptiScaler-opties blijven vergrendeld zolang hij geselecteerd is, omdat de twee op Windows conflicteren. "Geen" verwijdert hier de mod.</x:String>
     <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Op Linux werken de mod en OptiScaler samen: hij wordt geïnstalleerd samen met de gekozen OptiScaler-versie. Zet OptiScaler op "Geen" om alleen de mod te installeren.</x:String>
     <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler staat op "Geen": alleen de mod wordt geïnstalleerd.</x:String>
     <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Op Linux werken de mod en OptiScaler samen: elke game krijgt de mod samen met de OptiScaler-versie die voor de batch is gekozen.</x:String>
@@ -911,6 +913,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrDownloadError">Downloadfout: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">De mod van danielblnc is succesvol gedownload, maar moet handmatig geïnstalleerd worden:&#10;1) Klik op "Installer uitvoeren".&#10;2) Volg de stappen in de terminal. BELANGRIJK: als gevraagd wordt welke proxy-DLL te gebruiken, kies er een DIE NIET dxgi.dll is (bv. dbghelp.dll) — OptiScaler wordt daarna als dxgi.dll geïnstalleerd en ze hebben aparte slots nodig.&#10;&#10;Dit venster sluit automatisch en installeert de OptiScaler-wrapper zodra het detecteert dat de installer klaar is.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">De mod van danielblnc is succesvol gedownload, maar moet handmatig geïnstalleerd worden:&#10;1) Klik op "Installer uitvoeren".&#10;2) Volg de stappen in de terminal (elke aangeboden proxy-DLL werkt).&#10;&#10;Dit venster sluit automatisch zodra het detecteert dat de installer klaar is.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">Vanaf v0.3.3 heeft de mod van danielblnc een eigen installatieprogramma. Bij het installeren wordt het geopend zodat je de installatie daar kunt voltooien.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">Vanaf v0.3.3 heeft de mod van danielblnc een eigen installatieprogramma. Bij het installeren wordt het geopend zodat je de installatie daar kunt voltooien. BELANGRIJK: kies als proxy-DLL een ANDERE dan dxgi.dll (bijv. dbghelp.dll) — OptiScaler wordt daarna als dxgi.dll geïnstalleerd.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Wine DLL-override nodig</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">Op Linux/Proton heb je mogelijk een Wine DLL-override nodig om {0} daadwerkelijk te laten werken — anders kan Wine zijn eigen ingebouwde versie van die bestandsnaam blijven gebruiken in plaats van de zojuist geïnstalleerde. Als je Steam gebruikt, voeg dit toe aan de opstartopties van het spel:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Kon de gamemap niet bepalen.</x:String>
