@@ -61,7 +61,17 @@ namespace OptiscalerClient.Services
         private const string SetupExeName = "dlssnr_on_amd_setup.exe";
         public const string StagedExeFileName = SetupExeName;
         private const string CachedNvngxFileName = "nvngx_dlssnr.dll";
-        private const string WeightsMarkerFileName = "dlssnr_on_amd_weights.bin";
+        public const string WeightsMarkerFileName = "dlssnr_on_amd_weights.bin";
+
+        /// <summary>v0.3.3 replaced the console installer with a graphical one (Tauri/WebView2):
+        /// there are no stdin prompts left to drive, so these versions are never automated — the
+        /// user installs through the installer's own window (see RunGuiInstallAsync). It still writes
+        /// the same weights file and offers the same proxy DLL names.</summary>
+        public static bool HasGuiInstaller(string? version)
+        {
+            var m = Regex.Match(version ?? "", @"\d+(\.\d+)+");
+            return m.Success && Version.TryParse(m.Value, out var v) && v >= new Version(0, 3, 3);
+        }
 
         // Written next to the cached Mode B output files so TryUseCachedModeBOutput can report the
         // mod version that actually produced them, even though a later install may have a different
@@ -883,6 +893,61 @@ namespace OptiscalerClient.Services
                 : AutomatedInstallResult.Failed;
         }
 
+        /// <summary>v0.3.3+ (HasGuiInstaller): opens danielblnc's graphical installer for the user and
+        /// waits in the background — no window of ours — until it produces the weights file (true) or
+        /// every installer process is gone without it (false: the user closed it before finishing).
+        /// Launched directly only when the Defender exclusion is in place, otherwise the folder opens
+        /// with the exe selected (see Stage's notes on why). Watches processes by name rather than the
+        /// launched handle because the installer may relaunch itself elevated.</summary>
+        public async Task<bool> RunGuiInstallAsync(Game game, string gameDir, string danielVersion, bool isModeB)
+        {
+            var session = BeginInstallSession(gameDir);
+            var stagedExe = Path.Combine(gameDir, StagedExeFileName);
+            var launched = false;
+            if (game.DlssNrDefenderExclusionAdded)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = stagedExe, UseShellExecute = true, WorkingDirectory = gameDir })?.Dispose();
+                    launched = true;
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[SetupNr] Could not launch the installer directly, opening its folder instead: {ex.Message}");
+                }
+            }
+            if (!launched) PlatformServiceFactory.CreateShellService().OpenFolderAndSelect(stagedExe);
+
+            var processName = Path.GetFileNameWithoutExtension(StagedExeFileName);
+            var markerPath = Path.Combine(gameDir, WeightsMarkerFileName);
+            (long, DateTime)? lastMarker = null;
+            var seenRunning = false;
+            var start = DateTime.UtcNow;
+            // ponytail: 30 min overall cap, 10 min for the user to start it from the opened folder.
+            while (DateTime.UtcNow - start < TimeSpan.FromMinutes(30))
+            {
+                await Task.Delay(1000);
+
+                // Finish only once the weights file is unchanged across two polls: it is cached as
+                // Mode B output, and the installer is still writing (and copying the proxy DLL) for
+                // a moment after the file first appears.
+                var info = new FileInfo(markerPath);
+                (long, DateTime)? marker = info.Exists ? (info.Length, info.LastWriteTimeUtc) : null;
+                if (marker != null && marker == lastMarker && TryFinishInstall(session, game, danielVersion, isModeB))
+                    return true;
+                lastMarker = marker;
+
+                var procs = Process.GetProcessesByName(processName);
+                var running = procs.Length > 0;
+                foreach (var p in procs) p.Dispose();
+                if (running) seenRunning = true;
+                else if (seenRunning || DateTime.UtcNow - start > TimeSpan.FromMinutes(10))
+                    return TryFinishInstall(session, game, danielVersion, isModeB);
+            }
+            DebugWindow.Log("[SetupNr] Timed out waiting for danielblnc's installer.");
+            return false;
+        }
+
         /// <summary>Answers the known prompts, then just keeps draining stdout (see class notes —
         /// no more input is ever needed after the DLL-name prompt, but something still has to keep
         /// reading so the child doesn't block on a full pipe buffer once weight conversion starts
@@ -1274,8 +1339,10 @@ namespace OptiscalerClient.Services
                 }
             }
 
-            var result = await RunAutomatedInstallAsync(game, gameDir, danielVersion, isModeB);
-            if (result != AutomatedInstallResult.Success) return QuickPathResult.Failed;
+            var installed = HasGuiInstaller(danielVersion)
+                ? await RunGuiInstallAsync(game, gameDir, danielVersion, isModeB)
+                : await RunAutomatedInstallAsync(game, gameDir, danielVersion, isModeB) == AutomatedInstallResult.Success;
+            if (!installed) return QuickPathResult.Failed;
             if (isModeB) game.AmdNrBridgeVersion = bridgeVersion;
             return QuickPathResult.Success;
         }

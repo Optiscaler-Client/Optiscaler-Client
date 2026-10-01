@@ -688,63 +688,22 @@ namespace OptiscalerClient.Views
             var dlssNrVersionPanel = this.FindControl<Control>("PanelDefaultDlssNrDanielVersion");
             if (dlssNrVersionPanel != null) dlssNrVersionPanel.IsVisible = showDlssNr;
 
-            var cmb = this.FindControl<ComboBox>("CmbDefaultDlssNrOnAmdMode");
-            if (cmb == null) return;
-
-            // Linux: same as Manage — no mode selector; the mod version combo ("None" or a version)
-            // is the whole control and Quick/Bulk Install put the default OptiScaler next to it.
-            if (!OperatingSystem.IsWindows())
-            {
-                if (dlssNrModePanel != null) dlssNrModePanel.IsVisible = false;
-                if (dlssNrVersionPanel != null) Grid.SetColumn(dlssNrVersionPanel, 1);
-                if (this.FindControl<TextBlock>("TxtDefaultDlssNrDanielVersionLbl") is { } modLbl)
-                    modLbl.Text = GetResourceString("TxtSetupNrLinuxModLbl", "Neural Rendering (AMD) — danielblnc mod");
-                if (this.FindControl<Border>("BdDefaultDlssNrDanielVersionHelp") is { } modHelp)
-                    ToolTip.SetTip(modHelp, GetResourceString("TxtSetupNrLinuxModTooltip",
+            // Same as Manage — no mode selector; the mod version combo ("None" or a version) is the
+            // whole control. Linux: Quick/Bulk Install put the default OptiScaler next to it; Windows:
+            // the mod goes in alone and the other defaults lock (see UpdateDanielVersionSelection).
+            if (dlssNrModePanel != null) dlssNrModePanel.IsVisible = false;
+            if (dlssNrVersionPanel != null) Grid.SetColumn(dlssNrVersionPanel, 1);
+            if (this.FindControl<TextBlock>("TxtDefaultDlssNrDanielVersionLbl") is { } modLbl)
+                modLbl.Text = GetResourceString("TxtSetupNrLinuxModLbl", "Neural Rendering (AMD) — danielblnc mod");
+            if (this.FindControl<Border>("BdDefaultDlssNrDanielVersionHelp") is { } modHelp)
+                ToolTip.SetTip(modHelp, OperatingSystem.IsWindows()
+                    ? GetResourceString("TxtSetupNrWindowsModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs. Pick a version to install it; OptiScaler's options stay locked while it is selected, since the two conflict on Windows. \"None\" here removes the mod.")
+                    : GetResourceString("TxtSetupNrLinuxModTooltip",
                         "danielblnc's DLSS Neural Rendering mod for AMD GPUs, installed through bulacha3's Linux fork. Pick a version to install it together with the OptiScaler version selected above; set OptiScaler to \"None\" to install only the mod. \"None\" here removes the mod."));
-                SetDefaultOptionsLocked(false);
-                SetDefaultAmdNrBridgePanelVisible(false);
-                if (showDlssNr) _ = PopulateDefaultDlssNrDanielVersionComboAsync();
-                return;
-            }
-
-            // On Linux, "daniel-only" runs guentra/DLSS-NR-on-AMD-Linux's fork instead of danielblnc's
-            // own installer — labeled explicitly, same as ManageGameWindow's CmbSetupNr.
-            var danielOnlyItem = cmb.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-only");
-            if (danielOnlyItem != null)
-            {
-                danielOnlyItem.Content = OperatingSystem.IsWindows()
-                    ? GetResourceString("TxtSetupNrModeDanielOnlyShort", "danielblnc mod only")
-                    : GetResourceString("TxtSetupNrModeDanielOnlyShortLinux", "danielblnc mod only (fork)");
-            }
-
-            cmb.SelectionChanged -= CmbDefaultDlssNrOnAmdMode_SelectionChanged;
-            var saved = _componentService.Config.DefaultDlssNrOnAmdMode;
-            cmb.SelectedIndex = 0; // "none"
-            for (int i = 0; i < cmb.Items.Count; i++)
-            {
-                if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == saved)
-                {
-                    cmb.SelectedIndex = i;
-                    break;
-                }
-            }
-            cmb.SelectionChanged += CmbDefaultDlssNrOnAmdMode_SelectionChanged;
-
-            // While Experimental Features is off (or the GPU isn't AMD), this combo is unreachable —
-            // hidden along with GridDlssNrOnAmd — so its stored value must not go on locking every
-            // other default option with no visible control left to undo it (same bug, and same fix
-            // principle, as ManageGameWindow.PopulateVersionSelectors' targetSetupNrTag gate).
-            // SelectedItem above still reflects the real stored value (untouched) so BtnSave_Click
-            // doesn't silently overwrite it back to "none" just because the zone was hidden when
-            // saved — only the visible side effects (locking, the bridge selector) are suppressed.
-            if (showDlssNr)
-                ApplyDlssNrOnAmdModeSelection((cmb.SelectedItem as ComboBoxItem)?.Tag as string ?? "none");
-            else
-            {
-                SetDefaultOptionsLocked(false);
-                SetDefaultAmdNrBridgePanelVisible(false);
-            }
+            SetDefaultOptionsLocked(false);
+            SetDefaultAmdNrBridgePanelVisible(false);
+            if (showDlssNr) _ = PopulateDefaultDlssNrDanielVersionComboAsync();
         }
 
         private void CmbDefaultDlssNrOnAmdMode_SelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -838,32 +797,34 @@ namespace OptiscalerClient.Views
                 return;
             }
 
-            // Linux: "None" first — the combo is the whole mod control there (see
+            // "None" first — the combo is the whole mod control (see
             // PopulateDefaultDlssNrOnAmdModeCombo); selected when the saved mode is "none".
-            var offset = 0;
-            if (isLinux)
-            {
-                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtSetupNrModeNone", "None"), Tag = "none" });
-                offset = 1;
-            }
+            const int offset = 1;
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtSetupNrModeNone", "None"), Tag = "none" });
             for (int i = 0; i < releases.Count; i++)
                 cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
 
             var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
             var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
-            cmb.SelectedIndex = isLinux && (_componentService.Config.DefaultDlssNrOnAmdMode ?? "none") == "none"
+            cmb.SelectedIndex = (_componentService.Config.DefaultDlssNrOnAmdMode ?? "none") == "none"
                 ? 0
                 : (targetIndex >= 0 ? targetIndex : 0) + offset;
             cmb.IsEnabled = true;
-            if (isLinux)
-            {
-                cmb.SelectionChanged -= CmbDefaultDlssNrDanielVersion_SelectionChanged;
-                cmb.SelectionChanged += CmbDefaultDlssNrDanielVersion_SelectionChanged;
-                UpdateLinuxNrInfo();
-            }
+            cmb.SelectionChanged -= CmbDefaultDlssNrDanielVersion_SelectionChanged;
+            cmb.SelectionChanged += CmbDefaultDlssNrDanielVersion_SelectionChanged;
+            UpdateDanielVersionSelection();
         }
 
-        private void CmbDefaultDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e) => UpdateLinuxNrInfo();
+        private void CmbDefaultDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e) => UpdateDanielVersionSelection();
+
+        /// <summary>Windows: a picked mod version means the mod alone, so the other defaults lock
+        /// (same as Manage's "daniel-only"). Linux: shows the "mod + OptiScaler" note.</summary>
+        private void UpdateDanielVersionSelection()
+        {
+            var modTag = (this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
+            SetDefaultOptionsLocked(OperatingSystem.IsWindows() && !string.IsNullOrEmpty(modTag) && modTag != "none");
+            UpdateLinuxNrInfo();
+        }
 
         /// <summary>Linux: with a mod version picked, Quick/Bulk Install put the mod next to the
         /// default OptiScaler version — say so, same as Manage.</summary>
@@ -1285,20 +1246,15 @@ namespace OptiscalerClient.Views
             var cmbDlssNrDaniel = this.FindControl<ComboBox>("CmbDefaultDlssNrDanielVersion");
             if (cmbDlssNrDaniel?.SelectedItem is ComboBoxItem danielItem && danielItem.Tag is string danielVer)
             {
-                if (!OperatingSystem.IsWindows())
+                // The mod combo is the whole control — "None" turns the default off, a version means
+                // "mod + the default OptiScaler" (Linux) or the mod alone (Windows) for Quick/Bulk
+                // Install. Only when the combo is actually shown, so a hidden zone never rewrites the
+                // saved default.
+                if (cmbDlssNrDaniel.IsVisible && cmbDlssNrDaniel.IsEffectivelyVisible)
                 {
-                    // Linux: the mod combo is the whole control — "None" turns the default off, a
-                    // version means "mod + the default OptiScaler" for Quick/Bulk Install. Only when the
-                    // combo is actually shown, so a hidden zone never rewrites the saved default.
-                    if (cmbDlssNrDaniel.IsVisible && cmbDlssNrDaniel.IsEffectivelyVisible)
-                    {
-                        _componentService.Config.DefaultDlssNrOnAmdMode = danielVer == "none" ? "none" : "daniel-and-opti";
-                        if (danielVer != "none") _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
-                    }
-                }
-                else
-                {
-                    _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
+                    _componentService.Config.DefaultDlssNrOnAmdMode = danielVer == "none" ? "none"
+                        : OperatingSystem.IsWindows() ? "daniel-only" : "daniel-and-opti";
+                    if (danielVer != "none") _componentService.Config.DefaultDlssNrOnAmdDanielVersion = danielVer;
                 }
             }
 

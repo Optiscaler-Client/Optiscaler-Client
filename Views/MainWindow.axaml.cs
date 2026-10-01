@@ -6038,7 +6038,8 @@ namespace OptiscalerClient.Views
                         bool modeBBridge = false;
                         var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
                         if (_componentService.Config.ShowExperimentalFeatures &&
-                            !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none")
+                            !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none" &&
+                            AmdNrBridgeService.IsModeOffered(dlssNrDefaultMode))
                         {
                             var dlssNrResult = await new DlssNrOnAmdService()
                                 .InstallForQuickPathAsync(this, selectedGame, dlssNrDefaultMode, _componentService);

@@ -352,6 +352,11 @@ namespace OptiscalerClient.Services
         /// <summary>Setup NR mode that installs the bridge (danielblnc's mod + official OptiScaler).</summary>
         public const string BridgeMode = "daniel-and-opti";
 
+        /// <summary>Windows no longer offers "Mod + OptiScaler" for new installs (users are pointed
+        /// at 3zwr1/AMD-NR---OptiScaler instead) — a default or pending mode saved before that reads
+        /// as "none". Linux keeps it: there the mod and OptiScaler run together without the bridge.</summary>
+        public static bool IsModeOffered(string? mode) => !(OperatingSystem.IsWindows() && mode == BridgeMode);
+
         /// <summary><paramref name="preferred"/> (a per-window pick or the version pinned in
         /// Settings) when it is still listed, otherwise the latest release. Offline (no release list)
         /// it falls back to an already-downloaded version. Null when none is available.</summary>

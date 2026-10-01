@@ -687,6 +687,72 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Windows only, with the mod-only mode: "Mod + OptiScaler" is no longer offered
+                                 there — points at 3zwr1's project instead (see AmdNrBridgeService.IsModeOffered). -->
+                            <Border Name="PanelDanielWithOptiInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#9B7BEA"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#9B7BEA"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <!-- Link icon inline, right after the text (wraps with it). -->
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="#9B7BEA"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap">
+                                        <Run Text="{DynamicResource TxtSetupNrWithOptiProjectInfo}"/>
+                                        <InlineUIContainer BaselineAlignment="Center">
+                                            <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                      Foreground="#9B7BEA"
+                                                      Background="Transparent"
+                                                      Width="13" Height="13"
+                                                      Margin="4,0,0,0"
+                                                      Cursor="Hand"
+                                                      ToolTip.Tip="github.com/3zwr1/AMD-NR---OptiScaler"
+                                                      PointerPressed="TxtDanielWithOptiLink_PointerPressed"/>
+                                        </InlineUIContainer>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <!-- Windows only: danielblnc v0.3.3+ ships its own graphical installer, which
+                                 Install opens for the user instead of running it headlessly
+                                 (see ManageGameWindow.UpdateDanielGuiInstallerInfo). -->
+                            <Border Name="PanelDanielGuiInstallerInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <TextBlock Name="TxtDanielGuiInstallerInfo" Grid.Column="1"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Linux only: the NR mod and OptiScaler run together there — says what Install will
                                  put in (mod + OptiScaler, or only the mod when OptiScaler is "None"). Text set in code. -->
                             <Border Name="PanelLinuxNrWithOptiInfo"
