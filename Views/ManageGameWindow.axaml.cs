@@ -3899,14 +3899,14 @@ namespace OptiscalerClient.Views
             HideCoverModal();
         }
 
-        private void BtnCoverDelete_Click(object sender, RoutedEventArgs e)
+        private async void BtnCoverDelete_Click(object sender, RoutedEventArgs e)
         {
             _pendingCoverPath = null;
 
             string appIdKey = !string.IsNullOrWhiteSpace(_game.AppId) ? _game.AppId : _game.Name;
+            var metadataService = new GameMetadataService();
             try
             {
-                var metadataService = new GameMetadataService();
                 metadataService.DeleteCoverCache(appIdKey);
 
                 var coversCachePath = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
@@ -3925,18 +3925,27 @@ namespace OptiscalerClient.Views
                 DebugWindow.Log($"[ManageGame] Cover delete failed: {ex.Message}");
             }
 
-            _game.CoverImageUrl = null;
+            // Fall back to the exe-icon cover (regenerated, since the cache wipe removed it) rather than
+            // the generic placeholder; it stays replaceable by a real cover on the next fetch.
+            try { _game.CoverImageUrl = await metadataService.GetOrCreateIconCoverAsync(_game, appIdKey); }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ManageGame] Icon cover after delete failed: {ex.Message}");
+                _game.CoverImageUrl = null;
+            }
 
             var imgGameCover = this.FindControl<Image>("ImgGameCover");
             if (imgGameCover != null)
             {
                 imgGameCover.Source = null;
+                TrySetCoverImage(imgGameCover, _game.CoverImageUrl);
             }
 
             var imgPreview = this.FindControl<Image>("ImgCoverPreview");
             if (imgPreview != null)
             {
                 imgPreview.Source = null;
+                TrySetCoverImage(imgPreview, _game.CoverImageUrl);
             }
 
             var txtCoverPath = this.FindControl<TextBlock>("TxtCoverPath");
