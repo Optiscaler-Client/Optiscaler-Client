@@ -2,7 +2,7 @@
 
 # What’s Changed
 
-This update brings a **visual overhaul**, a **quick tour** for new users and an improved **Help** section. It adds **anti-cheat warnings** before installing, a **post-install settings check** and shows the **FSR version actually in use**. Auto Frame Generation now goes up to **x6**, and AMD DLSS Neural Rendering is simpler to set up. It also fixes a bug that **deleted game FidelityFX DLLs**, GPU detection on the **Steam Deck** and **Radeon AI PRO R9700**, and several Bulk Install, gamepad and Linux window issues.
+This update brings a **visual overhaul**, a **quick tour** for new users and an improved **Help** section. It adds **anti-cheat warnings** before installing, a **post-install settings check** and shows the **FSR version actually in use**. Auto Frame Generation now goes up to **x6**, AMD DLSS Neural Rendering is simpler to set up, and **cover art fetching** finds far more covers without a SteamGridDB key. It also fixes a bug that **deleted game FidelityFX DLLs**, GPU detection on the **Steam Deck** and **Radeon AI PRO R9700**, and several Bulk Install, gamepad and Linux window issues.
 
 # Changelog
 
@@ -18,6 +18,7 @@ This update brings a **visual overhaul**, a **quick tour** for new users and an 
 - Fixed a bug where the Bulk Install summary counted failed installations as successful. Failed games are now listed with their error.
 - Fixed gamepad focus issues in the game list and the Manage window.
 - Fixed dialogs on Linux opening on another screen or off-center.
+- Fixed "Delete cover" showing the generic placeholder instead of the executable's icon.
 
 ### New
 
@@ -40,6 +41,7 @@ This update brings a **visual overhaul**, a **quick tour** for new users and an 
 - The FSR entry in the Manage window now explains that the version shown is read from the DLL on disk.
 - OptiScaler's log is now written at Info level by default, unless the profile sets its own `LogToFile` or `LogLevel`.
 - The anti-cheat warning is now translated into all supported languages.
+- **Improved cover art fetching**: more covers are found without a SteamGridDB API key, using launcher caches, store IDs and additional sources. Games without a cover are retried once.
 
 #### [1.0.7.2] ####
 
