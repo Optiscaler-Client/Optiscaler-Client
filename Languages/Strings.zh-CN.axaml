@@ -782,16 +782,11 @@
 
     <!-- Welcome popup -->
     <x:String x:Key="TxtWelcomeChangelogTitle">更新日志</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：README 现已说明如何从 OptiScaler 的各个分支自行构建。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 改进：重新设计的标题栏，与应用整体风格更协调。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 改进：更好地支持掌机和小屏幕——更多窗口支持手柄、触控滚动与按钮、轻触显示提示和网格选项，管理窗口可拖动或双击最大化。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 改进：找不到封面时显示可执行文件图标，列表视图现在使用图标以更紧凑。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 改进：在 Linux 上，应用现在会在任务栏显示自己的图标。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 改进：新增提示，说明无需安装 OptiScaler 也可替换 FSR 4 DLL。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• 修复：卸载时可能删除游戏自带的 FidelityFX DLL（amd_fidelityfx_*）且未恢复原文件。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• 修复：部分文件夹名称清理错误，导致查询兼容性信息时无法识别这些游戏。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew9">• 修复：同一文件夹可能因同一可执行文件被扫描两次。</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew10">• 修复：在 Windows 上，最大化窗口会导致自动隐藏的任务栏无法显示。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 新增：全应用视觉焕新，新增面向新用户的快速导览，并改进了帮助部分。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 新增：安装前的反作弊警告、安装后的设置检查，以及在管理窗口中显示实际使用的 FSR 版本。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 改进：帧生成“自动”模式现在最高支持 x6，AMD 版 DLSS Neural Rendering 设置更简单。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 修复：重新安装可能删除游戏自带的 FidelityFX DLL；Steam Deck 和 Radeon AI PRO R9700 获得错误的 FSR 4 版本。</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• ……以及更多修复和改进。完整更新日志请查看 GitHub。</x:String>
     <x:String x:Key="TxtWelcomeChangelogContent">此版本的完整更改和新功能列表可在 GitHub 上查看。</x:String>
     <x:String x:Key="TxtWelcomeChangelogLink">&#x2197; 在 GitHub 上查看更新日志</x:String>
     <x:String x:Key="TxtWelcomeGuideTitle">快速上手</x:String>
