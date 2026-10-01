@@ -331,8 +331,14 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtClearAppCacheDesc">Remove scanned games, cover art and cached version data. The app will re-scan and re-download on next launch.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Open Folder</x:String>
     <x:String x:Key="TxtClearCacheBtn">Clear Cache</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.&#x0a;&#x0a;The application will close after clearing. On the next launch it will re-scan your library and re-download version information.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Select what to permanently delete.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Total size: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Scanned games</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Cover art and icons</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Cached version and online data</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Downloaded OptiScaler and extras files</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">App settings</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Restart required: the app will close after clearing.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Total size: {0}</x:String>
 
     <!-- Scan Sources -->

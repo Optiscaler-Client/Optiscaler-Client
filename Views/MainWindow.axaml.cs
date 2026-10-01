@@ -2231,51 +2231,106 @@ namespace OptiscalerClient.Views
         private async void BtnClearAppCache_Click(object sender, RoutedEventArgs e)
         {
             var baseDir = AppPaths.GetAppDataRoot();
+            string Root(string name) => System.IO.Path.Combine(baseDir, name);
+
+            var gameFiles = new[] { Root("games.json"), Root("analysis_cache_v3.json") };
+            var settingsFile = Root("config.json");
 
             // Every component's version/release cache lives as its own top-level *.json file here
-            // (games.json, config.json, releases_cache.json, fakenvapi_cache.json,
-            // streamline_releases_cache.json, amd_wrapper_releases_cache.json, ...). Enumerating
-            // instead of a hardcoded list means a full reset actually stays full: a hardcoded array
-            // silently misses every cache file added after it was written (which is exactly what
-            // happened here — Streamline's and the AMD wrapper's caches, both added this session,
-            // were never in this list). Subfolders (Covers/, Cache/, user profiles) are handled
-            // separately below or intentionally left alone.
-            var filesToDelete = System.IO.Directory.GetFiles(baseDir, "*.json");
+            // (releases_cache.json, fakenvapi_cache.json, streamline_releases_cache.json, ...).
+            // Enumerating instead of a hardcoded list keeps this category complete as caches are
+            // added; the game library and settings files are their own categories.
+            var dataCacheFiles = System.IO.Directory.GetFiles(baseDir, "*.json")
+                .Where(f => f != settingsFile && !gameFiles.Contains(f))
+                .ToArray();
 
-            string[] dirsToDelete =
-            [
-                System.IO.Path.Combine(baseDir, "Covers"),
-                System.IO.Path.Combine(baseDir, "Cache"),
-            ];
+            // Each category: label, files, folders, checked by default, and whether the app must close
+            // afterwards (data held in memory would otherwise be stale or written back). Settings are
+            // opt-in so a cleanup doesn't silently reset the user's configuration. Covers and icons
+            // only need the in-memory paths cleared.
+            var categories = new (string Label, string[] Files, string[] Dirs, bool Default, bool NeedsRestart)[]
+            {
+                (GetResourceString("TxtClearCacheOptGames", "Scanned games"), gameFiles, [], true, true),
+                (GetResourceString("TxtClearCacheOptCovers", "Cover art and icons"), [], [Root("Covers"), Root("Icons")], true, false),
+                (GetResourceString("TxtClearCacheOptVersionData", "Cached version and online data"), dataCacheFiles, [], true, true),
+                (GetResourceString("TxtClearCacheOptDownloads", "Downloaded OptiScaler and extras files"), [], [Root("Cache")], true, true),
+                (GetResourceString("TxtClearCacheOptSettings", "App settings"), [settingsFile], [], false, true),
+            };
 
-            var totalBytes = filesToDelete.Sum(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
-                            + dirsToDelete.Sum(GetDirectorySizeBytes);
+            var categorySizes = categories
+                .Select(c => c.Files.Sum(f => { try { return File.Exists(f) ? new FileInfo(f).Length : 0L; } catch { return 0L; } })
+                             + c.Dirs.Sum(GetDirectorySizeBytes))
+                .ToArray();
 
-            var sizeInfo = string.Format(GetResourceString("TxtClearAppCacheSizeInfo", "Total size: {0}"), FormatBytes(totalBytes));
+            var sizeFormat = GetResourceString("TxtClearAppCacheSizeInfo", "Total size: {0}");
             var dialog = new ConfirmDialog(
                 this,
                 GetResourceString("TxtClearAppCacheTitle", "Clear Application Cache"),
-                GetResourceString("TxtClearAppCacheDialogMsg", "Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.\n\nThe application will close after clearing. On the next launch it will re-scan your library and re-download version information."),
-                badgeText: sizeInfo);
+                GetResourceString("TxtClearAppCacheDialogMsg", "Select what to permanently delete."));
+            var restartNotice = GetResourceString("TxtClearCacheRestartRequired", "Restart required: the app will close after clearing.");
+            dialog.SetOptions(
+                categories.Select((c, i) => (c.Label, (string?)FormatBytes(categorySizes[i]), c.Default)).ToList(),
+                selected => string.Format(sizeFormat, FormatBytes(categorySizes.Where((_, i) => selected[i]).Sum())),
+                selected => categories.Where((_, i) => selected[i]).Any(c => c.NeedsRestart) ? restartNotice : null);
 
             var confirmed = await dialog.ShowDialog<bool>(this);
             if (!confirmed) return;
 
+            var chosen = categories.Where((_, i) => dialog.SelectedOptions[i]).ToList();
+            if (chosen.Count == 0) return;
+
             try
             {
-                foreach (var file in filesToDelete)
+                foreach (var file in chosen.SelectMany(c => c.Files))
                 {
                     if (File.Exists(file))
                         File.Delete(file);
                 }
 
-                foreach (var dir in dirsToDelete)
+                foreach (var dir in chosen.SelectMany(c => c.Dirs))
                 {
                     if (Directory.Exists(dir))
                         Directory.Delete(dir, recursive: true);
                 }
 
-                Close();
+                if (chosen.Any(c => c.NeedsRestart))
+                {
+                    Close();
+                    return;
+                }
+
+                // Only covers/icons were removed: rebuild the local exe-icon covers (no network) so no
+                // game is left blank, but don't download real covers. Those come back through
+                // "Refresh covers" in the scan dialog or on the next launch, which treats icon covers
+                // as replaceable.
+                Directory.CreateDirectory(Root("Covers"));
+                Directory.CreateDirectory(Root("Icons"));
+                var games = (_allGames != null && _allGames.Count > 0) ? _allGames : _games.ToList();
+                foreach (var game in games)
+                {
+                    game.CoverImageUrl = null;
+                    game.IconImagePath = null;
+                }
+                RefreshGameLists();
+
+                // Icons first: icon covers are composed from the same extracted icon files.
+                await ResolveGameIconsAsync(games.ToList());
+                using var semaphore = new SemaphoreSlim(4, 4);
+                await Task.WhenAll(games.Select(async game =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
+                        if (!string.IsNullOrEmpty(key))
+                            game.CoverImageUrl = await _metadataService.GetOrCreateIconCoverAsync(game, key);
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[MainWindow] Icon cover failed for {game.Name}: {ex.Message}"); }
+                    finally { semaphore.Release(); }
+                }));
+
+                RefreshGameLists();
+                _persistenceService.SaveGames(games);
             }
             catch (Exception ex)
             {

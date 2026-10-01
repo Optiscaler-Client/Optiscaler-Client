@@ -403,8 +403,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">스캔된 게임, 커버 이미지 및 캐시된 버전 데이터를 제거합니다. 앱은 다음 시작 시 다시 스캔합니다.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">폴더 열기</x:String>
     <x:String x:Key="TxtClearCacheBtn">캐시 지우기</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">경고: 스캔된 모든 게임, 커버 이미지 및 캐시된 OptiScaler 버전 데이터가 영구적으로 삭제됩니다.&#x0a;&#x0a;지운 후 애플리케이션이 종료됩니다. 다음 시작 시 라이브러리를 다시 스캔하고 버전 정보를 다시 다운로드합니다.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">영구적으로 삭제할 항목을 선택하세요.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">총 크기: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">스캔한 게임</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">커버 아트 및 아이콘</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">캐시된 버전 및 온라인 데이터</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">다운로드한 OptiScaler 및 추가 파일</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">앱 설정</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">재시작 필요: 삭제 후 앱이 종료됩니다.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">총 크기: {0}</x:String>
     <x:String x:Key="TxtWarning">경고</x:String>
     <x:String x:Key="TxtNoVersionsFound">설치 가능한 OptiScaler 버전이 없습니다.</x:String>

@@ -403,8 +403,14 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtClearAppCacheDesc">Taranan oyunları, kapak resimleri ve önbelleğe alınmış sürüm verilerini kaldırır. Uygulama bir sonraki başlatılmada yeniden tarar.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Klasörü Aç</x:String>
     <x:String x:Key="TxtClearCacheBtn">Önbelleği Temizle</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Uyarı: Bu işlem taranan tüm oyunları, kapak resimlerini ve önbelleğe alınmış OptiScaler sürüm verilerini kalıcı olarak siler.&#x0a;&#x0a;Temizleme sonrası uygulama kapanacaktır. Bir sonraki başlatılmada kütüphane yeniden taranacak ve sürüm bilgileri yeniden indirilecektir.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Kalıcı olarak silinecekleri seçin.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Toplam boyut: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Taranan oyunlar</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Kapak görselleri ve simgeler</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Önbelleğe alınmış sürüm ve çevrimiçi veriler</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">İndirilen OptiScaler ve ek dosyalar</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">Uygulama ayarları</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Yeniden başlatma gerekli: temizlemeden sonra uygulama kapanacak.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Toplam boyut: {0}</x:String>
     <x:String x:Key="TxtWarning">Uyarı</x:String>
     <x:String x:Key="TxtNoVersionsFound">Kurulum için kullanılabilir OptiScaler sürümü bulunamadı.</x:String>

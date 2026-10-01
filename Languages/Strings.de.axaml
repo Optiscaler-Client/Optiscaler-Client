@@ -403,8 +403,14 @@ Diese Version steht nicht zum Herunterladen zur Verfügung. Überprüfen Sie Ihr
     <x:String x:Key="TxtClearAppCacheDesc">Entfernt gescannte Spiele, Coverbilder und gecachte Versionsdaten. Die App scannt beim nächsten Start erneut.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Ordner öffnen</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache leeren</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Warnung: Dadurch werden alle gescannten Spiele, Coverbilder und gecachten OptiScaler-Versionsdaten dauerhaft gelöscht.&#x0a;&#x0a;Die Anwendung wird nach dem Löschen geschlossen. Beim nächsten Start wird die Bibliothek erneut gescannt und die Versionsinformationen neu heruntergeladen.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Wähle aus, was dauerhaft gelöscht werden soll.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Gesamtgröße: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Gescannte Spiele</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Cover und Symbole</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Zwischengespeicherte Versions- und Onlinedaten</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Heruntergeladene OptiScaler- und Extra-Dateien</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">App-Einstellungen</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Neustart erforderlich: Die App wird nach dem Löschen geschlossen.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Gesamtgröße: {0}</x:String>
     <x:String x:Key="TxtWarning">Warnung</x:String>
     <x:String x:Key="TxtNoVersionsFound">Keine OptiScaler-Versionen zur Installation verfügbar.</x:String>

@@ -403,8 +403,14 @@ Ta wersja nie jest dostępna do pobrania. Sprawdź połączenie internetowe i sp
     <x:String x:Key="TxtClearAppCacheDesc">Usuwa zeskanowane gry, okładki i dane wersji z pamięci podręcznej. Aplikacja ponownie przeskanuje przy następnym uruchomieniu.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Otwórz folder</x:String>
     <x:String x:Key="TxtClearCacheBtn">Wyczyść pamięć</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Ostrzeżenie: Spowoduje to trwałe usunięcie wszystkich zeskanowanych gier, okładek i danych wersji OptiScaler z pamięci podręcznej.&#x0a;&#x0a;Aplikacja zostanie zamknięta po wyczyszczeniu. Przy następnym uruchomieniu ponownie przeskanuje bibliotekę i pobierze informacje o wersjach.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Wybierz, co trwale usunąć.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Całkowity rozmiar: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Zeskanowane gry</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Okładki i ikony</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Buforowane dane wersji i dane online</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Pobrane pliki OptiScaler i dodatków</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">Ustawienia aplikacji</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Wymagany restart: aplikacja zostanie zamknięta po wyczyszczeniu.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Całkowity rozmiar: {0}</x:String>
     <x:String x:Key="TxtWarning">Ostrzeżenie</x:String>
     <x:String x:Key="TxtNoVersionsFound">Brak dostępnych wersji OptiScaler do instalacji.</x:String>

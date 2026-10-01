@@ -293,8 +293,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">Remove jogos escaneados, capas e dados de versão em cache. O app irá reanalisar e baixar novamente no próximo início.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Abrir pasta</x:String>
     <x:String x:Key="TxtClearCacheBtn">Limpar cache</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Atenção: Isso irá excluir permanentemente todos os jogos escaneados, capas e dados de versão do OptiScaler em cache.&#x0a;&#x0a;O aplicativo será fechado após a limpeza. No próximo início ele irá reanalisar sua biblioteca e baixar novamente as informações de versão.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Selecione o que excluir permanentemente.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Tamanho total: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Jogos escaneados</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Capas e ícones</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Dados de versões e online em cache</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Arquivos baixados do OptiScaler e extras</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">Configurações do app</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Reinício necessário: o app será fechado após a limpeza.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Tamanho total: {0}</x:String>
 
     <!-- Scan Sources -->

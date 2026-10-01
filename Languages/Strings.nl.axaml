@@ -295,8 +295,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">Verwijdert gescande spellen, omslagafbeeldingen en gecachte versiegegevens. De app scant opnieuw bij de volgende start.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Map openen</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache wissen</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Waarschuwing: Dit zal alle gescande spellen, omslagafbeeldingen en gecachte OptiScaler-versiegegevens permanent verwijderen.&#x0a;&#x0a;De applicatie sluit na het wissen. Bij de volgende start wordt de bibliotheek opnieuw gescand en versie-informatie opnieuw gedownload.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Selecteer wat permanent verwijderd moet worden.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Totale grootte: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Gescande games</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Covers en pictogrammen</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Gecachete versie- en onlinegegevens</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Gedownloade OptiScaler- en extra bestanden</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">App-instellingen</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Herstart vereist: de app wordt na het opschonen gesloten.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Totale grootte: {0}</x:String>
 
     <!-- Scan Sources -->

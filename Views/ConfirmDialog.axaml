@@ -96,6 +96,36 @@
                                Foreground="{StaticResource BrTextSecondary}"
                                HorizontalAlignment="Center"
                                TextAlignment="Center"/>
+                    <!-- Optional checkbox list (see SetOptions) — hidden unless a caller adds options,
+                         so every existing caller is unaffected. -->
+                    <StackPanel Name="PnlOptions"
+                                IsVisible="False"
+                                Spacing="4"
+                                Margin="0,4,0,0"
+                                HorizontalAlignment="Stretch"/>
+                    <!-- Optional selection-dependent notice (see SetOptions) — hidden unless the
+                         caller's notice callback returns text for the current selection. -->
+                    <Border Name="PnlNotice"
+                            IsVisible="False"
+                            Background="{StaticResource BrBgElevated}"
+                            BorderBrush="{StaticResource BrBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10,6"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xF4A4;"
+                                       FontFamily="{StaticResource FontIcons}"
+                                       FontSize="13"
+                                       Foreground="{StaticResource BrAccentWarm}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Name="TxtNotice"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrTextPrimary}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
                     <!-- Optional compact info pill (e.g. a computed total size) — hidden unless a
                          caller passes badgeText, so every existing caller is unaffected. -->
                     <Border Name="BadgeInfo"

@@ -403,8 +403,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">Удаляет отсканированные игры, обложки и кэшированные данные версий. Приложение снова выполнит сканирование при следующем запуске.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Открыть папку</x:String>
     <x:String x:Key="TxtClearCacheBtn">Очистить кэш</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Внимание: Следующее действие навсегда удалит все отсканированные игры, обложки и кэшированные данные версий OptiScaler.&#x0a;&#x0a;После очистки приложение закроется. При следующем запуске библиотека будет повторно отсканирована, а информация о версиях загружена заново.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Выберите, что удалить безвозвратно.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Общий размер: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Найденные игры</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Обложки и значки</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Кэш версий и онлайн-данных</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Загруженные файлы OptiScaler и дополнений</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">Настройки приложения</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Требуется перезапуск: после очистки приложение закроется.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Общий размер: {0}</x:String>
     <x:String x:Key="TxtWarning">Предупреждение</x:String>
     <x:String x:Key="TxtNoVersionsFound">Нет версий OptiScaler, доступных для установки.</x:String>

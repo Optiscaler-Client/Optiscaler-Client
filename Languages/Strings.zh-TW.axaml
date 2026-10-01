@@ -411,8 +411,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">刪除已掃描的遊戲、封面圖片和已快取的版本資料。應用程式將在下次啟動時重新掃描。</x:String>
     <x:String x:Key="TxtOpenFolderBtn">開啟資料夾</x:String>
     <x:String x:Key="TxtClearCacheBtn">清除快取</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">警告：此操作將永久刪除所有已掃描的遊戲、封面圖片和已快取的 OptiScaler 版本資料。&#x0a;&#x0a;清除完成後應用程式即將關閉。下次啟動時將重新掃描遊戲庫並重新擷取版本資訊。</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">選擇要永久刪除的內容。</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">總大小：{0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">已掃描的遊戲</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">封面與圖示</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">快取的版本與線上資料</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">已下載的 OptiScaler 與附加檔案</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">應用程式設定</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">需要重新啟動：清除後應用程式將關閉。</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">總大小：{0}</x:String>
     <x:String x:Key="TxtWarning">警告</x:String>
     <x:String x:Key="TxtNoVersionsFound">沒有可安裝的OptiScaler版本。</x:String>

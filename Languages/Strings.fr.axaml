@@ -403,8 +403,14 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtClearAppCacheDesc">Supprime les jeux scannés, les pochettes et les données de version en cache. L'app renumérisera au prochain lancement.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Ouvrir le dossier</x:String>
     <x:String x:Key="TxtClearCacheBtn">Vider le cache</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Avertissement : Cela supprimera définitivement tous les jeux scannés, les pochettes et les données de version OptiScaler en cache.&#x0a;&#x0a;L'application se fermera après le nettoyage. Au prochain lancement, elle renumérisera votre bibliothèque et retéléchargera les informations de version.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Sélectionnez ce que vous voulez supprimer définitivement.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Taille totale : {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Jeux analysés</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Jaquettes et icônes</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Données de versions et en ligne en cache</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Fichiers OptiScaler et extras téléchargés</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">Paramètres de l'application</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Redémarrage requis : l'application se fermera après le nettoyage.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Taille totale : {0}</x:String>
     <x:String x:Key="TxtWarning">Avertissement</x:String>
     <x:String x:Key="TxtNoVersionsFound">Aucune version d'OptiScaler n'est disponible pour l'installation.</x:String>

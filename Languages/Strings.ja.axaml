@@ -411,8 +411,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">スキャンしたゲーム、カバーアート、キャッシュされたバージョンデータを削除します。次回起動時に再スキャンします。</x:String>
     <x:String x:Key="TxtOpenFolderBtn">フォルダを開く</x:String>
     <x:String x:Key="TxtClearCacheBtn">キャッシュをクリア</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">警告：スキャンしたすべてのゲーム、カバーアート、キャッシュされた OptiScaler バージョンデータが完全に削除されます。&#x0a;&#x0a;クリア後にアプリケーションが閉じます。次回起動時にライブラリを再スキャンし、バージョン情報を再ダウンロードします。</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">完全に削除する項目を選択してください。</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">合計サイズ: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">スキャン済みのゲーム</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">カバーアートとアイコン</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">キャッシュされたバージョン・オンラインデータ</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">ダウンロード済みの OptiScaler と追加ファイル</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">アプリの設定</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">再起動が必要です：削除後にアプリが終了します。</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">合計サイズ: {0}</x:String>
     <x:String x:Key="TxtWarning">警告</x:String>
     <x:String x:Key="TxtNoVersionsFound">インストール可能なOptiScalerのバージョンがありません。</x:String>
