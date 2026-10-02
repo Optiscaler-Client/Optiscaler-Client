@@ -142,7 +142,37 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     [
         "/usr/share/libdrm/amdgpu.ids",
         "/usr/local/share/libdrm/amdgpu.ids",
+        // Flatpak: the runtime itself has no libdrm data, the Mesa GL extension ships it instead
+        "/usr/lib/x86_64-linux-gnu/GL/default/share/libdrm/amdgpu.ids",
+        "/usr/lib/aarch64-linux-gnu/GL/default/share/libdrm/amdgpu.ids",
     ];
+
+    /// <summary>
+    /// "nvidia-smi" from PATH, or inside Flatpak (where the host's copy isn't visible) the one shipped
+    /// by the NVIDIA GL extension matching the host driver (GL/nvidia-&lt;version&gt;/bin), if any.
+    /// </summary>
+    private static string ResolveNvidiaSmi()
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLATPAK_ID")))
+            return "nvidia-smi";
+
+        try
+        {
+            foreach (var glDir in new[] { "/usr/lib/x86_64-linux-gnu/GL", "/usr/lib/aarch64-linux-gnu/GL" })
+            {
+                if (!Directory.Exists(glDir)) continue;
+                var smi = Directory.GetDirectories(glDir, "nvidia-*")
+                    .Select(d => Path.Combine(d, "bin", "nvidia-smi"))
+                    .FirstOrDefault(File.Exists);
+                if (smi != null) return smi;
+            }
+        }
+        catch { }
+
+        return "nvidia-smi";
+    }
+
+    private static readonly Lazy<string> _nvidiaSmi = new(ResolveNvidiaSmi);
 
     /// <summary>
     /// Reads the PCI revision of the device as an uppercase hex string without the "0x" prefix
@@ -212,7 +242,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         try
         {
             var busId = GetPciBusId(devicePath);
-            var output = RunProcess("nvidia-smi", "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
             return MatchNvidiaSmiName(output, busId);
         }
         catch { return null; }
@@ -333,7 +363,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         // NVIDIA: query via nvidia-smi (returns MiB)
         if (vendor == GpuVendor.NVIDIA)
         {
-            var output = RunProcess("nvidia-smi", "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
             if (ulong.TryParse(output?.Trim(), out var mb))
                 return mb * 1024 * 1024;
         }
@@ -345,7 +375,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     {
         if (vendor == GpuVendor.NVIDIA)
         {
-            var output = RunProcess("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
             if (!string.IsNullOrWhiteSpace(output))
                 return output.Trim();
         }
