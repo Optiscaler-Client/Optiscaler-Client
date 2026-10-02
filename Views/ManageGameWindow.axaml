@@ -1458,6 +1458,7 @@
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
+                                        Margin="0,0,0,4"
                                         HorizontalAlignment="Right"
                                         IsVisible="False"
                                         Click="BtnUninstall_Click"/>
