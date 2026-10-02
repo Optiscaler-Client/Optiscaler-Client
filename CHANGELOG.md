@@ -11,6 +11,7 @@ This update brings a **visual overhaul**, a **quick tour** for new users and an 
 - Fixed a bug where reinstalling OptiScaler deleted a game's own FidelityFX DLLs, preventing the game from launching.
 - Fixed a bug where the FSR badge showed the game's native version instead of the FSR 4 DLL installed by OptiScaler.
 - Fixed a bug where the FSR 4 Swap DLL installed alongside OptiScaler was detected as a game-native file.
+- Fixed a bug where swapping the FSR 4 DLL in games using `amd_fidelityfx_dx12.dll` left the old file in place and added a differently named one the game ignored.
 - Fixed the anti-cheat detection missing EasyAntiCheat EOS and BattlEye, and files outside the game's root folder.
 - Fixed GPU detection for the Steam Deck (RDNA 2) and Radeon AI PRO R9700 (RDNA 4), which received the wrong FSR 4 version.
 - Fixed a bug where `PathRegex` scan exclusions in `config.json` were ignored. Invalid rules are now skipped instead of breaking the scan.
