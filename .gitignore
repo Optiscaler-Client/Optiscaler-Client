@@ -79,3 +79,22 @@ dist/
 
 # Git worktrees
 .worktrees/
+
+# ── fork-local (shyoo/Optiscaler-Client) ──────────────────────────────────
+# Fork-only: never carry this block into an upstream PR. See AGENTS.md.
+
+# Scratch notes and throwaway docs (plans worth keeping go in fork/)
+transient_docs/
+fork/scratch/
+*.local.md
+
+# Downloaded upstream mod binaries (dlssg_for_sm86 pinning, manual tests) —
+# never commit mod or NVIDIA binaries; the client always downloads them.
+fork/tools/.cache/
+*.dlssg_tmp
+
+# Local secrets for dev scripts (e.g. a GitHub token for the pin script)
+.env
+.env.*
+*.pfx
+# ── end fork-local ──────────────────────────────────────────────────────────
