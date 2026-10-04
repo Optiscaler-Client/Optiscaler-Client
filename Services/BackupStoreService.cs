@@ -119,6 +119,10 @@ namespace OptiscalerClient.Services
                         File.ReadAllText(manifestPath), OptimizerContext.Default.InstallationManifest);
                     if (!string.Equals(manifest?.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
                         continue;
+                    // A standalone component's record (its own store key, same InstalledGameDirectory)
+                    // isn't OptiScaler's and would otherwise win "first match" over the real one.
+                    if (!string.IsNullOrEmpty(manifest!.ComponentId))
+                        continue;
 
                     var installed = manifest!.InstalledGameDirectory;
                     if (string.IsNullOrWhiteSpace(installed) || !Directory.Exists(installed)) continue;

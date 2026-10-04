@@ -271,6 +271,13 @@ namespace OptiscalerClient.Views
                 // instead of getting a separate sidebar page.
             }
 
+            // dlssg_for_sm86 builds (experimental, Windows only — see CacheManagementWindow.DlssgSm86.cs)
+            if (IsDlssgSm86CacheSectionAvailable())
+            {
+                sidebar.Children.Add(CreateTopButton("dlssgsm86",
+                    Application.Current?.FindResource("TxtDlssgSm86Title") as string ?? "DLSS FG (RTX 20/30)", ""));
+            }
+
             // Section rendering/selection is the caller's responsibility (each constructor calls
             // ShowSection(_currentSection)/UpdateSidebarSelection(_currentSection) right after
             // BuildSidebar()). Doing it here too used to clobber a requested initialSection other
@@ -367,6 +374,7 @@ namespace OptiscalerClient.Views
                 case "renodx":      RenderRenodx(content); break;
                 case "dlssnronamd": RenderDlssNrOnAmd(content); break;
                 case "nvngxdlssnr": RenderNvngxDlssNr(content); break;
+                case "dlssgsm86":   RenderDlssgSm86(content); break;
             }
         }
 

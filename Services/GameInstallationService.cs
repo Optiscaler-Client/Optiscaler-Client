@@ -339,6 +339,13 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
                 throw new Exception("Installation cancelled or valid directory not found.");
 
+            // dlssg_for_sm86 is a separate component with its own backup record: installing OptiScaler
+            // under one of its proxy names would back the mod up as a game "original" and restore it on
+            // OptiScaler's uninstall. Refuse instead of silently changing the user's injection method.
+            var dlssgProxyNames = DlssgSm86Records.GetInstalledProxyNames(game, gameDir);
+            if (dlssgProxyNames.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase))
+                throw new DlssgSm86ProxyCollisionException(injectionDllName, dlssgProxyNames);
+
             // storeKey is always the stable game root (game.InstallPath) so that lookup is
             // consistent after app restarts, regardless of which subdirectory was chosen as gameDir.
             var storeKey = game.InstallPath;

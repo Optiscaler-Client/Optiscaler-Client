@@ -157,6 +157,9 @@ public class GameAnalyzerService
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
         game.IsAmdNrBridgeInstalled = false;
+        game.IsDlssgSm86Installed = false;
+        game.DlssgSm86Version = null;
+        game.DlssgSm86Build = null;
         game.IsDlssNrOnAmdInstalled = false; // DlssNrOnAmdVersion is NOT reset here — no on-disk
         // version marker to repopulate it from (see _dlssNrOnAmdMarkerName), so it stays whatever
         // the "Setup NR" wizard itself last recorded rather than being clobbered to null every scan.
@@ -427,6 +430,18 @@ public class GameAnalyzerService
             // "Setup NR" — plain presence check, no version to extract (see _dlssNrOnAmdMarkerName).
             game.IsDlssNrOnAmdInstalled = collectedFiles.ContainsKey(_dlssNrOnAmdMarkerName);
             game.IsAmdNrBridgeInstalled = collectedFiles.ContainsKey(_amdNrBridgeMarkerName);
+
+            // dlssg_for_sm86 — its own backup record (see DlssgSm86Records), not OptiScaler's. Counted
+            // as installed only while at least one of its proxies is still on disk, so a game update
+            // that wiped the folder doesn't leave a stale badge.
+            var dlssgRecord = DlssgSm86Records.LoadCommitted(new BackupStoreService(), game);
+            if (dlssgRecord != null && !string.IsNullOrEmpty(dlssgRecord.InstalledGameDirectory) &&
+                dlssgRecord.DlssgSm86ProxyNames.Any(n => File.Exists(Path.Combine(dlssgRecord.InstalledGameDirectory, n))))
+            {
+                game.IsDlssgSm86Installed = true;
+                game.DlssgSm86Version = dlssgRecord.DlssgSm86Version;
+                game.DlssgSm86Build = dlssgRecord.DlssgSm86Build;
+            }
         }
         catch (Exception ex)
         {
