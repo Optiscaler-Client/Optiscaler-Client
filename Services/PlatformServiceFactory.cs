@@ -57,6 +57,15 @@ public static class PlatformServiceFactory
         return null;
     }
 
+    /// <summary>Returns the dlssg_for_sm86 service on Windows, or <c>null</c> elsewhere — the mod is
+    /// Windows-only, and callers hide its UI entirely when this is null.</summary>
+    public static IDlssgSm86Service? CreateDlssgSm86Service()
+    {
+        if (OperatingSystem.IsWindows())
+            return new DlssgSm86Service();
+        return null;
+    }
+
     // ── Private implementations ────────────────────────────────────────────
 
     [SupportedOSPlatform("windows")]

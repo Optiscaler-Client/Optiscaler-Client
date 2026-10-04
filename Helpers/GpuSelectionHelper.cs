@@ -87,5 +87,27 @@ namespace OptiscalerClient.Helpers
             return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
                    Regex.IsMatch(gpu.Name, @"RTX\s?50(50|60|70|80|90)", RegexOptions.IgnoreCase);
         }
+
+        /// <summary>Nvidia Turing with tensor cores: GeForce RTX 20 series, TITAN RTX and Quadro RTX
+        /// (with optional Super/Ti/Laptop/Max-Q suffixes). GTX 16xx and Quadro T-series are Turing too
+        /// but have no tensor cores, so they don't match.</summary>
+        public static bool IsTuringRtx(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
+                   Regex.IsMatch(gpu.Name, @"RTX\s?20(60|70|80)|TITAN\s?RTX|Quadro\s?RTX\s?\d{4}", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>Nvidia Ampere: GeForce RTX 30 series (and the GA107-based RTX 2050 Laptop) plus the
+        /// RTX A-series workstation cards (A500–A6000). The "RTX 2000/4000/… Ada" workstation cards are
+        /// Ada Lovelace and don't match.</summary>
+        public static bool IsAmpere(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
+                   Regex.IsMatch(gpu.Name, @"RTX\s?(30(50|60|70|80|90)|2050)|RTX\s?A\d{3,4}(?![0-9])", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>GPUs dlssg_for_sm86 targets: RTX 20 (Turing) and RTX 30 (Ampere), which have
+        /// tensor cores but no official DLSS Frame Generation.</summary>
+        public static bool IsDlssgSm86Capable(GpuInfo? gpu) => IsTuringRtx(gpu) || IsAmpere(gpu);
     }
 }

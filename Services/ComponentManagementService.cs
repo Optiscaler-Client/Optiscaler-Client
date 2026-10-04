@@ -708,7 +708,7 @@ namespace OptiscalerClient.Services
         /// a 64 KB buffer. Applies a per-attempt timeout and retries with exponential backoff.
         /// Partial files are deleted before each retry.
         /// </summary>
-        private static async Task StreamToFileAsync(
+        internal static async Task StreamToFileAsync(
             Func<HttpClient> getClient, string url, string destPath,
             IProgress<double>? progress = null, long estimatedBytes = 20 * 1024 * 1024,
             int maxRetries = 3, int timeoutSeconds = 120,

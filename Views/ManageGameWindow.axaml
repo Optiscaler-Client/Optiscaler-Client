@@ -1381,6 +1381,127 @@
                                                           IsEnabled="False"/>
                                             </StackPanel>
                                         </Grid>
+
+                                        <!-- dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30): a standalone
+                                             component with its own Install/Uninstall buttons, independent of
+                                             the main Install button and of OptiScaler's own uninstall — see
+                                             ManageGameWindow.DlssgSm86.cs. Hidden unless the service exists
+                                             (Windows only) and the preferred GPU is RTX 20/30. -->
+                                        <StackPanel Name="PanelDlssgSm86" Spacing="6" IsVisible="False">
+                                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                                <StackPanel Grid.Column="0">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{DynamicResource TxtDlssgSm86Title}"
+                                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Background="{StaticResource BrBgElevated}"
+                                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                                BorderThickness="1" CornerRadius="8"
+                                                                Width="16" Height="16"
+                                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                                ToolTip.Tip="{DynamicResource TxtDlssgSm86Tooltip}">
+                                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <ComboBox Name="CmbDlssgSm86Build"
+                                                              Margin="0,4,0,0"
+                                                              HorizontalAlignment="Stretch"
+                                                              Classes="BtnSelector"
+                                                              Padding="8,0,24,0"
+                                                              HorizontalContentAlignment="Left"
+                                                              VerticalContentAlignment="Center"
+                                                              SelectionChanged="CmbDlssgSm86Build_SelectionChanged"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{DynamicResource TxtDlssgSm86MultiplierLbl}"
+                                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Background="{StaticResource BrBgElevated}"
+                                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                                BorderThickness="1" CornerRadius="8"
+                                                                Width="16" Height="16"
+                                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                                ToolTip.Tip="{DynamicResource TxtDlssgSm86MultiplierTooltip}">
+                                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <ComboBox Name="CmbDlssgSm86Multiplier"
+                                                              Margin="0,4,0,0"
+                                                              HorizontalAlignment="Stretch"
+                                                              Classes="BtnSelector"
+                                                              Padding="8,0,24,0"
+                                                              HorizontalContentAlignment="Left"
+                                                              VerticalContentAlignment="Center"
+                                                              SelectionChanged="CmbDlssgSm86Multiplier_SelectionChanged"/>
+                                                </StackPanel>
+
+                                                <Grid Grid.Column="2" ColumnDefinitions="*,Auto" ColumnSpacing="6"
+                                                      VerticalAlignment="Bottom">
+                                                    <Button Name="BtnDlssgSm86Install"
+                                                            Grid.Column="0"
+                                                            Classes="BtnBase"
+                                                            MinHeight="36"
+                                                            Padding="10,6"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Center"
+                                                            Click="BtnDlssgSm86Install_Click"/>
+                                                    <Button Name="BtnDlssgSm86Uninstall"
+                                                            Grid.Column="1"
+                                                            Content="{DynamicResource TxtDlssgSm86Uninstall}"
+                                                            Classes="BtnDanger"
+                                                            MinHeight="36"
+                                                            Padding="10,6"
+                                                            IsVisible="False"
+                                                            Click="BtnDlssgSm86Uninstall_Click"/>
+                                                </Grid>
+                                            </Grid>
+
+                                            <TextBlock Name="TxtDlssgSm86Status"
+                                                       Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="{StaticResource FontSizeCaption}"
+                                                       TextWrapping="Wrap"/>
+
+                                            <Border Name="PanelDlssgSm86Hags"
+                                                    Background="#2E2410"
+                                                    BorderBrush="{StaticResource BrWarning}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Warning}"
+                                                              Foreground="{StaticResource BrWarning}"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,0,0"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{DynamicResource TxtDlssgSm86HagsOff}"
+                                                               Foreground="{StaticResource BrWarning}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                    <Button Name="BtnDlssgSm86HagsSettings"
+                                                            Grid.Column="2"
+                                                            Content="{DynamicResource TxtDlssgSm86HagsOpenSettings}"
+                                                            Classes="BtnBase"
+                                                            Padding="10,4"
+                                                            VerticalAlignment="Center"
+                                                            Click="BtnDlssgSm86HagsSettings_Click"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
                                       </StackPanel>
                                     </Border>
                                     <Border Name="BorderExperimentalChip"

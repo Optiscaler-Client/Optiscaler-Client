@@ -762,6 +762,7 @@ namespace OptiscalerClient.Views
                 AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 4);
             }
             AddRootNode(nodes, "CmbAmdNrBridgeVersion", 4, 6);
+            AddDlssgSm86NavigationNodes(nodes);
 
             // Row 5: Uninstall
             AddRootNode(nodes, "BtnUninstall", 5, 6);
@@ -893,6 +894,9 @@ namespace OptiscalerClient.Views
             }
 
             bool isSetupNrVisible = this.FindControl<Control>("PanelDlssNrOnAmd")?.IsVisible == true;
+
+            if (GetDlssgSm86NeighborCandidates(currentName, direction) is { } dlssgSm86Candidates)
+                return dlssgSm86Candidates;
 
             return (currentName, direction) switch
             {
@@ -1551,6 +1555,7 @@ namespace OptiscalerClient.Views
             if (gridExperimentalZone != null) gridExperimentalZone.IsVisible = showExperimental;
             if (showExperimental)
                 PopulateRenodxComboBox(componentService);
+            _ = PopulateDlssgSm86Async(componentService);
 
             // "Setup NR" — on Linux this runs guentra/DLSS-NR-on-AMD-Linux (an unofficial third-party
             // fork) instead of danielblnc's own installer directly, since the mod's HIP-based GPU
@@ -7224,6 +7229,8 @@ namespace OptiscalerClient.Views
                     components.Add(new ComponentEntry($"FSR 4 Swap: {_game.Fsr4ExtraVersion}", false, false, null));
                 }
             }
+
+            AppendDlssgSm86ComponentEntry(components);
 
             var lstComponents = this.FindControl<ListBox>("LstComponents");
             if (lstComponents != null) lstComponents.ItemsSource = components;

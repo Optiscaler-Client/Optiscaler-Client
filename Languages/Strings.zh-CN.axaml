@@ -1121,4 +1121,57 @@
     <!-- Empty library state -->
     <x:String x:Key="TxtEmptyLibraryTitle">你的游戏库是空的</x:String>
     <x:String x:Key="TxtEmptyLibraryHint">点击“扫描游戏”以检测系统中已安装的游戏，或使用“手动添加”自行添加游戏。</x:String>
+
+    <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
+    <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">借助 sdli1995/dlssg_for_sm86，在已内置 DLSS 帧生成的游戏中为 GeForce RTX 20/30 系列显卡启用帧生成。非官方、实验性功能，风险自负。无需 OptiScaler 即可使用，卸载 OptiScaler 后仍会保留。文件以固定版本从该模组的 GitHub 仓库下载，并在使用前校验。</x:String>
+    <x:String x:Key="TxtDlssgSm86BuildItem">运行时 {0}（最高 {1}）</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierLbl">最大帧生成</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierTooltip">模组向游戏提供的最高倍数。实际倍数仍由游戏决定；使用旧版 Streamline 插件的游戏最高只能到 2X 或 4X。6X 需要 310.9 运行时。</x:String>
+    <x:String x:Key="TxtDlssgSm86Install">安装（{0} MB）</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallCached">安装</x:String>
+    <x:String x:Key="TxtDlssgSm86Update">更新</x:String>
+    <x:String x:Key="TxtDlssgSm86Apply">应用</x:String>
+    <x:String x:Key="TxtDlssgSm86Installed">已安装</x:String>
+    <x:String x:Key="TxtDlssgSm86Uninstall">卸载</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusInstalled">已安装：v{0}（运行时 {1}），以 {2} 安装在 {3}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">有可用更新：v{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusReady">将以 {0} 安装到 {1}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusSkipped">已跳过（被占用）：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">找不到游戏可执行文件所在的文件夹。</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">检测到反作弊：此游戏已禁用 DLSS FG for RTX 20/30。</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">此游戏未内置 DLSS 帧生成（Streamline），模组没有可启用的内容。</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNotDx12">DLSS FG for RTX 20/30 仅适用于 DirectX 12 游戏。</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoFreeProxyName">模组可用的所有加载器文件名都已被占用：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerManualInstall">此文件夹中已有手动安装的 dlssg_for_sm86：{0}。请先删除这些文件，然后重新打开此窗口。</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerManual">dlssg_for_sm86（手动安装）</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerFsr4Swap">FSR 4 Swap</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerAsiLoader">ASI 加载器</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerUnknown">其他文件</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOff">硬件加速 GPU 计划已关闭。在开启并重启电脑之前，游戏中的帧生成将不可用。</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOpenSettings">打开图形设置</x:String>
+    <x:String x:Key="TxtDlssgSm86Downloading">正在下载 DLSS FG for RTX 20/30（{0}）... {1}%</x:String>
+    <x:String x:Key="TxtDlssgSm86InstalledToast">已安装 DLSS FG for RTX 20/30。</x:String>
+    <x:String x:Key="TxtDlssgSm86ClampedToast">已安装 DLSS FG for RTX 20/30。运行时 {0} 最高支持 {1}，因此已降低上限。</x:String>
+    <x:String x:Key="TxtDlssgSm86AppliedToast">最大帧生成已设为 {0}。</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstalledToast">已卸载 DLSS FG for RTX 20/30。</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallConfirm">要从此游戏移除 DLSS FG for RTX 20/30 吗？被替换的文件会恢复，OptiScaler 不受影响。</x:String>
+    <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini 在安装后被修改过。仍要删除，还是将你修改过的副本保留在游戏文件夹中？</x:String>
+    <x:String x:Key="TxtDlssgSm86DeleteIni">删除</x:String>
+    <x:String x:Key="TxtDlssgSm86KeepIni">保留我的 INI</x:String>
+    <x:String x:Key="TxtDlssgSm86KeptFiles">以下文件在安装后被修改，已保留原处：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyFailed">下载的文件未通过校验，已删除：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySize">大小为 {0} 字节，应为 {1}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyHash">SHA-256 与固定值不一致</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyUnsigned">文件未签名</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySigner">由意外的证书签名（{0}）</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyError">无法校验（{0}）</x:String>
+    <x:String x:Key="TxtDlssgSm86BackupFailed">安装前无法备份 {0}。</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallFailed">无法安装 DLSS FG for RTX 20/30：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallFailed">无法卸载 DLSS FG for RTX 20/30：{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">此游戏文件夹中的 {0} 已被 DLSS FG for RTX 20/30 使用（{1}）。请选择其他注入方式，或先卸载 DLSS FG for RTX 20/30。</x:String>
+    <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30：v{0}（{1}）</x:String>
+    <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — 非官方、实验性，风险自负</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheEmpty">没有已缓存的 DLSS FG for RTX 20/30 版本。</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheItem">v{0} · 运行时 {1}</x:String>
 </ResourceDictionary>

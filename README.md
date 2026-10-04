@@ -72,6 +72,7 @@ Optional integrations, enabled from **Settings → Experimental**:
 
 - **RenoDx Addons** — Automatically fetches the per-game RenoDx addon for use with ReShade.
 - **Nvidia Neural Rendering Mod for AMD** — Runs danielblnc's unofficial DLSS Neural Rendering mod on AMD GPUs, optionally together with an official OptiScaler build (Stable, Beta or Nightly) through GoldenNights' AMD-NR-bridge.
+- **DLSS Frame Generation on RTX 20/30** — Installs sdli1995's unofficial dlssg_for_sm86 mod into games that already ship DLSS Frame Generation, so GeForce RTX 20 and 30 series GPUs can use it. Works with or without OptiScaler, downloaded at a pinned, hash- and signature-verified version. Windows only.
 
 ### Profiles
 
@@ -292,6 +293,7 @@ This program is distributed in the hope that it will be useful, but **WITHOUT AN
 - **[DLSS-NR-on-AMD](https://github.com/danielblnc/DLSS-NR-on-AMD)**: Unofficial DLSS Neural Rendering mod for AMD GPUs, by danielblnc.
 - **[DLSS-NR-on-AMD-Linux](https://github.com/bulacha3/DLSS-NR-on-AMD-Linux)**: Linux/Proton port of the AMD Neural Rendering mod, by bulacha3 (based on [guentra's original port](https://github.com/guentra/DLSS-NR-on-AMD-Linux), with [lmxxf](https://github.com/lmxxf/dlss5-on-amd-9070xt-porting)'s optimized backend).
 - **[AMD-NR-bridge](https://github.com/GoldenNights/AMD-NR-bridge)**: Plugin that lets the AMD Neural Rendering mod run alongside OptiScaler, by GoldenNights. Downloaded from its own releases, never bundled.
+- **[dlssg_for_sm86](https://github.com/sdli1995/dlssg_for_sm86)**: DLSS Frame Generation on RTX 20/30 (Turing/Ampere) GPUs, by sdli1995, with the RTX 20 (SM75) kernel port by Coldwood1026. Downloaded from its own repository at a pinned commit, never bundled.
 
 This client application is merely a frontend interface to help users more easily manage and install the amazing work done by the OptiScaler team and other contributors. While OptiScaler Client itself is licensed under GPL-3.0-or-later, the third-party components it downloads and manages may be subject to their own respective licenses.
 

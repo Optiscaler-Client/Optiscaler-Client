@@ -118,5 +118,21 @@ namespace OptiscalerClient.Models
 
         /// <summary>FSR 4 Swap version whose content was used for the swap.</summary>
         public string? DllSwapExtrasVersion { get; set; }
+
+        /// <summary>
+        /// Set when this manifest belongs to a standalone component with its own lifecycle (e.g.
+        /// "dlssg_sm86"), stored under its own store key next to OptiScaler's. Null for OptiScaler's
+        /// own per-game manifest. Lookups that look for OptiScaler's record skip component manifests.
+        /// </summary>
+        public string? ComponentId { get; set; }
+
+        /// <summary>dlssg_for_sm86 release installed by this record (ComponentId "dlssg_sm86").</summary>
+        public string? DlssgSm86Version { get; set; }
+
+        /// <summary>dlssg_for_sm86 runtime build ("310.9" or "310.1").</summary>
+        public string? DlssgSm86Build { get; set; }
+
+        /// <summary>Proxy DLL names dlssg_for_sm86 was installed under (e.g. version.dll, winmm.dll).</summary>
+        public List<string> DlssgSm86ProxyNames { get; set; } = new();
     }
 }

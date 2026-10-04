@@ -1120,4 +1120,57 @@
     <!-- Empty library state -->
     <x:String x:Key="TxtEmptyLibraryTitle">Ваша библиотека пуста</x:String>
     <x:String x:Key="TxtEmptyLibraryHint">Нажмите «Сканировать игры», чтобы найти установленные в системе игры, или используйте «Добавить вручную», чтобы добавить игру самостоятельно.</x:String>
+
+    <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
+    <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">Включает DLSS Frame Generation на видеокартах GeForce RTX 20 и 30 серий в играх, где она уже есть, с помощью sdli1995/dlssg_for_sm86. Неофициально и экспериментально, на свой страх и риск. Работает без OptiScaler и остаётся установленным после удаления OptiScaler. Файлы скачиваются из GitHub-репозитория мода в зафиксированной версии и проверяются перед использованием.</x:String>
+    <x:String x:Key="TxtDlssgSm86BuildItem">Runtime {0} (до {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierLbl">Макс. генерация кадров</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierTooltip">Наибольший множитель, который мод предлагает игре. Фактический множитель всё равно выбирает игра, а игры со старыми плагинами Streamline ограничены 2X или 4X. Для 6X нужен runtime 310.9.</x:String>
+    <x:String x:Key="TxtDlssgSm86Install">Установить ({0} МБ)</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallCached">Установить</x:String>
+    <x:String x:Key="TxtDlssgSm86Update">Обновить</x:String>
+    <x:String x:Key="TxtDlssgSm86Apply">Применить</x:String>
+    <x:String x:Key="TxtDlssgSm86Installed">Установлено</x:String>
+    <x:String x:Key="TxtDlssgSm86Uninstall">Удалить</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusInstalled">Установлено: v{0} (runtime {1}) как {2} в {3}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">Доступно обновление: v{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusReady">Будет установлено как {0} в {1}</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusSkipped">Пропущены (заняты): {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">Не удалось найти папку исполняемого файла игры.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">Обнаружен античит: DLSS FG для RTX 20/30 отключён для этой игры.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">В этой игре нет DLSS Frame Generation (Streamline), поэтому моду нечего включать.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNotDx12">DLSS FG для RTX 20/30 работает только в играх на DirectX 12.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoFreeProxyName">Все имена загрузчика, которые может использовать мод, уже заняты: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerManualInstall">В этой папке уже есть dlssg_for_sm86, установленный вручную: {0}. Сначала удалите эти файлы, затем снова откройте это окно.</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerManual">dlssg_for_sm86, ручная установка</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerFsr4Swap">FSR 4 Swap</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerAsiLoader">ASI-загрузчик</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerUnknown">другой файл</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOff">Аппаратное ускорение планирования GPU отключено. Генерация кадров в играх будет недоступна, пока вы не включите его и не перезагрузите ПК.</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOpenSettings">Открыть настройки графики</x:String>
+    <x:String x:Key="TxtDlssgSm86Downloading">Загрузка DLSS FG для RTX 20/30 ({0})... {1}%</x:String>
+    <x:String x:Key="TxtDlssgSm86InstalledToast">DLSS FG для RTX 20/30 установлен.</x:String>
+    <x:String x:Key="TxtDlssgSm86ClampedToast">DLSS FG для RTX 20/30 установлен. Runtime {0} поддерживает до {1}, поэтому максимум снижен.</x:String>
+    <x:String x:Key="TxtDlssgSm86AppliedToast">Макс. генерация кадров установлена на {0}.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG для RTX 20/30 удалён.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallConfirm">Удалить DLSS FG для RTX 20/30 из этой игры? Заменённые файлы будут восстановлены. OptiScaler это не затронет.</x:String>
+    <x:String x:Key="TxtDlssgSm86IniEditedPrompt">Файл dlssg_sm86.ini был изменён после установки. Всё равно удалить или оставить вашу изменённую копию в папке игры?</x:String>
+    <x:String x:Key="TxtDlssgSm86DeleteIni">Удалить</x:String>
+    <x:String x:Key="TxtDlssgSm86KeepIni">Оставить мой INI</x:String>
+    <x:String x:Key="TxtDlssgSm86KeptFiles">Эти файлы были изменены после установки и оставлены на месте: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyFailed">Скачанный файл не прошёл проверку и был удалён: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySize">размер {0} байт, ожидалось {1}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyHash">SHA-256 не совпадает с закреплённым значением</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyUnsigned">файл не подписан</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySigner">подписан неожиданным сертификатом ({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyError">не удалось проверить ({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86BackupFailed">Не удалось создать резервную копию {0} перед установкой.</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallFailed">Не удалось установить DLSS FG для RTX 20/30: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallFailed">Не удалось удалить DLSS FG для RTX 20/30: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} уже используется DLSS FG для RTX 20/30 в этой папке игры ({1}). Выберите другой способ внедрения или сначала удалите DLSS FG для RTX 20/30.</x:String>
+    <x:String x:Key="TxtDlssgSm86Badge">DLSS FG для RTX 20/30: v{0} ({1})</x:String>
+    <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — неофициально, экспериментально, на свой страх и риск</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheEmpty">Нет сохранённых сборок DLSS FG для RTX 20/30.</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheItem">v{0} · runtime {1}</x:String>
 </ResourceDictionary>

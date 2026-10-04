@@ -166,6 +166,12 @@ public class Game
     public bool IsFsr4DllSwapped { get; set; }
     public string? Fsr4DllSwapTargetFileName { get; set; }
 
+    // dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30) — a standalone component with its own
+    // backup record, independent of IsOptiscalerInstalled. See DlssgSm86Service.
+    public bool IsDlssgSm86Installed { get; set; }
+    public string? DlssgSm86Version { get; set; }
+    public string? DlssgSm86Build { get; set; }
+
     /// <summary>Optional FG settings applied specifically to this game, never to a shared profile.</summary>
     public GameFrameGenerationSettings? FrameGenerationSettings { get; set; }
 
