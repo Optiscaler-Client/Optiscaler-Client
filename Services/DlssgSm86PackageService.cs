@@ -106,20 +106,6 @@ namespace OptiscalerClient.Services
             return build.Files.Where(f => !f.IsProxy || names.Contains(f.Name)).ToList();
         }
 
-        /// <summary>Bytes still to download for these files (0 when all are cached at the right size).
-        /// Size only — the hash is checked again by <see cref="EnsureFilesAsync"/> before use.</summary>
-        public long GetMissingBytes(DlssgSm86BuildEntry build, IEnumerable<DlssgSm86FileEntry> files)
-        {
-            var manifest = Manifest;
-            if (manifest == null) return 0;
-            var dir = GetBuildCacheDir(manifest.ModVersion, build.Id);
-            return files.Where(f =>
-            {
-                var path = Path.Combine(dir, f.Name);
-                return !File.Exists(path) || new FileInfo(path).Length != f.Size;
-            }).Sum(f => f.Size);
-        }
-
         /// <summary>
         /// Makes sure every file in <paramref name="files"/> is in the cache and verified, downloading
         /// what's missing. Returns the build's cache directory. Any file that fails verification is

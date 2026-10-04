@@ -1128,20 +1128,12 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
 
     <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
     <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
-    <x:String x:Key="TxtDlssgSm86Tooltip">Schakelt DLSS Frame Generation in op GeForce RTX 20- en 30-serie GPU's in games die het al bevatten, met sdli1995/dlssg_for_sm86. Onofficieel en experimenteel, op eigen risico. Werkt zonder OptiScaler en blijft geïnstalleerd als OptiScaler wordt verwijderd. Bestanden worden in een vastgezette versie uit de GitHub-repository van de mod gedownload en vóór gebruik gecontroleerd.</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">Schakelt DLSS Frame Generation in op GeForce RTX 20- en 30-serie GPU's in games die het al bevatten, met sdli1995/dlssg_for_sm86. Onofficieel en experimenteel, op eigen risico. Werkt met of zonder OptiScaler. Bestanden worden in een vastgezette versie uit de GitHub-repository van de mod gedownload en vóór gebruik gecontroleerd.</x:String>
     <x:String x:Key="TxtDlssgSm86BuildItem">Runtime {0} (tot {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86None">Geen</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierLbl">Max. frame generation</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierTooltip">De hoogste vermenigvuldiger die de mod aan de game aanbiedt. De game kiest nog steeds de werkelijke vermenigvuldiger, en games met oudere Streamline-plug-ins stoppen bij 2X of 4X. 6X vereist runtime 310.9.</x:String>
-    <x:String x:Key="TxtDlssgSm86Install">Installeren ({0} MB)</x:String>
-    <x:String x:Key="TxtDlssgSm86InstallCached">Installeren</x:String>
-    <x:String x:Key="TxtDlssgSm86Update">Bijwerken</x:String>
-    <x:String x:Key="TxtDlssgSm86Apply">Toepassen</x:String>
-    <x:String x:Key="TxtDlssgSm86Installed">Geïnstalleerd</x:String>
-    <x:String x:Key="TxtDlssgSm86Uninstall">Verwijderen</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusInstalled">Geïnstalleerd: v{0} (runtime {1}) als {2} in {3}</x:String>
     <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">Update beschikbaar: v{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusReady">Wordt geïnstalleerd als {0} in {1}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusSkipped">Overgeslagen (in gebruik): {0}</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">De map van het uitvoerbare bestand van de game is niet gevonden.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">Anti-cheat gedetecteerd: DLSS FG voor RTX 20/30 is uitgeschakeld voor deze game.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">Deze game bevat geen DLSS Frame Generation (Streamline), dus de mod heeft niets in te schakelen.</x:String>
@@ -1160,6 +1152,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtDlssgSm86AppliedToast">Max. frame generation ingesteld op {0}.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG voor RTX 20/30 verwijderd.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallConfirm">DLSS FG voor RTX 20/30 uit deze game verwijderen? Vervangen bestanden worden hersteld. OptiScaler blijft ongemoeid.</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG voor RTX 20/30 wordt ook verwijderd.</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">Selecteer het uitvoerbare bestand van de game voor DLSS FG (RTX 20/30)</x:String>
     <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini is na de installatie gewijzigd. Toch verwijderen, of je bewerkte kopie in de gamemap houden?</x:String>
     <x:String x:Key="TxtDlssgSm86DeleteIni">Verwijderen</x:String>
     <x:String x:Key="TxtDlssgSm86KeepIni">Mijn INI houden</x:String>
@@ -1173,7 +1167,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtDlssgSm86BackupFailed">Kon geen back-up maken van {0} vóór de installatie.</x:String>
     <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG voor RTX 20/30 kon niet worden geïnstalleerd: {0}</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG voor RTX 20/30 kon niet worden verwijderd: {0}</x:String>
-    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} wordt in deze gamemap al gebruikt door DLSS FG voor RTX 20/30 ({1}). Kies een andere injectiemethode of verwijder eerst DLSS FG voor RTX 20/30.</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} wordt in deze gamemap al gebruikt door DLSS FG voor RTX 20/30 ({1}). Kies een andere injectiemethode of zet DLSS FG (RTX 20/30) op 'Geen'.</x:String>
     <x:String x:Key="TxtDlssgSm86Badge">DLSS FG voor RTX 20/30: v{0} ({1})</x:String>
     <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — onofficieel, experimenteel, op eigen risico</x:String>
     <x:String x:Key="TxtDlssgSm86CacheEmpty">Geen builds van DLSS FG voor RTX 20/30 in de cache.</x:String>

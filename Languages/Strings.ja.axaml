@@ -1125,20 +1125,12 @@
 
     <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
     <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
-    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86 を使い、DLSS フレーム生成を搭載済みのゲームで GeForce RTX 20/30 シリーズでもフレーム生成を有効にします。非公式・実験的な機能で、自己責任でご利用ください。OptiScaler なしで動作し、OptiScaler をアンインストールしても残ります。ファイルは MOD の GitHub リポジトリから固定バージョンでダウンロードされ、使用前に検証されます。</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86 を使い、DLSS フレーム生成を搭載済みのゲームで GeForce RTX 20/30 シリーズでもフレーム生成を有効にします。非公式・実験的な機能で、自己責任でご利用ください。OptiScaler の有無にかかわらず動作します。ファイルは MOD の GitHub リポジトリから固定バージョンでダウンロードされ、使用前に検証されます。</x:String>
     <x:String x:Key="TxtDlssgSm86BuildItem">ランタイム {0}（最大 {1}）</x:String>
+    <x:String x:Key="TxtDlssgSm86None">なし</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierLbl">最大フレーム生成</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierTooltip">MOD がゲームに提示する最大倍率です。実際の倍率はゲームが選びます。古い Streamline プラグインのゲームは 2X または 4X が上限です。6X にはランタイム 310.9 が必要です。</x:String>
-    <x:String x:Key="TxtDlssgSm86Install">インストール（{0} MB）</x:String>
-    <x:String x:Key="TxtDlssgSm86InstallCached">インストール</x:String>
-    <x:String x:Key="TxtDlssgSm86Update">更新</x:String>
-    <x:String x:Key="TxtDlssgSm86Apply">適用</x:String>
-    <x:String x:Key="TxtDlssgSm86Installed">インストール済み</x:String>
-    <x:String x:Key="TxtDlssgSm86Uninstall">アンインストール</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusInstalled">インストール済み: v{0}（ランタイム {1}）、{2} として {3} に配置</x:String>
     <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">アップデートあり: v{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusReady">{0} として {1} にインストールされます</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusSkipped">スキップ（使用中）: {0}</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">ゲームの実行ファイルのフォルダーが見つかりません。</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">アンチチートを検出: このゲームでは DLSS FG for RTX 20/30 は無効です。</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">このゲームには DLSS フレーム生成（Streamline）が含まれていないため、MOD で有効にできるものがありません。</x:String>
@@ -1157,6 +1149,8 @@
     <x:String x:Key="TxtDlssgSm86AppliedToast">最大フレーム生成を {0} に設定しました。</x:String>
     <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG for RTX 20/30 をアンインストールしました。</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallConfirm">このゲームから DLSS FG for RTX 20/30 を削除しますか？置き換えたファイルは元に戻されます。OptiScaler には影響しません。</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG for RTX 20/30 も削除されます。</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">DLSS FG (RTX 20/30) を入れるゲームの実行ファイルを選択</x:String>
     <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini はインストール後に変更されています。それでも削除しますか？それとも編集済みのコピーをゲームフォルダーに残しますか？</x:String>
     <x:String x:Key="TxtDlssgSm86DeleteIni">削除</x:String>
     <x:String x:Key="TxtDlssgSm86KeepIni">INI を残す</x:String>
@@ -1170,7 +1164,7 @@
     <x:String x:Key="TxtDlssgSm86BackupFailed">インストール前に {0} をバックアップできませんでした。</x:String>
     <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG for RTX 20/30 をインストールできませんでした: {0}</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG for RTX 20/30 をアンインストールできませんでした: {0}</x:String>
-    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} はこのゲームフォルダーで DLSS FG for RTX 20/30 がすでに使用しています（{1}）。別の注入方法を選ぶか、先に DLSS FG for RTX 20/30 をアンインストールしてください。</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} はこのゲームフォルダーで DLSS FG for RTX 20/30 がすでに使用しています（{1}）。別の注入方法を選ぶか、DLSS FG (RTX 20/30) を「なし」にしてください。</x:String>
     <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30: v{0}（{1}）</x:String>
     <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — 非公式・実験的、自己責任</x:String>
     <x:String x:Key="TxtDlssgSm86CacheEmpty">キャッシュされた DLSS FG for RTX 20/30 のビルドはありません。</x:String>

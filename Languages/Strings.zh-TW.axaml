@@ -1125,20 +1125,12 @@
 
     <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
     <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
-    <x:String x:Key="TxtDlssgSm86Tooltip">透過 sdli1995/dlssg_for_sm86，在已內建 DLSS 畫格生成的遊戲中為 GeForce RTX 20/30 系列顯示卡啟用畫格生成。非官方、實驗性功能，風險自負。不需要 OptiScaler 即可使用，解除安裝 OptiScaler 後仍會保留。檔案以固定版本從該模組的 GitHub 儲存庫下載，並在使用前驗證。</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">透過 sdli1995/dlssg_for_sm86，在已內建 DLSS 畫格生成的遊戲中為 GeForce RTX 20/30 系列顯示卡啟用畫格生成。非官方、實驗性功能，風險自負。可與 OptiScaler 一起使用，也可單獨使用。檔案以固定版本從該模組的 GitHub 儲存庫下載，並在使用前驗證。</x:String>
     <x:String x:Key="TxtDlssgSm86BuildItem">執行階段 {0}（最高 {1}）</x:String>
+    <x:String x:Key="TxtDlssgSm86None">無</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierLbl">最大畫格生成</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierTooltip">模組提供給遊戲的最高倍數。實際倍數仍由遊戲決定；使用舊版 Streamline 外掛的遊戲最高只到 2X 或 4X。6X 需要 310.9 執行階段。</x:String>
-    <x:String x:Key="TxtDlssgSm86Install">安裝（{0} MB）</x:String>
-    <x:String x:Key="TxtDlssgSm86InstallCached">安裝</x:String>
-    <x:String x:Key="TxtDlssgSm86Update">更新</x:String>
-    <x:String x:Key="TxtDlssgSm86Apply">套用</x:String>
-    <x:String x:Key="TxtDlssgSm86Installed">已安裝</x:String>
-    <x:String x:Key="TxtDlssgSm86Uninstall">解除安裝</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusInstalled">已安裝：v{0}（執行階段 {1}），以 {2} 安裝於 {3}</x:String>
     <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">有可用更新：v{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusReady">將以 {0} 安裝到 {1}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusSkipped">已略過（使用中）：{0}</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">找不到遊戲執行檔所在的資料夾。</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">偵測到反作弊：此遊戲已停用 DLSS FG for RTX 20/30。</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">此遊戲未內建 DLSS 畫格生成（Streamline），模組沒有可啟用的內容。</x:String>
@@ -1157,6 +1149,8 @@
     <x:String x:Key="TxtDlssgSm86AppliedToast">最大畫格生成已設為 {0}。</x:String>
     <x:String x:Key="TxtDlssgSm86UninstalledToast">已解除安裝 DLSS FG for RTX 20/30。</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallConfirm">要從此遊戲移除 DLSS FG for RTX 20/30 嗎？被取代的檔案會還原，OptiScaler 不受影響。</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG for RTX 20/30 也會一併移除。</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">選擇要安裝 DLSS FG (RTX 20/30) 的遊戲執行檔</x:String>
     <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini 在安裝後被修改過。仍要刪除，還是將你修改過的副本保留在遊戲資料夾中？</x:String>
     <x:String x:Key="TxtDlssgSm86DeleteIni">刪除</x:String>
     <x:String x:Key="TxtDlssgSm86KeepIni">保留我的 INI</x:String>
@@ -1170,7 +1164,7 @@
     <x:String x:Key="TxtDlssgSm86BackupFailed">安裝前無法備份 {0}。</x:String>
     <x:String x:Key="TxtDlssgSm86InstallFailed">無法安裝 DLSS FG for RTX 20/30：{0}</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallFailed">無法解除安裝 DLSS FG for RTX 20/30：{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86CollisionMsg">此遊戲資料夾中的 {0} 已被 DLSS FG for RTX 20/30 使用（{1}）。請選擇其他注入方式，或先解除安裝 DLSS FG for RTX 20/30。</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">此遊戲資料夾中的 {0} 已被 DLSS FG for RTX 20/30 使用（{1}）。請選擇其他注入方式，或將 DLSS FG (RTX 20/30) 設為「無」。</x:String>
     <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30：v{0}（{1}）</x:String>
     <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — 非官方、實驗性，風險自負</x:String>
     <x:String x:Key="TxtDlssgSm86CacheEmpty">沒有已快取的 DLSS FG for RTX 20/30 版本。</x:String>
