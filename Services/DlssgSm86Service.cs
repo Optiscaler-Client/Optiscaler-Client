@@ -44,20 +44,25 @@ namespace OptiscalerClient.Services
         DlssgSm86InstallState? GetInstallState(Game game);
 
         /// <summary>Whether the mod can go into this game, where, and under which proxy names.
-        /// Scans the game folder — call it off the UI thread.</summary>
-        DlssgSm86Eligibility GetEligibility(Game game);
+        /// <paramref name="targetDirectory"/> is a folder the user picked (Manual Install) or the one
+        /// OptiScaler was just installed into; null resolves it automatically. Scans the game folder —
+        /// call it off the UI thread.</summary>
+        DlssgSm86Eligibility GetEligibility(Game game, string? targetDirectory = null);
 
         HagsState GetHagsState();
 
-        /// <summary>What the action button does for this selection: install, update, apply only the
-        /// multiplier, or nothing. Cheap: reads only the download cache's file sizes.</summary>
+        /// <summary>What the next install does for this selection: install, update, apply only the
+        /// multiplier, remove, or nothing. <paramref name="build"/> is null when "None" is selected. Cheap:
+        /// no disk access.</summary>
         DlssgSm86ActionPlan GetPendingAction(DlssgSm86Eligibility eligibility, DlssgSm86InstallState? state,
-            DlssgSm86BuildEntry build, int maxGeneratedFrames);
+            DlssgSm86BuildEntry? build, int maxGeneratedFrames);
 
-        /// <summary>Downloads (if needed) and installs <paramref name="buildId"/>. Also performs an update
-        /// or build switch when the mod is already installed, carrying the user's INI values over.</summary>
+        /// <summary>Downloads (if needed) and installs <paramref name="buildId"/> into
+        /// <paramref name="targetDirectory"/> (null: resolved as in <see cref="GetEligibility"/>). Also
+        /// performs an update or build switch when the mod is already installed, carrying the user's INI
+        /// values over.</summary>
         Task<DlssgSm86InstallResult> InstallAsync(Game game, string buildId, int maxGeneratedFrames,
-            IProgress<double>? progress = null, CancellationToken cancellationToken = default);
+            IProgress<double>? progress = null, string? targetDirectory = null, CancellationToken cancellationToken = default);
 
         /// <summary>Rewrites MaxGeneratedFrames in the installed INI (clamped to the build's maximum).</summary>
         DlssgSm86InstallResult SetMaxGeneratedFrames(Game game, int maxGeneratedFrames);
@@ -89,7 +94,7 @@ namespace OptiscalerClient.Services
         public DlssgSm86ProxyCollisionException(string injectionDllName, IEnumerable<string> dlssgProxyNames)
             : base(string.Format(
                 DlssgSm86Records.GetString("TxtDlssgSm86CollisionMsg",
-                    "{0} is already used by DLSS FG for RTX 20/30 in this game folder ({1}). Pick another injection method, or uninstall DLSS FG for RTX 20/30 first."),
+                    "{0} is already used by DLSS FG for RTX 20/30 in this game folder ({1}). Pick another injection method, or set DLSS FG (RTX 20/30) to None."),
                 injectionDllName, string.Join(", ", dlssgProxyNames)))
         {
         }
@@ -217,18 +222,21 @@ namespace OptiscalerClient.Services
         }
 
         public DlssgSm86ActionPlan GetPendingAction(DlssgSm86Eligibility eligibility, DlssgSm86InstallState? state,
-            DlssgSm86BuildEntry build, int maxGeneratedFrames)
+            DlssgSm86BuildEntry? build, int maxGeneratedFrames)
         {
             var modVersion = Packages.Manifest?.ModVersion;
             bool updateAvailable = state != null && !string.Equals(state.Version, modVersion, StringComparison.OrdinalIgnoreCase);
 
-            DlssgSm86PendingAction action;
-            long downloadBytes = 0;
-            if (state == null)
+            if (build == null)
             {
-                action = DlssgSm86PendingAction.Install;
-                downloadBytes = Packages.GetMissingBytes(build, DlssgSm86PackageService.SelectFiles(build, eligibility.FreeProxyNames));
+                return state == null
+                    ? new DlssgSm86ActionPlan(DlssgSm86PendingAction.None, updateAvailable, CanRun: false)
+                    : new DlssgSm86ActionPlan(DlssgSm86PendingAction.Remove, updateAvailable, CanRun: true);
             }
+
+            DlssgSm86PendingAction action;
+            if (state == null)
+                action = DlssgSm86PendingAction.Install;
             else if (updateAvailable || !string.Equals(state.Build, build.Id, StringComparison.OrdinalIgnoreCase))
                 action = DlssgSm86PendingAction.Update;
             else if (state.MaxGeneratedFrames != DlssgSm86Multipliers.Clamp(maxGeneratedFrames, build))
@@ -236,19 +244,21 @@ namespace OptiscalerClient.Services
             else
                 action = DlssgSm86PendingAction.None;
 
-            return new DlssgSm86ActionPlan(action, downloadBytes, updateAvailable,
+            return new DlssgSm86ActionPlan(action, updateAvailable,
                 CanRun: eligibility.IsEligible && action != DlssgSm86PendingAction.None);
         }
 
         // ── Eligibility ──────────────────────────────────────────────────────────
 
-        public DlssgSm86Eligibility GetEligibility(Game game)
+        public DlssgSm86Eligibility GetEligibility(Game game, string? targetDirectory = null)
         {
             var store = new BackupStoreService();
             var ours = DlssgSm86Records.LoadCommitted(store, game);
             var opti = LoadOptiScalerManifest(store, game);
 
-            var targetDir = ResolveTargetDirectory(game, ours, opti);
+            var targetDir = targetDirectory != null
+                ? (Directory.Exists(targetDirectory) ? targetDirectory : null)
+                : ResolveTargetDirectory(game, ours, opti);
             if (targetDir == null)
                 return new DlssgSm86Eligibility { Blocker = DlssgSm86Blocker.NoTargetDirectory };
 
@@ -419,14 +429,14 @@ namespace OptiscalerClient.Services
         // ── Install / update ────────────────────────────────────────────────────
 
         public async Task<DlssgSm86InstallResult> InstallAsync(Game game, string buildId, int maxGeneratedFrames,
-            IProgress<double>? progress = null, CancellationToken cancellationToken = default)
+            IProgress<double>? progress = null, string? targetDirectory = null, CancellationToken cancellationToken = default)
         {
             var manifest = Packages.Manifest ?? throw new InvalidOperationException("dlssg_for_sm86 manifest is missing.");
             var build = manifest.FindBuild(buildId) ?? throw new ArgumentException($"Unknown dlssg_for_sm86 build '{buildId}'.", nameof(buildId));
 
             // Re-checked here: what the window showed may be stale (another tool may have dropped a
             // proxy into the folder since).
-            var eligibility = await Task.Run(() => GetEligibility(game), cancellationToken);
+            var eligibility = await Task.Run(() => GetEligibility(game, targetDirectory), cancellationToken);
             if (!eligibility.IsEligible || eligibility.TargetDirectory == null)
                 throw new DlssgSm86BlockedException(eligibility);
 
@@ -451,13 +461,15 @@ namespace OptiscalerClient.Services
             // Update / build switch: remember what the user had in their INI, then take the old
             // install out completely (restoring anything it replaced) so the new one starts from the
             // same clean folder a fresh install would. The new files are already downloaded and
-            // verified at this point, so what can still fail below is local disk I/O only.
+            // verified at this point, so what can still fail below is local disk I/O only. The old
+            // install may sit in another folder (Manual Install picked a different exe).
             List<(string Section, string Key, string Value)>? carried = null;
             var prior = DlssgSm86Records.Load(store, game);
             if (prior != null)
             {
-                if (DlssgSm86Records.IsCommitted(prior) && File.Exists(iniPath))
-                    carried = DlssgSm86Ini.ReadAll(iniPath);
+                var priorIniPath = Path.Combine(prior.InstalledGameDirectory ?? targetDir, DlssgSm86Records.IniFileName);
+                if (DlssgSm86Records.IsCommitted(prior) && File.Exists(priorIniPath))
+                    carried = DlssgSm86Ini.ReadAll(priorIniPath);
                 UninstallRecord(store, storeKey, prior, keepModifiedIni: false);
             }
 

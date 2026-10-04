@@ -4821,7 +4821,8 @@ namespace OptiscalerClient.Views
             var earlyOptiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             if (string.Equals(earlyOptiTag, "none", StringComparison.OrdinalIgnoreCase))
             {
-                if (!injectExtras)
+                bool installDlssgSm86 = HasDlssgSm86PendingInstall();
+                if (!injectExtras && !installDlssgSm86)
                 {
                     // Defense #2 — buttons should already be disabled for this combination
                     // (UpdateInstallButtonsForSwapState), this is the last-resort guard.
@@ -4832,7 +4833,10 @@ namespace OptiscalerClient.Views
                     return;
                 }
 
-                await ExecuteDllSwapAsync(isManualMode, selectedExtrasVersion!);
+                if (injectExtras)
+                    await ExecuteDllSwapAsync(isManualMode, selectedExtrasVersion!);
+                if (installDlssgSm86)
+                    await RunDlssgSm86StandaloneInstallAsync(isManualMode);
                 return;
             }
 
@@ -4921,6 +4925,9 @@ namespace OptiscalerClient.Views
                         // "continue" → fall through to normal install
                     }
                 }
+
+                // DLSS FG for RTX 20/30 set to "None" while installed: removed before OptiScaler goes in.
+                if (!await RemoveDeselectedDlssgSm86Async()) return;
 
                 if (btnInstall != null) btnInstall.IsEnabled = false;
                 if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
@@ -5670,6 +5677,10 @@ namespace OptiscalerClient.Views
                     }
                 }
 
+                // ── DLSS FG for RTX 20/30, into the folder OptiScaler just went into ──────
+                if (await RunDlssgSm86InstallStepAsync(overrideGameDir ?? resolvedGameDir, showToast: false))
+                    installedComponents += " + " + GetResourceString("TxtDlssgSm86Title", "DLSS FG (RTX 20/30)");
+
                 // "Mod + OptiScaler": AMD-NR-bridge goes last, over every OptiScaler.ini layer above.
                 // If it can't be applied, a fresh mod install is rolled back like any other failure of
                 // this half (OptiScaler itself stays installed).
@@ -6313,6 +6324,7 @@ namespace OptiscalerClient.Views
                 if (txtMsg != null) txtMsg.Text = GetResourceString("TxtConfirmUninstallMsg", "Are you sure you want to uninstall OptiScaler?\nOnly backed-up original files will be restored.");
                 if (btnYes != null) btnYes.Content = GetResourceString("TxtUninstall", "✕ Uninstall");
             }
+            AdjustDlssgSm86UninstallConfirm(txtTitle, txtMsg, btnYes);
 
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
@@ -6865,6 +6877,9 @@ namespace OptiscalerClient.Views
                     SelectCmbSetupNrTag("none");
                 }
 
+                // DLSS FG for RTX 20/30 has its own record, never touched by UninstallOptiScaler below.
+                if (!await UninstallDlssgSm86WithMainAsync()) return;
+
                 // Capture before UninstallOptiScaler runs — it resets both flags on _game.
                 bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
 
@@ -7045,6 +7060,7 @@ namespace OptiscalerClient.Views
                     btnUninstall.Content = GetResourceString("TxtRestoreOriginalDll", "Restore original DLL");
                 }
             }
+            ApplyDlssgSm86UninstallButton(btnUninstall);
 
             // Everything below overrides whichever labels/visibility the branches above (and these
             // three calls) just set — called here, before the daniel-mod-specific overrides, so those
@@ -7117,7 +7133,11 @@ namespace OptiscalerClient.Views
 
         }
 
-        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);
+        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip)
+        {
+            /// <summary>A standalone mod the client added (dlssg_for_sm86), neither native nor via OptiScaler.</summary>
+            public bool IsAddedMod { get; init; }
+        }
 
         private ComponentEntry MakeUpscalerEntry(string label, bool viaOptiscaler, bool isSwapped = false)
         {
@@ -7497,7 +7517,10 @@ namespace OptiscalerClient.Views
             // OptiScaler at "None" it goes in on its own, with or without an FSR 4 Swap.
             bool modSelected = new ComponentManagementService().Config.ShowExperimentalFeatures &&
                 !OperatingSystem.IsWindows() && !string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode);
-            bool nothingToInstall = optiIsNone && extrasIsNone && !modSelected;
+            // DLSS FG for RTX 20/30 (Experimental, Windows) is the same kind of third thing: with
+            // OptiScaler and FSR 4 Swap at "None" it goes in on its own.
+            bool dlssgSm86Pending = HasDlssgSm86PendingInstall();
+            bool nothingToInstall = optiIsNone && extrasIsNone && !modSelected && !dlssgSm86Pending;
             if (pnlNothingToInstall != null) pnlNothingToInstall.IsVisible = nothingToInstall;
 
             if (!optiIsNone || modSelected)
@@ -7521,7 +7544,18 @@ namespace OptiscalerClient.Views
                 return;
             }
 
-            if (extrasIsNone)
+            if (extrasIsNone && dlssgSm86Pending)
+            {
+                btnInstall.IsEnabled = true;
+                btnInstallManual.IsEnabled = true;
+                btnInstall.Content = _game.IsDlssgSm86Installed
+                    ? GetResourceString("TxtUpdateOpti", "↑ Auto Update / Reinstall")
+                    : GetResourceString("TxtInstallOpti", "✦ Auto Install");
+                btnInstallManual.Content = _game.IsDlssgSm86Installed
+                    ? GetResourceString("TxtUpdateOptiManual", "↑ Manual Update / Reinstall")
+                    : GetResourceString("TxtBtnManualInstall", "✦ Manual Install");
+            }
+            else if (extrasIsNone)
             {
                 // Nothing selected to install at all — grey out (defense #1) and show the info panel.
                 btnInstall.IsEnabled = false;
@@ -7668,6 +7702,7 @@ namespace OptiscalerClient.Views
         private bool ComputeConfigOnlyEligible()
         {
             if (_installedHardSelectionBaseline == null || _installedSoftSelectionBaseline == null) return false;
+            if (HasDlssgSm86PendingChange()) return false; // "Update config only" doesn't touch DLSS FG
 
             var currentHard = ReadCurrentHardInstallSelection();
             if (currentHard == null || currentHard != _installedHardSelectionBaseline) return false;

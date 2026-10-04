@@ -1122,20 +1122,12 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
 
     <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
     <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
-    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86 ile, DLSS Frame Generation içeren oyunlarda GeForce RTX 20 ve 30 serisi GPU'larda kare oluşturmayı etkinleştirir. Resmi değildir ve deneyseldir, sorumluluk size aittir. OptiScaler olmadan çalışır ve OptiScaler kaldırılsa da yüklü kalır. Dosyalar modun GitHub deposundan sabitlenmiş bir sürümde indirilir ve kullanılmadan önce doğrulanır.</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86 ile, DLSS Frame Generation içeren oyunlarda GeForce RTX 20 ve 30 serisi GPU'larda kare oluşturmayı etkinleştirir. Resmi değildir ve deneyseldir, sorumluluk size aittir. OptiScaler ile de, olmadan da çalışır. Dosyalar modun GitHub deposundan sabitlenmiş bir sürümde indirilir ve kullanılmadan önce doğrulanır.</x:String>
     <x:String x:Key="TxtDlssgSm86BuildItem">Runtime {0} ({1} değerine kadar)</x:String>
+    <x:String x:Key="TxtDlssgSm86None">Yok</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierLbl">Maks. kare oluşturma</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierTooltip">Modun oyuna sunduğu en yüksek çarpan. Gerçek çarpanı yine oyun seçer; eski Streamline eklentili oyunlar 2X veya 4X'te kalır. 6X için runtime 310.9 gerekir.</x:String>
-    <x:String x:Key="TxtDlssgSm86Install">Yükle ({0} MB)</x:String>
-    <x:String x:Key="TxtDlssgSm86InstallCached">Yükle</x:String>
-    <x:String x:Key="TxtDlssgSm86Update">Güncelle</x:String>
-    <x:String x:Key="TxtDlssgSm86Apply">Uygula</x:String>
-    <x:String x:Key="TxtDlssgSm86Installed">Yüklü</x:String>
-    <x:String x:Key="TxtDlssgSm86Uninstall">Kaldır</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusInstalled">Yüklü: v{0} (runtime {1}), {3} içinde {2} olarak</x:String>
     <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">Güncelleme mevcut: v{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusReady">{1} içine {0} olarak yüklenecek</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusSkipped">Atlananlar (kullanımda): {0}</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">Oyunun çalıştırılabilir dosyasının klasörü bulunamadı.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">Hile önleyici algılandı: Bu oyun için DLSS FG for RTX 20/30 devre dışı.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">Bu oyun DLSS Frame Generation (Streamline) içermiyor, bu yüzden modun etkinleştireceği bir şey yok.</x:String>
@@ -1154,6 +1146,8 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDlssgSm86AppliedToast">Maks. kare oluşturma {0} olarak ayarlandı.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG for RTX 20/30 kaldırıldı.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallConfirm">DLSS FG for RTX 20/30 bu oyundan kaldırılsın mı? Değiştirdiği dosyalar geri yüklenir. OptiScaler etkilenmez.</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG for RTX 20/30 da kaldırılacak.</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">DLSS FG (RTX 20/30) için oyunun çalıştırılabilir dosyasını seçin</x:String>
     <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini kurulumdan sonra değiştirildi. Yine de silinsin mi, yoksa düzenlediğiniz kopya oyun klasöründe mi kalsın?</x:String>
     <x:String x:Key="TxtDlssgSm86DeleteIni">Sil</x:String>
     <x:String x:Key="TxtDlssgSm86KeepIni">INI dosyamı koru</x:String>
@@ -1167,7 +1161,7 @@ Bu sürüm indirilemez. İnternet bağlantınızı kontrol edip daha sonra tekra
     <x:String x:Key="TxtDlssgSm86BackupFailed">{0} yüklemeden önce yedeklenemedi.</x:String>
     <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG for RTX 20/30 yüklenemedi: {0}</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG for RTX 20/30 kaldırılamadı: {0}</x:String>
-    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} bu oyun klasöründe zaten DLSS FG for RTX 20/30 tarafından kullanılıyor ({1}). Başka bir enjeksiyon yöntemi seçin veya önce DLSS FG for RTX 20/30'u kaldırın.</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} bu oyun klasöründe zaten DLSS FG for RTX 20/30 tarafından kullanılıyor ({1}). Başka bir enjeksiyon yöntemi seçin veya DLSS FG (RTX 20/30) seçimini “Yok” yapın.</x:String>
     <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30: v{0} ({1})</x:String>
     <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — resmi değil, deneysel, sorumluluk size ait</x:String>
     <x:String x:Key="TxtDlssgSm86CacheEmpty">Önbellekte DLSS FG for RTX 20/30 derlemesi yok.</x:String>

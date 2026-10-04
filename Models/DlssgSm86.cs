@@ -134,24 +134,27 @@ namespace OptiscalerClient.Models
         On
     }
 
-    /// <summary>What the section's action button does for the current selection.</summary>
+    /// <summary>What the next Auto/Manual Install does with dlssg_for_sm86 for the current selection.</summary>
     public enum DlssgSm86PendingAction
     {
-        /// <summary>Installed, and the selection matches what is installed: nothing to do.</summary>
+        /// <summary>Nothing: "None" with nothing installed, or the selection matches what is installed.</summary>
         None,
         Install,
         /// <summary>Installed, but the pinned mod version or the selected runtime differs: reinstall.</summary>
         Update,
         /// <summary>Installed with the same version and runtime: only MaxGeneratedFrames changes.</summary>
-        ApplyMultiplier
+        ApplyMultiplier,
+        /// <summary>Installed, and "None" is selected. Like an FSR 4 Swap set to "None", the window only
+        /// carries it out as part of an OptiScaler (re)install.</summary>
+        Remove
     }
 
     /// <summary>The pending action for a selection, plus what the window needs to describe it.</summary>
-    /// <param name="Action">What the action button does.</param>
-    /// <param name="DownloadBytes">Bytes still to download for <see cref="DlssgSm86PendingAction.Install"/>, else 0.</param>
+    /// <param name="Action">What the next install does.</param>
     /// <param name="UpdateAvailable">The installed mod version differs from the pinned one.</param>
-    /// <param name="CanRun">The action can run now: there is one and the game isn't blocked.</param>
-    public sealed record DlssgSm86ActionPlan(DlssgSm86PendingAction Action, long DownloadBytes, bool UpdateAvailable, bool CanRun);
+    /// <param name="CanRun">The action can run now: there is one, and the game isn't blocked (removal
+    /// is never blocked).</param>
+    public sealed record DlssgSm86ActionPlan(DlssgSm86PendingAction Action, bool UpdateAvailable, bool CanRun);
 
     public sealed record DlssgSm86InstallResult(IReadOnlyList<string> ProxyNames, int MaxGeneratedFrames, bool MultiplierClamped);
 

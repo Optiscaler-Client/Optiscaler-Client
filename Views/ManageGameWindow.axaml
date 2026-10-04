@@ -472,6 +472,7 @@
                                                 BoxShadow="0 2 8 0 #20000000"
                                                 Classes.ViaOptiscaler="{Binding ViaOptiscaler}"
                                                 Classes.Swapped="{Binding IsSwapped}"
+                                                Classes.AddedMod="{Binding IsAddedMod}"
                                                 ToolTip.Tip="{Binding Tooltip}">
                                             <Border.Styles>
                                                 <!-- Background/BorderBrush live entirely in styles (not as local
@@ -490,6 +491,12 @@
                                                 <Style Selector="Border.Swapped">
                                                     <Setter Property="Background" Value="#2E2410"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BrWarning}"/>
+                                                </Style>
+                                                <!-- Distinct from native, ViaOptiscaler and Swapped — a standalone mod
+                                                     the client added (DLSS FG for RTX 20/30). -->
+                                                <Style Selector="Border.AddedMod">
+                                                    <Setter Property="Background" Value="#10213A"/>
+                                                    <Setter Property="BorderBrush" Value="#4A90E2"/>
                                                 </Style>
                                             </Border.Styles>
                                             <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}" FontWeight="SemiBold"/>
@@ -1382,11 +1389,10 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30): a standalone
-                                             component with its own Install/Uninstall buttons, independent of
-                                             the main Install button and of OptiScaler's own uninstall — see
-                                             ManageGameWindow.DlssgSm86.cs. Hidden unless the service exists
-                                             (Windows only) and the preferred GPU is RTX 20/30. -->
+                                        <!-- dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30): picked here,
+                                             installed by the main Auto/Manual Install and removed by the main
+                                             Uninstall — see ManageGameWindow.DlssgSm86.cs. Hidden unless the
+                                             service exists (Windows only) and the preferred GPU is RTX 20/30. -->
                                         <StackPanel Name="PanelDlssgSm86" Spacing="6" IsVisible="False">
                                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                                                 <StackPanel Grid.Column="0">
@@ -1444,32 +1450,57 @@
                                                               VerticalContentAlignment="Center"
                                                               SelectionChanged="CmbDlssgSm86Multiplier_SelectionChanged"/>
                                                 </StackPanel>
-
-                                                <Grid Grid.Column="2" ColumnDefinitions="*,Auto" ColumnSpacing="6"
-                                                      VerticalAlignment="Bottom">
-                                                    <Button Name="BtnDlssgSm86Install"
-                                                            Grid.Column="0"
-                                                            Classes="BtnBase"
-                                                            MinHeight="36"
-                                                            Padding="10,6"
-                                                            HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Center"
-                                                            Click="BtnDlssgSm86Install_Click"/>
-                                                    <Button Name="BtnDlssgSm86Uninstall"
-                                                            Grid.Column="1"
-                                                            Content="{DynamicResource TxtDlssgSm86Uninstall}"
-                                                            Classes="BtnDanger"
-                                                            MinHeight="36"
-                                                            Padding="10,6"
-                                                            IsVisible="False"
-                                                            Click="BtnDlssgSm86Uninstall_Click"/>
-                                                </Grid>
                                             </Grid>
 
-                                            <TextBlock Name="TxtDlssgSm86Status"
-                                                       Foreground="{StaticResource BrTextSecondary}"
-                                                       FontSize="{StaticResource FontSizeCaption}"
-                                                       TextWrapping="Wrap"/>
+                                            <!-- Why DLSS FG can't go into this game (the selector is locked then) -->
+                                            <Border Name="PanelDlssgSm86Blocked"
+                                                    Background="#2E2410"
+                                                    BorderBrush="{StaticResource BrWarning}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Warning}"
+                                                              Foreground="{StaticResource BrWarning}"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,8,0"/>
+                                                    <TextBlock Name="TxtDlssgSm86BlockedText"
+                                                               Grid.Column="1"
+                                                               Foreground="{StaticResource BrWarning}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- A newer pinned version is available; the install buttons apply it -->
+                                            <Border Name="PanelDlssgSm86Update"
+                                                    Background="{StaticResource BrBgElevated}"
+                                                    BorderBrush="#4A90E2"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Info}"
+                                                              Foreground="#4A90E2"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,8,0"/>
+                                                    <TextBlock Name="TxtDlssgSm86UpdateText"
+                                                               Grid.Column="1"
+                                                               Foreground="#4A90E2"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
 
                                             <Border Name="PanelDlssgSm86Hags"
                                                     Background="#2E2410"

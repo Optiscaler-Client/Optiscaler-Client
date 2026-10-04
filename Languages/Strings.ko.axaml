@@ -1124,20 +1124,12 @@
 
     <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
     <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
-    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86을 사용해 DLSS 프레임 생성을 이미 지원하는 게임에서 GeForce RTX 20/30 시리즈 GPU로도 프레임 생성을 켭니다. 비공식·실험적 기능이며 사용에 따른 책임은 본인에게 있습니다. OptiScaler 없이 동작하며 OptiScaler를 제거해도 그대로 남습니다. 파일은 모드의 GitHub 저장소에서 고정된 버전으로 내려받고 사용 전에 검증합니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86을 사용해 DLSS 프레임 생성을 이미 지원하는 게임에서 GeForce RTX 20/30 시리즈 GPU로도 프레임 생성을 켭니다. 비공식·실험적 기능이며 사용에 따른 책임은 본인에게 있습니다. OptiScaler 설치 여부와 관계없이 동작합니다. 파일은 모드의 GitHub 저장소에서 고정된 버전으로 내려받고 사용 전에 검증합니다.</x:String>
     <x:String x:Key="TxtDlssgSm86BuildItem">런타임 {0} (최대 {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86None">없음</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierLbl">최대 프레임 생성</x:String>
     <x:String x:Key="TxtDlssgSm86MultiplierTooltip">모드가 게임에 제공하는 최대 배율입니다. 실제 배율은 게임이 정하며, 구형 Streamline 플러그인을 쓰는 게임은 2X 또는 4X에서 멈춥니다. 6X는 런타임 310.9가 필요합니다.</x:String>
-    <x:String x:Key="TxtDlssgSm86Install">설치 ({0} MB)</x:String>
-    <x:String x:Key="TxtDlssgSm86InstallCached">설치</x:String>
-    <x:String x:Key="TxtDlssgSm86Update">업데이트</x:String>
-    <x:String x:Key="TxtDlssgSm86Apply">적용</x:String>
-    <x:String x:Key="TxtDlssgSm86Installed">설치됨</x:String>
-    <x:String x:Key="TxtDlssgSm86Uninstall">제거</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusInstalled">설치됨: v{0} (런타임 {1}), {3}에 {2}(으)로 설치</x:String>
     <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">업데이트 가능: v{0}</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusReady">{1}에 {0}(으)로 설치됩니다</x:String>
-    <x:String x:Key="TxtDlssgSm86StatusSkipped">건너뜀 (사용 중): {0}</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">게임 실행 파일의 폴더를 찾을 수 없습니다.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">안티치트 감지: 이 게임에서는 DLSS FG for RTX 20/30을 사용할 수 없습니다.</x:String>
     <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">이 게임은 DLSS 프레임 생성(Streamline)을 포함하지 않아 모드가 켤 수 있는 것이 없습니다.</x:String>
@@ -1156,6 +1148,8 @@
     <x:String x:Key="TxtDlssgSm86AppliedToast">최대 프레임 생성을 {0}(으)로 설정했습니다.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG for RTX 20/30을 제거했습니다.</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallConfirm">이 게임에서 DLSS FG for RTX 20/30을 제거할까요? 교체했던 파일은 복원되며 OptiScaler에는 영향이 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG for RTX 20/30도 함께 제거됩니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">DLSS FG (RTX 20/30)를 설치할 게임 실행 파일 선택</x:String>
     <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini가 설치 후 변경되었습니다. 그래도 삭제할까요, 아니면 수정한 파일을 게임 폴더에 남길까요?</x:String>
     <x:String x:Key="TxtDlssgSm86DeleteIni">삭제</x:String>
     <x:String x:Key="TxtDlssgSm86KeepIni">내 INI 유지</x:String>
@@ -1169,7 +1163,7 @@
     <x:String x:Key="TxtDlssgSm86BackupFailed">설치하기 전에 {0}을(를) 백업하지 못했습니다.</x:String>
     <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG for RTX 20/30을 설치하지 못했습니다: {0}</x:String>
     <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG for RTX 20/30을 제거하지 못했습니다: {0}</x:String>
-    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0}은(는) 이 게임 폴더에서 이미 DLSS FG for RTX 20/30이 사용 중입니다({1}). 다른 주입 방식을 선택하거나 먼저 DLSS FG for RTX 20/30을 제거하세요.</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0}은(는) 이 게임 폴더에서 이미 DLSS FG for RTX 20/30이 사용 중입니다({1}). 다른 주입 방식을 선택하거나 DLSS FG (RTX 20/30)를 '없음'으로 설정하세요.</x:String>
     <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30: v{0} ({1})</x:String>
     <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — 비공식·실험적, 사용 책임은 본인에게</x:String>
     <x:String x:Key="TxtDlssgSm86CacheEmpty">캐시된 DLSS FG for RTX 20/30 빌드가 없습니다.</x:String>
