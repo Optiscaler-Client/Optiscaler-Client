@@ -30,15 +30,15 @@
   <url type="bugtracker">https://github.com/Optiscaler-Client/Optiscaler-Client/issues</url>
   <screenshots>
     <screenshot type="default">
-      <image>https://github.com/user-attachments/assets/f39de984-a055-41ef-8900-3ee4e4317a68</image>
+      <image>https://github.com/user-attachments/assets/f60226eb-ce53-48b0-a672-3824dd6b691d</image>
       <caption>Main window</caption>
     </screenshot>
     <screenshot>
-      <image>https://github.com/user-attachments/assets/f8608451-d18e-410f-9df5-5e63a27e0e02</image>
+      <image>https://github.com/user-attachments/assets/099a0f6c-3a0f-49d7-ae70-f8331f0f1415</image>
       <caption>Game management</caption>
     </screenshot>
     <screenshot>
-      <image>https://github.com/user-attachments/assets/cd8e41fc-a6e0-4ca3-a035-ebc8fd4d32bb</image>
+      <image>https://github.com/user-attachments/assets/726f345b-1097-469f-b567-7eee0fc469e5</image>
       <caption>Game management after installation</caption>
     </screenshot>
   </screenshots>
@@ -47,6 +47,6 @@
     <binary>OptiscalerClient</binary>
   </provides>
   <releases>
-    <release version="1.0.8" date="2026-09-30"/>
+    <release version="1.0.8" date="2026-10-08"/>
   </releases>
 </component>

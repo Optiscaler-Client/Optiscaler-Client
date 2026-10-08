@@ -42,7 +42,7 @@ modules:
       - type: git
         url: https://github.com/Optiscaler-Client/Optiscaler-Client.git
         tag: OptiscalerClient-1.0.8
-        commit: 0000000000000000000000000000000000000000
+        commit: 1a4135de7fce2ea87b37404b533ba2949e40a173
         # Flathub's update bot opens a PR (tag + commit + metainfo release) for each new tag
         x-checker-data:
           type: git
