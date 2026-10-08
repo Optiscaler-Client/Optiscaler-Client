@@ -107,21 +107,57 @@
         <Border Name="BdManageFrame"
                 CornerRadius="12"
                 Background="{StaticResource BrBgBase}"
-                BoxShadow="0 8 32 0 #80000000"
+                BoxShadow="0 24 64 -8 #CC000000, 0 0 24 0 #158B73F8"
                 BorderBrush="{StaticResource BrBorderSubtle}"
                 BorderThickness="1">
-            <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
-                <!-- LEFT COLUMN -->
-                <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
-                    <StackPanel Grid.Row="0" Spacing="12">
-                    <Border Classes="ImageCard"
-                            Name="BdGameCover"
-                            HorizontalAlignment="Stretch"
-                            Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
-                            MaxWidth="320"
-                            MaxHeight="460"
-                            ClipToBounds="True"
-                            Background="{StaticResource BrBgElevated}">
+            <Panel>
+                <!-- Ambient Glow Layer -->
+                <Border CornerRadius="12"
+                        Background="{StaticResource BrAmbientGlow}"
+                        IsHitTestVisible="False"/>
+
+                <!-- Cover ambience: a few-pixel copy of the cover stretched back up (free blur),
+                     faded out radially so it melts into the frame background. Positioned around
+                     BdGameCover from code (ManageGameWindow.CoverAmbience.cs). The Canvas has no
+                     desired size, so it never affects the window's SizeToContent height. -->
+                <Border CornerRadius="{Binding #BdManageFrame.CornerRadius}"
+                        ClipToBounds="True"
+                        IsHitTestVisible="False">
+                    <Canvas Name="CanvasCoverAmbience">
+                        <Image Name="ImgCoverAmbience"
+                               Stretch="Fill"
+                               Opacity="0"
+                               RenderOptions.BitmapInterpolationMode="HighQuality">
+                            <Image.OpacityMask>
+                                <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+                                    <GradientStop Color="#FF000000" Offset="0"/>
+                                    <GradientStop Color="#AC000000" Offset="0.45"/>
+                                    <GradientStop Color="#3D000000" Offset="0.75"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
+                                </RadialGradientBrush>
+                            </Image.OpacityMask>
+                            <Image.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Opacity" Duration="0:0:0.45" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </Image.Transitions>
+                        </Image>
+                    </Canvas>
+                </Border>
+
+                <Grid Name="GridManageRoot" ColumnDefinitions="3*,7*,Auto" RowDefinitions="*">
+                    <!-- LEFT COLUMN -->
+                    <Grid Grid.Column="0" Name="GridLeftColumn" Margin="16" RowDefinitions="*,Auto">
+                        <StackPanel Grid.Row="0" Spacing="12">
+                        <Border Classes="ImageCard"
+                                Name="BdGameCover"
+                                HorizontalAlignment="Stretch"
+                                Height="{Binding Bounds.Width, RelativeSource={RelativeSource Self}, Converter={StaticResource MultiplyConverter}, ConverterParameter=1.4}"
+                                MaxWidth="320"
+                                MaxHeight="460"
+                                ClipToBounds="True"
+                                Background="{StaticResource BrBgElevated}"
+                                BoxShadow="0 8 24 -4 #60000000">
                             <Grid>
                                 <!-- Same no-cover fallback as the Games grid cards; the cover hides it once loaded. -->
                                 <TextBlock Text="🎮"
@@ -133,11 +169,10 @@
                                 <Image Name="ImgGameCover" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Border Classes="ImageOverlay">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
-                                        <TextBlock Text="&#xF493;"
-                                                   FontFamily="{StaticResource FontIcons}"
-                                                   FontSize="22"
-                                                   Foreground="{StaticResource BrTextPrimary}"
-                                                   HorizontalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource Icon.Camera}"
+                                                  Width="22" Height="22"
+                                                  Foreground="{StaticResource BrTextPrimary}"
+                                                  HorizontalAlignment="Center"/>
                                         <TextBlock Text="{DynamicResource TxtEditImage}"
                                                    Foreground="{StaticResource BrTextPrimary}"
                                                    FontSize="{StaticResource FontSizeBody}"/>
@@ -178,11 +213,7 @@
                                         Classes="BtnBase"
                                         Padding="10,6"
                                         Click="BtnEditTitle_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="&#xF3DD;"
-                                                   FontFamily="{StaticResource FontIcons}"
-                                                   FontSize="12"/>
-                                    </StackPanel>
+                                    <PathIcon Data="{StaticResource Icon.Pencil}" Width="12" Height="12"/>
                                 </Button>
                             </Grid>
 
@@ -191,8 +222,9 @@
 
                     <!-- Path & Open Folder bottom aligned. Same MaxWidth as the title Grid above
                          so both pick up the identical Stretch centering offset as the cover and
-                         line up with it (see comment on the title Grid). -->
-                    <Grid Grid.Row="1" Name="GridInstallPath" ColumnDefinitions="*,Auto" MaxWidth="320" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+                         line up with it (see comment on the title Grid). The top margin keeps a
+                         minimum gap from the title when the column has no leftover height. -->
+                    <Grid Grid.Row="1" Name="GridInstallPath" ColumnDefinitions="*,Auto" MaxWidth="320" Margin="0,14,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
                         <Border Grid.Column="0"
                                 Background="{StaticResource BrBgBase}"
                                 BorderBrush="{StaticResource BrBorderSubtle}"
@@ -202,6 +234,7 @@
                                 Margin="0,0,8,0"
                                 VerticalAlignment="Center">
                             <TextBlock Name="TxtInstallPath"
+                                       Classes="Mono"
                                        Text=""
                                        FontSize="{StaticResource FontSizeCaption}"
                                        Foreground="{StaticResource BrTextSecondary}"
@@ -216,9 +249,7 @@
                                 ToolTip.Tip="{DynamicResource TxtOpenFolder}"
                                 VerticalAlignment="Center"
                                 Click="BtnOpenFolder_Click">
-                            <TextBlock Text="&#xF419;"
-                                       FontFamily="{StaticResource FontIcons}"
-                                       FontSize="14"/>
+                            <PathIcon Data="{StaticResource Icon.Folder}" Width="14" Height="14"/>
                         </Button>
                     </Grid>
                 </Grid>
@@ -234,6 +265,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #35000000"
                             Margin="0,6,0,10"
                             Padding="16,10">
                         <StackPanel>
@@ -255,6 +287,7 @@
                                                    Foreground="{StaticResource BrTextPrimary}"
                                                    VerticalAlignment="Center"/>
                                         <TextBlock Name="TxtVersion"
+                                                   Classes="Mono"
                                                    Text=""
                                                    FontSize="{StaticResource FontSizeBodyLarge}"
                                                    Foreground="{StaticResource BrTextSecondary}"
@@ -262,18 +295,27 @@
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </StackPanel>
-                                <Button Grid.Column="1"
-                                        Name="BtnClose"
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="2">
+                                <Button Name="BtnHelp"
                                         Classes="IconBtn"
-                                        VerticalAlignment="Top"
+                                        ToolTip.Tip="{DynamicResource TxtContextHelpTip}"
+                                        Click="BtnHelp_Click">
+                                    <PathIcon Data="{StaticResource Icon.Help}"
+                                              Width="15" Height="15"
+                                              Foreground="{StaticResource BrTextSecondary}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                </Button>
+                                <Button Name="BtnClose"
+                                        Classes="IconBtn"
                                         Click="BtnClose_Click">
                                     <Panel>
-                                        <TextBlock Name="TxtCloseIconX"
-                                                   Text="{OnPlatform '&#xE711;', Linux='✕'}"
-                                                   FontFamily="{OnPlatform 'Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI', Linux='sans-serif'}"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
+                                        <PathIcon Name="TxtCloseIconX"
+                                                  Data="{StaticResource Icon.Close}"
+                                                  Width="12" Height="12"
+                                                  Foreground="{StaticResource BrTextSecondary}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
                                         <Border Name="BadgeCloseGamepadB"
                                                 Background="#E05252"
                                                 CornerRadius="10"
@@ -290,6 +332,7 @@
                                         </Border>
                                     </Panel>
                                 </Button>
+                                </StackPanel>
                             </Grid>
 
                         <!-- PROGRESS BAR (Oculto por defecto, dentro del Status Card) -->
@@ -345,7 +388,7 @@
                                             Margin="8,0,0,0"
                                             VerticalAlignment="Center"
                                             Click="BtnToastClose_Click">
-                                        <TextBlock Text="&#x2715;" FontSize="10" Foreground="{StaticResource BrTextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <PathIcon Data="{StaticResource Icon.Close}" Width="10" Height="10" Foreground="{StaticResource BrTextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Button>
                                 </Grid>
                                 <ProgressBar Name="PrgToastDuration"
@@ -367,6 +410,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #25000000"
                             Padding="12,10"
                             Margin="0,0,0,10">
                         <StackPanel Name="PnlDetectedComponents" Spacing="8">
@@ -425,8 +469,10 @@
                                                 CornerRadius="{StaticResource RadiusPill}"
                                                 Padding="10,6"
                                                 Margin="0,0,6,6"
+                                                BoxShadow="0 2 8 0 #20000000"
                                                 Classes.ViaOptiscaler="{Binding ViaOptiscaler}"
                                                 Classes.Swapped="{Binding IsSwapped}"
+                                                Classes.AddedMod="{Binding IsAddedMod}"
                                                 ToolTip.Tip="{Binding Tooltip}">
                                             <Border.Styles>
                                                 <!-- Background/BorderBrush live entirely in styles (not as local
@@ -446,32 +492,45 @@
                                                     <Setter Property="Background" Value="#2E2410"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BrWarning}"/>
                                                 </Style>
+                                                <!-- Distinct from native, ViaOptiscaler and Swapped — a standalone mod
+                                                     the client added (DLSS FG for RTX 20/30). -->
+                                                <Style Selector="Border.AddedMod">
+                                                    <Setter Property="Background" Value="#10213A"/>
+                                                    <Setter Property="BorderBrush" Value="#4A90E2"/>
+                                                </Style>
                                             </Border.Styles>
-                                            <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}"/>
+                                            <TextBlock Text="{Binding Text}" Foreground="{StaticResource BrTextPrimary}" FontSize="{StaticResource FontSizeCaption}" FontWeight="SemiBold"/>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <!-- EasyAntiCheat Detection -->
+                            <!-- Anti-cheat detection (AntiCheatHelper) - same warning look as PanelModdedWarning -->
                             <Border Name="EasyAntiCheat"
-                                    Background="{StaticResource BrBgCard}"
-                                    BorderBrush="{StaticResource BrBorderSubtle}"
+                                    Background="#2E2410"
+                                    BorderBrush="{StaticResource BrWarning}"
                                     BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusLarge}"
-                                    Padding="16,12"
+                                    CornerRadius="6"
+                                    Padding="10,6"
                                     Margin="0,8,0,0"
                                     IsVisible="False">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="⚠ Anti Cheat Detected"
-                                                   Foreground="{StaticResource BrTextPrimary}"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{DynamicResource TxtAntiCheatTitle}"
+                                                   Foreground="{StaticResource BrWarning}"
                                                    FontWeight="SemiBold"
                                                    FontSize="{StaticResource FontSizeBody}"/>
-                                        <TextBlock Text="This game uses anti-cheat protection, use OptiScaler at your own risk"
+                                        <TextBlock Text="{DynamicResource TxtAntiCheatDesc}"
                                                    Foreground="{StaticResource BrTextSecondary}"
+                                                   TextWrapping="Wrap"
                                                    FontSize="{StaticResource FontSizeCaption}"/>
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>
@@ -486,6 +545,7 @@
                             BorderBrush="{StaticResource BrBorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusLarge}"
+                            BoxShadow="0 4 16 -4 #35000000"
                             Padding="14,12">
                         <DockPanel>
                         <!-- Action row: pinned below the scroll area so Install stays reachable on small screens.
@@ -556,14 +616,12 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtFsr4SwapOnlyHint}"
                                                Foreground="#4A90E2"
@@ -574,10 +632,9 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Shown instead of PanelFsr4SwapOnlyHint while the "Modded" OptiScaler channel
-                                 (Setup NR's Mod + OptiScaler mode) is selected — that build is a
-                                 community wrapper, not an OptiScaler release, so the "already includes
-                                 X/Y" info doesn't apply and a risk warning belongs there instead. -->
+                            <!-- Shown instead of PanelFsr4SwapOnlyHint while Setup NR = Mod + OptiScaler:
+                                 AMD-NR-bridge is third-party and forces the FSR upscaler / limits FG, which
+                                 the user should know before installing. -->
                             <Border Name="PanelModdedWarning"
                                     Background="#2E2410"
                                     BorderBrush="{StaticResource BrWarning}"
@@ -592,16 +649,15 @@
                                      window's edge. The Grid's "*" column gives it a real bound to wrap
                                      against. -->
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="{StaticResource BrWarning}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="1"
-                                               Text="{DynamicResource TxtSetupNrWrapperWarning}"
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <TextBlock Name="TxtAmdNrBridgeInfo"
+                                               Grid.Column="1"
+                                               Text="{DynamicResource TxtSetupNrBridgeInfo}"
                                                Foreground="{StaticResource BrWarning}"
                                                FontSize="12"
                                                FontWeight="Medium"
@@ -622,16 +678,107 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrDanielOnlyDx12Info}"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Windows only, with the mod-only mode: "Mod + OptiScaler" is no longer offered
+                                 there — points at 3zwr1's project instead (see AmdNrBridgeService.IsModeOffered). -->
+                            <Border Name="PanelDanielWithOptiInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#9B7BEA"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#9B7BEA"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <!-- Link icon inline, right after the text (wraps with it). -->
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="#9B7BEA"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap">
+                                        <Run Text="{DynamicResource TxtSetupNrWithOptiProjectInfo}"/>
+                                        <InlineUIContainer BaselineAlignment="Center">
+                                            <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                      Foreground="#9B7BEA"
+                                                      Background="Transparent"
+                                                      Width="13" Height="13"
+                                                      Margin="4,0,0,0"
+                                                      Cursor="Hand"
+                                                      ToolTip.Tip="github.com/3zwr1/AMD-NR---OptiScaler"
+                                                      PointerPressed="TxtDanielWithOptiLink_PointerPressed"/>
+                                        </InlineUIContainer>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <!-- Windows only: danielblnc v0.3.3+ ships its own graphical installer, which
+                                 Install opens for the user instead of running it headlessly
+                                 (see ManageGameWindow.UpdateDanielGuiInstallerInfo). -->
+                            <Border Name="PanelDanielGuiInstallerInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <TextBlock Name="TxtDanielGuiInstallerInfo" Grid.Column="1"
+                                               Foreground="#4A90E2"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Linux only: the NR mod and OptiScaler run together there — says what Install will
+                                 put in (mod + OptiScaler, or only the mod when OptiScaler is "None"). Text set in code. -->
+                            <Border Name="PanelLinuxNrWithOptiInfo"
+                                    Background="{StaticResource BrBgElevated}"
+                                    BorderBrush="#4A90E2"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,6"
+                                    Margin="0,0,0,10"
+                                    IsVisible="False">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
+                                    <TextBlock Name="TxtLinuxNrWithOptiInfo"
+                                               Grid.Column="1"
                                                Foreground="#4A90E2"
                                                FontSize="12"
                                                FontWeight="Medium"
@@ -643,7 +790,7 @@
                             <!-- Shown instead of PanelFsr4SwapOnlyHint/PanelModdedWarning while danielblnc's
                                  mod-only Setup NR mode is pending/installed on Linux — there, "Setup NR"
                                  doesn't run danielblnc's own installer at all, it runs
-                                 guentra/DLSS-NR-on-AMD-Linux, an unofficial third-party fork (not
+                                 bulacha3/DLSS-NR-on-AMD-Linux, an unofficial third-party fork (not
                                  affiliated with either project) that bridges the mod to a real ROCm
                                  runtime so its GPU check can pass under Wine/Proton. See code-behind's
                                  CmbSetupNr_SelectionChanged and ExecuteLinuxWrapperInstallAsync. -->
@@ -656,14 +803,12 @@
                                     Margin="0,0,0,10"
                                     IsVisible="False">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                               Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="{StaticResource BrWarning}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,8,0"/>
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Warning}"
+                                              Foreground="{StaticResource BrWarning}"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,8,0"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{DynamicResource TxtSetupNrLinuxWrapperWarning}"
                                                Foreground="{StaticResource BrWarning}"
@@ -686,20 +831,21 @@
                                     Padding="10,6"
                                     Margin="0,0,0,10"
                                     IsVisible="False">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xF4A4;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               Foreground="#4A90E2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource TxtNothingToInstallInfo}"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="{StaticResource Icon.Info}"
+                                              Foreground="#4A90E2"
+                                              Width="16" Height="16"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{DynamicResource TxtNothingToInstallInfo}"
                                                Foreground="#4A90E2"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                VerticalAlignment="Center"
                                                TextWrapping="Wrap"/>
-                                </StackPanel>
+                                </Grid>
                             </Border>
 
                             <!-- Options (3 columns, or 2 on narrow widths — see ManageGameWindow.Responsive.cs):
@@ -713,27 +859,8 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <!-- 4th options row, used only in the non-compact layout (Fakenvapi
-                                         and/or NukemFG selectors visible — older/Custom OptiScaler
-                                         builds) — see UpdateOptionsLayout. The compact layout never
-                                         places anything here, so it collapses to zero height. -->
-                                    <RowDefinition Height="Auto"/>
-                                    <!-- 5th/6th options rows: only used by the 2-column layout (up to
-                                         11 panels → 6 rows); empty rows collapse to zero height. -->
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <!-- Experimental zone (RenoDX today, future experimental options
-                                         go here too) — its own row, always after the regular options
-                                         and before Uninstall, hidden entirely unless
-                                         Config.ShowExperimentalFeatures is on. -->
-                                    <RowDefinition Height="Auto"/>
-                                    <!-- Uninstall / Restore original DLL lives here, and is hidden
-                                         until OptiScaler is actually installed. MinHeight keeps the
-                                         row from collapsing while it's hidden, so the action row
-                                         below doesn't jump up against the selectors and back down
-                                         again the moment the game gets installed. Matches the
-                                         buttons' own height (Padding="14,7" around a ~20px line). -->
-                                    <RowDefinition Height="Auto" MinHeight="34"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -796,19 +923,6 @@
                                                 Margin="2,0,0,0"
                                                 IsVisible="False"
                                                 Click="BtnOptiCustom_Click"/>
-                                        <!-- Shown exclusively (Stable/Beta/Nightly/Custom hidden) while the NR
-                                             mode selector = "Mod + OptiScaler" — the only "channel" available in
-                                             that state, so it's a plain indicator rather than a real tab. -->
-                                        <Button Name="BtnOptiModded"
-                                                Grid.Column="0" Grid.ColumnSpan="4"
-                                                Content="Modded"
-                                                Classes="BtnPrimary"
-                                                HorizontalAlignment="Stretch"
-                                                HorizontalContentAlignment="Center"
-                                                FontSize="11"
-                                                Padding="8,5"
-                                                IsVisible="False"
-                                                IsHitTestVisible="False"/>
                                     </Grid>
                                     <ComboBox Name="CmbOptiVersion"
                                               HorizontalAlignment="Stretch"
@@ -820,9 +934,23 @@
 
                                 <!-- Row 1, Col 0 : Injection method -->
                                 <StackPanel Name="PanelInjectionMethod" Grid.Row="1" Grid.Column="0">
-                                    <TextBlock Name="LblInjectionMethod" Text="{DynamicResource TxtInjectionLbl}"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Name="LblInjectionMethod" Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtInjectionLbl}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtInjectionTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <ComboBox Name="CmbInjectionMethod"
                                               Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"
@@ -890,9 +1018,23 @@
 
                                 <!-- Row 2, Col 1 : Compact per-game FG configuration (position overridden at runtime by UpdateOptionsLayout) -->
                                 <StackPanel Name="PanelFrameGeneration" Grid.Row="2" Grid.Column="1">
-                                    <TextBlock Text="{DynamicResource TxtFrameGeneration}"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="{DynamicResource TxtFrameGeneration}"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtFrameGenerationTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <Button Name="BtnFrameGeneration"
                                             Margin="0,4,0,0"
                                             Classes="BtnBase"
@@ -1105,7 +1247,7 @@
                                      underneath it instead of just sitting inside the box. Declared after
                                      BorderExperimentalZone in this same Grid cell so it paints on top
                                      (Grid children z-order by declaration order). -->
-                                <Grid Name="GridExperimentalZone" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0">
+                                <Grid Name="GridExperimentalZone" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,12,0,0">
                                     <Border Name="BorderExperimentalZone"
                                             BorderBrush="{StaticResource BrExperimental}"
                                             BorderThickness="1"
@@ -1142,10 +1284,10 @@
                                             </StackPanel>
 
                                             <!-- "Setup NR" — danielblnc's standalone AMD DLSS Neural
-                                                 Rendering mod, optionally combined with an unofficial
-                                                 OptiScaler wrapper build. AMD-only (locked, not hidden,
+                                                 Rendering mod, optionally combined with an official
+                                                 OptiScaler build through AMD-NR-bridge. AMD-only (locked, not hidden,
                                                  for other vendors — see IsSetupNrGpuAllowed). On Linux
-                                                 this runs via guentra/DLSS-NR-on-AMD-Linux instead of
+                                                 this runs via bulacha3/DLSS-NR-on-AMD-Linux instead of
                                                  danielblnc's own installer directly — see
                                                  PanelDlssNrLinuxWrapperWarning (near PanelModdedWarning
                                                  above) and code-behind's ExecuteLinuxWrapperInstallAsync. -->
@@ -1186,10 +1328,12 @@
                                                  mode's own configuration. Disabled/empty while NR mode = none. -->
                                             <StackPanel Name="PanelDlssNrDanielVersion" Grid.Column="2">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <TextBlock Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
+                                                    <TextBlock Name="TxtDlssNrDanielVersionLbl"
+                                                               Text="{DynamicResource TxtSetupNrDanielVersionLbl}"
                                                                Foreground="{StaticResource BrTextSecondary}"
                                                                FontSize="{StaticResource FontSizeCaption}"/>
-                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                    <Border Name="BdDlssNrDanielVersionHelp"
+                                                            Background="{StaticResource BrBgElevated}"
                                                             BorderBrush="{StaticResource BrBorderSubtle}"
                                                             BorderThickness="1" CornerRadius="8"
                                                             Width="16" Height="16"
@@ -1212,6 +1356,183 @@
                                                           SelectionChanged="CmbDlssNrDanielVersion_SelectionChanged"/>
                                             </StackPanel>
                                         </Grid>
+
+                                        <!-- "Mod + OptiScaler" only: GoldenNights/AMD-NR-bridge release applied on top
+                                             of the OptiScaler version picked above (see AmdNrBridgeService). Sits under
+                                             the danielblnc version it pairs with. -->
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                            <StackPanel Name="PanelAmdNrBridgeVersion" Grid.Column="2" IsVisible="False">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{DynamicResource TxtSetupNrBridgeVersionLbl}"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtSetupNrBridgeVersionTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <ComboBox Name="CmbAmdNrBridgeVersion"
+                                                          Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          Classes="BtnSelector"
+                                                          Padding="8,0,24,0"
+                                                          HorizontalContentAlignment="Left"
+                                                          VerticalContentAlignment="Center"
+                                                          IsEnabled="False"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30): picked here,
+                                             installed by the main Auto/Manual Install and removed by the main
+                                             Uninstall — see ManageGameWindow.DlssgSm86.cs. Hidden unless the
+                                             service exists (Windows only) and the preferred GPU is RTX 20/30. -->
+                                        <StackPanel Name="PanelDlssgSm86" Spacing="6" IsVisible="False">
+                                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                                <StackPanel Grid.Column="0">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{DynamicResource TxtDlssgSm86Title}"
+                                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Background="{StaticResource BrBgElevated}"
+                                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                                BorderThickness="1" CornerRadius="8"
+                                                                Width="16" Height="16"
+                                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                                ToolTip.Tip="{DynamicResource TxtDlssgSm86Tooltip}">
+                                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <ComboBox Name="CmbDlssgSm86Build"
+                                                              Margin="0,4,0,0"
+                                                              HorizontalAlignment="Stretch"
+                                                              Classes="BtnSelector"
+                                                              Padding="8,0,24,0"
+                                                              HorizontalContentAlignment="Left"
+                                                              VerticalContentAlignment="Center"
+                                                              SelectionChanged="CmbDlssgSm86Build_SelectionChanged"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{DynamicResource TxtDlssgSm86MultiplierLbl}"
+                                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Background="{StaticResource BrBgElevated}"
+                                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                                BorderThickness="1" CornerRadius="8"
+                                                                Width="16" Height="16"
+                                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                                ToolTip.Tip="{DynamicResource TxtDlssgSm86MultiplierTooltip}">
+                                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <ComboBox Name="CmbDlssgSm86Multiplier"
+                                                              Margin="0,4,0,0"
+                                                              HorizontalAlignment="Stretch"
+                                                              Classes="BtnSelector"
+                                                              Padding="8,0,24,0"
+                                                              HorizontalContentAlignment="Left"
+                                                              VerticalContentAlignment="Center"
+                                                              SelectionChanged="CmbDlssgSm86Multiplier_SelectionChanged"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Why DLSS FG can't go into this game (the selector is locked then) -->
+                                            <Border Name="PanelDlssgSm86Blocked"
+                                                    Background="#2E2410"
+                                                    BorderBrush="{StaticResource BrWarning}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Warning}"
+                                                              Foreground="{StaticResource BrWarning}"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,8,0"/>
+                                                    <TextBlock Name="TxtDlssgSm86BlockedText"
+                                                               Grid.Column="1"
+                                                               Foreground="{StaticResource BrWarning}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- A newer pinned version is available; the install buttons apply it -->
+                                            <Border Name="PanelDlssgSm86Update"
+                                                    Background="{StaticResource BrBgElevated}"
+                                                    BorderBrush="#4A90E2"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Info}"
+                                                              Foreground="#4A90E2"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,8,0"/>
+                                                    <TextBlock Name="TxtDlssgSm86UpdateText"
+                                                               Grid.Column="1"
+                                                               Foreground="#4A90E2"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Name="PanelDlssgSm86Hags"
+                                                    Background="#2E2410"
+                                                    BorderBrush="{StaticResource BrWarning}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6"
+                                                    IsVisible="False">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                    <PathIcon Grid.Column="0"
+                                                              Data="{StaticResource Icon.Warning}"
+                                                              Foreground="{StaticResource BrWarning}"
+                                                              Width="16" Height="16"
+                                                              VerticalAlignment="Top"
+                                                              Margin="0,2,0,0"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{DynamicResource TxtDlssgSm86HagsOff}"
+                                                               Foreground="{StaticResource BrWarning}"
+                                                               FontSize="12"
+                                                               FontWeight="Medium"
+                                                               TextWrapping="Wrap"
+                                                               VerticalAlignment="Center"/>
+                                                    <Button Name="BtnDlssgSm86HagsSettings"
+                                                            Grid.Column="2"
+                                                            Content="{DynamicResource TxtDlssgSm86HagsOpenSettings}"
+                                                            Classes="BtnBase"
+                                                            Padding="10,4"
+                                                            VerticalAlignment="Center"
+                                                            Click="BtnDlssgSm86HagsSettings_Click"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
                                       </StackPanel>
                                     </Border>
                                     <Border Name="BorderExperimentalChip"
@@ -1229,10 +1550,23 @@
 
                                 <!-- Row 0, Col 2 : Fakenvapi version selector -->
                                 <StackPanel Name="PanelFakenvapiVersion" Grid.Row="0" Grid.Column="2">
-                                    <TextBlock Text="Fakenvapi"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"
-                                               Margin="0,32,0,0"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,32,0,0">
+                                        <TextBlock Text="Fakenvapi"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtFakenvapiTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <ComboBox Name="CmbFakenvapiVersion"
                                               Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"
@@ -1244,9 +1578,23 @@
 
                                 <!-- Row 1, Col 2 : NukemFG version selector -->
                                 <StackPanel Name="PanelNukemFGVersion" Grid.Row="1" Grid.Column="2">
-                                    <TextBlock Text="NukemFG"
-                                               Foreground="{StaticResource BrTextSecondary}"
-                                               FontSize="{StaticResource FontSizeCaption}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="NukemFG"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="{DynamicResource TxtNukemFGTooltip}">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
+                                    </StackPanel>
                                     <ComboBox Name="CmbNukemFGVersion"
                                               Margin="0,4,0,0"
                                               HorizontalAlignment="Stretch"
@@ -1258,10 +1606,11 @@
 
                                 <!-- Row 7, last column : Uninstall button -->
                                 <Button Name="BtnUninstall"
-                                        Grid.Row="7" Grid.Column="2"
+                                        Grid.Row="4" Grid.Column="2"
                                         Content="{DynamicResource TxtUninstall}"
                                         Classes="BtnDanger"
                                         Padding="14,7"
+                                        Margin="0,0,0,4"
                                         HorizontalAlignment="Right"
                                         IsVisible="False"
                                         Click="BtnUninstall_Click"/>
@@ -1290,6 +1639,7 @@
                         BorderBrush="{StaticResource BrBorderSubtle}"
                         BorderThickness="1"
                         CornerRadius="{StaticResource RadiusLarge}"
+                        BoxShadow="0 4 16 -4 #35000000"
                         ClipToBounds="True">
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Stays in Row 0, top-aligned, in both states. Expanded: the clipboard
@@ -1509,11 +1859,10 @@
                                                            Foreground="{StaticResource BrAccent}"
                                                            FontSize="{StaticResource FontSizeBody}"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="&#xE12E;"
-                                                           FontFamily="{StaticResource FontIcons}"
-                                                           FontSize="12"
-                                                           Foreground="{StaticResource BrAccent}"
-                                                           VerticalAlignment="Center"/>
+                                                <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                          Width="11" Height="11"
+                                                          Foreground="{StaticResource BrAccent}"
+                                                          VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
 
@@ -1529,11 +1878,10 @@
                                                            Foreground="{StaticResource BrAccent}"
                                                            FontSize="{StaticResource FontSizeBody}"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="&#xE12E;"
-                                                           FontFamily="{StaticResource FontIcons}"
-                                                           FontSize="12"
-                                                           Foreground="{StaticResource BrAccent}"
-                                                           VerticalAlignment="Center"/>
+                                                <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                                          Width="11" Height="11"
+                                                          Foreground="{StaticResource BrAccent}"
+                                                          VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -1560,16 +1908,14 @@
                                 <!-- Icon + trailing "external link" arrow side by side, same
                                      layout as the header's clipboard+arrow toggle button. -->
                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xF7A9;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="14"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="&#xE12E;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="10"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.Book}"
+                                              Width="14" Height="14"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                              Width="10" Height="10"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <!-- Only shown once PopulateWikiDetailsAsync resolves this game's own
@@ -1581,16 +1927,14 @@
                                     IsVisible="{Binding IsVisible, ElementName=BtnGameWikiLink}"
                                     Click="BtnGameWikiLink_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xEEB9;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="14"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Text="&#xE12E;"
-                                               FontFamily="{StaticResource FontIcons}"
-                                               FontSize="10"
-                                               Foreground="{StaticResource BrAccent}"
-                                               VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.Games}"
+                                              Width="14" Height="14"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
+                                    <PathIcon Data="{StaticResource Icon.ExternalLink}"
+                                              Width="10" Height="10"
+                                              Foreground="{StaticResource BrAccent}"
+                                              VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -1611,7 +1955,7 @@
                         <StackPanel Spacing="0">
                             <!-- Title -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#x26A0;" Foreground="{StaticResource BrAccentWarm}" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Warning}" Foreground="{StaticResource BrAccentWarm}" Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtCorruptInstallTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
@@ -1642,7 +1986,7 @@
                         <StackPanel Spacing="0">
                             <!-- Title -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#x26A0;" Foreground="{StaticResource BrAccentWarm}" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Warning}" Foreground="{StaticResource BrAccentWarm}" Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtFolderCleanupTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
@@ -1710,7 +2054,7 @@
                             MaxWidth="480">
                         <StackPanel Spacing="0">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource FontIcons}" Foreground="{StaticResource BrAccent}" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                <PathIcon Data="{StaticResource Icon.Layers}" Foreground="{StaticResource BrAccent}" Width="20" Height="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{DynamicResource TxtFsr4SwapSelectTitle}" FontSize="{StaticResource FontSizeSubtitle}" FontWeight="Bold" Foreground="{StaticResource BrTextPrimary}" VerticalAlignment="Center"/>
                             </StackPanel>
 
@@ -1860,6 +2204,7 @@
                     </Border>
                 </Grid>
             </Grid>
+            </Panel>
         </Border>
 
         <!-- Dim backdrop shown behind child dialogs -->

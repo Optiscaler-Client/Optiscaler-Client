@@ -7,7 +7,8 @@ namespace OptiscalerClient.Services;
 [SupportedOSPlatform("linux")]
 public class LinuxGpuDetectionService : IGpuDetectionService
 {
-    public GpuInfo[] DetectGPUs()
+    // Virtual so tests can supply a fixed GPU list to the selection helpers below.
+    public virtual GpuInfo[] DetectGPUs()
     {
         try
         {
@@ -117,7 +118,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// vendor string (e.g. "Advanced Micro Devices, Inc. [AMD/ATI] Navi 48 [Radeon RX ...]"), which
     /// is what fastfetch/neofetch-style tools show and what fits in a UI badge.
     /// </summary>
-    private static string BuildCleanGpuName(GpuVendor vendor, string deviceField)
+    internal static string BuildCleanGpuName(GpuVendor vendor, string deviceField)
     {
         var marketingName = ExtractBracketedMarketingName(deviceField);
         var vendorLabel = vendor switch
@@ -131,7 +132,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         return string.IsNullOrEmpty(vendorLabel) ? marketingName : $"{vendorLabel} {marketingName}".Trim();
     }
 
-    private static string ExtractBracketedMarketingName(string deviceField)
+    internal static string ExtractBracketedMarketingName(string deviceField)
     {
         var match = Regex.Match(deviceField, @"\[([^\[\]]+)\]\s*$");
         return match.Success ? match.Groups[1].Value.Trim() : deviceField.Trim();
@@ -141,13 +142,43 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     [
         "/usr/share/libdrm/amdgpu.ids",
         "/usr/local/share/libdrm/amdgpu.ids",
+        // Flatpak: the runtime itself has no libdrm data, the Mesa GL extension ships it instead
+        "/usr/lib/x86_64-linux-gnu/GL/default/share/libdrm/amdgpu.ids",
+        "/usr/lib/aarch64-linux-gnu/GL/default/share/libdrm/amdgpu.ids",
     ];
+
+    /// <summary>
+    /// "nvidia-smi" from PATH, or inside Flatpak (where the host's copy isn't visible) the one shipped
+    /// by the NVIDIA GL extension matching the host driver (GL/nvidia-&lt;version&gt;/bin), if any.
+    /// </summary>
+    private static string ResolveNvidiaSmi()
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("FLATPAK_ID")))
+            return "nvidia-smi";
+
+        try
+        {
+            foreach (var glDir in new[] { "/usr/lib/x86_64-linux-gnu/GL", "/usr/lib/aarch64-linux-gnu/GL" })
+            {
+                if (!Directory.Exists(glDir)) continue;
+                var smi = Directory.GetDirectories(glDir, "nvidia-*")
+                    .Select(d => Path.Combine(d, "bin", "nvidia-smi"))
+                    .FirstOrDefault(File.Exists);
+                if (smi != null) return smi;
+            }
+        }
+        catch { }
+
+        return "nvidia-smi";
+    }
+
+    private static readonly Lazy<string> _nvidiaSmi = new(ResolveNvidiaSmi);
 
     /// <summary>
     /// Reads the PCI revision of the device as an uppercase hex string without the "0x" prefix
     /// (sysfs exposes e.g. "0xc0" -> "C0"), which is the form amdgpu.ids uses.
     /// </summary>
-    private static string? GetPciRevision(string devicePath)
+    internal static string? GetPciRevision(string devicePath)
     {
         try
         {
@@ -172,13 +203,16 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// </summary>
     private static string? LookupAmdgpuIds(string deviceId, string? revisionId)
     {
+        var idsFile = _amdgpuIdsPaths.FirstOrDefault(File.Exists);
+        return idsFile == null ? null : LookupAmdgpuIds(deviceId, revisionId, idsFile);
+    }
+
+    internal static string? LookupAmdgpuIds(string deviceId, string? revisionId, string idsFile)
+    {
         if (string.IsNullOrEmpty(revisionId)) return null;
 
         try
         {
-            var idsFile = _amdgpuIdsPaths.FirstOrDefault(File.Exists);
-            if (idsFile == null) return null;
-
             foreach (var line in File.ReadLines(idsFile))
             {
                 if (line.Length == 0 || line.StartsWith('#')) continue;
@@ -208,7 +242,18 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         try
         {
             var busId = GetPciBusId(devicePath);
-            var output = RunProcess("nvidia-smi", "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
+            return MatchNvidiaSmiName(output, busId);
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Picks the name for <paramref name="busId"/> out of nvidia-smi's
+    /// "pci.bus_id,name" CSV output.</summary>
+    internal static string? MatchNvidiaSmiName(string? output, string? busId)
+    {
+        try
+        {
             if (string.IsNullOrWhiteSpace(output)) return null;
 
             string? firstName = null;
@@ -234,7 +279,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         catch { return null; }
     }
 
-    private static string? GetPciBusId(string devicePath)
+    internal static string? GetPciBusId(string devicePath)
     {
         try
         {
@@ -260,11 +305,14 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// </summary>
     private static (string? VendorName, string? DeviceName) LookupPciIds(string vendorId, string deviceId)
     {
+        var idsFile = _pciIdsPaths.FirstOrDefault(File.Exists);
+        return idsFile == null ? (null, null) : LookupPciIds(vendorId, deviceId, idsFile);
+    }
+
+    internal static (string? VendorName, string? DeviceName) LookupPciIds(string vendorId, string deviceId, string idsFile)
+    {
         try
         {
-            var idsFile = _pciIdsPaths.FirstOrDefault(File.Exists);
-            if (idsFile == null) return (null, null);
-
             string? vendorName = null;
             string? deviceName = null;
             bool inVendor = false;
@@ -315,7 +363,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         // NVIDIA: query via nvidia-smi (returns MiB)
         if (vendor == GpuVendor.NVIDIA)
         {
-            var output = RunProcess("nvidia-smi", "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
             if (ulong.TryParse(output?.Trim(), out var mb))
                 return mb * 1024 * 1024;
         }
@@ -327,7 +375,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     {
         if (vendor == GpuVendor.NVIDIA)
         {
-            var output = RunProcess("nvidia-smi", "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
             if (!string.IsNullOrWhiteSpace(output))
                 return output.Trim();
         }

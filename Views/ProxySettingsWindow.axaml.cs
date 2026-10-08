@@ -68,13 +68,13 @@ namespace OptiscalerClient.Views
                 }
 
                 if (owner is IGamepadInputHost host)
-                    host.GamepadHelper?.SuspendInput();
+                    host.SuspendInput();
             };
 
             this.Closed += (s, e) =>
             {
                 if (owner is IGamepadInputHost closedHost)
-                    closedHost.GamepadHelper?.ResumeInput();
+                    closedHost.ResumeInput();
 
                 _gamepadHelper?.Dispose();
                 _gamepadHelper = null;

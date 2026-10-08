@@ -12,8 +12,24 @@
         ShowInTaskbar="False">
 
     <Window.Styles>
-        <Style Selector=":is(Control)">
-            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+        <Style Selector="Button#BtnToggleAdvanced:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrBgElevated}"/>
+            <Setter Property="BorderBrush" Value="#8B73F8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+
+        <Style Selector="CheckBox:focus">
+            <Setter Property="FocusAdorner">
+                <FocusAdornerTemplate>
+                    <Border BorderBrush="#8B73F8"
+                            BorderThickness="2"
+                            CornerRadius="6"
+                            Background="Transparent"
+                            Margin="-4,-2"
+                            IsHitTestVisible="False"/>
+                </FocusAdornerTemplate>
+            </Setter>
         </Style>
     </Window.Styles>
 
@@ -320,7 +336,8 @@
                         CornerRadius="0,0,12,12"
                         Padding="22,13">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                        <Button Content="{DynamicResource TxtCancel}"
+                        <Button Name="BtnCancel"
+                                Content="{DynamicResource TxtCancel}"
                                 Classes="BtnBase"
                                 Padding="16,8"
                                 Click="BtnCancel_Click"/>

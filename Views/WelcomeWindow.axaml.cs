@@ -42,13 +42,7 @@ namespace OptiscalerClient.Views
 
             // Flicker-free startup: start invisible, show after positioning
             this.Opacity = 0;
-
-            var scaling = owner.DesktopScaling;
-            double dialogW = 540 * scaling;
-            double dialogH = 560 * scaling;
-            var x = owner.Position.X + (owner.Bounds.Width * scaling - dialogW) / 2;
-            var y = owner.Position.Y + (owner.Bounds.Height * scaling - dialogH) / 2;
-            this.Position = new PixelPoint((int)Math.Max(0, x), (int)Math.Max(0, y));
+            DialogCenterHelper.Register(this, owner);
 
             var titleBar = this.FindControl<Border>("TitleBar");
             if (titleBar != null)

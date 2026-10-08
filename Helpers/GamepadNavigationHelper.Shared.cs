@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 namespace OptiscalerClient.Helpers;
@@ -79,6 +80,35 @@ public partial class GamepadNavigationHelper
 
         if (TryGetFocusedButton(focused, out var button))
         {
+            if (button.Flyout != null)
+            {
+                var bdHide = _window.FindControl<Border>("BdFilterHideNoUpscaler");
+                var bdInstalled = _window.FindControl<Border>("BdFilterOnlyInstalled");
+                var bdFavorites = _window.FindControl<Border>("BdFilterOnlyFavorites");
+
+                if (button.Flyout.IsOpen)
+                {
+                    bdHide?.Classes.Remove("ActiveFocus");
+                    bdInstalled?.Classes.Remove("ActiveFocus");
+                    bdFavorites?.Classes.Remove("ActiveFocus");
+                    button.Flyout.Hide();
+                    Dispatcher.UIThread.Post(() => button.Focus(NavigationMethod.Directional), DispatcherPriority.Background);
+                }
+                else
+                {
+                    button.Flyout.ShowAt(button);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        var firstCheck = _window.FindControl<CheckBox>("ChkHideNoUpscaler");
+                        firstCheck?.Focus(NavigationMethod.Directional);
+                        bdHide?.Classes.Add("ActiveFocus");
+                        bdInstalled?.Classes.Remove("ActiveFocus");
+                        bdFavorites?.Classes.Remove("ActiveFocus");
+                    }, DispatcherPriority.Loaded);
+                }
+                return;
+            }
+
             button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             return;
         }

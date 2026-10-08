@@ -99,6 +99,7 @@ namespace OptiscalerClient.Views
         private int _gamesHeaderTier = -1;
         private Avalonia.Controls.Shapes.Path? _txtGamepadIcon;
         private Border? _pnlNoUpscalersFound;
+        private Border? _pnlEmptyLibrary;
         private CheckBox? _chkHideNoUpscaler;
         private CheckBox? _chkOnlyInstalled;
         private CheckBox? _chkOnlyFavorites;
@@ -293,15 +294,15 @@ namespace OptiscalerClient.Views
         /// Test-only constructor. Injects a custom <see cref="IGpuDetectionService"/> instead
         /// of the platform-default one so unit/headless tests can run without real hardware.
         /// </summary>
-        internal MainWindow(IGpuDetectionService? gpuService) : this()
+        internal MainWindow(IGpuDetectionService? gpuService) : this(gpuService, null)
         {
-            // Override the service assigned by the public constructor.
-            _gpuService = gpuService!;
-            // Reset cached GPU so the injected service is actually called.
-            _lastDetectedGpu = null;
         }
 
-        public MainWindow()
+        public MainWindow() : this(null, null)
+        {
+        }
+
+        private MainWindow(IGpuDetectionService? injectedGpuService, object? _)
         {
             InitializeComponent();
             InitializeChrome();
@@ -311,7 +312,7 @@ namespace OptiscalerClient.Views
             _componentService = new ComponentManagementService();
             _metadataService = new GameMetadataService(_componentService);
             App.ChangeLanguage(_componentService.Config.Language);
-            _gpuService = PlatformServiceFactory.CreateGpuDetectionService()!;
+            _gpuService = injectedGpuService ?? PlatformServiceFactory.CreateGpuDetectionService()!;
             _games = new ObservableCollection<Game>();
 
             // Debug Window check
@@ -400,6 +401,7 @@ namespace OptiscalerClient.Views
                 _pnlHeaderBadges = this.FindControl<WrapPanel>("PnlHeaderBadges");
                 _gamesSearchGrid = this.FindControl<Grid>("GamesSearchGrid");
                 _pnlNoUpscalersFound = this.FindControl<Border>("PnlNoUpscalersFound");
+                _pnlEmptyLibrary = this.FindControl<Border>("PnlEmptyLibrary");
                 _chkHideNoUpscaler = this.FindControl<CheckBox>("ChkHideNoUpscaler");
                 _chkOnlyInstalled = this.FindControl<CheckBox>("ChkOnlyInstalled");
                 _chkOnlyFavorites = this.FindControl<CheckBox>("ChkOnlyFavorites");
@@ -423,6 +425,7 @@ namespace OptiscalerClient.Views
                 _txtToastSecondaryMessage = this.FindControl<TextBlock>("TxtToastSecondaryMessage");
 
                 bool hadSavedGames = LoadSavedGames(_windowLifetimeCts.Token);
+                UpdateEmptyLibraryState();
                 _ = LoadGpuInfoAsync();
                 _compatibilityRefreshTask = RefreshCompatibilityListOnStartupAsync();
                 if (CompatibilityListService.IsRefreshInProgress)
@@ -461,6 +464,9 @@ namespace OptiscalerClient.Views
                     _componentService.SaveConfiguration();
                 }
 
+                // Before the initial scan prompt, so first-time users see the tour before scanning.
+                await ShowQuickTourIfNeededAsync();
+
                 if (!hadSavedGames)
                 {
                     if (_componentService.Config.HasCompletedInitialScan)
@@ -494,6 +500,24 @@ namespace OptiscalerClient.Views
                 // Scans should only run when the user explicitly clicks Scan Games.
             }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] Loaded handler failed: {ex.Message}"); }
+        }
+
+        private async Task ShowQuickTourIfNeededAsync()
+        {
+            if (_componentService.Config.HasSeenQuickTour) return;
+
+            // Loaded fires before the first frame: wait until the main window has actually been painted
+            // and startup work has settled, otherwise the tour opens over a black window and stutters in.
+            var firstFrame = new TaskCompletionSource();
+            RequestAnimationFrame(_ => RequestAnimationFrame(_ => firstFrame.TrySetResult()));
+            await firstFrame.Task;
+            await Task.Delay(400);
+            if (_windowLifetimeCts.IsCancellationRequested) return;
+
+            DebugWindow.Log("[Startup] Showing quick tour.");
+            await new QuickTourWindow(this).ShowDialog(this);
+            _componentService.Config.HasSeenQuickTour = true;
+            _componentService.SaveConfiguration();
         }
 
         private void GamepadHelper_GamepadConnectionChanged(object? sender, bool isConnected)
@@ -809,8 +833,19 @@ namespace OptiscalerClient.Views
             }
         }
 
+        /// <summary>
+        /// Shows the "scan your games" empty state while the library has never been populated
+        /// (e.g. the initial scan prompt was dismissed). A scan with no results uses PnlNoUpscalersFound instead.
+        /// </summary>
+        private void UpdateEmptyLibraryState()
+        {
+            if (_pnlEmptyLibrary != null)
+                _pnlEmptyLibrary.IsVisible = !_hasScanned && (_allGames == null || _allGames.Count == 0);
+        }
+
         private void ApplyFilter(string? searchText)
         {
+            UpdateEmptyLibraryState();
             if (_allGames == null) return;
 
             // In edit mode show all games (including hidden) so the user can reveal them.
@@ -2060,6 +2095,31 @@ namespace OptiscalerClient.Views
             PopulateHelpContent();
         }
 
+        /// <summary>Opens the Help view directly on the given help page (see assets/configs/help-pages.json).</summary>
+        public void NavigateToHelp(string pageId)
+        {
+            _currentHelpPageId = pageId;
+            var nav = this.FindControl<RadioButton>("NavHelp");
+            if (nav != null) nav.IsChecked = true;
+            SwitchToView("ViewHelp");
+            PopulateHelpContent();
+        }
+
+        private void BtnContextHelp_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Control { Tag: string pageId })
+                NavigateToHelp(pageId);
+        }
+
+        private async void BtnQuickTour_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await new QuickTourWindow(this).ShowDialog(this);
+            }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] Quick tour dialog failed: {ex.Message}"); }
+        }
+
         private void NavSettings_Click(object sender, RoutedEventArgs e)
         {
             SwitchToView("ViewSettings");
@@ -2171,51 +2231,106 @@ namespace OptiscalerClient.Views
         private async void BtnClearAppCache_Click(object sender, RoutedEventArgs e)
         {
             var baseDir = AppPaths.GetAppDataRoot();
+            string Root(string name) => System.IO.Path.Combine(baseDir, name);
+
+            var gameFiles = new[] { Root("games.json"), Root("analysis_cache_v3.json") };
+            var settingsFile = Root("config.json");
 
             // Every component's version/release cache lives as its own top-level *.json file here
-            // (games.json, config.json, releases_cache.json, fakenvapi_cache.json,
-            // streamline_releases_cache.json, amd_wrapper_releases_cache.json, ...). Enumerating
-            // instead of a hardcoded list means a full reset actually stays full: a hardcoded array
-            // silently misses every cache file added after it was written (which is exactly what
-            // happened here — Streamline's and the AMD wrapper's caches, both added this session,
-            // were never in this list). Subfolders (Covers/, Cache/, user profiles) are handled
-            // separately below or intentionally left alone.
-            var filesToDelete = System.IO.Directory.GetFiles(baseDir, "*.json");
+            // (releases_cache.json, fakenvapi_cache.json, streamline_releases_cache.json, ...).
+            // Enumerating instead of a hardcoded list keeps this category complete as caches are
+            // added; the game library and settings files are their own categories.
+            var dataCacheFiles = System.IO.Directory.GetFiles(baseDir, "*.json")
+                .Where(f => f != settingsFile && !gameFiles.Contains(f))
+                .ToArray();
 
-            string[] dirsToDelete =
-            [
-                System.IO.Path.Combine(baseDir, "Covers"),
-                System.IO.Path.Combine(baseDir, "Cache"),
-            ];
+            // Each category: label, files, folders, checked by default, and whether the app must close
+            // afterwards (data held in memory would otherwise be stale or written back). Settings are
+            // opt-in so a cleanup doesn't silently reset the user's configuration. Covers and icons
+            // only need the in-memory paths cleared.
+            var categories = new (string Label, string[] Files, string[] Dirs, bool Default, bool NeedsRestart)[]
+            {
+                (GetResourceString("TxtClearCacheOptGames", "Scanned games"), gameFiles, [], true, true),
+                (GetResourceString("TxtClearCacheOptCovers", "Cover art and icons"), [], [Root("Covers"), Root("Icons")], true, false),
+                (GetResourceString("TxtClearCacheOptVersionData", "Cached version and online data"), dataCacheFiles, [], true, true),
+                (GetResourceString("TxtClearCacheOptDownloads", "Downloaded OptiScaler and extras files"), [], [Root("Cache")], true, true),
+                (GetResourceString("TxtClearCacheOptSettings", "App settings"), [settingsFile], [], false, true),
+            };
 
-            var totalBytes = filesToDelete.Sum(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
-                            + dirsToDelete.Sum(GetDirectorySizeBytes);
+            var categorySizes = categories
+                .Select(c => c.Files.Sum(f => { try { return File.Exists(f) ? new FileInfo(f).Length : 0L; } catch { return 0L; } })
+                             + c.Dirs.Sum(GetDirectorySizeBytes))
+                .ToArray();
 
-            var sizeInfo = string.Format(GetResourceString("TxtClearAppCacheSizeInfo", "Total size: {0}"), FormatBytes(totalBytes));
+            var sizeFormat = GetResourceString("TxtClearAppCacheSizeInfo", "Total size: {0}");
             var dialog = new ConfirmDialog(
                 this,
                 GetResourceString("TxtClearAppCacheTitle", "Clear Application Cache"),
-                GetResourceString("TxtClearAppCacheDialogMsg", "Warning: This will permanently delete all scanned games, cover art and cached OptiScaler version data.\n\nThe application will close after clearing. On the next launch it will re-scan your library and re-download version information."),
-                badgeText: sizeInfo);
+                GetResourceString("TxtClearAppCacheDialogMsg", "Select what to permanently delete."));
+            var restartNotice = GetResourceString("TxtClearCacheRestartRequired", "Restart required: the app will close after clearing.");
+            dialog.SetOptions(
+                categories.Select((c, i) => (c.Label, (string?)FormatBytes(categorySizes[i]), c.Default)).ToList(),
+                selected => string.Format(sizeFormat, FormatBytes(categorySizes.Where((_, i) => selected[i]).Sum())),
+                selected => categories.Where((_, i) => selected[i]).Any(c => c.NeedsRestart) ? restartNotice : null);
 
             var confirmed = await dialog.ShowDialog<bool>(this);
             if (!confirmed) return;
 
+            var chosen = categories.Where((_, i) => dialog.SelectedOptions[i]).ToList();
+            if (chosen.Count == 0) return;
+
             try
             {
-                foreach (var file in filesToDelete)
+                foreach (var file in chosen.SelectMany(c => c.Files))
                 {
                     if (File.Exists(file))
                         File.Delete(file);
                 }
 
-                foreach (var dir in dirsToDelete)
+                foreach (var dir in chosen.SelectMany(c => c.Dirs))
                 {
                     if (Directory.Exists(dir))
                         Directory.Delete(dir, recursive: true);
                 }
 
-                Close();
+                if (chosen.Any(c => c.NeedsRestart))
+                {
+                    Close();
+                    return;
+                }
+
+                // Only covers/icons were removed: rebuild the local exe-icon covers (no network) so no
+                // game is left blank, but don't download real covers. Those come back through
+                // "Refresh covers" in the scan dialog or on the next launch, which treats icon covers
+                // as replaceable.
+                Directory.CreateDirectory(Root("Covers"));
+                Directory.CreateDirectory(Root("Icons"));
+                var games = (_allGames != null && _allGames.Count > 0) ? _allGames : _games.ToList();
+                foreach (var game in games)
+                {
+                    game.CoverImageUrl = null;
+                    game.IconImagePath = null;
+                }
+                RefreshGameLists();
+
+                // Icons first: icon covers are composed from the same extracted icon files.
+                await ResolveGameIconsAsync(games.ToList());
+                using var semaphore = new SemaphoreSlim(4, 4);
+                await Task.WhenAll(games.Select(async game =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        var key = !string.IsNullOrEmpty(game.AppId) ? game.AppId : game.Name;
+                        if (!string.IsNullOrEmpty(key))
+                            game.CoverImageUrl = await _metadataService.GetOrCreateIconCoverAsync(game, key);
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[MainWindow] Icon cover failed for {game.Name}: {ex.Message}"); }
+                    finally { semaphore.Release(); }
+                }));
+
+                RefreshGameLists();
+                _persistenceService.SaveGames(games);
             }
             catch (Exception ex)
             {
@@ -2326,16 +2441,17 @@ namespace OptiscalerClient.Views
             {
                 titleRow.Children.Add(new Border
                 {
-                    Background = Application.Current?.FindResource("BrBgElevated") as IBrush ?? Brushes.Transparent,
-                    BorderBrush = Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
+                    Background = new SolidColorBrush(Color.FromArgb(0x25, 0x8B, 0x73, 0xF8)),
+                    BorderBrush = Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.DimGray,
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(6, 2),
+                    Padding = new Thickness(8, 2),
                     Child = new TextBlock
                     {
                         Text = GetResourceString("TxtDefaultBadge", "Default"),
-                        FontSize = 9,
-                        Foreground = Application.Current?.FindResource("BrTextSecondary") as IBrush ?? Brushes.Gray
+                        FontSize = 10,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.Gray
                     }
                 });
             }
@@ -2359,13 +2475,16 @@ namespace OptiscalerClient.Views
                 Background = Application.Current?.FindResource("BrBgCard") as IBrush ?? Brushes.Transparent,
                 BorderBrush = Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray,
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(16, 10),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(16, 12),
                 Child = stack,
                 Tag = profile,
                 Cursor = new Cursor(StandardCursorType.Hand),
-                Focusable = true
+                Focusable = true,
+                BoxShadow = BoxShadows.Parse("0 2 8 -2 #30000000")
             };
+            border.Classes.Add("Card");
+            border.Classes.Add("Interactive");
 
             void SelectCard(object? s)
             {
@@ -2409,7 +2528,10 @@ namespace OptiscalerClient.Views
                     b.BorderBrush = selected
                         ? Application.Current?.FindResource("BrAccent") as IBrush ?? Brushes.White
                         : Application.Current?.FindResource("BrBorderSubtle") as IBrush ?? Brushes.DimGray;
-                    b.BorderThickness = selected ? new Thickness(2) : new Thickness(1);
+                    b.BorderThickness = selected ? new Thickness(1.5) : new Thickness(1);
+                    b.BoxShadow = selected
+                        ? BoxShadows.Parse("0 8 24 -4 #70000000, 0 0 14 0 #308B73F8")
+                        : BoxShadows.Parse("0 2 8 -2 #30000000");
                 }
             }
         }
@@ -3604,6 +3726,8 @@ namespace OptiscalerClient.Views
         {
             try { await new DlssNrOnAmdService().GetReleasesAsync(); }
             catch (Exception ex) { DebugWindow.Log($"[MainWindow] DlssNrOnAmdService refresh failed: {ex.Message}"); }
+            try { await new AmdNrBridgeService().GetReleasesAsync(); }
+            catch (Exception ex) { DebugWindow.Log($"[MainWindow] AmdNrBridgeService refresh failed: {ex.Message}"); }
         }
 
         /// <summary>
@@ -3951,6 +4075,9 @@ namespace OptiscalerClient.Views
                 case "guide-button":
                     RenderGuideButton(container);
                     break;
+                case "tour-button":
+                    RenderQuickTourButton(container);
+                    break;
                 case "app-info":
                     RenderAppInfo(container);
                     break;
@@ -3999,6 +4126,41 @@ namespace OptiscalerClient.Views
             button.Click += BtnGuide_Click2;
 
             container.Children.Add(title);
+            container.Children.Add(button);
+        }
+
+        private void RenderQuickTourButton(StackPanel container)
+        {
+            var title = new TextBlock
+            {
+                Text = GetResourceString("TxtTourTitle", "Quick tour"),
+                FontSize = 18,
+                FontWeight = FontWeight.SemiBold,
+                Margin = new Thickness(0, 0, 0, 8),
+                Foreground = this.FindResource("BrTextPrimary") as IBrush
+            };
+
+            var desc = new TextBlock
+            {
+                Text = GetResourceString("TxtTourHelpDesc", "A short walkthrough of the basic steps and where to find everything else."),
+                FontSize = 13,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 12),
+                Foreground = this.FindResource("BrTextSecondary") as IBrush
+            };
+
+            var button = new Button
+            {
+                Content = GetResourceString("TxtTourStartBtn", "Start quick tour"),
+                Padding = new Thickness(16, 12),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Margin = new Thickness(0, 0, 0, 32)
+            };
+            button.Classes.Add("BtnBase");
+            button.Click += BtnQuickTour_Click;
+
+            container.Children.Add(title);
+            container.Children.Add(desc);
             container.Children.Add(button);
         }
 
@@ -5608,6 +5770,7 @@ namespace OptiscalerClient.Views
                     _persistenceService.SaveGames(_games);
 
                     RefreshGameLists();
+                    UpdateEmptyLibraryState();
                 }
             }
             catch (Exception ex)
@@ -5833,7 +5996,15 @@ namespace OptiscalerClient.Views
                         if (selectedGame.IsDlssNrOnAmdInstalled && selectedGame.InstalledDlssNrOnAmdMode == "daniel-and-opti")
                         {
                             var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
-                            if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                            if (danielGameDir != null)
+                            {
+                                // AMD-NR-bridge first: it restores the OptiScaler.ini values it changed.
+                                AmdNrBridgeService.RemoveFromGame(selectedGame, danielGameDir);
+                                if (OperatingSystem.IsWindows())
+                                    new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                                else if (!await LinuxNrInstallHelper.UninstallAsync(this, selectedGame, danielGameDir))
+                                    return; // the fork refused — nothing was removed, error already shown
+                            }
                             selectedGame.IsDlssNrOnAmdInstalled = false;
                             selectedGame.DlssNrOnAmdVersion = null;
                             selectedGame.InstalledDlssNrOnAmdMode = null;
@@ -5875,7 +6046,13 @@ namespace OptiscalerClient.Views
                         // ManageGameWindow.UninstallDanielModOnly (CmbSetupNr's "none" case / the
                         // dedicated "Uninstall mod" button there).
                         var danielGameDir = new GameInstallationService().DetermineInstallDirectory(selectedGame);
-                        if (danielGameDir != null) new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                        if (danielGameDir != null)
+                        {
+                            if (OperatingSystem.IsWindows())
+                                new DlssNrOnAmdService().RestoreFromManifest(danielGameDir);
+                            else if (!await LinuxNrInstallHelper.UninstallAsync(this, selectedGame, danielGameDir))
+                                return; // the fork refused — nothing was removed, error already shown
+                        }
 
                         selectedGame.IsDlssNrOnAmdInstalled = false;
                         selectedGame.DlssNrOnAmdVersion = null;
@@ -5896,6 +6073,16 @@ namespace OptiscalerClient.Views
                         // the nvngx/Defender-exclusion modal.
                         SetQuickInstallLoading(button);
 
+                        // Same risk confirmation as Manage - Quick Install used to skip the anti-cheat warning entirely.
+                        if (await Task.Run(() => AntiCheatHelper.IsPresent(selectedGame.InstallPath)))
+                        {
+                            var antiCheatMsg = string.Format(GetResourceString("TxtAntiCheatConfirmMsg",
+                                "{0} uses anti-cheat protection.\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes. Only continue if you play offline or the game officially allows it.\n\nInstall anyway?"), selectedGame.Name);
+                            if (!await new ConfirmDialog(this, GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"), antiCheatMsg,
+                                    confirmText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway")).ShowDialog<bool>(this))
+                                return;
+                        }
+
                         // AMD DLSS Neural Rendering ("Setup NR") default — see
                         // ManageDefaultVersionsWindow and DlssNrOnAmdService.InstallForQuickPathAsync.
                         // Only ever configured when the default GPU is AMD (see that window's own
@@ -5903,12 +6090,13 @@ namespace OptiscalerClient.Views
                         // is a *different* switch (in this same window's Settings), so turning it off
                         // must disable this default's effect immediately, not just hide the UI that
                         // configured it — re-checked here rather than trusting the stored value alone.
-                        string? modeBWrapperVersion = null;
+                        bool modeBBridge = false;
                         var dlssNrDefaultMode = _componentService.Config.DefaultDlssNrOnAmdMode;
                         if (_componentService.Config.ShowExperimentalFeatures &&
-                            !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none")
+                            !string.IsNullOrEmpty(dlssNrDefaultMode) && dlssNrDefaultMode != "none" &&
+                            AmdNrBridgeService.IsModeOffered(dlssNrDefaultMode))
                         {
-                            var (dlssNrResult, wrapperVersion) = await new DlssNrOnAmdService()
+                            var dlssNrResult = await new DlssNrOnAmdService()
                                 .InstallForQuickPathAsync(this, selectedGame, dlssNrDefaultMode, _componentService);
 
                             if (dlssNrDefaultMode == "daniel-only")
@@ -5927,6 +6115,8 @@ namespace OptiscalerClient.Views
                                 }
                                 else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success)
                                 {
+                                    if (!OperatingSystem.IsWindows())
+                                        await LinuxNrInstallHelper.ApplyLaunchOptionsAsync(this, selectedGame);
                                     RefreshGameLists();
                                     _persistenceService.SaveGames(_games);
                                     ShowToast(GetResourceString("TxtSetupNrDanielInstalledDone", "danielblnc's mod installed successfully."));
@@ -5936,30 +6126,24 @@ namespace OptiscalerClient.Views
                             }
 
                             if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success && dlssNrDefaultMode == "daniel-and-opti")
-                                modeBWrapperVersion = wrapperVersion;
+                                modeBBridge = true;
                         }
+
+                        // Linux: a game that already had the mod gets OptiScaler next to it the same way.
+                        if (!OperatingSystem.IsWindows() && selectedGame.IsDlssNrOnAmdInstalled)
+                            modeBBridge = true;
 
                         // Determine version to install: use configured default, fall back to latest per channel
                         string versionToInstall;
 
-                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
+                        var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
+                        if (!string.IsNullOrEmpty(configuredDefault))
                         {
-                            // "Mod + OptiScaler" just installed (or reused) the mod — install the
-                            // matching wrapper build instead of the normally configured version,
-                            // same override ManageGameWindow.ExecuteInstallAsync applies for Mode B.
-                            versionToInstall = modeBWrapperVersion;
+                            versionToInstall = configuredDefault;
                         }
                         else
                         {
-                            var configuredDefault = _componentService.EffectiveDefaultOptiScalerVersion;
-                            if (!string.IsNullOrEmpty(configuredDefault))
-                            {
-                                versionToInstall = configuredDefault;
-                            }
-                            else
-                            {
-                                versionToInstall = _componentService.LatestStableVersion ?? "";
-                            }
+                            versionToInstall = _componentService.LatestStableVersion ?? "";
                         }
 
                         if (string.IsNullOrEmpty(versionToInstall))
@@ -6164,7 +6348,7 @@ namespace OptiscalerClient.Views
                         // "dbghelp" (see DlssNrOnAmdService.DriveInstallerAsync) — force dxgi.dll for
                         // OptiScaler's own slot regardless of any other configured default so the two
                         // never collide.
-                        if (!string.IsNullOrEmpty(modeBWrapperVersion))
+                        if (modeBBridge)
                             injectionMethod = "dxgi.dll";
 
                         // Install with default settings (backup always enabled)
@@ -6426,6 +6610,28 @@ namespace OptiscalerClient.Views
                             DebugWindow.Log($"[QuickInstall] Failed to apply default Frame Generation/Quality/Output Upscaler settings: {ex.Message}");
                         }
 
+                        // "Mod + OptiScaler": AMD-NR-bridge goes last, over every OptiScaler.ini layer above.
+                        if (modeBBridge)
+                        {
+                            try
+                            {
+                                var bridgeGameDir = resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath;
+                                if (OperatingSystem.IsWindows())
+                                    await new AmdNrBridgeService().EnsureAppliedAsync(selectedGame, bridgeGameDir);
+                                else
+                                    // Linux: no bridge — OptiScaler's ini values + Steam launch options.
+                                    await LinuxNrInstallHelper.FinishWithOptiScalerAsync(this, selectedGame, bridgeGameDir, injectionMethod);
+                            }
+                            catch (Exception ex)
+                            {
+                                DebugWindow.Log($"[QuickInstall] AMD-NR-bridge could not be applied: {ex.Message}");
+                                await new ConfirmDialog(this, GetResourceString("TxtWarning", "Warning"),
+                                    string.Format(GetResourceString("TxtSetupNrBridgeApplyFailedFormat",
+                                        "AMD-NR-bridge could not be applied: {0}\n\nOptiScaler itself was installed. Reinstall from Manage to try again."), ex.Message),
+                                    isAlert: true).ShowDialog<bool>(this);
+                            }
+                        }
+
                         // Update game status
                         selectedGame.IsOptiscalerInstalled = true;
                         selectedGame.OptiscalerVersion = versionToInstall;
@@ -6455,6 +6661,9 @@ namespace OptiscalerClient.Views
                         });
 
                         await HideToastAfterAsync(1500);
+
+                        await ConfirmDialog.VerifyIniAfterInstallAsync(this,
+                            resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(selectedGame) ?? selectedGame.InstallPath);
                     }
                 }
                 catch (Exception ex)
@@ -6525,7 +6734,7 @@ namespace OptiscalerClient.Views
                     _lastDetectedGpu = gpu;
                 }
 
-                Dispatcher.UIThread.Post(() =>
+                void UpdateBadge()
                 {
                     if (gpu != null)
                     {
@@ -6557,7 +6766,12 @@ namespace OptiscalerClient.Views
                         _txtGpuInfo.Foreground = Brushes.Orange;
                         ToolTip.SetTip(_txtGpuInfo, GetResourceString("TxtNoGpuTip", "No GPU was detected on this system"));
                     }
-                });
+                }
+
+                if (Dispatcher.UIThread.CheckAccess())
+                    UpdateBadge();
+                else
+                    Dispatcher.UIThread.Post(UpdateBadge);
             }
             catch (Exception ex)
             {

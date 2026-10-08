@@ -99,6 +99,20 @@ public partial class GamepadNavigationHelper : GamepadHelperBase, IDisposable
             _gamepadService.GamepadConnectionChanged += OnGamepadConnectionChanged;
             _gamepadService.StartListening();
         }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            var btnFilters = _window.FindControl<Avalonia.Controls.Button>("BtnFilters");
+            if (btnFilters?.Flyout is Avalonia.Controls.Primitives.FlyoutBase fb)
+            {
+                fb.Closed += (_, _) =>
+                {
+                    _window.FindControl<Avalonia.Controls.Border>("BdFilterHideNoUpscaler")?.Classes.Remove("ActiveFocus");
+                    _window.FindControl<Avalonia.Controls.Border>("BdFilterOnlyInstalled")?.Classes.Remove("ActiveFocus");
+                    _window.FindControl<Avalonia.Controls.Border>("BdFilterOnlyFavorites")?.Classes.Remove("ActiveFocus");
+                };
+            }
+        }, DispatcherPriority.Loaded);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -287,6 +301,96 @@ public partial class GamepadNavigationHelper : GamepadHelperBase, IDisposable
                     Dispatcher.UIThread.Post(() => openCombo.Focus(NavigationMethod.Directional), DispatcherPriority.Background);
                     return;
             }
+        }
+
+        var btnFilters = _window.FindControl<Avalonia.Controls.Button>("BtnFilters");
+        if (btnFilters?.Flyout is Avalonia.Controls.Primitives.FlyoutBase filtersFlyout && filtersFlyout.IsOpen)
+        {
+            var chkHide = _window.FindControl<Avalonia.Controls.CheckBox>("ChkHideNoUpscaler");
+            var chkInstalled = _window.FindControl<Avalonia.Controls.CheckBox>("ChkOnlyInstalled");
+            var chkFavorites = _window.FindControl<Avalonia.Controls.CheckBox>("ChkOnlyFavorites");
+
+            var filterItems = new Avalonia.Controls.CheckBox?[] { chkHide, chkInstalled, chkFavorites }
+                .Where(x => x != null)
+                .Select(x => x!)
+                .ToList();
+
+            var bdHide = _window.FindControl<Avalonia.Controls.Border>("BdFilterHideNoUpscaler");
+            var bdInstalled = _window.FindControl<Avalonia.Controls.Border>("BdFilterOnlyInstalled");
+            var bdFavorites = _window.FindControl<Avalonia.Controls.Border>("BdFilterOnlyFavorites");
+
+            var borderItems = new Avalonia.Controls.Border?[] { bdHide, bdInstalled, bdFavorites }
+                .Where(x => x != null)
+                .Select(x => x!)
+                .ToList();
+
+            void SetActiveFilterFocus(int index)
+            {
+                for (int i = 0; i < borderItems.Count; i++)
+                {
+                    if (i == index)
+                        borderItems[i].Classes.Add("ActiveFocus");
+                    else
+                        borderItems[i].Classes.Remove("ActiveFocus");
+                }
+                if (index >= 0 && index < filterItems.Count)
+                {
+                    filterItems[index].Focus(NavigationMethod.Directional);
+                }
+            }
+
+            int currentIdx = -1;
+            for (int i = 0; i < borderItems.Count; i++)
+            {
+                if (borderItems[i].Classes.Contains("ActiveFocus") || (i < filterItems.Count && filterItems[i].IsFocused))
+                {
+                    currentIdx = i;
+                    break;
+                }
+            }
+
+            switch (button)
+            {
+                case GamepadButton.DPadDown:
+                case GamepadButton.ThumbLeftDown:
+                {
+                    int nextIdx = currentIdx == -1 ? 0 : Math.Min(filterItems.Count - 1, currentIdx + 1);
+                    SetActiveFilterFocus(nextIdx);
+                    return;
+                }
+
+                case GamepadButton.DPadUp:
+                case GamepadButton.ThumbLeftUp:
+                {
+                    int prevIdx = currentIdx == -1 ? 0 : Math.Max(0, currentIdx - 1);
+                    SetActiveFilterFocus(prevIdx);
+                    return;
+                }
+
+                case GamepadButton.A:
+                {
+                    if (currentIdx >= 0 && currentIdx < filterItems.Count)
+                    {
+                        filterItems[currentIdx].IsChecked = !(filterItems[currentIdx].IsChecked ?? false);
+                    }
+                    else if (filterItems.Count > 0)
+                    {
+                        SetActiveFilterFocus(0);
+                        filterItems[0].IsChecked = !(filterItems[0].IsChecked ?? false);
+                    }
+                    return;
+                }
+
+                case GamepadButton.B:
+                {
+                    for (int i = 0; i < borderItems.Count; i++)
+                        borderItems[i].Classes.Remove("ActiveFocus");
+                    filtersFlyout.Hide();
+                    Dispatcher.UIThread.Post(() => btnFilters.Focus(NavigationMethod.Directional), DispatcherPriority.Background);
+                    return;
+                }
+            }
+            return;
         }
 
         if (button == GamepadButton.B)

@@ -119,6 +119,10 @@ namespace OptiscalerClient.Services
                         File.ReadAllText(manifestPath), OptimizerContext.Default.InstallationManifest);
                     if (!string.Equals(manifest?.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase))
                         continue;
+                    // A standalone component's record (its own store key, same InstalledGameDirectory)
+                    // isn't OptiScaler's and would otherwise win "first match" over the real one.
+                    if (!string.IsNullOrEmpty(manifest!.ComponentId))
+                        continue;
 
                     var installed = manifest!.InstalledGameDirectory;
                     if (string.IsNullOrWhiteSpace(installed) || !Directory.Exists(installed)) continue;
@@ -361,8 +365,31 @@ namespace OptiscalerClient.Services
         /// </summary>
         public static string ComputeGameSlug(string gameDir)
         {
-            var normalized = Path.GetFullPath(gameDir)
-                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            if (string.IsNullOrWhiteSpace(gameDir))
+                return "unknown_00000000";
+
+            string normalized;
+            bool isWindowsDrivePath = Regex.IsMatch(gameDir, @"^[a-zA-Z]:[/\\]");
+
+            if (OperatingSystem.IsWindows() || !isWindowsDrivePath)
+            {
+                try
+                {
+                    normalized = Path.GetFullPath(gameDir);
+                }
+                catch
+                {
+                    normalized = gameDir;
+                }
+            }
+            else
+            {
+                normalized = gameDir;
+            }
+
+            normalized = normalized
+                .Replace('\\', '/')
+                .TrimEnd('/')
                 .ToLowerInvariant();
 
             // 8-char hex hash for uniqueness
@@ -370,12 +397,13 @@ namespace OptiscalerClient.Services
             var hash = Convert.ToHexString(hashBytes)[..8].ToLowerInvariant();
 
             // Human-readable suffix: last 2 path segments, sanitized
-            var parts = normalized.Split(
-                new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
-                StringSplitOptions.RemoveEmptyEntries);
+            var parts = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
             var readable = string.Join("_", parts.TakeLast(2)
                 .Select(p => Regex.Replace(p, @"[^\w\-]", "_")));
+
+            if (string.IsNullOrEmpty(readable))
+                readable = "game";
 
             return $"{readable}_{hash}";
         }

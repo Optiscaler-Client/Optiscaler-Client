@@ -96,7 +96,7 @@ namespace OptiscalerClient.Services
         /// EnumerateDirectories skips it, File.Exists = true). Enumerating entries and keeping
         /// anything that is a directory OR a link is what still sees it — otherwise the alias is
         /// invisible to the very sweep meant to remove it and survives the uninstall.</summary>
-        private static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
+        internal static IEnumerable<string> ResolveKnownDirectoriesIgnoreCase(string parentDir, string name)
         {
             if (!Directory.Exists(parentDir)) yield break;
 
@@ -119,7 +119,7 @@ namespace OptiscalerClient.Services
 
         /// <summary>True when <paramref name="path"/> is a symlink — including a dangling one, which
         /// only <see cref="FileInfo.LinkTarget"/> still reports (see ResolveKnownDirectoriesIgnoreCase).</summary>
-        private static bool IsLink(string path)
+        internal static bool IsLink(string path)
         {
             try { return new FileInfo(path).LinkTarget != null; }
             catch (Exception ex)
@@ -261,6 +261,23 @@ namespace OptiscalerClient.Services
             manifest.PreInstallKeyFiles.Any(k => !k.Existed &&
                 k.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase));
 
+        /// <summary>True only when a game-ownable FidelityFX DLL on disk is provably the copy we wrote:
+        /// absent before the install AND still byte-identical to what the manifest recorded creating.
+        /// The pre-install snapshot alone is not enough — it goes stale once the user puts the game's
+        /// own DLL back by hand (e.g. AC Black Flag Resynced's amd_fidelityfx_loader_dx12.dll, which
+        /// then got deleted again on every reinstall and the game no longer launched).</summary>
+        private static bool IsProvablyOurFfxCopy(InstallationManifest? manifest, string gameDir, string relativePath)
+        {
+            if (manifest == null || !WasAbsentBeforeInstall(manifest, relativePath))
+                return false;
+
+            var createdHash = manifest.FilesCreated
+                .FirstOrDefault(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase))
+                ?.PostInstallSha256;
+            return !string.IsNullOrEmpty(createdHash) &&
+                   string.Equals(ComputeSha256(Path.Combine(gameDir, relativePath)), createdHash, StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string? FindCacheFile(IEnumerable<string> cacheFiles, string fileName) =>
             cacheFiles.FirstOrDefault(f =>
                 Path.GetFileName(f).Equals(fileName, StringComparison.OrdinalIgnoreCase));
@@ -321,6 +338,13 @@ namespace OptiscalerClient.Services
 
             if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
                 throw new Exception("Installation cancelled or valid directory not found.");
+
+            // dlssg_for_sm86 is a separate component with its own backup record: installing OptiScaler
+            // under one of its proxy names would back the mod up as a game "original" and restore it on
+            // OptiScaler's uninstall. Refuse instead of silently changing the user's injection method.
+            var dlssgProxyNames = DlssgSm86Records.GetInstalledProxyNames(game, gameDir);
+            if (dlssgProxyNames.Contains(injectionDllName, StringComparer.OrdinalIgnoreCase))
+                throw new DlssgSm86ProxyCollisionException(injectionDllName, dlssgProxyNames);
 
             // storeKey is always the stable game root (game.InstallPath) so that lookup is
             // consistent after app restarts, regardless of which subdirectory was chosen as gameDir.
@@ -803,6 +827,10 @@ namespace OptiscalerClient.Services
             }
 
             // Step 2.5: Generate OptiScaler.ini from profile if provided (skip for Default profile)
+            // Recorded before the write so a failed write shows up in VerifyIniSettings instead of
+            // only in the debug log.
+            ResetExpectedIni(Path.Combine(gameDir, "OptiScaler.ini"),
+                effectiveProfile != null && effectiveProfile.IniSettings.Count > 0 ? effectiveProfile.IniSettings : null);
             if (effectiveProfile != null && effectiveProfile.IniSettings.Count > 0)
             {
                 try
@@ -842,6 +870,17 @@ namespace OptiscalerClient.Services
             // for these keys already, matching what a freshly generated ini would otherwise leave in
             // place, so this is a harmless no-op when the user hasn't touched the selector.
             ApplySpoofingSettings(game, dxgiSpoofing, gameDir);
+
+            // Info-level file log so Manage can show which FSR version OptiScaler actually loaded
+            // (GameAnalyzerService.ReadFsrRuntimeVersion). OptiScaler truncates it on every launch.
+            // Only fills in "auto" - an explicit profile value is left alone.
+            var currentIni = ReadIni(ResolveOptiScalerIniPath(gameDir));
+            if (IsAutoOrMissing(currentIni, "Log", "LogToFile"))
+            {
+                ModifyOptiScalerIni(gameDir, "LogToFile", "true", "Log");
+                if (IsAutoOrMissing(currentIni, "Log", "LogLevel"))
+                    ModifyOptiScalerIni(gameDir, "LogLevel", "2", "Log");
+            }
 
             // Step 2.6: RenoDX (experimental, opt-in) and/or re-enabling a ReShade install that Step 1
             // preserved as ReShade64.dll. Runs AFTER Step 2.5 deliberately: LoadReshade is force-set
@@ -1059,55 +1098,10 @@ namespace OptiscalerClient.Services
                 ApplyOutputUpscalerSettings(game, gameDir);
             }
 
-            // "Mod + OptiScaler" (danielblnc's AMD Neural Rendering mod + this wrapper build): by
-            // this point in the flow, ManageGameWindow's daniel-mod step has already set
-            // InstalledDlssNrOnAmdMode before falling through to this same install. The wrapper's own
-            // OptiScaler.ini ships [DlssNr] Enabled=false — flip just that key as the final INI layer
-            // so neural rendering actually turns on immediately instead of requiring the user to find
-            // and enable it by hand. Skipped when Frame Generation is also configured: the wrapper's own
-            // README says Neural Rendering ships disabled in fresh installs specifically because it
-            // isn't fully vetted yet, and stacking it with FG's own Streamline/DLSS Enabler hooks has
-            // been observed to crash the game on launch — leave the wrapper's safer default alone for
-            // that combination instead of forcing it on. Also skipped on Linux: this is the wrapper's
-            // OWN separate AMD neural-rendering pass ("AMD PreSR Multipass", amd_presr.log/amd_bridge.log)
-            // — not danielblnc's actual mod, which hooks D3D12/DXGI itself independently and works fine
-            // regardless of this key. Confirmed directly on a real Linux/Proton setup: this pass does its
-            // own D3D12-LUID-to-HIP device matching and fails ("No HIP adapter matches D3D12 LUID") even
-            // though HIP itself loads and enumerates the GPU correctly — a VKD3D-Proton/HIP LUID quirk
-            // this wrapper feature (built and tested for native Windows) doesn't account for. Leaving it
-            // at its shipped default costs nothing there: the real neural rendering already comes from
-            // danielblnc's mod via guentra's Linux fork.
-            var fgConfigured = game.FrameGenerationSettings != null && game.FrameGenerationSettings.Route != FrameGenerationRoute.Disabled;
-            if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti" && !fgConfigured && OperatingSystem.IsWindows())
-            {
-                rollbackJournal.CaptureFile("OptiScaler.ini");
-                ModifyOptiScalerIni(gameDir, "Enabled", "true", "DlssNr");
-                DebugWindow.Log($"[Install] Enabled [DlssNr] in OptiScaler.ini for {game.Name} (Mod + OptiScaler).");
-            }
-            else if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti" && !OperatingSystem.IsWindows())
-            {
-                DebugWindow.Log($"[Install] Linux — leaving [DlssNr] Enabled at the wrapper's own default instead of forcing it on (its own separate AMD PreSR pass doesn't match D3D12/HIP LUIDs correctly under Wine/Proton; danielblnc's actual mod works independently of this key).");
-            }
-            else if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
-            {
-                DebugWindow.Log($"[Install] Frame Generation is configured for {game.Name} — leaving [DlssNr] Enabled at the wrapper's own default instead of forcing it on (known-unstable combination).");
-            }
-
-            // "Mod + OptiScaler": the wrapper's own [Menu] FGShortcutKey ships at "auto", which its own
-            // OptiScaler.ini comments document as 0x23 (VK_END) — the exact same key danielblnc's mod
-            // uses to open its own menu. With both loaded, OptiScaler's shortcut hook claims the
-            // keypress first and the mod's menu never opens (confirmed directly: pressing End did
-            // nothing visible with both installed). Not Windows/Linux-specific — this is a plain
-            // keybinding collision in the shared wrapper build, so it applies on every OS. Setting it to
-            // -1 (no shortcut) rather than picking another key: Frame Generation stays reachable from
-            // OptiScaler's own overlay menu (still opened by its separate, non-conflicting ShortcutKey,
-            // default Insert), so nothing is lost by freeing up End for the mod alone.
-            if (game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
-            {
-                rollbackJournal.CaptureFile("OptiScaler.ini");
-                ModifyOptiScalerIni(gameDir, "FGShortcutKey", "-1", "Menu");
-                DebugWindow.Log($"[Install] Set [Menu] FGShortcutKey=-1 in OptiScaler.ini for {game.Name} (Mod + OptiScaler) — its default (End) collided with danielblnc's own menu hotkey.");
-            }
+            // "Mod + OptiScaler" needs no INI layer here: AmdNrBridgeService.EnsureAppliedAsync sets
+            // the values AMD-NR-bridge needs (FSR upscaler, FGShortcutKey=-1, ...) after this install,
+            // from each caller. The [DlssNr] Enabled / FGShortcutKey layers that used to live here were
+            // specific to the discontinued MatheusGViana wrapper build.
 
             // Save manifest to external store
             manifest.ExpectedFinalMarkers = manifest.ExpectedFinalMarkers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -1818,7 +1812,7 @@ namespace OptiscalerClient.Services
                 foreach (var artifact in KnownOptiscalerArtifacts)
                 {
                     // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
-                    if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(manifest, artifact))
+                    if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(manifest, gameDir, artifact))
                         continue;
 
                     var artifactPath = Path.Combine(gameDir, artifact);
@@ -2125,7 +2119,7 @@ namespace OptiscalerClient.Services
             foreach (var artifact in KnownOptiscalerArtifacts)
             {
                 // The game's own FidelityFX DLLs: left alone (Step 2 restores them if overwritten).
-                if (IsGameOwnableFfxDll(artifact) && !WasAbsentBeforeInstall(priorManifest, artifact))
+                if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(priorManifest, gameDir, artifact))
                     continue;
 
                 try
@@ -2508,7 +2502,7 @@ namespace OptiscalerClient.Services
 
             DebugWindow.Log($"[FolderCleanup] Starting force cleanup for '{game.Name}' at: {gameDir}");
 
-            ForceRemoveAllArtifacts(gameDir, selectedSensitiveFiles);
+            ForceRemoveAllArtifacts(gameDir, manifest, selectedSensitiveFiles);
 
             // Delete the external backup store so future installs start fresh.
             _backupStore.DeleteBackup(storeKey);
@@ -2580,7 +2574,7 @@ namespace OptiscalerClient.Services
             return false;
         }
 
-        private void ForceRemoveAllArtifacts(string gameDir, IEnumerable<string>? extraFilesToDelete = null)
+        private void ForceRemoveAllArtifacts(string gameDir, InstallationManifest? manifest, IEnumerable<string>? extraFilesToDelete = null)
         {
             var dirsToScan = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { gameDir };
             var phoenixDir = DetectCorrectInstallDirectory(gameDir);
@@ -2591,9 +2585,15 @@ namespace OptiscalerClient.Services
 
             foreach (var dir in dirsToScan)
             {
-                // Delete every known artifact file unconditionally
+                // Delete every known artifact file unconditionally — except the game's own FidelityFX
+                // DLLs (loader/upscaler/frame generation...), which native-FSR games ship under the
+                // exact same names: only removed when the manifest proves the copy is ours. The ones
+                // the user may still want gone are opt-in via extraFilesToDelete (SensitiveArtifacts).
                 foreach (var artifact in KnownOptiscalerArtifacts)
                 {
+                    if (IsGameOwnableFfxDll(artifact) && !IsProvablyOurFfxCopy(manifest, dir, artifact))
+                        continue;
+
                     var fullPath = Path.Combine(dir, artifact);
                     try
                     {
@@ -3044,6 +3044,33 @@ namespace OptiscalerClient.Services
                 return null;
             }
 
+            var mainExe = DetermineMainExecutable(game);
+            var bestMatchDir = mainExe != null ? Path.GetDirectoryName(mainExe) : null;
+            if (bestMatchDir != null && Directory.Exists(bestMatchDir))
+            {
+                return bestMatchDir;
+            }
+
+            // Fallback to the main install path, if nothing else works
+            return game.InstallPath;
+        }
+
+        /// <summary>
+        /// The game's main executable — the one DetermineInstallDirectory's folder comes from —
+        /// found by scanning the install folder (Unreal's Binaries\Win64 first, launcher/crash
+        /// reporter/setup stubs excluded, then name, size and nearby upscaler DLLs). Null when none
+        /// can be found. Also used to tell the Linux NR fork which exe to patch (--exe) instead of
+        /// letting it give up on folders with several executables.
+        /// </summary>
+        public string? DetermineMainExecutable(Game game)
+        {
+            if (string.IsNullOrEmpty(game.InstallPath) || !Directory.Exists(game.InstallPath))
+            {
+                return !string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath)
+                    ? game.ExecutablePath
+                    : null;
+            }
+
             // Rule 1: Try to extract in the same folder as the main .exe, scan to find it.
             string[] allExes = Array.Empty<string>();
             try
@@ -3067,7 +3094,7 @@ namespace OptiscalerClient.Services
                 .ToArray();
             var candidateExes = binariesWin64Exes.Length > 0 ? binariesWin64Exes : allExes;
 
-            string? bestMatchDir = null;
+            string? bestMatch = null;
 
             if (candidateExes.Length > 0)
             {
@@ -3150,37 +3177,28 @@ namespace OptiscalerClient.Services
                     }
                 }
 
-                if (bestExe != null)
-                {
-                    bestMatchDir = Path.GetDirectoryName(bestExe);
-                }
+                bestMatch = bestExe;
 
                 // Fallback: If no match by name, check known ExecutablePath
-                if (bestMatchDir == null)
+                if (bestMatch == null)
                 {
                     if (!string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath))
                     {
-                        bestMatchDir = Path.GetDirectoryName(game.ExecutablePath);
+                        bestMatch = game.ExecutablePath;
                     }
                     else if (binariesWin64Exes.Length == 1)
                     {
-                        bestMatchDir = Path.GetDirectoryName(binariesWin64Exes[0]);
+                        bestMatch = binariesWin64Exes[0];
                     }
                 }
             }
             else if (allExes.Length == 0 && !string.IsNullOrEmpty(game.ExecutablePath) && File.Exists(game.ExecutablePath))
             {
                 // Fallback if Directory.GetFiles fails but we have an ExecutablePath
-                bestMatchDir = Path.GetDirectoryName(game.ExecutablePath);
+                bestMatch = game.ExecutablePath;
             }
 
-            if (bestMatchDir != null && Directory.Exists(bestMatchDir))
-            {
-                return bestMatchDir;
-            }
-
-            // Fallback to the main install path, if nothing else works
-            return game.InstallPath;
+            return bestMatch;
         }
 
 
@@ -3279,6 +3297,7 @@ namespace OptiscalerClient.Services
                 if (!found)
                     lines.Add("LoadAsiPlugins=true");
                 File.WriteAllLines(iniPath, lines);
+                ForgetExpectedIniKey(iniPath, "LoadAsiPlugins"); // written section-agnostic, see above
                 DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: LoadAsiPlugins=true ({asiFileName})");
             }
             else
@@ -3334,6 +3353,7 @@ namespace OptiscalerClient.Services
         {
             var iniPath = ResolveOptiScalerIniPath(gameDir);
             var sectionHeader = $"[{section}]";
+            RecordExpectedIni(iniPath, section, key, value);
 
             if (!File.Exists(iniPath))
             {
@@ -3403,6 +3423,127 @@ namespace OptiscalerClient.Services
                 DebugWindow.Log($"[Install] Failed to modify OptiScaler.ini, creating new: {ex.Message}");
                 File.WriteAllText(iniPath, $"{sectionHeader}\n{key}={value}\n");
             }
+        }
+
+        // ── OptiScaler.ini verification ─────────────────────────────────────────────
+        // Every value an install writes (profile + narrow patches) is recorded per ini path, so
+        // VerifyIniSettings can confirm afterwards that the file OptiScaler will read really holds
+        // them - a swallowed profile write or ModifyOptiScalerIni's rewrite fallback would otherwise
+        // leave the game on a different config with nothing but a debug-log line.
+        // ponytail: in-memory only (lost on restart) - persist next to the manifest if verification
+        // ever needs to cover installs from a previous session.
+        private static readonly Dictionary<string, Dictionary<string, (string Section, string Key, string Value)>> _expectedIni =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static string IniEntryId(string section, string key) => $"{section}|{key}";
+
+        private static void ResetExpectedIni(string iniPath, Dictionary<string, Dictionary<string, string>>? settings)
+        {
+            var entries = new Dictionary<string, (string Section, string Key, string Value)>(StringComparer.OrdinalIgnoreCase);
+            if (settings != null)
+                foreach (var (section, keys) in settings)
+                    foreach (var (key, value) in keys)
+                        entries[IniEntryId(section, key)] = (section, key, value);
+            lock (_expectedIni) _expectedIni[Path.GetFullPath(iniPath)] = entries;
+        }
+
+        /// <summary>Records OptiScaler.ini values written by something other than this service (e.g.
+        /// AmdNrBridgeService) as expected, so VerifyIniSettings doesn't flag them and
+        /// ReapplyIniSettings doesn't undo them.</summary>
+        public static void RecordExternalIniValues(string gameDir, IEnumerable<(string Section, string Key, string Value)> values)
+        {
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
+            foreach (var (section, key, value) in values)
+                RecordExpectedIni(iniPath, section, key, value);
+        }
+
+        private static void RecordExpectedIni(string iniPath, string section, string key, string value)
+        {
+            lock (_expectedIni)
+            {
+                var full = Path.GetFullPath(iniPath);
+                if (!_expectedIni.TryGetValue(full, out var entries))
+                    _expectedIni[full] = entries = new(StringComparer.OrdinalIgnoreCase);
+                entries[IniEntryId(section, key)] = (section, key, value);
+            }
+        }
+
+        private static void ForgetExpectedIniKey(string iniPath, string key)
+        {
+            lock (_expectedIni)
+            {
+                if (!_expectedIni.TryGetValue(Path.GetFullPath(iniPath), out var entries)) return;
+                foreach (var id in entries.Where(e => e.Value.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Select(e => e.Key).ToList())
+                    entries.Remove(id);
+            }
+        }
+
+        /// <summary>Section|Key -> value (first occurrence, like ModifyOptiScalerIni). Empty if missing/unreadable.</summary>
+        private static Dictionary<string, string> ReadIni(string iniPath)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(iniPath)) return result;
+            try
+            {
+                string section = "";
+                foreach (var raw in File.ReadLines(iniPath))
+                {
+                    var line = raw.Trim();
+                    if (line.Length == 0 || line.StartsWith(';')) continue;
+                    if (line.StartsWith('[') && line.EndsWith(']')) { section = line[1..^1]; continue; }
+                    var eq = line.IndexOf('=');
+                    if (eq <= 0) continue;
+                    result.TryAdd(IniEntryId(section, line[..eq].Trim()), line[(eq + 1)..].Trim());
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[IniVerify] Failed to read {iniPath}: {ex.Message}");
+            }
+            return result;
+        }
+
+        private static bool IsAutoOrMissing(Dictionary<string, string> ini, string section, string key) =>
+            !ini.TryGetValue(IniEntryId(section, key), out var value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase);
+
+        private static List<(string Section, string Key, string Value)> GetIniMismatches(string iniPath)
+        {
+            List<(string Section, string Key, string Value)> expected;
+            lock (_expectedIni)
+            {
+                if (!_expectedIni.TryGetValue(Path.GetFullPath(iniPath), out var entries)) return new();
+                expected = entries.Values.ToList();
+            }
+
+            var actual = ReadIni(iniPath);
+            return expected
+                .Where(e => !string.Equals(actual.GetValueOrDefault(IniEntryId(e.Section, e.Key)), e.Value.Trim(), StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Compares OptiScaler.ini against every value recorded during the last install for this game
+        /// dir. Returns one line per mismatch ("[Section] Key: expected X, found Y"); empty = all good,
+        /// or nothing was recorded this session.
+        /// </summary>
+        public List<string> VerifyIniSettings(string gameDir)
+        {
+            var iniPath = ResolveOptiScalerIniPath(gameDir);
+            var actual = ReadIni(iniPath);
+            var lines = GetIniMismatches(iniPath)
+                .Select(e => $"[{e.Section}] {e.Key}: expected {e.Value}, found {actual.GetValueOrDefault(IniEntryId(e.Section, e.Key)) ?? "-"}")
+                .ToList();
+            if (lines.Count > 0)
+                DebugWindow.Log($"[IniVerify] {lines.Count} mismatch(es) in {iniPath}: {string.Join("; ", lines)}");
+            return lines;
+        }
+
+        /// <summary>Rewrites every recorded value VerifyIniSettings flags, then returns a fresh verification.</summary>
+        public List<string> ReapplyIniSettings(string gameDir)
+        {
+            foreach (var (section, key, value) in GetIniMismatches(ResolveOptiScalerIniPath(gameDir)))
+                ModifyOptiScalerIni(gameDir, key, value, section);
+            return VerifyIniSettings(gameDir);
         }
     }
 }

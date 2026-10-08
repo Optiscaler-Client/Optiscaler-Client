@@ -8,7 +8,9 @@ using OptiscalerClient.Helpers;
 using Avalonia.Media;
 using Avalonia.Threading;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OptiscalerClient.Views
@@ -182,19 +184,97 @@ namespace OptiscalerClient.Views
                 // can still process that same press (e.g. 'B' closing the
                 // owner too). See gamepad_implementation_log.md, section 18.
                 if (owner is IGamepadInputHost host)
-                    host.GamepadHelper?.SuspendInput();
+                    host.SuspendInput();
             };
 
             this.Closed += (s, e) =>
             {
                 if (owner is IGamepadInputHost closedHost)
-                    closedHost.GamepadHelper?.ResumeInput();
+                    closedHost.ResumeInput();
 
                 if (_gamepadHelper != null)
                     _gamepadHelper.GamepadModeActiveChanged -= OnGamepadModeActiveChanged;
                 _gamepadHelper?.Dispose();
                 _gamepadHelper = null;
             };
+        }
+
+        private CheckBox[] _optionBoxes = [];
+
+        /// <summary>Checked state of each option passed to <see cref="SetOptions"/>, in order.</summary>
+        public bool[] SelectedOptions => _optionBoxes.Select(b => b.IsChecked == true).ToArray();
+
+        /// <summary>
+        /// Shows a list of checkboxes below the message, each with an optional trailing badge (e.g. a
+        /// size). Confirm is disabled while none is checked. <paramref name="badgeForSelection"/> and
+        /// <paramref name="noticeForSelection"/>, when given, recompute the info pill and the notice
+        /// box on every change; returning null hides them.
+        /// </summary>
+        public void SetOptions(IReadOnlyList<(string Label, string? Badge, bool IsChecked)> options,
+            Func<bool[], string?>? badgeForSelection = null, Func<bool[], string?>? noticeForSelection = null)
+        {
+            var pnlOptions = this.FindControl<StackPanel>("PnlOptions");
+            if (pnlOptions == null) return;
+
+            _optionBoxes = options.Select(o => new CheckBox { Content = BuildOptionContent(o.Label, o.Badge), IsChecked = o.IsChecked }).ToArray();
+            pnlOptions.Children.Clear();
+            pnlOptions.Children.AddRange(_optionBoxes);
+            pnlOptions.IsVisible = _optionBoxes.Length > 0;
+
+            void Refresh()
+            {
+                var selected = SelectedOptions;
+                var btnConfirm = this.FindControl<Button>("BtnConfirm");
+                if (btnConfirm != null) btnConfirm.IsEnabled = selected.Any(s => s);
+
+                if (badgeForSelection != null)
+                {
+                    var text = badgeForSelection(selected);
+                    var txtBadge = this.FindControl<TextBlock>("TxtBadge");
+                    var badgeInfo = this.FindControl<Border>("BadgeInfo");
+                    if (txtBadge != null) txtBadge.Text = text;
+                    if (badgeInfo != null) badgeInfo.IsVisible = !string.IsNullOrEmpty(text);
+                }
+
+                if (noticeForSelection != null)
+                {
+                    var text = noticeForSelection(selected);
+                    var txtNotice = this.FindControl<TextBlock>("TxtNotice");
+                    var pnlNotice = this.FindControl<Border>("PnlNotice");
+                    if (txtNotice != null) txtNotice.Text = text;
+                    if (pnlNotice != null) pnlNotice.IsVisible = !string.IsNullOrEmpty(text);
+                }
+            }
+
+            foreach (var box in _optionBoxes)
+                box.IsCheckedChanged += (_, _) => Refresh();
+            Refresh();
+        }
+
+        private static Control BuildOptionContent(string label, string? badge)
+        {
+            var panel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8 };
+            panel.Children.Add(new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            if (!string.IsNullOrEmpty(badge))
+            {
+                panel.Children.Add(new Border
+                {
+                    Background = Application.Current?.FindResource("BrBgElevated") as IBrush,
+                    BorderBrush = Application.Current?.FindResource("BrBorderSubtle") as IBrush,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(10),
+                    Padding = new Thickness(8, 1),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    Child = new TextBlock
+                    {
+                        Text = badge,
+                        FontSize = 11,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = Application.Current?.FindResource("BrAccent") as IBrush,
+                    },
+                });
+            }
+            return panel;
         }
 
         private void InitializeComponent()
@@ -259,6 +339,35 @@ namespace OptiscalerClient.Views
             if (rootPanel != null) rootPanel.Opacity = 0;
             await Task.Delay(220);
             Close(result);
+        }
+
+        private static string Res(string key, string fallback) =>
+            Application.Current?.TryFindResource(key, out var res) == true ? res?.ToString() ?? fallback : fallback;
+
+        /// <summary>
+        /// Post-install check shared by Manage and Quick Install: if OptiScaler.ini doesn't hold what
+        /// the install wrote (GameInstallationService.VerifyIniSettings), offers to reapply it.
+        /// </summary>
+        public static async Task VerifyIniAfterInstallAsync(Window owner, string gameDir)
+        {
+            var installService = new Services.GameInstallationService();
+            var mismatches = await Task.Run(() => installService.VerifyIniSettings(gameDir));
+            if (mismatches.Count == 0) return;
+
+            var title = Res("TxtIniVerifyTitle", "Settings not applied");
+            var msg = string.Format(Res("TxtIniVerifyMsg",
+                "Some settings were not written to OptiScaler.ini as expected, so the game may run with a different configuration:\n\n{0}"),
+                string.Join("\n", mismatches.Take(15)));
+            var reapply = await new ConfirmDialog(owner, title, msg, confirmText: Res("TxtIniVerifyReapply", "Reapply")).ShowDialog<bool>(owner);
+            if (!reapply) return;
+
+            var remaining = await Task.Run(() => installService.ReapplyIniSettings(gameDir));
+            if (remaining.Count == 0) return;
+
+            var failMsg = string.Format(Res("TxtIniVerifyReapplyFailed",
+                "Some settings still could not be applied. Check that OptiScaler.ini is not read-only or open in another program:\n\n{0}"),
+                string.Join("\n", remaining.Take(15)));
+            await new ConfirmDialog(owner, title, failMsg, isAlert: true).ShowDialog<bool>(owner);
         }
     }
 }

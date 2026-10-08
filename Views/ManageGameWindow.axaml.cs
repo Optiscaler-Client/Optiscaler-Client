@@ -52,6 +52,22 @@ namespace OptiscalerClient.Views
         GamepadHelperBase? IGamepadInputHost.GamepadHelper => null;
         bool IGamepadInputHost.IsGamepadModeActive => _isControllerModeActive;
 
+        private int _gamepadInputSuspensionCount;
+
+        public void SuspendGamepadInput()
+        {
+            _gamepadInputSuspensionCount++;
+        }
+
+        public void ResumeGamepadInput()
+        {
+            _gamepadInputSuspensionCount = Math.Max(0, _gamepadInputSuspensionCount - 1);
+            _ignoreGamepadInputUntilUtc = DateTime.UtcNow.AddMilliseconds(300);
+        }
+
+        void IGamepadInputHost.SuspendInput() => SuspendGamepadInput();
+        void IGamepadInputHost.ResumeInput() => ResumeGamepadInput();
+
         private readonly Game _game;
         private readonly IGpuDetectionService? _gpuService;
         private Window? _ownerWindow;
@@ -61,7 +77,6 @@ namespace OptiscalerClient.Views
         private bool _optiShowingBeta;
         private bool _optiShowingNightly;
         private bool _optiShowingCustom;
-        private bool _optiShowingModded;
         private string? _optiVersionBeforeAutoNightlySwitch;
         private bool _optiBetaBeforeAutoNightlySwitch;
         private bool _optiCustomBeforeAutoNightlySwitch;
@@ -73,20 +88,7 @@ namespace OptiscalerClient.Views
         private readonly DlssNrOnAmdService _dlssNrService = new();
         private readonly DlssNrLinuxWrapperService _dlssNrLinuxWrapperService = new();
 
-        // Setup NR — Matheus wrapper ("Modded" channel) background download, started as soon as a
-        // version is picked in CmbOptiVersion so it's likely already on disk by the time Install runs.
-        // No service-level dedup exists for this download (unlike danielblnc's own, which has one in
-        // DlssNrOnAmdService), so it's tracked here per-window instead — only one Modded selection is
-        // ever "current" at a time for a single ManageGameWindow, so this is enough.
-        private Task<string>? _pendingModdedDownloadTask;
-        private string? _pendingModdedDownloadVersion;
-
-        // CmbOptiVersion's Tag for a Modded item is the *registered* Custom version name
-        // ("custom-amd-presr-{version}", matching ComponentManagementService.DownloadAndImportAmdWrapperVersionAsync)
-        // so the normal install pipeline — which reads CmbOptiVersion's Tag directly as optiscalerVersion —
-        // can find it like any other Custom version. This maps that registered name back to the raw
-        // GitHub release version DownloadAndImportAmdWrapperVersionAsync actually needs as input.
-        private readonly Dictionary<string, string> _moddedVersionRawByRegisteredName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly AmdNrBridgeService _amdNrBridgeService = new();
         private string? _pendingCoverPath;
         private readonly string? _originalCoverPath;
         private const string NewProfileTag = "__NEW_PROFILE__";
@@ -95,6 +97,11 @@ namespace OptiscalerClient.Views
         // "none" case relies on that). Only the daniel-only warning must not: during initial
         // population the window isn't shown yet, and ShowDialog over a non-visible owner throws.
         private bool _isPopulatingSetupNr;
+        private int _danielComboPopulateToken;
+        // Set while CmbDlssNrDanielVersion's own selection drives the (hidden) mode selector on Linux:
+        // the mode cases must not repopulate that same combo from inside its SelectionChanged —
+        // clearing its items mid-event left it empty.
+        private bool _modComboDriving;
         private string? _lastSelectedProfileName;
         private string? _defaultProfileName;
         private IGamepadDetectionService? _gamepadService;
@@ -449,6 +456,7 @@ namespace OptiscalerClient.Views
             _compatSidebarScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _compatSidebarScrollTimer.Tick += CompatSidebarScrollTimer_Tick;
 
+            InitializeCoverAmbience();
             SetupUI();
             InitializeGamepadNavigation();
 
@@ -540,7 +548,9 @@ namespace OptiscalerClient.Views
 
             Dispatcher.UIThread.Post(() =>
             {
-                if (!IsActive) return;
+                if (!IsVisible) return;
+                if (_gamepadInputSuspensionCount > 0) return;
+                if (OwnedWindows.Count > 0) return;
                 if (DateTime.UtcNow < _ignoreGamepadInputUntilUtc) return;
 
                 SetControllerModeActive(true);
@@ -584,10 +594,31 @@ namespace OptiscalerClient.Views
             });
         }
 
+        private Point? _lastPointerPositionForModeDetection;
+
         private void ManageGameWindow_PointerMoved(object? sender, PointerEventArgs e)
         {
-            if (!_isControllerModeActive) return;
+            var position = e.GetPosition(this);
 
+            if (!_isControllerModeActive)
+            {
+                _lastPointerPositionForModeDetection = position;
+                return;
+            }
+
+            // Avalonia raises synthetic PointerMoved events on layout changes or popups.
+            // Only genuine mouse movement should switch to mouse mode.
+            if (_lastPointerPositionForModeDetection is { } last)
+            {
+                var delta = position - last;
+                if (Math.Abs(delta.X) < 1.0 && Math.Abs(delta.Y) < 1.0)
+                {
+                    _lastPointerPositionForModeDetection = position;
+                    return;
+                }
+            }
+
+            _lastPointerPositionForModeDetection = position;
             SetControllerModeActive(false);
             TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
         }
@@ -597,7 +628,7 @@ namespace OptiscalerClient.Views
             if (_isControllerModeActive == active) return;
             _isControllerModeActive = active;
 
-            var txtX = this.FindControl<TextBlock>("TxtCloseIconX");
+            var txtX = this.FindControl<Control>("TxtCloseIconX");
             var badgeB = this.FindControl<Border>("BadgeCloseGamepadB");
             if (txtX != null) txtX.IsVisible = !active;
             if (badgeB != null) badgeB.IsVisible = active;
@@ -671,10 +702,9 @@ namespace OptiscalerClient.Views
             var currentNode = ResolveFocusedNode(focused, nodes);
             if (currentNode == null)
             {
-                var first = nodes
-                    .OrderBy(n => n.Row)
-                    .ThenBy(n => n.Col)
-                    .First();
+                var first = nodes.FirstOrDefault(n => n.Name == "BtnOptiStable")
+                         ?? nodes.FirstOrDefault(n => n.Name == "CmbOptiVersion")
+                         ?? nodes.OrderBy(n => n.Row).ThenBy(n => n.Col).First();
                 FocusControl(first.Control);
                 return true;
             }
@@ -690,30 +720,58 @@ namespace OptiscalerClient.Views
         {
             var nodes = new List<NavigationNode>();
 
-            AddRootNode(nodes, "BtnEditImage", 1, 1);
-            AddRootNode(nodes, "BtnOptiStable", 1, 2);
-            AddRootNode(nodes, "BtnOptiBeta", 1, 3);
-            AddRootNode(nodes, "BtnOptiNightly", 1, 4);
-            AddRootNode(nodes, "BtnClose", 1, 5);
+            // Row 0: Tabs & Titlebar buttons
+            AddRootNode(nodes, "BtnEditImage", 0, 0);
+            AddRootNode(nodes, "BtnOptiStable", 0, 1);
+            AddRootNode(nodes, "BtnOptiBeta", 0, 2);
+            AddRootNode(nodes, "BtnOptiNightly", 0, 3);
+            AddRootNode(nodes, "BtnOptiCustom", 0, 3);
+            AddRootNode(nodes, "BtnExtrasInt8", 0, 4);
+            AddRootNode(nodes, "BtnExtrasFp8", 0, 5);
+            AddRootNode(nodes, "BtnClose", 0, 7);
 
-            AddRootNode(nodes, "BtnEditTitle", 2, 1);
-            AddRootNode(nodes, "CmbOptiVersion", 2, 2);
-            AddRootNode(nodes, "CmbExtrasVersion", 2, 4);
-            AddRootNode(nodes, "CmbFakenvapiVersion", 2, 5);
+            // Row 1: OptiScaler / FSR 4 Swap / Injection
+            AddRootNode(nodes, "BtnEditTitle", 1, 0);
+            AddRootNode(nodes, "CmbOptiVersion", 1, 2);
+            AddRootNode(nodes, "CmbExtrasVersion", 1, 4);
+            AddRootNode(nodes, "CmbInjectionMethod", 1, 6);
+            AddRootNode(nodes, "CmbFakenvapiVersion", 1, 6);
 
-            AddRootNode(nodes, "CmbInjectionMethod", 3, 3);
-            AddRootNode(nodes, "CmbOptiPatcherVersion", 3, 4);
-            AddRootNode(nodes, "CmbNukemFGVersion", 3, 5);
+            // Row 2: OptiPatcher / Output Upscaler / Upscaling Quality
+            AddRootNode(nodes, "CmbOptiPatcherVersion", 2, 2);
+            AddRootNode(nodes, "CmbOutputUpscaler", 2, 4);
+            AddRootNode(nodes, "CmbUpscalingQuality", 2, 6);
+            AddRootNode(nodes, "CmbNukemFGVersion", 2, 6);
 
-            AddRootNode(nodes, "CmbProfile", 4, 3);
-            AddRootNode(nodes, "BtnFrameGeneration", 4, 4);
-            AddRootNode(nodes, "CmbUpscalingQuality", 4, 5);
-            AddRootNode(nodes, "BtnUninstall", 5, 5);
+            // Row 3: Frame Generation / Profile / Spoofing
+            AddRootNode(nodes, "BtnFrameGeneration", 3, 2);
+            AddRootNode(nodes, "CmbProfile", 3, 4);
+            AddRootNode(nodes, "CmbSpoofing", 3, 6);
 
-            AddRootNode(nodes, "BtnOpenFolder", 6, 1);
-            AddRootNode(nodes, "BtnFolderCleanup", 6, 3);
+            // Row 4: Experimental zone
+            AddRootNode(nodes, "CmbRenodxVersion", 4, 2);
+            bool isSetupNrVisible = this.FindControl<Control>("PanelDlssNrOnAmd")?.IsVisible == true;
+            if (isSetupNrVisible)
+            {
+                AddRootNode(nodes, "CmbSetupNr", 4, 4);
+                AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 6);
+            }
+            else
+            {
+                // Linux: CmbDlssNrDanielVersion is moved to Column 1 (middle, under Profile)
+                AddRootNode(nodes, "CmbDlssNrDanielVersion", 4, 4);
+            }
+            AddRootNode(nodes, "CmbAmdNrBridgeVersion", 4, 6);
+            AddDlssgSm86NavigationNodes(nodes);
+
+            // Row 5: Uninstall
+            AddRootNode(nodes, "BtnUninstall", 5, 6);
+
+            // Row 6: Bottom actions
+            AddRootNode(nodes, "BtnOpenFolder", 6, 0);
+            AddRootNode(nodes, "BtnFolderCleanup", 6, 2);
             AddRootNode(nodes, "BtnInstallManual", 6, 4);
-            AddRootNode(nodes, "BtnInstall", 6, 5);
+            AddRootNode(nodes, "BtnInstall", 6, 6);
 
             return nodes;
         }
@@ -759,9 +817,10 @@ namespace OptiscalerClient.Views
                 if (ReferenceEquals(candidate.Control, current.Control))
                     continue;
 
-                if (IsOptiTabButton(candidate.Name)
-                    && !IsOptiTabButton(current.Name)
-                    && !string.Equals(current.Name, "CmbOptiVersion", StringComparison.Ordinal))
+                if (IsTabButton(candidate.Name)
+                    && !IsTabButton(current.Name)
+                    && !string.Equals(current.Name, "CmbOptiVersion", StringComparison.Ordinal)
+                    && !string.Equals(current.Name, "CmbExtrasVersion", StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -813,7 +872,15 @@ namespace OptiscalerClient.Views
         {
             return string.Equals(controlName, "BtnOptiStable", StringComparison.Ordinal)
                    || string.Equals(controlName, "BtnOptiBeta", StringComparison.Ordinal)
-                   || string.Equals(controlName, "BtnOptiNightly", StringComparison.Ordinal);
+                   || string.Equals(controlName, "BtnOptiNightly", StringComparison.Ordinal)
+                   || string.Equals(controlName, "BtnOptiCustom", StringComparison.Ordinal);
+        }
+
+        private static bool IsTabButton(string controlName)
+        {
+            return IsOptiTabButton(controlName)
+                   || string.Equals(controlName, "BtnExtrasInt8", StringComparison.Ordinal)
+                   || string.Equals(controlName, "BtnExtrasFp8", StringComparison.Ordinal);
         }
 
         private IEnumerable<string> GetRootNeighborCandidates(string currentName, NavigationDirection direction)
@@ -826,78 +893,163 @@ namespace OptiscalerClient.Views
                     return new[] { preferred };
             }
 
+            bool isSetupNrVisible = this.FindControl<Control>("PanelDlssNrOnAmd")?.IsVisible == true;
+
+            if (GetDlssgSm86NeighborCandidates(currentName, direction) is { } dlssgSm86Candidates)
+                return dlssgSm86Candidates;
+
             return (currentName, direction) switch
             {
+                // Left Column
+                ("BtnEditImage", NavigationDirection.Down) => new[] { "BtnEditTitle" },
+                ("BtnEditImage", NavigationDirection.Right) => new[] { "BtnOptiStable", "CmbOptiVersion" },
+
+                ("BtnEditTitle", NavigationDirection.Up) => new[] { "BtnEditImage" },
                 ("BtnEditTitle", NavigationDirection.Down) => new[] { "BtnOpenFolder" },
+                ("BtnEditTitle", NavigationDirection.Right) => new[] { "CmbOptiVersion", "CmbOptiPatcherVersion" },
 
-                ("CmbOptiVersion", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
-                ("CmbOptiVersion", NavigationDirection.Left) => new[] { "BtnEditTitle" },
-                ("CmbOptiVersion", NavigationDirection.Down) => new[] { "CmbInjectionMethod", "CmbProfile" },
+                ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
+                ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup", "BtnFrameGeneration" },
 
+                // Top Tabs
+                ("BtnOptiStable", NavigationDirection.Left) => new[] { "BtnEditImage" },
+                ("BtnOptiStable", NavigationDirection.Right) => new[] { "BtnOptiBeta", "BtnOptiNightly", "BtnExtrasInt8" },
                 ("BtnOptiStable", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
-                ("BtnOptiStable", NavigationDirection.Right) => new[] { "BtnOptiBeta", "BtnOptiNightly", "CmbExtrasVersion" },
 
                 ("BtnOptiBeta", NavigationDirection.Left) => new[] { "BtnOptiStable" },
-                ("BtnOptiBeta", NavigationDirection.Right) => new[] { "BtnOptiNightly", "CmbExtrasVersion" },
+                ("BtnOptiBeta", NavigationDirection.Right) => new[] { "BtnOptiNightly", "BtnExtrasInt8" },
                 ("BtnOptiBeta", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
 
                 ("BtnOptiNightly", NavigationDirection.Left) => new[] { "BtnOptiBeta", "BtnOptiStable" },
-                ("BtnOptiNightly", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("BtnOptiNightly", NavigationDirection.Right) => new[] { "BtnExtrasInt8", "BtnExtrasFp8", "CmbInjectionMethod" },
                 ("BtnOptiNightly", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
 
+                ("BtnOptiCustom", NavigationDirection.Left) => new[] { "BtnOptiNightly", "BtnOptiBeta" },
+                ("BtnOptiCustom", NavigationDirection.Right) => new[] { "BtnExtrasInt8" },
+                ("BtnOptiCustom", NavigationDirection.Down) => new[] { "CmbOptiVersion" },
+
+                ("BtnExtrasInt8", NavigationDirection.Left) => new[] { "BtnOptiNightly", "BtnOptiBeta", "BtnOptiStable" },
+                ("BtnExtrasInt8", NavigationDirection.Right) => new[] { "BtnExtrasFp8", "CmbInjectionMethod", "BtnClose" },
+                ("BtnExtrasInt8", NavigationDirection.Down) => new[] { "CmbExtrasVersion" },
+
+                ("BtnExtrasFp8", NavigationDirection.Left) => new[] { "BtnExtrasInt8" },
+                ("BtnExtrasFp8", NavigationDirection.Right) => new[] { "CmbInjectionMethod", "BtnClose" },
+                ("BtnExtrasFp8", NavigationDirection.Down) => new[] { "CmbExtrasVersion" },
+
+                ("BtnClose", NavigationDirection.Left) => new[] { "BtnExtrasFp8", "BtnExtrasInt8", "BtnOptiNightly" },
+                ("BtnClose", NavigationDirection.Down) => new[] { "CmbInjectionMethod", "CmbUpscalingQuality" },
+
+                // Row 1: OptiScaler / FSR 4 Swap / Injection
+                ("CmbOptiVersion", NavigationDirection.Left) => new[] { "BtnEditTitle", "BtnEditImage" },
+                ("CmbOptiVersion", NavigationDirection.Right) => new[] { "CmbExtrasVersion" },
+                ("CmbOptiVersion", NavigationDirection.Down) => new[] { "CmbOptiPatcherVersion" },
+
+                ("CmbExtrasVersion", NavigationDirection.Up) => new[] { "BtnExtrasInt8", "BtnExtrasFp8" },
                 ("CmbExtrasVersion", NavigationDirection.Left) => new[] { "CmbOptiVersion" },
-                ("CmbExtrasVersion", NavigationDirection.Up) => new[] { "BtnOptiNightly", "BtnOptiBeta", "BtnOptiStable" },
-                ("CmbExtrasVersion", NavigationDirection.Right) => new[] { "CmbFakenvapiVersion" },
-                ("CmbExtrasVersion", NavigationDirection.Down) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Right) => new[] { "CmbInjectionMethod", "CmbFakenvapiVersion" },
+                ("CmbExtrasVersion", NavigationDirection.Down) => new[] { "CmbOutputUpscaler" },
+
+                ("CmbInjectionMethod", NavigationDirection.Up) => new[] { "BtnExtrasFp8", "BtnExtrasInt8", "BtnClose" },
+                ("CmbInjectionMethod", NavigationDirection.Left) => new[] { "CmbExtrasVersion" },
+                ("CmbInjectionMethod", NavigationDirection.Right) => new[] { "BtnClose" },
+                ("CmbInjectionMethod", NavigationDirection.Down) => new[] { "CmbUpscalingQuality" },
 
                 ("CmbFakenvapiVersion", NavigationDirection.Left) => new[] { "CmbExtrasVersion" },
-                ("CmbFakenvapiVersion", NavigationDirection.Down) => new[] { "CmbNukemFGVersion", "BtnInstall" },
+                ("CmbFakenvapiVersion", NavigationDirection.Down) => new[] { "CmbNukemFGVersion", "CmbUpscalingQuality" },
 
-                ("CmbInjectionMethod", NavigationDirection.Up) => new[] { "CmbOptiVersion" },
-                ("CmbInjectionMethod", NavigationDirection.Down) => new[] { "CmbProfile", "BtnFolderCleanup" },
-                ("CmbInjectionMethod", NavigationDirection.Right) => new[] { "CmbOptiPatcherVersion" },
-                ("CmbInjectionMethod", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                // Row 2: OptiPatcher / Output Upscaler / Upscaling Quality
+                ("CmbOptiPatcherVersion", NavigationDirection.Up) => new[] { "CmbOptiVersion" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Right) => new[] { "CmbOutputUpscaler" },
+                ("CmbOptiPatcherVersion", NavigationDirection.Down) => new[] { "BtnFrameGeneration" },
 
-                ("CmbOptiPatcherVersion", NavigationDirection.Left) => new[] { "CmbInjectionMethod" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Right) => new[] { "CmbNukemFGVersion" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Up) => new[] { "CmbExtrasVersion" },
-                ("CmbOptiPatcherVersion", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnFolderCleanup" },
+                ("CmbOutputUpscaler", NavigationDirection.Up) => new[] { "CmbExtrasVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Left) => new[] { "CmbOptiPatcherVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Right) => new[] { "CmbUpscalingQuality", "CmbNukemFGVersion" },
+                ("CmbOutputUpscaler", NavigationDirection.Down) => new[] { "CmbProfile" },
 
+                ("CmbUpscalingQuality", NavigationDirection.Up) => new[] { "CmbInjectionMethod", "CmbNukemFGVersion" },
+                ("CmbUpscalingQuality", NavigationDirection.Left) => new[] { "CmbOutputUpscaler" },
+                ("CmbUpscalingQuality", NavigationDirection.Down) => new[] { "CmbSpoofing" },
+
+                ("CmbNukemFGVersion", NavigationDirection.Up) => new[] { "CmbFakenvapiVersion", "CmbInjectionMethod" },
                 ("CmbNukemFGVersion", NavigationDirection.Left) => new[] { "CmbOptiPatcherVersion" },
-                ("CmbNukemFGVersion", NavigationDirection.Up) => new[] { "CmbFakenvapiVersion" },
-                ("CmbNukemFGVersion", NavigationDirection.Down) => new[] { "BtnInstall", "BtnInstallManual" },
+                ("CmbNukemFGVersion", NavigationDirection.Right) => new[] { "CmbUpscalingQuality" },
+                ("CmbNukemFGVersion", NavigationDirection.Down) => new[] { "CmbSpoofing" },
 
-                ("CmbProfile", NavigationDirection.Up) => new[] { "CmbInjectionMethod" },
-                ("CmbProfile", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
-                ("CmbProfile", NavigationDirection.Right) => new[] { "BtnFrameGeneration" },
-                ("CmbProfile", NavigationDirection.Left) => new[] { "BtnEditTitle" },
+                // Row 3: Frame Generation / Profile / Spoofing
+                ("BtnFrameGeneration", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion" },
+                ("BtnFrameGeneration", NavigationDirection.Left) => new[] { "BtnEditTitle", "BtnOpenFolder" },
+                ("BtnFrameGeneration", NavigationDirection.Right) => new[] { "CmbProfile" },
+                ("BtnFrameGeneration", NavigationDirection.Down) => new[] { "CmbRenodxVersion", "BtnFolderCleanup" },
 
-                ("BtnFrameGeneration", NavigationDirection.Left) => new[] { "CmbProfile" },
-                ("BtnFrameGeneration", NavigationDirection.Right) => new[] { "CmbUpscalingQuality" },
-                ("BtnFrameGeneration", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion", "CmbNukemFGVersion" },
-                ("BtnFrameGeneration", NavigationDirection.Down) => new[] { "BtnInstallManual", "BtnInstall" },
+                ("CmbProfile", NavigationDirection.Up) => new[] { "CmbOutputUpscaler" },
+                ("CmbProfile", NavigationDirection.Left) => new[] { "BtnFrameGeneration" },
+                ("CmbProfile", NavigationDirection.Right) => new[] { "CmbSpoofing" },
+                ("CmbProfile", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr", "BtnInstallManual" }
+                    : new[] { "CmbDlssNrDanielVersion", "BtnInstallManual" },
 
-                ("CmbUpscalingQuality", NavigationDirection.Left) => new[] { "BtnFrameGeneration" },
-                ("CmbUpscalingQuality", NavigationDirection.Up) => new[] { "CmbNukemFGVersion", "CmbFakenvapiVersion" },
-                ("CmbUpscalingQuality", NavigationDirection.Down) => new[] { "BtnUninstall", "BtnInstall" },
+                ("CmbSpoofing", NavigationDirection.Up) => new[] { "CmbUpscalingQuality" },
+                ("CmbSpoofing", NavigationDirection.Left) => new[] { "CmbProfile" },
+                ("CmbSpoofing", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbDlssNrDanielVersion", "CmbSetupNr", "BtnUninstall", "BtnInstall" }
+                    : new[] { "BtnUninstall", "BtnInstall" },
 
-                ("BtnUninstall", NavigationDirection.Left) => new[] { "CmbUpscalingQuality", "BtnFrameGeneration", "CmbProfile" },
+                // Row 4: Experimental Zone
+                ("CmbRenodxVersion", NavigationDirection.Up) => new[] { "BtnFrameGeneration" },
+                ("CmbRenodxVersion", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
+                ("CmbRenodxVersion", NavigationDirection.Right) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbDlssNrDanielVersion" },
+                ("CmbRenodxVersion", NavigationDirection.Down) => new[] { "BtnFolderCleanup" },
+
+                ("CmbSetupNr", NavigationDirection.Up) => new[] { "CmbProfile" },
+                ("CmbSetupNr", NavigationDirection.Left) => new[] { "CmbRenodxVersion" },
+                ("CmbSetupNr", NavigationDirection.Right) => new[] { "CmbDlssNrDanielVersion", "BtnUninstall", "BtnInstall" },
+                ("CmbSetupNr", NavigationDirection.Down) => new[] { "BtnInstallManual" },
+
+                ("CmbDlssNrDanielVersion", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbSpoofing" }
+                    : new[] { "CmbProfile" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbRenodxVersion" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Right) => new[] { "BtnUninstall", "BtnInstall" },
+                ("CmbDlssNrDanielVersion", NavigationDirection.Down) => isSetupNrVisible
+                    ? new[] { "CmbAmdNrBridgeVersion", "BtnUninstall", "BtnInstall" }
+                    : new[] { "BtnInstallManual" },
+
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Up) => new[] { "CmbDlssNrDanielVersion", "CmbSpoofing" },
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr" }
+                    : new[] { "CmbDlssNrDanielVersion" },
+                ("CmbAmdNrBridgeVersion", NavigationDirection.Down) => new[] { "BtnUninstall", "BtnInstall" },
+
+                // Row 5: Uninstall
+                ("BtnUninstall", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" }
+                    : new[] { "CmbSpoofing", "CmbDlssNrDanielVersion" },
+                ("BtnUninstall", NavigationDirection.Left) => isSetupNrVisible
+                    ? new[] { "BtnInstallManual", "BtnFolderCleanup" }
+                    : new[] { "CmbDlssNrDanielVersion", "BtnInstallManual", "BtnFolderCleanup" },
                 ("BtnUninstall", NavigationDirection.Down) => new[] { "BtnInstall" },
-                ("BtnUninstall", NavigationDirection.Up) => new[] { "BtnFrameGeneration", "CmbNukemFGVersion" },
 
-                ("BtnOpenFolder", NavigationDirection.Up) => new[] { "BtnEditTitle" },
-                ("BtnOpenFolder", NavigationDirection.Right) => new[] { "BtnFolderCleanup" },
-
+                // Row 6: Bottom Actions
+                ("BtnFolderCleanup", NavigationDirection.Up) => new[] { "CmbRenodxVersion", "BtnFrameGeneration" },
                 ("BtnFolderCleanup", NavigationDirection.Left) => new[] { "BtnOpenFolder" },
                 ("BtnFolderCleanup", NavigationDirection.Right) => new[] { "BtnInstallManual" },
-                ("BtnFolderCleanup", NavigationDirection.Up) => new[] { "CmbProfile", "CmbInjectionMethod" },
 
+                ("BtnInstallManual", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "CmbSetupNr", "CmbProfile" }
+                    : new[] { "CmbDlssNrDanielVersion", "CmbProfile" },
                 ("BtnInstallManual", NavigationDirection.Left) => new[] { "BtnFolderCleanup" },
                 ("BtnInstallManual", NavigationDirection.Right) => new[] { "BtnInstall" },
-                ("BtnInstallManual", NavigationDirection.Up) => new[] { "CmbOptiPatcherVersion" },
 
+                ("BtnInstall", NavigationDirection.Up) => isSetupNrVisible
+                    ? new[] { "BtnUninstall", "CmbAmdNrBridgeVersion", "CmbDlssNrDanielVersion", "CmbSpoofing" }
+                    : new[] { "BtnUninstall", "CmbSpoofing", "CmbDlssNrDanielVersion" },
                 ("BtnInstall", NavigationDirection.Left) => new[] { "BtnInstallManual" },
-                ("BtnInstall", NavigationDirection.Up) => new[] { "BtnUninstall", "CmbNukemFGVersion" },
 
                 _ => Array.Empty<string>()
             };
@@ -1032,6 +1184,19 @@ namespace OptiscalerClient.Views
 
         private void FocusFirstActiveElement()
         {
+            if (!IsAnyModalVisible())
+            {
+                var nodes = GetRootNavigationNodes();
+                var preferred = nodes.FirstOrDefault(n => n.Name == "BtnOptiStable")
+                             ?? nodes.FirstOrDefault(n => n.Name == "CmbOptiVersion")
+                             ?? nodes.OrderBy(n => n.Row).ThenBy(n => n.Col).FirstOrDefault();
+                if (preferred != null)
+                {
+                    FocusControl(preferred.Control);
+                    return;
+                }
+            }
+
             var focusables = GetFocusableElementsInActiveSurface();
             if (focusables.Count == 0) return;
             FocusControl(focusables[0]);
@@ -1365,16 +1530,8 @@ namespace OptiscalerClient.Views
                 _optiTabInitialized = true;
             }
 
-            // Skipped while the "Modded" channel is active: this method (and PopulateVersionSelectors
-            // as a whole) runs twice per LoadVersionsAsync, and on the second pass CmbSetupNr's tag is
-            // already selected so SelectCmbSetupNrTag below is a no-op that won't re-trigger
-            // PopulateModdedVersionComboAsync — populating the Stable/Beta/Nightly/Custom list here
-            // unconditionally would silently stomp the Modded list it had just set.
-            if (!_optiShowingModded)
-            {
-                UpdateOptiChannelButtons();
-                PopulateOptiVersionCombo(componentService);
-            }
+            UpdateOptiChannelButtons();
+            PopulateOptiVersionCombo(componentService);
 
             // ── Populate FSR 4 Swap Extras selector ────────────────────────────
             PopulateExtrasComboBox(componentService);
@@ -1394,8 +1551,11 @@ namespace OptiscalerClient.Views
             if (experimentalZone != null) experimentalZone.IsVisible = showExperimental;
             var experimentalChip = this.FindControl<Control>("BorderExperimentalChip");
             if (experimentalChip != null) experimentalChip.IsVisible = showExperimental;
+            var gridExperimentalZone = this.FindControl<Grid>("GridExperimentalZone");
+            if (gridExperimentalZone != null) gridExperimentalZone.IsVisible = showExperimental;
             if (showExperimental)
                 PopulateRenodxComboBox(componentService);
+            _ = PopulateDlssgSm86Async(componentService);
 
             // "Setup NR" — on Linux this runs guentra/DLSS-NR-on-AMD-Linux (an unofficial third-party
             // fork) instead of danielblnc's own installer directly, since the mod's HIP-based GPU
@@ -1432,14 +1592,24 @@ namespace OptiscalerClient.Views
             // is a hook-chain incompatibility between two closed-source DLLs, not something this app
             // can patch around. IsEnabled locked rather than removed from Items so a game that already
             // has this mode installed/pending from before still shows and can still be uninstalled.
-            var cmbSetupNrModeBLock = cmbSetupNrLabel?.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == "daniel-and-opti");
-            if (cmbSetupNrModeBLock != null)
-            {
-                cmbSetupNrModeBLock.IsEnabled = OperatingSystem.IsWindows();
-                ToolTip.SetTip(cmbSetupNrModeBLock, OperatingSystem.IsWindows() ? null : GetResourceString(
-                    "TxtSetupNrDanielAndOptiLinuxBrokenTooltip",
-                    "Not available on Linux at the moment."));
-            }
+            // Linux: no mode selector at all — the mod's version combo is the whole control ("None"
+            // or a version), and OptiScaler's own version combo decides whether OptiScaler goes in
+            // alongside it ("None" there = mod only). Confirmed on Cyberpunk 2077 + Proton-CachyOS
+            // with bulacha3's fork that both run and open their menus together. CmbSetupNr stays as
+            // the hidden carrier of the internal mode so the shared install/uninstall flow still works.
+            // Windows works the same way, except a picked version always means "daniel-only" (the mod
+            // and OptiScaler conflict there, so OptiScaler stays locked) — PanelDanielWithOptiInfo
+            // points at 3zwr1's project for running both.
+            if (dlssNrPanel != null) dlssNrPanel.IsVisible = false;
+            if (dlssNrDanielPanel != null) Grid.SetColumn(dlssNrDanielPanel, 1);
+            if (this.FindControl<TextBlock>("TxtDlssNrDanielVersionLbl") is { } modLbl)
+                modLbl.Text = GetResourceString("TxtSetupNrLinuxModLbl", "Neural Rendering (AMD) — danielblnc mod");
+            if (this.FindControl<Border>("BdDlssNrDanielVersionHelp") is { } modHelp)
+                ToolTip.SetTip(modHelp, OperatingSystem.IsWindows()
+                    ? GetResourceString("TxtSetupNrWindowsModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs. Pick a version to install it; OptiScaler's options stay locked while it is selected, since the two conflict on Windows. \"None\" here removes the mod.")
+                    : GetResourceString("TxtSetupNrLinuxModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs, installed through bulacha3's Linux fork. Pick a version to install it together with the OptiScaler version selected above; set OptiScaler to \"None\" to install only the mod. \"None\" here removes the mod."));
 
             // The mod itself only targets AMD GPUs — stays visible (rather than hidden) so an already
             // pending/installed selection isn't yanked out from under the user (e.g. after swapping to
@@ -1476,9 +1646,14 @@ namespace OptiscalerClient.Views
                 : ((showExperimental ? _game.PendingDlssNrOnAmdMode : null)
                     ?? (setupNrGpuOk && showExperimental ? componentService.Config.DefaultDlssNrOnAmdMode : null)
                     ?? "none");
+            if (!_game.IsDlssNrOnAmdInstalled && !AmdNrBridgeService.IsModeOffered(targetSetupNrTag)) targetSetupNrTag = "none";
             _isPopulatingSetupNr = true;
             try { SelectCmbSetupNrTag(targetSetupNrTag); }
             finally { _isPopulatingSetupNr = false; }
+            // Linux: the mod combo is always live (it carries "None"), not only once a mode is chosen —
+            // the mode cases above already fill it, "none" doesn't (and re-selecting an unchanged tag
+            // fires nothing).
+            if (showExperimental && targetSetupNrTag == "none") _ = PopulateDlssNrDanielVersionComboAsync();
 
             // This is the point where all five "hard" combos (OptiVersion/Extras/OptiPatcher/
             // NukemFG/Fakenvapi) have real selections for the first time — LoadVersionsAsync runs
@@ -2216,19 +2391,29 @@ namespace OptiscalerClient.Views
             cmb.SelectedIndex = targetIndex;
         }
 
-        private void CheckIfAntiCheat()
-        {
-            const string anticheatName = "start_protected_game.exe";
-            var anticheatPanel = this.FindControl<Border>("EasyAntiCheat");
+        private bool _antiCheatFound;
 
-            bool antiCheatFound = !string.IsNullOrEmpty(_game?.InstallPath) &&
-                         File.Exists(System.IO.Path.Combine(_game.InstallPath, anticheatName));
+        private async void CheckIfAntiCheat()
+        {
+            var installPath = _game?.InstallPath;
+            _antiCheatFound = await Task.Run(() => AntiCheatHelper.IsPresent(installPath));
+            var anticheatPanel = this.FindControl<Border>("EasyAntiCheat");
 
             if (anticheatPanel != null)
             {
-                anticheatPanel.IsVisible = antiCheatFound;
-                anticheatPanel.IsEnabled = antiCheatFound;
+                anticheatPanel.IsVisible = _antiCheatFound;
+                anticheatPanel.IsEnabled = _antiCheatFound;
             }
+        }
+
+        /// <summary>True when there's no anti-cheat, or the user explicitly accepted the ban risk.</summary>
+        private async Task<bool> ConfirmAntiCheatRiskAsync()
+        {
+            if (!_antiCheatFound) return true;
+            var msg = string.Format(GetResourceString("TxtAntiCheatConfirmMsg",
+                "{0} uses anti-cheat protection.\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes. Only continue if you play offline or the game officially allows it.\n\nInstall anyway?"), _game.Name);
+            return await new ConfirmDialog(this, GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"), msg,
+                confirmText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway")).ShowDialog<bool>(this);
         }
 
         private void UpdateCheckboxStatesForVersion(ComboBox? cmb)
@@ -2243,10 +2428,7 @@ namespace OptiscalerClient.Views
             // Stable/Beta 0.9+ bundle both components. Nightly resolves Fakenvapi automatically
             // per game when fakenvapi.dll is absent, so its manual selector remains disabled.
             // "None" means no OptiScaler install at all, so neither component applies either.
-            // Modded ("Mod + OptiScaler") always bundles its own dependencies too — its version tag
-            // ("custom-amd-presr-...") never parses as >= 0.9, so without this it fell through to
-            // the manual-selector case, the same as an actual pre-0.9/Custom build.
-            bool includedInPackage = _optiShowingModded || (!isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9));
+            bool includedInPackage = !isNightly && IsVersionGreaterOrEqual(selectedTag, 0, 9);
             bool disableFakenvapi = isNightly || includedInPackage || isNone;
             bool disableNukemFG = isNightly || includedInPackage || isNone;
 
@@ -2277,8 +2459,18 @@ namespace OptiscalerClient.Views
             bool danielModOnlyInstalledForPanels = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
             bool danielOnlyPendingForPanels = !danielModOnlyInstalledForPanels && _game.PendingDlssNrOnAmdMode == "daniel-only";
             bool danielOnlyActive = danielModOnlyInstalledForPanels || danielOnlyPendingForPanels;
-            if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !_optiShowingModded && !isNone;
-            if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = !danielOnlyActive && _optiShowingModded;
+            // "Mod + OptiScaler" shows the AMD-NR-bridge notes (FSR upscaler, FG limits) instead.
+            bool bridgeModeActive = !danielOnlyActive && IsAmdNrBridgeModeActive();
+            // A "Mod + OptiScaler" install made with the discontinued MatheusGViana wrapper build:
+            // the same panel explains that reinstalling moves it to the official build + bridge.
+            if (this.FindControl<TextBlock>("TxtAmdNrBridgeInfo") is { } bridgeInfo)
+                bridgeInfo.Text = IsLegacyWrapperInstall()
+                    ? GetResourceString("TxtSetupNrLegacyWrapperInfo", "This game uses the discontinued MatheusGViana OptiScaler build. Reinstall to switch it to the selected official OptiScaler version with AMD-NR-bridge.")
+                    : GetResourceString("TxtSetupNrBridgeInfo", "Uses GoldenNights' AMD-NR-bridge (third-party) on top of the selected official OptiScaler version.");
+            // Linux with a mod version picked: the "mod + OptiScaler" note takes the swap hint's place.
+            bool linuxNrInfoShown = UpdateLinuxNrInfo();
+            if (swapOnlyHintPanel != null) swapOnlyHintPanel.IsVisible = !danielOnlyActive && !bridgeModeActive && !isNone && !linuxNrInfoShown;
+            if (moddedWarningPanel != null) moddedWarningPanel.IsVisible = bridgeModeActive;
             SetDanielOnlyDx12InfoVisible(danielOnlyActive);
 
             if (disableFakenvapi)
@@ -2531,13 +2723,14 @@ namespace OptiscalerClient.Views
             var upscalingQuality = this.FindControl<StackPanel>("PanelUpscalingQuality");
             var outputUpscaler = this.FindControl<StackPanel>("PanelOutputUpscaler");
             var spoofingHost = this.FindControl<StackPanel>("PanelSpoofingHost");
-            var injectionLabel = this.FindControl<TextBlock>("LblInjectionMethod");
+            var injectionLabel = this.FindControl<StackPanel>("LblInjectionMethod");
 
             if (opti == null || extras == null || injection == null || patcher == null
                 || profile == null || frameGeneration == null || upscalingQuality == null
                 || outputUpscaler == null || spoofingHost == null)
                 return;
 
+            int optionRowCount;
             if (useCompactLayout)
             {
                 // Opti / FSR4 / injection, then patcher / Output Upscaler / Quality, then Frame
@@ -2552,17 +2745,14 @@ namespace OptiscalerClient.Views
                     Grid.SetRow(ordered[i], i / cols);
                     Grid.SetColumn(ordered[i], i % cols);
                 }
+                optionRowCount = (ordered.Count + cols - 1) / cols;
             }
             else
             {
                 // Fakenvapi and/or NukemFG selectors are visible (pre-0.9/Custom OptiScaler builds),
                 // which is one or two extra panels than the compact case has room for in 3 rows (up
                 // to 11 total incl. Spoofing). Lay them out in a fixed logical order instead of
-                // hand-picking (row, col) per panel — wrap to a new row every 3 — so it can never
-                // again silently run out of cells the way it did when Output Upscaler landed on top
-                // of the Uninstall row and Spoofing got squeezed into Profile's column. 6 options
-                // rows are reserved in the grid (see the .axaml RowDefinitions): ceil(11/3) = 4 rows
-                // at 3 columns, ceil(11/2) = 6 at 2, so it always fits.
+                // hand-picking (row, col) per panel — wrap to a new row every 3.
                 var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
                 var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
                 var ordered = new List<StackPanel> { opti, extras };
@@ -2581,6 +2771,35 @@ namespace OptiscalerClient.Views
                     Grid.SetRow(ordered[i], i / cols);
                     Grid.SetColumn(ordered[i], i % cols);
                 }
+                optionRowCount = (ordered.Count + cols - 1) / cols;
+            }
+
+            var optionsGrid = this.FindControl<Grid>("GridInstallOptions");
+            var experimentalZone = this.FindControl<Grid>("GridExperimentalZone");
+            var uninstallBtn = this.FindControl<Button>("BtnUninstall");
+
+            int nextRow = optionRowCount;
+            bool isExperimentalVisible = experimentalZone is { IsVisible: true };
+
+            if (experimentalZone != null)
+            {
+                Grid.SetRow(experimentalZone, nextRow);
+                Grid.SetColumn(experimentalZone, 0);
+                Grid.SetColumnSpan(experimentalZone, cols);
+                if (isExperimentalVisible)
+                    nextRow++;
+            }
+
+            if (uninstallBtn != null)
+            {
+                Grid.SetRow(uninstallBtn, nextRow);
+                Grid.SetColumn(uninstallBtn, cols - 1);
+                nextRow++;
+            }
+
+            if (optionsGrid != null)
+            {
+                optionsGrid.RowDefinitions = new RowDefinitions(string.Join(",", Enumerable.Repeat("Auto", nextRow)));
             }
 
             // Pushes the injection combo down to line up with the Opti/FSR4 combos (which have a tab
@@ -3115,6 +3334,13 @@ namespace OptiscalerClient.Views
                 var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
                 var dialog = new FrameGenerationSettingsWindow(this, _game, gpu);
                 var settings = await dialog.ShowDialog<GameFrameGenerationSettings?>(this);
+                if (_isControllerModeActive)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        this.FindControl<Button>("BtnFrameGeneration")?.Focus(NavigationMethod.Directional);
+                    }, DispatcherPriority.Input);
+                }
                 if (settings == null) return;
 
                 _game.FrameGenerationSettings = settings;
@@ -3123,10 +3349,7 @@ namespace OptiscalerClient.Views
                 var needsNightly = settings.Route != FrameGenerationRoute.Disabled &&
                     settings.Output == FrameGenerationOutput.DlssG &&
                     settings.NvngxReplacement is FrameGenerationNvngxReplacement.Arturs or FrameGenerationNvngxReplacement.Combo;
-                // Skipped entirely in "Modded" mode (Setup NR's Mod + OptiScaler) — auto-switching to
-                // the official Nightly channel would silently undo the user's NR selector choice, and
-                // the Matheus wrapper isn't part of this channel machinery to switch back into anyway.
-                if (!_optiShowingModded && needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
+                if (needsNightly && !CurrentlySelectedOptiScalerVersionSupportsNvngxReplacement())
                 {
                     if (string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
                     {
@@ -3143,7 +3366,7 @@ namespace OptiscalerClient.Views
                     await ShowToastAsync(GetResourceString("TxtMfgRequiresNightlyToast",
                         "MFG with DLSS Enabler requires a Nightly OptiScaler version — switched automatically."));
                 }
-                else if (!_optiShowingModded && !needsNightly && !string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
+                else if (!needsNightly && !string.IsNullOrEmpty(_optiVersionBeforeAutoNightlySwitch))
                 {
                     _optiShowingBeta = _optiBetaBeforeAutoNightlySwitch;
                     _optiShowingCustom = _optiCustomBeforeAutoNightlySwitch;
@@ -3681,14 +3904,14 @@ namespace OptiscalerClient.Views
             HideCoverModal();
         }
 
-        private void BtnCoverDelete_Click(object sender, RoutedEventArgs e)
+        private async void BtnCoverDelete_Click(object sender, RoutedEventArgs e)
         {
             _pendingCoverPath = null;
 
             string appIdKey = !string.IsNullOrWhiteSpace(_game.AppId) ? _game.AppId : _game.Name;
+            var metadataService = new GameMetadataService();
             try
             {
-                var metadataService = new GameMetadataService();
                 metadataService.DeleteCoverCache(appIdKey);
 
                 var coversCachePath = System.IO.Path.Combine(AppPaths.GetAppDataRoot(), "Covers");
@@ -3707,18 +3930,27 @@ namespace OptiscalerClient.Views
                 DebugWindow.Log($"[ManageGame] Cover delete failed: {ex.Message}");
             }
 
-            _game.CoverImageUrl = null;
+            // Fall back to the exe-icon cover (regenerated, since the cache wipe removed it) rather than
+            // the generic placeholder; it stays replaceable by a real cover on the next fetch.
+            try { _game.CoverImageUrl = await metadataService.GetOrCreateIconCoverAsync(_game, appIdKey); }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[ManageGame] Icon cover after delete failed: {ex.Message}");
+                _game.CoverImageUrl = null;
+            }
 
             var imgGameCover = this.FindControl<Image>("ImgGameCover");
             if (imgGameCover != null)
             {
                 imgGameCover.Source = null;
+                TrySetCoverImage(imgGameCover, _game.CoverImageUrl);
             }
 
             var imgPreview = this.FindControl<Image>("ImgCoverPreview");
             if (imgPreview != null)
             {
                 imgPreview.Source = null;
+                TrySetCoverImage(imgPreview, _game.CoverImageUrl);
             }
 
             var txtCoverPath = this.FindControl<TextBlock>("TxtCoverPath");
@@ -3813,6 +4045,13 @@ namespace OptiscalerClient.Views
         private bool _isAnimatingClose = false;
 
         private void BtnClose_Click(object sender, RoutedEventArgs e) => _ = CloseAnimated();
+
+        private void BtnHelp_Click(object? sender, RoutedEventArgs e)
+        {
+            Close();
+            if (_ownerWindow is MainWindow mainWindow)
+                mainWindow.NavigateToHelp("game-management");
+        }
 
         private async Task CloseAnimated()
         {
@@ -4141,6 +4380,17 @@ namespace OptiscalerClient.Views
 
                 // The download step hid the progress card again; the headless installer is the longest wait.
                 ShowDanielModAutoInstallingStatus();
+
+                // v0.3.3+: its own graphical installer opens instead (both Install buttons) — the
+                // progress card stays up while the user goes through it. Closing it before it
+                // finishes is the user cancelling, so clean up without an error dialog.
+                if (DlssNrOnAmdService.HasGuiInstaller(version))
+                {
+                    if (await _dlssNrService.RunGuiInstallAsync(_game, gameDir, version, isModeB)) return true;
+                    await CancelStagedDanielModInstallAsync();
+                    return false;
+                }
+
                 var result = await _dlssNrService.RunAutomatedInstallAsync(_game, gameDir, version, isModeB);
                 if (result == DlssNrOnAmdService.AutomatedInstallResult.Success) return true;
 
@@ -4181,16 +4431,8 @@ namespace OptiscalerClient.Views
         /// pick two different folders and split the install across both.</summary>
         private async Task<(bool Success, string? GameDir)> ExecuteLinuxWrapperInstallAsync(bool isModeB, bool isManualMode)
         {
-            var version = _game.PendingDlssNrOnAmdVersion ?? "";
-
-            if (!_dlssNrService.IsNvngxDlssNrCached())
-            {
-                var picker = new DlssNrOnAmdWizardWindow(this, _game, version, isModeB, nvngxPickerOnly: true);
-                await picker.ShowDialog<bool>(this);
-                if (!picker.Succeeded) return (false, null);
-            }
-
-            string? gameDir;
+            string? gameDir = null;
+            string? gameExe = null;
             if (isManualMode)
             {
                 // Same file picker as the main OptiScaler install's manual mode (ExecuteInstallAsync)
@@ -4208,100 +4450,16 @@ namespace OptiscalerClient.Views
                     }
                 });
                 if (files == null || !files.Any()) return (false, null); // User cancelled
-                gameDir = System.IO.Path.GetDirectoryName(files[0].Path.LocalPath);
-            }
-            else
-            {
-                // Game.ExecutablePath is only populated by the Lutris/generic scanners (Steam-scanned
-                // games leave it blank) — DetermineInstallDirectory is the reliable resolver every other
-                // Setup NR path already uses (see ResolveDanielModGameDir). guentra's own installer finds
-                // the actual exe inside it via real PE parsing (see RunAutoInstallAsync's own notes), so
-                // there's no need to also know the exact exe path on this side.
-                gameDir = ResolveDanielModGameDir();
-            }
-            if (gameDir == null)
-            {
-                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
-                    GetResourceString("TxtSetupNrCannotResolveDir", "Could not resolve the game folder."),
-                    isAlert: true).ShowDialog<object>(this);
-                return (false, null);
+                gameExe = files[0].Path.LocalPath;
+                gameDir = System.IO.Path.GetDirectoryName(gameExe);
             }
 
             ShowLinuxWrapperInstallingStatus();
             try
             {
-                string extractedDir;
-                try
-                {
-                    SetLinuxWrapperStatusText(GetResourceString("TxtSetupNrLinuxWrapperDownloading", "Downloading the Linux fork..."));
-                    await _dlssNrLinuxWrapperService.DownloadAsync(version);
-                    SetLinuxWrapperStatusText(GetResourceString("TxtSetupNrLinuxWrapperExtracting", "Extracting the fork into the game folder..."));
-                    extractedDir = _dlssNrLinuxWrapperService.ExtractToGameDir(version, gameDir);
-                }
-                catch (Exception ex)
-                {
-                    DebugWindow.Log($"[SetupNr] Could not download/extract guentra's Linux fork: {ex.Message}");
-                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
-                        string.Format(GetResourceString("TxtSetupNrLinuxWrapperDownloadFailedFormat",
-                            "Could not download the Linux fork: {0}"), ex.Message),
-                        isAlert: true).ShowDialog<object>(this);
-                    return (false, null);
-                }
-
-                // Ask-once-per-game runner resolution — cached on Game so later installs/updates on
-                // this same game never ask again (same "ask once" spirit as nvngx_dlssnr.dll above,
-                // just scoped per game since different games can use different Proton versions).
-                var runnerPath = _game.DlssNrLinuxWrapperRunnerPath;
-                if (string.IsNullOrEmpty(runnerPath) || !Directory.Exists(runnerPath))
-                {
-                    SetLinuxWrapperStatusText(GetResourceString("TxtSetupNrLinuxWrapperDetectingRunner", "Detecting your Proton/Wine runner..."));
-                    var runners = await _dlssNrLinuxWrapperService.ListRunnersAsync(extractedDir);
-                    var compatible = runners.Where(r => r.Compatible).ToList();
-                    if (compatible.Count == 1)
-                    {
-                        runnerPath = compatible[0].Path;
-                    }
-                    else
-                    {
-                        var runnerPicker = new DlssNrLinuxWrapperRunnerPickerWindow(this, runners);
-                        var picked = await runnerPicker.ShowDialog<bool>(this);
-                        if (!picked || string.IsNullOrEmpty(runnerPicker.SelectedPath)) return (false, null);
-                        runnerPath = runnerPicker.SelectedPath;
-                    }
-                    _game.DlssNrLinuxWrapperRunnerPath = runnerPath;
-                }
-
-                // Prefer already-converted weights (from an earlier successful conversion, any OS/mode
-                // — weights only depend on the nvngx_dlssnr.dll content, not the game) over handing
-                // guentra's fork the raw DLL: its own conversion path hash-checks that DLL against one
-                // specific known-good release and rejects any other legitimate distribution of the same
-                // version (see RunAutoInstallAsync's own notes on this).
-                var cachedWeights = _dlssNrService.IsModeBOutputCached() ? _dlssNrService.CachedModeBWeightsPath : null;
-                SetLinuxWrapperStatusText(GetResourceString("TxtSetupNrLinuxWrapperInstalling", "Installing (Linux fork)..."));
-                var result = await _dlssNrLinuxWrapperService.RunAutoInstallAsync(
-                    extractedDir, gameDir,
-                    weightsPath: cachedWeights,
-                    nvidiaDllPath: cachedWeights == null ? _dlssNrService.CachedNvngxDlssNrPath : null,
-                    runnerPath: runnerPath);
-                if (!result.Success)
-                {
-                    await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
-                        string.Format(GetResourceString("TxtSetupNrLinuxWrapperFailedFormat",
-                            "The Linux fork installer failed: {0}"), result.RawError ?? "unknown error"),
-                        isAlert: true).ShowDialog<object>(this);
-                    return (false, null);
-                }
-
-                _game.PendingDlssNrOnAmdMode = null;
-                _game.PendingDlssNrOnAmdVersion = null;
-                _game.IsDlssNrOnAmdInstalled = true;
-                _game.DlssNrOnAmdVersion = version;
-                _game.InstalledDlssNrOnAmdMode = isModeB ? "daniel-and-opti" : "daniel-only";
-                // Already the full, correctly-quoted Steam launch-options string (e.g.
-                // "'/path/launch.sh' %command%") — see DlssNrLinuxWrapperService.RunAutoInstallAsync.
-                _game.DlssNrLinuxWrapperLaunchCommand = result.LaunchOptions;
-
-                return (true, gameDir);
+                // Shared with Quick/Bulk Install — see LinuxNrInstallHelper.InstallAsync.
+                return await LinuxNrInstallHelper.InstallAsync(this, _game, _game.PendingDlssNrOnAmdVersion, isModeB,
+                    gameDir, gameExe, SetLinuxWrapperStatusText);
             }
             finally
             {
@@ -4385,34 +4543,22 @@ namespace OptiscalerClient.Views
         /// game folder and running its own uninstall is the only reliable way to reverse it. Shared by
         /// CmbSetupNr's "none" case and the dedicated "Uninstall mod" button (see BtnUninstall_Click),
         /// which just re-selects that tag to reach the same case rather than duplicating this.</summary>
-        private async Task UninstallDanielModOnly()
+        /// <summary>False only when the Linux fork's own uninstall failed — the mod is still in the
+        /// game folder then, and the caller must keep it recorded as installed.</summary>
+        private async Task<bool> UninstallDanielModOnly()
         {
             var gameDir = ResolveDanielModGameDir();
-            if (gameDir == null) return;
+            if (gameDir == null) return true;
+
+            // "Mod + OptiScaler": AMD-NR-bridge first, while OptiScaler.ini is still there to restore.
+            if (_game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode)
+                AmdNrBridgeService.RemoveFromGame(_game, gameDir);
 
             if (!OperatingSystem.IsWindows())
-            {
-                var hadLaunchCommand = !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand);
-                await UninstallLinuxForkAsync(gameDir);
-                _game.DlssNrLinuxWrapperLaunchCommand = null;
-
-                // The launch options the user pasted into their launcher point at the fork's
-                // launch.sh, which the uninstall above just deleted — leaving them in place makes the
-                // game fail to start at all, with nothing on screen explaining why. guentra's own
-                // uninstall instructions say the same thing ("remove the wrapper from your launcher
-                // settings"), so say it here instead of letting the user discover it the hard way.
-                if (hadLaunchCommand)
-                {
-                    await new ConfirmDialog(this,
-                        GetResourceString("TxtSetupNrLinuxForkRemoveLaunchTitle", "Clear the game's launch options"),
-                        GetResourceString("TxtSetupNrLinuxForkRemoveLaunchBody",
-                            "The mod is uninstalled. Remove the launch options you pasted for it (Steam: Properties → General → Launch Options) — they still point at the launch script that was just deleted, and the game won't start until you clear them."),
-                        isAlert: true).ShowDialog<object>(this);
-                }
-                return;
-            }
+                return await LinuxNrInstallHelper.UninstallAsync(this, _game, gameDir);
 
             _dlssNrService.RestoreFromManifest(gameDir);
+            return true;
         }
 
         /// <summary>Runs guentra's own uninstall against <paramref name="gameDir"/> (see
@@ -4424,44 +4570,13 @@ namespace OptiscalerClient.Views
         /// effort: logs and gives up quietly if even that fails (e.g. nothing was ever actually
         /// installed), since there's nothing more specific to tell the user beyond what UpdateStatus
         /// already shows.</summary>
-        private async Task UninstallLinuxForkAsync(string gameDir)
-        {
-            var extractedDir = System.IO.Path.Combine(gameDir, DlssNrLinuxWrapperService.ExtractedFolderName);
-            try
-            {
-                if (!Directory.Exists(extractedDir))
-                {
-                    var version = _game.DlssNrOnAmdVersion;
-                    if (string.IsNullOrEmpty(version) || !_dlssNrLinuxWrapperService.IsCached(version))
-                    {
-                        DebugWindow.Log("[SetupNr] Linux fork uninstall: no extracted installer and no cached version to re-extract — nothing to do.");
-                        return;
-                    }
-                    extractedDir = _dlssNrLinuxWrapperService.ExtractToGameDir(version, gameDir);
-                }
-
-                var (success, rawError) = await _dlssNrLinuxWrapperService.RunUninstallAsync(extractedDir, gameDir);
-                if (!success)
-                    DebugWindow.Log($"[SetupNr] guentra fork uninstall reported an issue (files may need manual review): {rawError}");
-
-                // Same runtime-only log/pass-shader sweep as the Windows path (RestoreFromManifest) —
-                // guentra's own journal never tracks these since they're only ever written later, once
-                // the game actually runs with the mod loaded.
-                DlssNrOnAmdService.SweepRuntimeArtifacts(gameDir);
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[SetupNr] Linux fork uninstall failed: {ex.Message}");
-            }
-            finally
-            {
-                try { if (Directory.Exists(extractedDir)) Directory.Delete(extractedDir, recursive: true); }
-                catch (Exception ex) { DebugWindow.Log($"[SetupNr] Could not remove '{extractedDir}': {ex.Message}"); }
-            }
-        }
+        private Task<bool> UninstallLinuxForkAsync(string gameDir) =>
+            LinuxNrInstallHelper.UninstallForkAsync(this, _game, gameDir);
 
         private async Task ExecuteInstallAsync(bool isManualMode)
         {
+            if (!await ConfirmAntiCheatRiskAsync()) return;
+
             // Mode B ("daniel-and-opti") commits the daniel-mod files (and Game state) as soon as
             // that step succeeds, well before the OptiScaler half below even starts — cancelling or
             // failing anywhere after that (the manual-install folder picker, a corrupt-artifact
@@ -4491,6 +4606,7 @@ namespace OptiscalerClient.Views
                     _game.IsDlssNrOnAmdInstalled = false;
                     _game.DlssNrOnAmdVersion = null;
                     _game.InstalledDlssNrOnAmdMode = null;
+                    _game.AmdNrBridgeVersion = null;
                     // The selector still shows "Mod + OptiScaler" and nothing is installed any more, so
                     // that's a pending install again — restore it, otherwise the retry would skip the
                     // mod step entirely (ExecuteInstallAsync keys off this field) and install only
@@ -4507,6 +4623,11 @@ namespace OptiscalerClient.Views
             // triggered by this same Install button rather than a separate one in that dialog.
             // Mode A (danielblnc only) stops here; Mode B falls through to the normal install below,
             // which targets the wrapper Custom version already auto-selected when Setup NR was saved.
+            // Linux has no mode selector: the mod goes in on its own when OptiScaler is set to
+            // "None", and together with the selected OptiScaler version otherwise.
+            if (!OperatingSystem.IsWindows() && !string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode))
+                _game.PendingDlssNrOnAmdMode = IsOptiScalerNoneSelected() ? "daniel-only" : AmdNrBridgeService.BridgeMode;
+
             if (!string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode))
             {
                 var isModeB = _game.PendingDlssNrOnAmdMode == "daniel-and-opti";
@@ -4548,7 +4669,7 @@ namespace OptiscalerClient.Views
                     danielSucceeded = linuxResult.Success;
                     linuxModeBGameDir = linuxResult.GameDir;
                 }
-                else if (isManualMode)
+                else if (isManualMode && !DlssNrOnAmdService.HasGuiInstaller(_game.PendingDlssNrOnAmdVersion))
                 {
                     if (await DownloadAndStageDanielModAsync(_game.PendingDlssNrOnAmdVersion ?? "") == null) return;
                     var wizard = new DlssNrOnAmdWizardWindow(this, _game, _game.PendingDlssNrOnAmdVersion ?? "", isModeB);
@@ -4569,7 +4690,7 @@ namespace OptiscalerClient.Views
 
                 // Re-derive the lock from whatever's left instead of assuming success unlocked things
                 // (both paths above clear PendingDlssNrOnAmdMode on success, either outcome).
-                SetOptiScalerControlsLocked(_game.PendingDlssNrOnAmdMode == "daniel-only");
+                SetOptiScalerControlsLocked(OperatingSystem.IsWindows() && _game.PendingDlssNrOnAmdMode == "daniel-only");
                 if (!danielSucceeded) return;
 
                 if (!isModeB)
@@ -4606,14 +4727,7 @@ namespace OptiscalerClient.Views
                     // it needs no WINEDLLOVERRIDES of its own (the fork's own launch.sh already
                     // sets everything its DLLs need internally).
                     if (!OperatingSystem.IsWindows() && !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand))
-                    {
-                        await new ConfirmDialog(this, GetResourceString("TxtSetupNrLinuxWrapperLaunchCommandTitle", "Paste this into Steam"),
-                            GetResourceString("TxtSetupNrLinuxWrapperLaunchCommandBody",
-                                "The mod runs through a small launch script generated by the Linux fork. If you're using Steam, paste this into this game's launch options (Properties → General → Launch Options):"),
-                            isAlert: true,
-                            copyableText: _game.DlssNrLinuxWrapperLaunchCommand
-                        ).ShowDialog<object>(this);
-                    }
+                        await LinuxNrInstallHelper.ApplyLaunchOptionsAsync(this, _game);
                     return;
                 }
 
@@ -4624,33 +4738,22 @@ namespace OptiscalerClient.Views
                 danielFreshThisRun = true;
                 danielFreshGameDir = !OperatingSystem.IsWindows() ? linuxModeBGameDir : cachedModeBGameDir;
 
-                // Mode B: weights are generated — make sure the selected Matheus build is actually on
-                // disk before falling through to the normal install below, which reads CmbOptiVersion's
-                // Tag directly as optiscalerVersion. StartModdedVersionDownload already kicked this off
-                // in the background when the version was picked; just await that same task instead of
-                // starting a second, colliding download. Falls back to downloading it directly if it was
-                // never triggered this session (e.g. the combo defaulted to the only available item
-                // without the user touching it) and isn't already registered.
-                var selectedModdedTag = (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
-                if (!string.IsNullOrEmpty(selectedModdedTag) &&
-                    _moddedVersionRawByRegisteredName.TryGetValue(selectedModdedTag, out var selectedModdedRawVersion))
+                // Mode B: the mod is in place — make sure AMD-NR-bridge is downloaded before falling
+                // through to the normal OptiScaler install below (whatever channel/version is picked in
+                // CmbOptiVersion); it is applied right after that install. Windows only: on Linux the
+                // fork runs alongside OptiScaler without it (see AmdNrBridgeService.LinuxModSettings).
+                if (OperatingSystem.IsWindows() && !await PrepareAmdNrBridgeVersionAsync())
                 {
-                    try
-                    {
-                        if (string.Equals(_pendingModdedDownloadVersion, selectedModdedRawVersion, StringComparison.OrdinalIgnoreCase) &&
-                            _pendingModdedDownloadTask != null)
-                            await _pendingModdedDownloadTask;
-                        else if (_cachedComponentService != null && !_customVersions.Contains(selectedModdedTag))
-                            await _cachedComponentService.DownloadAndImportAmdWrapperVersionAsync(selectedModdedRawVersion);
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugWindow.Log($"[SetupNr] Modded wrapper download failed: {ex.Message}");
-                        await new ConfirmDialog(this, "Error", $"Could not download the OptiScaler wrapper build: {ex.Message}").ShowDialog<object>(this);
-                        await RollbackFreshDanielModIfNeeded();
-                        return;
-                    }
+                    await RollbackFreshDanielModIfNeeded();
+                    return;
                 }
+            }
+            else if (_game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode && OperatingSystem.IsWindows())
+            {
+                // Reinstall/update of an existing "Mod + OptiScaler" game — also how a legacy install
+                // made with the discontinued MatheusGViana wrapper migrates: the new OptiScaler build
+                // gets AMD-NR-bridge on top, at the version picked in CmbAmdNrBridgeVersion.
+                if (!await PrepareAmdNrBridgeVersionAsync()) return;
             }
 
             var btnInstall = this.FindControl<Button>("BtnInstall");
@@ -4718,7 +4821,8 @@ namespace OptiscalerClient.Views
             var earlyOptiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             if (string.Equals(earlyOptiTag, "none", StringComparison.OrdinalIgnoreCase))
             {
-                if (!injectExtras)
+                bool installDlssgSm86 = HasDlssgSm86PendingInstall();
+                if (!injectExtras && !installDlssgSm86)
                 {
                     // Defense #2 — buttons should already be disabled for this combination
                     // (UpdateInstallButtonsForSwapState), this is the last-resort guard.
@@ -4729,7 +4833,10 @@ namespace OptiscalerClient.Views
                     return;
                 }
 
-                await ExecuteDllSwapAsync(isManualMode, selectedExtrasVersion!);
+                if (injectExtras)
+                    await ExecuteDllSwapAsync(isManualMode, selectedExtrasVersion!);
+                if (installDlssgSm86)
+                    await RunDlssgSm86StandaloneInstallAsync(isManualMode);
                 return;
             }
 
@@ -4818,6 +4925,9 @@ namespace OptiscalerClient.Views
                         // "continue" → fall through to normal install
                     }
                 }
+
+                // DLSS FG for RTX 20/30 set to "None" while installed: removed before OptiScaler goes in.
+                if (!await RemoveDeselectedDlssgSm86Async()) return;
 
                 if (btnInstall != null) btnInstall.IsEnabled = false;
                 if (btnInstallManual != null) btnInstallManual.IsEnabled = false;
@@ -4979,6 +5089,21 @@ namespace OptiscalerClient.Views
 
                 var selectedItem = cmbInjectionMethod?.SelectedItem as ComboBoxItem;
                 var injectionMethod = selectedItem?.Tag?.ToString() ?? "dxgi.dll";
+                // "Mod + OptiScaler": danielblnc's mod is always installed as dbghelp.dll (see
+                // DlssNrOnAmdService.DriveInstallerAsync) — OptiScaler can't take that same name.
+                if (_game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode &&
+                    injectionMethod.Equals("dbghelp.dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    DebugWindow.Log("[SetupNr] dbghelp.dll is used by danielblnc's mod — installing OptiScaler as dxgi.dll instead.");
+                    injectionMethod = "dxgi.dll";
+                }
+                // On Linux the fork itself takes version.dll, d3d12.dll and d3d12core.dll.
+                if (!OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled &&
+                    new[] { "version.dll", "d3d12.dll", "d3d12core.dll", "amdhip64_7.dll" }.Contains(injectionMethod, StringComparer.OrdinalIgnoreCase))
+                {
+                    DebugWindow.Log($"[SetupNr] {injectionMethod} is used by the Linux NR fork — installing OptiScaler as dxgi.dll instead.");
+                    injectionMethod = "dxgi.dll";
+                }
 
                 // Nightly packages do not bundle Fakenvapi. Do not overwrite an existing game
                 // copy; otherwise resolve the current release and include it in this install.
@@ -5552,6 +5677,17 @@ namespace OptiscalerClient.Views
                     }
                 }
 
+                // ── DLSS FG for RTX 20/30, into the folder OptiScaler just went into ──────
+                if (await RunDlssgSm86InstallStepAsync(overrideGameDir ?? resolvedGameDir, showToast: false))
+                    installedComponents += " + " + GetResourceString("TxtDlssgSm86Title", "DLSS FG (RTX 20/30)");
+
+                // "Mod + OptiScaler": AMD-NR-bridge goes last, over every OptiScaler.ini layer above.
+                // If it can't be applied, a fresh mod install is rolled back like any other failure of
+                // this half (OptiScaler itself stays installed).
+                var bridgeGameDir = overrideGameDir ?? resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(_game) ?? _game.InstallPath;
+                if (!await ApplyAmdNrBridgeAfterIniWriteAsync(bridgeGameDir))
+                    await RollbackFreshDanielModIfNeeded();
+
                 moddedInstallSucceeded = true;
                 NeedsScan = true;
                 UpdateStatus();
@@ -5569,25 +5705,16 @@ namespace OptiscalerClient.Views
                 // the toast finished animating, instead of both appearing together.
                 _ = ShowToastAsync(string.Format(successFormat, installedComponents));
 
-                // Setup NR's "Mod + OptiScaler" (Mode B) on Linux just ran through guentra's fork,
-                // whose generated launch.sh already sets everything the mod's own DLLs need
-                // internally except OptiScaler's own proxy DLL override, which still has to be
-                // prepended in front of it. A plain Linux OptiScaler install (no Setup NR involved)
-                // needs no such reminder — OptiScaler resolves its own DLL fine there without one —
-                // so this only fires right after a fresh Mode B run, not on every Linux install.
-                if (!OperatingSystem.IsWindows() && danielFreshThisRun)
-                {
-                    var baseCommand = !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand)
-                        ? _game.DlssNrLinuxWrapperLaunchCommand
-                        : "%command%";
-                    var wineMessage = string.Format(GetResourceString("TxtWineOverrideReminderFormat",
-                        "On Linux/Proton you may need a Wine DLL override for {0} to actually take effect — Wine can otherwise keep using its own builtin version of that filename instead of the one just installed. If you're using Steam, add this to the game's launch options:"),
-                        injectionMethod);
-                    var wineCopyable = $"WINEDLLOVERRIDES=\"{injectionMethod}=n,b\" {baseCommand}";
+                await ConfirmDialog.VerifyIniAfterInstallAsync(this,
+                    overrideGameDir ?? resolvedGameDir ?? new GameInstallationService().DetermineInstallDirectory(_game) ?? _game.InstallPath);
 
-                    await new ConfirmDialog(this, GetResourceString("TxtWineOverrideTitle", "Wine DLL override needed"),
-                        wineMessage, isAlert: true, copyableText: wineCopyable
-                    ).ShowDialog<object>(this);
+                // Linux with the NR mod installed: OptiScaler now runs alongside it, so the game's
+                // Steam launch options get the swapchain-queue variable and a native override for
+                // OptiScaler's proxy DLL in front of the fork's wrapper (the rest is kept).
+                if (!OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled &&
+                    !string.IsNullOrEmpty(_game.DlssNrLinuxWrapperLaunchCommand))
+                {
+                    await LinuxNrInstallHelper.ApplyLaunchOptionsAsync(this, _game, injectionMethod);
                 }
             }
             catch (Exception ex)
@@ -5644,7 +5771,6 @@ namespace OptiscalerClient.Views
             var tag = (cmb?.SelectedItem as ComboBoxItem)?.Tag as string;
             if (tag == null) return;
 
-            var cmbDanielVersion = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
 
             switch (tag)
@@ -5659,7 +5785,12 @@ namespace OptiscalerClient.Views
                     bool wasInstalled = _game.IsDlssNrOnAmdInstalled;
                     if (wasInstalled)
                     {
-                        await UninstallDanielModOnly();
+                        if (!await UninstallDanielModOnly())
+                        {
+                            // Still installed — put the selector back on the installed mode.
+                            SelectCmbSetupNrTag(_game.InstalledDlssNrOnAmdMode ?? "daniel-only");
+                            return;
+                        }
                         _game.IsDlssNrOnAmdInstalled = false;
                         _game.DlssNrOnAmdVersion = null;
                         _game.InstalledDlssNrOnAmdMode = null;
@@ -5667,7 +5798,7 @@ namespace OptiscalerClient.Views
                     _game.PendingDlssNrOnAmdMode = null;
                     _game.PendingDlssNrOnAmdVersion = null;
                     SetOptiScalerControlsLocked(false);
-                    SetOptiTabsForModdedMode(false);
+                    SetAmdNrBridgePanelVisible(false);
                     var dlssNrLinuxWarningNone = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
                     if (dlssNrLinuxWarningNone != null) dlssNrLinuxWarningNone.IsVisible = false;
                     SetDanielOnlyDx12InfoVisible(false);
@@ -5676,7 +5807,7 @@ namespace OptiscalerClient.Views
                         UpdateOptiChannelButtons();
                         PopulateOptiVersionCombo(_cachedComponentService);
                     }
-                    if (cmbDanielVersion != null) { cmbDanielVersion.IsEnabled = false; cmbDanielVersion.Items.Clear(); }
+                    if (!_modComboDriving) _ = PopulateDlssNrDanielVersionComboAsync(); // back to "None"
                     if (btnInstallManual != null) btnInstallManual.IsVisible = true;
                     // Fire-and-forget: ShowToastAsync runs its own multi-second fade loop before
                     // returning, and awaiting it here would delay UpdateStatus() below (which is what
@@ -5692,22 +5823,26 @@ namespace OptiscalerClient.Views
                     // throwaway D3D12 device for probing, OptiScaler's D3D12CreateDevice hook adopts
                     // it as the game's, and when the mod releases it OptiScaler is left tracking a
                     // dead device — the game then faults inside D3D12Core.dll while creating its
-                    // swapchain. "Mod + OptiScaler" avoids this by installing the wrapper fork, which
-                    // integrates neural rendering instead of running a second device alongside it.
+                    // swapchain. "Mod + OptiScaler" avoids this by adding AMD-NR-bridge, which
+                    // coordinates the two instead of leaving them racing for the same device.
                     // Warn rather than block: the user may be deliberately testing the combination.
                     // Skipped while populating (see _isPopulatingSetupNr) and when the mod is
                     // already installed — then the combo is just reflecting existing state, not a
                     // new install to warn about.
-                    if (!_isPopulatingSetupNr && _game.IsOptiscalerInstalled &&
+                    if (OperatingSystem.IsWindows() && !_isPopulatingSetupNr && _game.IsOptiscalerInstalled &&
                         !_game.IsDlssNrOnAmdInstalled &&
                         !await ConfirmDanielOnlyOverOptiScalerAsync())
                     {
                         SelectCmbSetupNrTag("none");
                         return;
                     }
-                    _game.PendingDlssNrOnAmdMode = "daniel-only";
-                    SetOptiScalerControlsLocked(true);
-                    SetOptiTabsForModdedMode(false);
+                    // Linux: reopening a game that already has the mod only reflects it — the mod
+                    // version combo is what makes a (re)install pending there.
+                    if (OperatingSystem.IsWindows() || !(_isPopulatingSetupNr && _game.IsDlssNrOnAmdInstalled))
+                        _game.PendingDlssNrOnAmdMode = "daniel-only";
+                    // Only Windows needs OptiScaler out of the way; on Linux they run together.
+                    SetOptiScalerControlsLocked(OperatingSystem.IsWindows());
+                    SetAmdNrBridgePanelVisible(false);
                     // Both Install buttons are shown for this mode (see UpdateStatus's danielOnlyPending
                     // block below, which runs right after this switch and is authoritative for their
                     // visibility/labels) — nothing to set here.
@@ -5722,19 +5857,21 @@ namespace OptiscalerClient.Views
                     if (moddedWarningPanelDanielOnly != null) moddedWarningPanelDanielOnly.IsVisible = false;
                     if (dlssNrLinuxWarningDanielOnly != null) dlssNrLinuxWarningDanielOnly.IsVisible = !OperatingSystem.IsWindows();
                     SetDanielOnlyDx12InfoVisible(true);
-                    _ = PopulateDlssNrDanielVersionComboAsync();
+                    if (!_modComboDriving) _ = PopulateDlssNrDanielVersionComboAsync();
                     break;
 
                 case "daniel-and-opti":
-                    _game.PendingDlssNrOnAmdMode = "daniel-and-opti";
+                    if (OperatingSystem.IsWindows() || !(_isPopulatingSetupNr && _game.IsDlssNrOnAmdInstalled))
+                        _game.PendingDlssNrOnAmdMode = "daniel-and-opti";
                     SetDanielOnlyDx12InfoVisible(false);
                     SetOptiScalerControlsLocked(false);
-                    SetOptiTabsForModdedMode(true);
+                    SetAmdNrBridgePanelVisible(OperatingSystem.IsWindows());
                     if (btnInstallManual != null) btnInstallManual.IsVisible = true;
                     var dlssNrLinuxWarningModeB = this.FindControl<Control>("PanelDlssNrLinuxWrapperWarning");
-                    if (dlssNrLinuxWarningModeB != null) dlssNrLinuxWarningModeB.IsVisible = false;
-                    _ = PopulateDlssNrDanielVersionComboAsync();
-                    _ = PopulateModdedVersionComboAsync();
+                    if (dlssNrLinuxWarningModeB != null) dlssNrLinuxWarningModeB.IsVisible = !OperatingSystem.IsWindows();
+                    UpdateCheckboxStatesForVersion(this.FindControl<ComboBox>("CmbOptiVersion"));
+                    if (!_modComboDriving) _ = PopulateDlssNrDanielVersionComboAsync();
+                    _ = PopulateAmdNrBridgeVersionComboAsync();
                     break;
             }
 
@@ -5744,6 +5881,25 @@ namespace OptiscalerClient.Views
         private void SetDanielOnlyDx12InfoVisible(bool visible)
         {
             if (this.FindControl<Border>("PanelDanielOnlyDx12Info") is { } panel) panel.IsVisible = visible;
+            if (this.FindControl<Border>("PanelDanielWithOptiInfo") is { } withOpti) withOpti.IsVisible = visible && OperatingSystem.IsWindows();
+        }
+
+        private void TxtDanielWithOptiLink_PointerPressed(object? sender, PointerPressedEventArgs e) =>
+            PlatformServiceFactory.CreateShellService().OpenUrl("https://github.com/3zwr1/AMD-NR---OptiScaler/releases");
+
+        /// <summary>Windows only: a pending install of a danielblnc version with its own graphical
+        /// installer (see DlssNrOnAmdService.HasGuiInstaller) opens that installer instead of running
+        /// headlessly — say so up front.</summary>
+        private void UpdateDanielGuiInstallerInfo()
+        {
+            if (this.FindControl<Border>("PanelDanielGuiInstallerInfo") is { } panel)
+                panel.IsVisible = OperatingSystem.IsWindows() && _game.PendingDlssNrOnAmdMode != null &&
+                                  DlssNrOnAmdService.HasGuiInstaller(_game.PendingDlssNrOnAmdVersion);
+            // "Mod + OptiScaler": the proxy DLL warning the old wizard used to give lives here now.
+            if (this.FindControl<TextBlock>("TxtDanielGuiInstallerInfo") is { } txt)
+                txt.Text = _game.PendingDlssNrOnAmdMode == "daniel-and-opti"
+                    ? GetResourceString("TxtSetupNrGuiInstallerInfoModeB", "From v0.3.3 on, danielblnc's mod comes with its own installer. When you install, it opens so you can complete the installation there. IMPORTANT: for the proxy DLL, pick one DIFFERENT from dxgi.dll (e.g. dbghelp.dll) — OptiScaler is installed as dxgi.dll afterwards.")
+                    : GetResourceString("TxtSetupNrGuiInstallerInfo", "From v0.3.3 on, danielblnc's mod comes with its own installer. When you install, it opens so you can complete the installation there.");
         }
 
         private void SelectCmbSetupNrTag(string tag)
@@ -5812,98 +5968,170 @@ namespace OptiscalerClient.Views
             }
         }
 
-        /// <summary>Swaps the OptiScaler version tab bar between the normal Stable/Beta/Nightly/Custom
-        /// set and the single "Modded" indicator used for "Mod + OptiScaler" — does not touch
-        /// _optiShowingBeta/Nightly/Custom, so whatever channel was active before entering Modded mode
-        /// is exactly what's restored on the way back out.</summary>
-        private void SetOptiTabsForModdedMode(bool modded)
+        /// <summary>Shows the AMD-NR-bridge version selector — only relevant for "Mod + OptiScaler".</summary>
+        private void SetAmdNrBridgePanelVisible(bool visible)
         {
-            _optiShowingModded = modded;
-            var btnStable = this.FindControl<Button>("BtnOptiStable");
-            var btnBeta = this.FindControl<Button>("BtnOptiBeta");
-            var btnNightly = this.FindControl<Button>("BtnOptiNightly");
-            var btnCustom = this.FindControl<Button>("BtnOptiCustom");
-            var btnModded = this.FindControl<Button>("BtnOptiModded");
-            if (btnStable != null) btnStable.IsVisible = !modded;
-            if (btnBeta != null) btnBeta.IsVisible = !modded;
-            if (btnNightly != null) btnNightly.IsVisible = !modded;
-            if (btnCustom != null) btnCustom.IsVisible = !modded && _customVersions.Count > 0;
-            if (btnModded != null) btnModded.IsVisible = modded;
+            if (this.FindControl<Control>("PanelAmdNrBridgeVersion") is { } panel) panel.IsVisible = visible;
         }
 
-        /// <summary>Populates CmbOptiVersion with MatheusGViana/dlss-5-amd-project's releases (the
-        /// "Modded" channel) — kept entirely separate from PopulateOptiVersionCombo's Stable/Beta/
-        /// Nightly/Custom filtering rather than wedged in as a 5th branch there, since that logic is
-        /// synchronous and driven by ComponentManagementService's pre-fetched cached lists, while this
-        /// needs its own live GitHub call.</summary>
-        private async Task PopulateModdedVersionComboAsync()
-        {
-            var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
-            if (cmbOptiVersion == null || _cachedComponentService == null) return;
-            var componentService = _cachedComponentService;
+        /// <summary>"Mod + OptiScaler" installed with the discontinued MatheusGViana wrapper build
+        /// (no bridge recorded) — still works; reinstalling migrates it (see ExecuteInstallAsync).</summary>
+        private bool IsLegacyWrapperInstall() =>
+            _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode &&
+            !AmdNrBridgeService.UsesBridge(_game) &&
+            _game.OptiscalerVersion != null && ComponentManagementService.IsAmdWrapperVersion(_game.OptiscalerVersion);
 
-            cmbOptiVersion.SelectionChanged -= CmbOptiVersion_SelectionChanged;
-            cmbOptiVersion.Items.Clear();
-            cmbOptiVersion.IsEnabled = false;
+        /// <summary>"Mod + OptiScaler" pending or installed — the OptiScaler install gets
+        /// AMD-NR-bridge on top.</summary>
+        private bool IsAmdNrBridgeModeActive() => OperatingSystem.IsWindows() && (
+            _game.PendingDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode ||
+            (_game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode));
+
+        /// <summary>Linux: tells the user what Install will put in when a mod version is picked —
+        /// the mod together with the selected OptiScaler version, or only the mod when OptiScaler is
+        /// "None". Hidden on Windows, with Experimental Features off, or with the mod at "None".
+        /// Returns whether it is shown — it replaces the FSR 4 Swap hint then.</summary>
+        private bool UpdateLinuxNrInfo()
+        {
+            var panel = this.FindControl<Border>("PanelLinuxNrWithOptiInfo");
+            var text = this.FindControl<TextBlock>("TxtLinuxNrWithOptiInfo");
+            if (panel == null || text == null) return false;
+            var modTag = (this.FindControl<ComboBox>("CmbDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag as string;
+            var show = !OperatingSystem.IsWindows() &&
+                (_cachedComponentService?.Config.ShowExperimentalFeatures ?? false) &&
+                !string.IsNullOrEmpty(modTag) && modTag != "none" && IsSetupNrGpuAllowed();
+            panel.IsVisible = show;
+            if (!show) return false;
+            text.Text = IsOptiScalerNoneSelected()
+                ? GetResourceString("TxtSetupNrLinuxModOnlyInfo", "OptiScaler is set to \"None\": only the mod will be installed.")
+                : GetResourceString("TxtSetupNrLinuxWithOptiInfo", "On Linux the mod and OptiScaler work together: it will be installed alongside the selected OptiScaler version. Set OptiScaler to \"None\" to install only the mod.");
+            return true;
+        }
+
+        private bool IsOptiScalerNoneSelected() => string.Equals(
+            (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString(),
+            "none", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Populates CmbAmdNrBridgeVersion with GoldenNights/AMD-NR-bridge's releases for
+        /// "Mod + OptiScaler", pre-selecting the version this game already has, else the one pinned
+        /// in Settings, else the latest. Starts downloading the selection in the background.</summary>
+        private async Task PopulateAmdNrBridgeVersionComboAsync()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbAmdNrBridgeVersion");
+            if (cmb == null) return;
+
+            cmb.SelectionChanged -= CmbAmdNrBridgeVersion_SelectionChanged;
+            cmb.Items.Clear();
+            cmb.IsEnabled = false;
 
             List<DlssNrOnAmdRelease> releases;
             try
             {
-                releases = await componentService.GetAmdWrapperReleasesAsync();
+                releases = await _amdNrBridgeService.GetReleasesAsync();
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[SetupNr] Could not list Matheus wrapper releases: {ex.Message}");
+                DebugWindow.Log($"[SetupNr] Could not list AMD-NR-bridge releases: {ex.Message}");
                 releases = new List<DlssNrOnAmdRelease>();
             }
 
-            _moddedVersionRawByRegisteredName.Clear();
-
             if (releases.Count == 0)
             {
-                cmbOptiVersion.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
-                cmbOptiVersion.SelectedIndex = 0;
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
+                cmb.SelectedIndex = 0;
             }
             else
             {
                 for (int i = 0; i < releases.Count; i++)
-                {
-                    var registeredName = "custom-amd-presr-" + ComponentManagementService.SanitizeVersionName(releases[i].Version);
-                    _moddedVersionRawByRegisteredName[registeredName] = releases[i].Version;
-                    cmbOptiVersion.Items.Add(BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0, tag: registeredName));
-                }
-                cmbOptiVersion.SelectedIndex = 0;
-                StartModdedVersionDownload(releases[0].Version);
+                    cmb.Items.Add(BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
+
+                var preferred = _game.AmdNrBridgeVersion ?? _cachedComponentService?.Config.DefaultAmdNrBridgeVersion;
+                var targetIndex = string.IsNullOrEmpty(preferred) ? -1 : releases.FindIndex(r => string.Equals(r.Version, preferred, StringComparison.OrdinalIgnoreCase));
+                cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+                cmb.IsEnabled = true;
+                StartAmdNrBridgeDownload(releases[cmb.SelectedIndex].Version);
             }
 
-            // SelectedIndex above was set while the handler was detached (to avoid a redundant
-            // download kick-off), so drive the checkbox/warning-panel visibility update manually.
-            UpdateCheckboxStatesForVersion(cmbOptiVersion);
-
-            cmbOptiVersion.IsEnabled = true;
-            cmbOptiVersion.SelectionChanged += CmbOptiVersion_SelectionChanged;
+            cmb.SelectionChanged += CmbAmdNrBridgeVersion_SelectionChanged;
         }
 
-        /// <summary>Downloads and registers a Matheus wrapper version as soon as it's picked in
-        /// CmbOptiVersion, in the background — same idea as danielblnc's own dedup-safe background
-        /// download, but tracked per-window here since ComponentManagementService has no equivalent
-        /// in-flight-download dedup for this one. ExecuteInstallAsync awaits this same task (if it
-        /// still matches the current selection) instead of starting a second, colliding download.</summary>
-        private void StartModdedVersionDownload(string version)
+        private void CmbAmdNrBridgeVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            if (_cachedComponentService == null) return;
-            if (string.Equals(_pendingModdedDownloadVersion, version, StringComparison.OrdinalIgnoreCase) &&
-                _pendingModdedDownloadTask?.IsCompleted == false)
-                return;
+            var version = ((sender as ComboBox)?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            if (!string.IsNullOrEmpty(version)) StartAmdNrBridgeDownload(version);
+        }
 
-            var componentService = _cachedComponentService;
-            _pendingModdedDownloadVersion = version;
-            _pendingModdedDownloadTask = componentService.DownloadAndImportAmdWrapperVersionAsync(version);
-            _pendingModdedDownloadTask.ContinueWith(t =>
+        /// <summary>Background download as soon as a bridge version is picked. The service shares one
+        /// in-flight download per version, so PrepareAmdNrBridgeVersionAsync awaiting the same version
+        /// later never downloads it twice.</summary>
+        private void StartAmdNrBridgeDownload(string version)
+        {
+            if (!OperatingSystem.IsWindows() || _amdNrBridgeService.IsCached(version)) return;
+            _amdNrBridgeService.DownloadAsync(version).ContinueWith(t =>
             {
                 if (t.IsFaulted)
-                    DebugWindow.Log($"[SetupNr] Background download of Matheus wrapper v{version} failed: {t.Exception?.GetBaseException().Message}");
+                    DebugWindow.Log($"[SetupNr] Background download of AMD-NR-bridge {version} failed: {t.Exception?.GetBaseException().Message}");
             }, TaskScheduler.Default);
+        }
+
+        /// <summary>Resolves the AMD-NR-bridge version to use for this install (CmbAmdNrBridgeVersion,
+        /// else the pinned default, else the latest), makes sure it is downloaded and records it on
+        /// the game — EnsureAppliedAsync applies it after the OptiScaler install. Shows the error and
+        /// returns false when no version can be obtained.</summary>
+        private async Task<bool> PrepareAmdNrBridgeVersionAsync()
+        {
+            var picked = (this.FindControl<ComboBox>("CmbAmdNrBridgeVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            try
+            {
+                var version = await _amdNrBridgeService.ResolveVersionAsync(picked ?? _cachedComponentService?.Config.DefaultAmdNrBridgeVersion)
+                    ?? throw new InvalidOperationException(GetResourceString("TxtSetupNrBridgeNoRelease", "No AMD-NR-bridge release is available."));
+                await _amdNrBridgeService.DownloadAsync(version);
+                _game.AmdNrBridgeVersion = version;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] AMD-NR-bridge download failed: {ex.Message}");
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    string.Format(GetResourceString("TxtSetupNrBridgeDownloadFailedFormat", "Could not download AMD-NR-bridge: {0}"), ex.Message),
+                    isAlert: true).ShowDialog<object>(this);
+                return false;
+            }
+        }
+
+        /// <summary>Applies AMD-NR-bridge after anything in this window wrote OptiScaler.ini (a full
+        /// install or a config-only apply). No-op for games not using it. On failure the partial
+        /// bridge is removed and the error shown; returns false.</summary>
+        private async Task<bool> ApplyAmdNrBridgeAfterIniWriteAsync(string gameDir)
+        {
+            // Linux: no bridge — OptiScaler next to the NR mod only needs its ini values, and the game
+            // counts as "Mod + OptiScaler" from now on (also when OptiScaler is added to a game that
+            // already had the mod on its own).
+            if (!OperatingSystem.IsWindows())
+            {
+                if (_game.IsDlssNrOnAmdInstalled)
+                {
+                    _game.InstalledDlssNrOnAmdMode = AmdNrBridgeService.BridgeMode;
+                    AmdNrBridgeService.ApplyLinuxModSettings(gameDir);
+                }
+                return true;
+            }
+            if (!AmdNrBridgeService.UsesBridge(_game)) return true;
+            try
+            {
+                await _amdNrBridgeService.EnsureAppliedAsync(_game, gameDir);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[SetupNr] AMD-NR-bridge could not be applied: {ex.Message}");
+                AmdNrBridgeService.RemoveFromGame(_game, gameDir);
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"),
+                    string.Format(GetResourceString("TxtSetupNrBridgeApplyFailedFormat",
+                        "AMD-NR-bridge could not be applied: {0}\n\nOptiScaler itself was installed. Reinstall from Manage to try again."), ex.Message),
+                    isAlert: true).ShowDialog<object>(this);
+                return false;
+            }
         }
 
         /// <summary>Populates CmbDlssNrDanielVersion (danielblnc's own mod version) — shared by both NR
@@ -5922,6 +6150,7 @@ namespace OptiscalerClient.Views
             // under Wine (see context/dlssnr-on-amd-linux-setup.md) — guentra/DLSS-NR-on-AMD-Linux's
             // unofficial fork is used instead, so this combo lists ITS releases there.
             var isLinux = !OperatingSystem.IsWindows();
+            var populateToken = ++_danielComboPopulateToken;
             List<DlssNrOnAmdRelease> releases;
             try
             {
@@ -5929,9 +6158,12 @@ namespace OptiscalerClient.Views
             }
             catch (Exception ex)
             {
-                DebugWindow.Log($"[SetupNr] Could not list {(isLinux ? "guentra/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
+                DebugWindow.Log($"[SetupNr] Could not list {(isLinux ? "bulacha3/DLSS-NR-on-AMD-Linux" : "danielblnc")} releases: {ex.Message}");
                 releases = new List<DlssNrOnAmdRelease>();
             }
+            // A newer call started while this one awaited — let that one fill the combo.
+            if (populateToken != _danielComboPopulateToken) return;
+            cmb.Items.Clear();
 
             if (releases.Count == 0)
             {
@@ -5940,15 +6172,21 @@ namespace OptiscalerClient.Views
             }
             else
             {
+                // "None" first — the combo is the whole mod control (see PopulateVersionSelectors).
+                // Selected when nothing is installed or pending.
+                cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtSetupNrModeNone", "None"), Tag = "none" });
                 for (int i = 0; i < releases.Count; i++)
                     cmb.Items.Add(BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
 
+                string? wanted = _game.PendingDlssNrOnAmdMode != null
+                    ? (_game.PendingDlssNrOnAmdVersion ?? releases[0].Version)
+                    : _game.IsDlssNrOnAmdInstalled ? _game.DlssNrOnAmdVersion : null;
                 int selectedIndex = 0;
-                if (!string.IsNullOrEmpty(_game.PendingDlssNrOnAmdVersion))
+                if (!string.IsNullOrEmpty(wanted))
                 {
                     for (int i = 0; i < cmb.Items.Count; i++)
                     {
-                        if (cmb.Items[i] is ComboBoxItem cbi && string.Equals(cbi.Tag as string, _game.PendingDlssNrOnAmdVersion, StringComparison.OrdinalIgnoreCase))
+                        if (cmb.Items[i] is ComboBoxItem cbi && string.Equals(cbi.Tag as string, wanted, StringComparison.OrdinalIgnoreCase))
                         {
                             selectedIndex = i;
                             break;
@@ -5956,7 +6194,9 @@ namespace OptiscalerClient.Views
                     }
                 }
                 cmb.SelectedIndex = selectedIndex;
-                ApplyDlssNrDanielVersionSelection(releases[selectedIndex].Version);
+                var selectedTag = (cmb.Items[selectedIndex] as ComboBoxItem)?.Tag as string;
+                if (!string.IsNullOrEmpty(selectedTag) && selectedTag != "none" && _game.PendingDlssNrOnAmdMode != null)
+                    ApplyDlssNrDanielVersionSelection(selectedTag);
             }
 
             // Same AMD gate as CmbSetupNr (see IsSetupNrGpuAllowed) — this combo is repopulated (and
@@ -5968,10 +6208,12 @@ namespace OptiscalerClient.Views
             ToolTip.SetTip(cmb, !danielVersionGpuOk
                 ? GetResourceString("TxtSetupNrRequiresAmdTooltip", "danielblnc's mod requires an AMD RDNA 3 or RDNA 4 GPU.")
                 : isLinux
-                    ? GetResourceString("TxtSetupNrLinuxWrapperTooltip",
-                        "On Linux this uses guentra's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and guentra/DLSS-NR-on-AMD-Linux (the fork).")
-                    : null);
+                    ? GetResourceString("TxtSetupNrLinuxModTooltip",
+                        "On Linux this uses bulacha3's unofficial DLSS-NR-on-AMD-Linux fork (not danielblnc's installer directly), which bridges the mod to a real ROCm runtime so its GPU check can actually pass under Wine/Proton. Credit: danielblnc/DLSS-NR-on-AMD (the mod) and bulacha3/DLSS-NR-on-AMD-Linux (the fork).")
+                    : GetResourceString("TxtSetupNrWindowsModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs. Pick a version to install it; OptiScaler's options stay locked while it is selected, since the two conflict on Windows. \"None\" here removes the mod."));
             cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
+            UpdateCheckboxStatesForVersion(this.FindControl<ComboBox>("CmbOptiVersion"));
         }
 
         /// <summary>danielblnc's mod only targets AMD GPUs — used to lock (not hide) CmbSetupNr and
@@ -5991,18 +6233,54 @@ namespace OptiscalerClient.Views
         private void CmbDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             var version = ((sender as ComboBox)?.SelectedItem as ComboBoxItem)?.Tag as string;
-            if (!string.IsNullOrEmpty(version)) ApplyDlssNrDanielVersionSelection(version);
+            if (string.IsNullOrEmpty(version)) return;
+
+            UpdateCheckboxStatesForVersion(this.FindControl<ComboBox>("CmbOptiVersion"));
+            // This combo is the whole mod control. "None" removes/cancels the mod (via the hidden
+            // CmbSetupNr's "none" case); a version makes it pending — on Linux installed alone or
+            // with OptiScaler depending on OptiScaler's own selection (resolved in
+            // ExecuteInstallAsync), on Windows always alone ("daniel-only", OptiScaler locked).
+            // Re-picking the installed version changes nothing.
+            var newMode = OperatingSystem.IsWindows() ? "daniel-only" : AmdNrBridgeService.BridgeMode;
+            if (version == "none")
+            {
+                if (_game.IsDlssNrOnAmdInstalled || _game.PendingDlssNrOnAmdMode != null)
+                {
+                    _modComboDriving = true;
+                    try { SelectCmbSetupNrTag("none"); }
+                    finally { _modComboDriving = false; }
+                }
+                return;
+            }
+            if (_game.IsDlssNrOnAmdInstalled && _game.PendingDlssNrOnAmdMode == null &&
+                string.Equals(version, _game.DlssNrOnAmdVersion, StringComparison.OrdinalIgnoreCase))
+                return;
+            _game.PendingDlssNrOnAmdVersion = version;
+            if (_game.PendingDlssNrOnAmdMode == null)
+            {
+                if (_game.IsDlssNrOnAmdInstalled)
+                    _game.PendingDlssNrOnAmdMode = OperatingSystem.IsWindows() ? (_game.InstalledDlssNrOnAmdMode ?? newMode) : newMode;
+                else
+                {
+                    _modComboDriving = true;
+                    try { SelectCmbSetupNrTag(newMode); }
+                    finally { _modComboDriving = false; }
+                }
+            }
+            ApplyDlssNrDanielVersionSelection(version);
+            UpdateStatus();
         }
 
         private void ApplyDlssNrDanielVersionSelection(string version)
         {
             _game.PendingDlssNrOnAmdVersion = version;
+            UpdateDanielGuiInstallerInfo();
             if (!OperatingSystem.IsWindows())
             {
                 _ = _dlssNrLinuxWrapperService.DownloadAsync(version).ContinueWith(t =>
                 {
                     if (t.IsFaulted)
-                        DebugWindow.Log($"[SetupNr] Background download of guentra's Linux fork v{version} failed: {t.Exception?.GetBaseException().Message}");
+                        DebugWindow.Log($"[SetupNr] Background download of the Linux fork v{version} failed: {t.Exception?.GetBaseException().Message}");
                 }, TaskScheduler.Default);
                 return;
             }
@@ -6046,6 +6324,7 @@ namespace OptiscalerClient.Views
                 if (txtMsg != null) txtMsg.Text = GetResourceString("TxtConfirmUninstallMsg", "Are you sure you want to uninstall OptiScaler?\nOnly backed-up original files will be restored.");
                 if (btnYes != null) btnYes.Content = GetResourceString("TxtUninstall", "✕ Uninstall");
             }
+            AdjustDlssgSm86UninstallConfirm(txtTitle, txtMsg, btnYes);
 
             var btnInstall = this.FindControl<Button>("BtnInstall");
             var btnInstallManual = this.FindControl<Button>("BtnInstallManual");
@@ -6582,7 +6861,7 @@ namespace OptiscalerClient.Views
                 // behind and IsDlssNrOnAmdInstalled never clears.
                 if (_game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-and-opti")
                 {
-                    await UninstallDanielModOnly();
+                    if (!await UninstallDanielModOnly()) return;
                     _game.IsDlssNrOnAmdInstalled = false;
                     _game.DlssNrOnAmdVersion = null;
                     _game.InstalledDlssNrOnAmdMode = null;
@@ -6597,6 +6876,9 @@ namespace OptiscalerClient.Views
                     // checks to decide whether to run an uninstall are already cleared above.
                     SelectCmbSetupNrTag("none");
                 }
+
+                // DLSS FG for RTX 20/30 has its own record, never touched by UninstallOptiScaler below.
+                if (!await UninstallDlssgSm86WithMainAsync()) return;
 
                 // Capture before UninstallOptiScaler runs — it resets both flags on _game.
                 bool isRestoreDllOnly = !_game.IsOptiscalerInstalled && _game.IsFsr4DllSwapped;
@@ -6707,6 +6989,8 @@ namespace OptiscalerClient.Views
             // Folder Cleanup is always available regardless of install state.
             if (btnFolderCleanup != null) { btnFolderCleanup.IsVisible = true; btnFolderCleanup.IsEnabled = true; }
 
+            UpdateDanielGuiInstallerInfo();
+
             // View Ini (next to Profile's "?") only makes sense once there's an OptiScaler.ini on
             // disk to show.
             var btnViewIni = this.FindControl<Button>("BtnViewIni");
@@ -6776,6 +7060,7 @@ namespace OptiscalerClient.Views
                     btnUninstall.Content = GetResourceString("TxtRestoreOriginalDll", "Restore original DLL");
                 }
             }
+            ApplyDlssgSm86UninstallButton(btnUninstall);
 
             // Everything below overrides whichever labels/visibility the branches above (and these
             // three calls) just set — called here, before the daniel-mod-specific overrides, so those
@@ -6802,8 +7087,9 @@ namespace OptiscalerClient.Views
             // and would otherwise silently re-enable everything a still-pending selection had just
             // locked. Negated flag runs on every pass so it also restores everything once neither
             // pending nor installed anymore (e.g. right after uninstalling).
-            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
-            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            // Windows only: on Linux the mod runs alongside OptiScaler, so nothing is locked.
+            bool danielModOnlyInstalled = OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = OperatingSystem.IsWindows() && !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
             SetInstallOptionsEnabled(!(danielModOnlyInstalled || danielOnlyPending));
 
             if (danielOnlyPending)
@@ -6847,7 +7133,11 @@ namespace OptiscalerClient.Views
 
         }
 
-        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip);
+        private sealed record ComponentEntry(string Text, bool ViaOptiscaler, bool IsSwapped, string? Tooltip)
+        {
+            /// <summary>A standalone mod the client added (dlssg_for_sm86), neither native nor via OptiScaler.</summary>
+            public bool IsAddedMod { get; init; }
+        }
 
         private ComponentEntry MakeUpscalerEntry(string label, bool viaOptiscaler, bool isSwapped = false)
         {
@@ -6876,19 +7166,30 @@ namespace OptiscalerClient.Views
                 components.Add(MakeUpscalerEntry(dlssDisplay, _game.DlssViaOptiscaler));
             }
 
+            // Normalized on-disk FSR version, compared against the runtime one below.
+            string? fsrDiskVersion = null;
             if (!string.IsNullOrEmpty(_game.FsrVersion))
             {
                 var fsrMap = GetFsrVersionMap();
                 string fsrDisplay;
                 if (TryLookupVersionMap(fsrMap, _game.FsrVersion, out var fsrNormal))
+                {
+                    fsrDiskVersion = fsrNormal;
                     fsrDisplay = VersionDisplayEquals(fsrNormal, _game.FsrVersion)
                         ? $"AMD FSR: {fsrNormal}"
                         : $"AMD FSR: {fsrNormal} ({_game.FsrVersion})";
+                }
                 else
+                {
+                    fsrDiskVersion = _game.FsrVersion;
                     fsrDisplay = $"AMD FSR: {_game.FsrVersion}";
+                }
                 if (_game.FsrIsSwapped)
                     fsrDisplay += " (swapped)";
-                components.Add(MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler, _game.FsrIsSwapped));
+                var fsrEntry = MakeUpscalerEntry(fsrDisplay, _game.FsrViaOptiscaler, _game.FsrIsSwapped);
+                var diskTip = GetResourceString("TxtFsrDiskVersionTip",
+                    "Version read from the DLL file on disk. OptiScaler or the GPU driver may load a different FSR version at runtime.");
+                components.Add(fsrEntry with { Tooltip = fsrEntry.Tooltip == null ? diskTip : $"{fsrEntry.Tooltip}\n{diskTip}" });
             }
 
             if (!string.IsNullOrEmpty(_game.XessVersion))
@@ -6917,6 +7218,12 @@ namespace OptiscalerClient.Views
                     GetResourceString("TxtDlssNrBadgeTooltip", "danielblnc/DLSS-NR-on-AMD via \"Setup NR\" — unofficial, experimental, at your own risk")));
             }
 
+            if (AmdNrBridgeService.UsesBridge(_game))
+            {
+                components.Add(new ComponentEntry($"AMD-NR-bridge: {_game.AmdNrBridgeVersion}", false, false,
+                    GetResourceString("TxtSetupNrBridgeVersionTooltip", "GoldenNights/AMD-NR-bridge — lets danielblnc's mod run alongside an official OptiScaler build.")));
+            }
+
             if (_game.IsOptiscalerInstalled)
             {
                 string[] keyFiles = { "OptiScaler.ini", "dxgi.dll", "version.dll", "winmm.dll", "optiscaler.log" };
@@ -6943,8 +7250,43 @@ namespace OptiscalerClient.Views
                 }
             }
 
+            AppendDlssgSm86ComponentEntry(components);
+
             var lstComponents = this.FindControl<ListBox>("LstComponents");
             if (lstComponents != null) lstComponents.ItemsSource = components;
+
+            if (_game.IsOptiscalerInstalled)
+                _ = AppendFsrRuntimeEntryAsync(components, fsrDiskVersion);
+        }
+
+        /// <summary>
+        /// Adds the FSR version OptiScaler reported in its log (what actually ran) next to the
+        /// on-disk one, flagged when the two differ. Async: the log can be large.
+        /// </summary>
+        private async Task AppendFsrRuntimeEntryAsync(ObservableCollection<ComponentEntry> components, string? fsrDiskVersion)
+        {
+            var game = _game;
+            var runtime = await Task.Run(() =>
+                GameAnalyzerService.ReadFsrRuntimeVersion(new GameInstallationService().DetermineInstallDirectory(game) ?? game.InstallPath));
+            if (string.IsNullOrEmpty(runtime)) return;
+
+            var text = string.Format(GetResourceString("TxtFsrRuntimeLabel", "AMD FSR in use (OptiScaler log): {0}"), runtime);
+            var tooltip = GetResourceString("TxtFsrRuntimeTip", "FSR upscaler version OptiScaler reported in its log the last time the game ran.");
+            if (fsrDiskVersion != null && !FsrVersionsMatch(runtime, fsrDiskVersion))
+            {
+                text = "⚠ " + text;
+                tooltip += "\n" + GetResourceString("TxtFsrRuntimeMismatchTip",
+                    "Differs from the DLL on disk: OptiScaler or the GPU driver loaded a different FSR version.");
+            }
+            components.Add(new ComponentEntry(text, false, false, tooltip));
+        }
+
+        /// <summary>Compares major.minor.patch only - disk versions carry a build number / hotfix letter the log doesn't.</summary>
+        private static bool FsrVersionsMatch(string a, string b)
+        {
+            static string Core(string v) => string.Join('.', Regex.Replace(v, "^FSR\\s*", "", RegexOptions.IgnoreCase)
+                .Split(' ')[0].Split('.').Take(3).Select(p => new string(p.TakeWhile(char.IsDigit).ToArray())));
+            return Core(a) == Core(b);
         }
 
         private static Dictionary<string, string> GetFsrVersionMap()
@@ -7122,15 +7464,6 @@ namespace OptiscalerClient.Views
             bool isBeta = !string.IsNullOrEmpty(selectedTag) && _betaVersions.Contains(selectedTag);
             bool isNightly = !string.IsNullOrEmpty(selectedTag) && _nightlyVersions.Contains(selectedTag);
 
-            // "Modded" channel (Setup NR's Mod + OptiScaler mode) — start downloading/registering
-            // whichever Matheus wrapper build was just picked, same idea as switching OptiScaler tabs
-            // but resolving the registered Tag back to the raw version DownloadAndImportAmdWrapperVersionAsync needs.
-            if (_optiShowingModded && !string.IsNullOrEmpty(selectedTag) &&
-                _moddedVersionRawByRegisteredName.TryGetValue(selectedTag, out var rawModdedVersion))
-            {
-                StartModdedVersionDownload(rawModdedVersion);
-            }
-
             if (!isBeta && !isNightly)
             {
                 ConfigureAdditionalComponents();
@@ -7161,8 +7494,9 @@ namespace OptiscalerClient.Views
             // completely irrelevant while daniel-only is pending/installed (OptiScaler is locked out
             // entirely then), and would otherwise wrongly grey out or relabel the two Setup NR install
             // buttons. Defer to UpdateStatus's daniel-only block for their content/visibility instead.
-            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
-            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            // Windows only: on Linux the mod runs alongside OptiScaler, so nothing is locked.
+            bool danielModOnlyInstalled = OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = OperatingSystem.IsWindows() && !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
             if (danielModOnlyInstalled || danielOnlyPending) return;
 
             var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
@@ -7179,10 +7513,17 @@ namespace OptiscalerClient.Views
 
             bool optiIsNone = string.Equals(optiTag, "none", StringComparison.OrdinalIgnoreCase);
             bool extrasIsNone = string.IsNullOrEmpty(extrasTag) || string.Equals(extrasTag, "none", StringComparison.OrdinalIgnoreCase);
-            bool nothingToInstall = optiIsNone && extrasIsNone;
+            // The NR mod is a third thing to install (Experimental Features only): on Linux, with
+            // OptiScaler at "None" it goes in on its own, with or without an FSR 4 Swap.
+            bool modSelected = new ComponentManagementService().Config.ShowExperimentalFeatures &&
+                !OperatingSystem.IsWindows() && !string.IsNullOrEmpty(_game.PendingDlssNrOnAmdMode);
+            // DLSS FG for RTX 20/30 (Experimental, Windows) is the same kind of third thing: with
+            // OptiScaler and FSR 4 Swap at "None" it goes in on its own.
+            bool dlssgSm86Pending = HasDlssgSm86PendingInstall();
+            bool nothingToInstall = optiIsNone && extrasIsNone && !modSelected && !dlssgSm86Pending;
             if (pnlNothingToInstall != null) pnlNothingToInstall.IsVisible = nothingToInstall;
 
-            if (!optiIsNone)
+            if (!optiIsNone || modSelected)
             {
                 // Normal install mode. Recompute the label instead of assuming UpdateStatus already
                 // set it — this method is also called live on every combo change (not just window
@@ -7190,7 +7531,7 @@ namespace OptiscalerClient.Views
                 // swap-mode label a previous pass left behind (e.g. "Auto-Swap DLL").
                 btnInstall.IsEnabled = true;
                 btnInstallManual.IsEnabled = true;
-                if (_game.IsOptiscalerInstalled)
+                if (_game.IsOptiscalerInstalled && !optiIsNone)
                 {
                     btnInstall.Content = GetResourceString("TxtUpdateOpti", "↑ Auto Update / Reinstall");
                     btnInstallManual.Content = GetResourceString("TxtUpdateOptiManual", "↑ Manual Update / Reinstall");
@@ -7203,7 +7544,18 @@ namespace OptiscalerClient.Views
                 return;
             }
 
-            if (extrasIsNone)
+            if (extrasIsNone && dlssgSm86Pending)
+            {
+                btnInstall.IsEnabled = true;
+                btnInstallManual.IsEnabled = true;
+                btnInstall.Content = _game.IsDlssgSm86Installed
+                    ? GetResourceString("TxtUpdateOpti", "↑ Auto Update / Reinstall")
+                    : GetResourceString("TxtInstallOpti", "✦ Auto Install");
+                btnInstallManual.Content = _game.IsDlssgSm86Installed
+                    ? GetResourceString("TxtUpdateOptiManual", "↑ Manual Update / Reinstall")
+                    : GetResourceString("TxtBtnManualInstall", "✦ Manual Install");
+            }
+            else if (extrasIsNone)
             {
                 // Nothing selected to install at all — grey out (defense #1) and show the info panel.
                 btnInstall.IsEnabled = false;
@@ -7350,6 +7702,7 @@ namespace OptiscalerClient.Views
         private bool ComputeConfigOnlyEligible()
         {
             if (_installedHardSelectionBaseline == null || _installedSoftSelectionBaseline == null) return false;
+            if (HasDlssgSm86PendingChange()) return false; // "Update config only" doesn't touch DLSS FG
 
             var currentHard = ReadCurrentHardInstallSelection();
             if (currentHard == null || currentHard != _installedHardSelectionBaseline) return false;
@@ -7423,8 +7776,9 @@ namespace OptiscalerClient.Views
             // PopulateVersionSelectors), which used to run after UpdateStatus's daniel-only override
             // and re-split the collapsed button back into Auto/Manual. Bail out here instead so every
             // caller defers to UpdateStatus's daniel-only handling regardless of call order.
-            bool danielModOnlyInstalled = _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
-            bool danielOnlyPending = !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
+            // Windows only: on Linux the mod runs alongside OptiScaler, so nothing is locked.
+            bool danielModOnlyInstalled = OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled && _game.InstalledDlssNrOnAmdMode == "daniel-only";
+            bool danielOnlyPending = OperatingSystem.IsWindows() && !danielModOnlyInstalled && _game.PendingDlssNrOnAmdMode == "daniel-only";
             if (danielModOnlyInstalled || danielOnlyPending) return;
 
             var btnInstall = this.FindControl<Button>("BtnInstall");
@@ -7518,9 +7872,13 @@ namespace OptiscalerClient.Views
                 var spoofingValue = (this.FindControl<ComboBox>("CmbSpoofing")?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "auto";
                 await Task.Run(() => installService.ApplySpoofingSettings(_game, spoofingValue));
 
+                // The layers above may have undone AMD-NR-bridge's values (e.g. Dx12Upscaler).
+                await ApplyAmdNrBridgeAfterIniWriteAsync(installService.DetermineInstallDirectory(_game) ?? _game.InstallPath);
+
                 NeedsScan = true;
                 UpdateStatus();
-                await ShowToastAsync(GetResourceString("TxtConfigOnlyUpdateApplied", "Configuration updated."));
+                _ = ShowToastAsync(GetResourceString("TxtConfigOnlyUpdateApplied", "Configuration updated."));
+                await ConfirmDialog.VerifyIniAfterInstallAsync(this, installService.DetermineInstallDirectory(_game) ?? _game.InstallPath);
             }
             catch (Exception ex)
             {

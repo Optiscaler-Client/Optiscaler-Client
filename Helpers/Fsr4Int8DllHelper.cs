@@ -30,6 +30,8 @@ namespace OptiscalerClient.Helpers
     {
         public const string LegacyFileName = "amd_fidelityfx_upscaler_dx12.dll";
         public const string CurrentFileName = "amdxcffx64.dll";
+        /// <summary>Monolithic FSR 3.1 SDK DLL name that many games hardcode; a swap target, never a package file.</summary>
+        public const string MonolithicFileName = "amd_fidelityfx_dx12.dll";
 
         /// <summary>
         /// Additional per-effect DLLs shipped by FidelityFX SDK 2.0+ split packages (the monolithic
@@ -108,7 +110,11 @@ namespace OptiscalerClient.Helpers
         {
             var allowed = new HashSet<string>(allowedKeys, System.StringComparer.OrdinalIgnoreCase);
             if (allowed.Count == 0) return candidates;
-            return candidates.Where(c => allowed.Contains(GetLogicalKey(Path.GetFileName(c.SourceContentPath)))).ToList();
+            // A loader replacing the monolithic DLL is what makes the game load the upscaler at all
+            // (see BuildSwapCandidates), so it follows the Upscaler choice.
+            return candidates.Where(c => allowed.Contains(GetLogicalKey(Path.GetFileName(c.SourceContentPath))) ||
+                (allowed.Contains("Upscaler") &&
+                 string.Equals(Path.GetFileName(c.TargetPath), MonolithicFileName, System.StringComparison.OrdinalIgnoreCase))).ToList();
         }
 
         public static bool IsKnownFileName(string fileName)
@@ -259,11 +265,21 @@ namespace OptiscalerClient.Helpers
             var files = packagedFiles as IList<string> ?? packagedFiles.ToList();
             var candidates = new List<(string, string)>();
 
+            // FSR 3.1 games (e.g. Ratchet & Clank) only load the monolithic amd_fidelityfx_dx12.dll, so a
+            // file copied in under any other name is ignored. When the package ships a loader, the loader
+            // takes that name and finds the providers (upscaler, frame generation...) next to it by their
+            // canonical names, keeping frame generation working. Without a loader, the upscaler itself
+            // replaces it (it exports the same ffx* API, but has no frame generation).
+            var monolithicPath = Path.Combine(gameDir, MonolithicFileName);
+            var existingMonolithic = File.Exists(monolithicPath) ? monolithicPath : null;
+            bool packagedLoader = files.Contains(LoaderFileName, System.StringComparer.OrdinalIgnoreCase);
+
             var upscalerNames = new[] { LegacyFileName, CurrentFileName };
             var packagedUpscaler = files.FirstOrDefault(f => upscalerNames.Contains(f, System.StringComparer.OrdinalIgnoreCase));
             if (packagedUpscaler != null)
             {
-                var existingUpscaler = FindRenamedTarget(gameDir, LegacyFileName) ?? FindRenamedTarget(gameDir, CurrentFileName);
+                var existingUpscaler = FindRenamedTarget(gameDir, LegacyFileName) ?? FindRenamedTarget(gameDir, CurrentFileName)
+                                       ?? (packagedLoader ? null : existingMonolithic);
                 var targetName = existingUpscaler != null ? Path.GetFileName(existingUpscaler) : packagedUpscaler;
                 candidates.Add((Path.Combine(gameDir, targetName), Path.Combine(cacheDir, packagedUpscaler)));
             }
@@ -273,8 +289,13 @@ namespace OptiscalerClient.Helpers
                 if (files.Contains(extra, System.StringComparer.OrdinalIgnoreCase))
                 {
                     var existingExtra = FindRenamedTarget(gameDir, extra);
+                    if (existingExtra == null && extra == LoaderFileName) existingExtra = existingMonolithic;
                     var targetName = existingExtra != null ? Path.GetFileName(existingExtra) : extra;
-                    candidates.Add((Path.Combine(gameDir, targetName), Path.Combine(cacheDir, extra)));
+                    var targetPath = Path.Combine(gameDir, targetName);
+                    // Never write two package files onto the same target (the last one would win).
+                    if (candidates.Any(c => string.Equals(c.Item1, targetPath, System.StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    candidates.Add((targetPath, Path.Combine(cacheDir, extra)));
                 }
             }
 

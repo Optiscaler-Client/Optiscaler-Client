@@ -91,6 +91,14 @@ public class Game
 
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
+
+    [JsonIgnore]
+    public string OptiscalerBadgeText => string.IsNullOrWhiteSpace(OptiscalerVersion)
+        ? "✦ OptiScaler"
+        : $"✦ OptiScaler {OptiscalerVersion.Trim()}";
+
+    // Set by GameAnalyzerService (AntiCheatHelper); drives the warning badge on the Games view cover.
+    public bool HasAntiCheat { get; set; }
     public string? Fsr4ExtraVersion { get; set; }
 
     // "Setup NR" experimental feature — danielblnc's standalone AMD DLSS Neural Rendering mod.
@@ -112,6 +120,15 @@ public class Game
     // "daniel-only" or "daniel-and-opti"; null when no Setup NR run is pending.
     public string? PendingDlssNrOnAmdMode { get; set; }
     public string? PendingDlssNrOnAmdVersion { get; set; }
+
+    // "Mod + OptiScaler" (daniel-and-opti) through GoldenNights/AMD-NR-bridge (see AmdNrBridgeService)
+    // instead of the discontinued MatheusGViana wrapper build. AmdNrBridgeVersion is the release
+    // applied last; AmdNrBridgeIniChanges the OptiScaler.ini values it changed with their originals,
+    // kept from the first apply so uninstall can put them back. IsAmdNrBridgeInstalled is detected
+    // by GameAnalyzerService from the plugin on disk.
+    public string? AmdNrBridgeVersion { get; set; }
+    public List<AmdNrBridgeIniChange>? AmdNrBridgeIniChanges { get; set; }
+    public bool IsAmdNrBridgeInstalled { get; set; }
 
     // Linux only (see DlssNrLinuxWrapperService) — guentra/DLSS-NR-on-AMD-Linux's installer needs a
     // Wine/Proton runner folder, which it can only auto-resolve when the machine has exactly one
@@ -148,6 +165,12 @@ public class Game
     // above doubles as "which version" for this too, whether injected via OptiScaler or swapped raw.
     public bool IsFsr4DllSwapped { get; set; }
     public string? Fsr4DllSwapTargetFileName { get; set; }
+
+    // dlssg_for_sm86 (DLSS Frame Generation on RTX 20/30) — a standalone component with its own
+    // backup record, independent of IsOptiscalerInstalled. See DlssgSm86Service.
+    public bool IsDlssgSm86Installed { get; set; }
+    public string? DlssgSm86Version { get; set; }
+    public string? DlssgSm86Build { get; set; }
 
     /// <summary>Optional FG settings applied specifically to this game, never to a shared profile.</summary>
     public GameFrameGenerationSettings? FrameGenerationSettings { get; set; }

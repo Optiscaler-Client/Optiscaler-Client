@@ -300,7 +300,9 @@ namespace OptiscalerClient.Services
 
                 // Append whatever the profile configures that the template didn't already have —
                 // as new lines in an existing section, or as a brand-new section at the end.
-                int insertOffset = 0;
+                // In-section inserts go bottom-up so each recorded index stays valid; profile order
+                // isn't file order, so a running offset would push keys into the next section.
+                var inSectionInserts = new List<(int At, List<string> Lines)>();
                 foreach (var section in profile.IniSettings)
                 {
                     var missing = section.Value
@@ -311,8 +313,7 @@ namespace OptiscalerClient.Services
 
                     if (sectionEndIndex.TryGetValue(section.Key, out var insertAt))
                     {
-                        modifiedLines.InsertRange(insertAt + insertOffset, missing);
-                        insertOffset += missing.Count;
+                        inSectionInserts.Add((insertAt, missing));
                     }
                     else
                     {
@@ -321,6 +322,8 @@ namespace OptiscalerClient.Services
                         modifiedLines.AddRange(missing);
                     }
                 }
+                foreach (var (at, missing) in inSectionInserts.OrderByDescending(i => i.At))
+                    modifiedLines.InsertRange(at, missing);
 
                 return string.Join(Environment.NewLine, modifiedLines);
             }

@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">최대화</x:String>
     <x:String x:Key="TxtWindowRestore">이전 크기로 복원</x:String>
     <x:String x:Key="TxtWindowClose">닫기</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  게임 스캔</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  수동으로 추가</x:String>
+    <x:String x:Key="TxtBtnScan">게임 스캔</x:String>
+    <x:String x:Key="TxtBtnAddManual">수동으로 추가</x:String>
     <x:String x:Key="TxtTipSettings">설정</x:String>
     <x:String x:Key="TxtTipComponent">구성 요소 버전</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  NukemFG 업데이트</x:String>
@@ -144,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">설정이 업데이트되었습니다.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">설정을 업데이트할 수 없습니다:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">다른 항목이 변경되었습니다 — 설치/재설치를 사용하세요.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">없음 — FSR 4 교체만</x:String>
+    <x:String x:Key="TxtOptiVersionNone">없음</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ 자동 DLL 교체</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ 수동 DLL 교체</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ 원본 DLL 복원</x:String>
@@ -403,8 +403,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">스캔된 게임, 커버 이미지 및 캐시된 버전 데이터를 제거합니다. 앱은 다음 시작 시 다시 스캔합니다.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">폴더 열기</x:String>
     <x:String x:Key="TxtClearCacheBtn">캐시 지우기</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">경고: 스캔된 모든 게임, 커버 이미지 및 캐시된 OptiScaler 버전 데이터가 영구적으로 삭제됩니다.&#x0a;&#x0a;지운 후 애플리케이션이 종료됩니다. 다음 시작 시 라이브러리를 다시 스캔하고 버전 정보를 다시 다운로드합니다.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">영구적으로 삭제할 항목을 선택하세요.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">총 크기: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">스캔한 게임</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">커버 아트 및 아이콘</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">캐시된 버전 및 온라인 데이터</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">다운로드한 OptiScaler 및 추가 파일</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">앱 설정</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">재시작 필요: 삭제 후 앱이 종료됩니다.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">총 크기: {0}</x:String>
     <x:String x:Key="TxtWarning">경고</x:String>
     <x:String x:Key="TxtNoVersionsFound">설치 가능한 OptiScaler 버전이 없습니다.</x:String>
@@ -536,14 +542,14 @@
     <x:String x:Key="TxtHelpExpRenodxText">ReShade 위에서 실행되는 게임별 HDR/톤 매핑 애드온입니다. 지적 재산권 문제로 인해 기본 버전을 자동으로 다운로드할 수는 없지만 게임별 애드온은 다운로드할 수 있습니다. '자동'은 RenoDX wiki에서 현재 게임에 맞는 애드온을 직접 찾아 다운로드합니다. 게임 폴더에 ReShade가 이미 설치되어 있어야 합니다.</x:String>
     <x:String x:Key="TxtHelpExpRenodxLinkLabel">GitHub의 RenoDX ↗</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLabel">AMD에서의 DLSS Neural Rendering</x:String>
-    <x:String x:Key="TxtHelpExpDlssNrText">AMD GPU에서 danielblnc의 비공식 DLSS Neural Rendering 모드를 실행합니다. OptiScaler와 Neural Rendering을 함께 실행할 수 있도록 비공식 커뮤니티 OptiScaler 래퍼 빌드(MatheusGViana)와 선택적으로 결합할 수 있습니다. OptiScaler 자체에는 아직 공식적인 Neural Rendering 지원이 없습니다.</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">danielblnc의 비공식 DLSS Neural Rendering 모드를 AMD GPU에서 실행하며, 선택적으로 GoldenNights의 AMD-NR-bridge를 통해 공식 OptiScaler 빌드와 함께 사용합니다 - OptiScaler 자체는 아직 Neural Rendering을 공식 지원하지 않습니다.</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLinkLabel">GitHub의 DLSS-NR-on-AMD ↗</x:String>
     <x:String x:Key="TxtHelpExpDllTitle">NVIDIA의 DLL을 제공할 수 없는 이유</x:String>
     <x:String x:Key="TxtHelpExpDllContent">DLSS Neural Rendering에는 NVIDIA가 소유한 파일인 nvngx_dlssnr.dll이 필요합니다. 재배포가 허용되지 않으므로 앱에서 이 파일을 다운로드하거나 번들로 제공하지 않습니다. DLSS 5가 이미 포함된 게임에서 추출한 정당한 복사본을 제공해야 합니다. 한 번 요청된 후 향후 설치 시 재사용을 위해 캐시됩니다.</x:String>
     <x:String x:Key="TxtHelpExpSupportTitle">지원 수준</x:String>
     <x:String x:Key="TxtHelpExpSupportContent">여기에 있는 모든 것은 이 프로젝트 및 OptiScaler 외부에서 유지 관리되는 타사 모드 또는 커뮤니티 빌드입니다. 이들을 연결하고 릴리스를 캐시하며 원활한 워크플로를 유지하려고 노력하지만, 릴리스 주기, 버그 또는 각 게임이나 GPU와의 호환성까지 제어하지는 않습니다. 지원은 최선을 다해 제공되지만 OptiScaler 자체 기능만큼 깊거나 테스트되지는 않았습니다.</x:String>
     <x:String x:Key="TxtHelpExpWarningTitle">비공식 빌드 ⚠️</x:String>
-    <x:String x:Key="TxtHelpExpWarningContent">'Mod + OptiScaler' 래퍼 빌드는 OptiScaler 프로젝트에서 배포하거나 검증하지 않았습니다. GitHub 릴리스에서 직접 다운로드되며 릴리스에 체크섬이 있는 경우 검증되지만, 콘텐츠 자체는 당사나 OptiScaler에서 감사하지 않습니다. 사용자 본인의 책임하에 설치하세요.</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">'Mod + OptiScaler'에서 사용하는 AMD-NR-bridge는 OptiScaler 프로젝트가 배포하거나 검증하지 않는 서드파티 플러그인입니다. GitHub 릴리스에서 직접 다운로드되며 릴리스가 체크섬을 게시하면 검증되지만, 내용 자체는 당사나 OptiScaler가 감사하지 않습니다. 설치는 본인 책임입니다.</x:String>
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
     <x:String x:Key="TxtHelpProfTitle">프로필 생성 및 관리</x:String>
@@ -719,12 +725,16 @@
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
-    <x:String x:Key="TxtOptiPatcherTooltip">지원 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 OptiScaler용 ASI 플러그인입니다. Intel Arc 사용자의 D3D12 오류와 Dxgi 스푸핑으로 인한 성능 저하 또는 크래시를 방지합니다.</x:String>
+    <x:String x:Key="TxtOptiPatcherTooltip">지원되는 게임이 GPU 스푸핑 없이 DLSS/DLSS-FG 입력을 제공하도록 하는 OptiScaler 플러그인입니다. AMD와 Intel에서 스푸핑으로 인한 D3D12 오류, 충돌, 성능 저하를 막아 줍니다.&#10;&#10;Compatibility List에서 게임이 지원됨으로 표시되면 최신 버전이 자동으로 선택됩니다. 다른 게임에서는 "None"으로 두세요.</x:String>
+    <x:String x:Key="TxtInjectionTooltip">게임이 OptiScaler를 불러오도록 게임 폴더에서 사용하는 파일 이름입니다. 대부분의 게임은 dxgi.dll로 동작합니다. 게임에서 OptiScaler가 보이지 않거나 게임이 충돌하면 다른 이름(예: winmm.dll, version.dll)을 시도해 보세요.&#10;&#10;게임에 권장 이름이 있으면 Compatibility List에서 자동으로 선택됩니다.</x:String>
+    <x:String x:Key="TxtFrameGenerationTooltip">이 게임에서 추가 프레임을 생성하는 방식을 설정합니다. OptiScaler가 데이터를 가져오는 경로, 출력 기술(FSR FG, XeFG, DLSS-G…), 배수를 정합니다.&#10;&#10;Auto는 GPU와 게임에 맞는 옵션을 고릅니다. 바꾸려면 버튼을 클릭하세요.</x:String>
+    <x:String x:Key="TxtFakenvapiTooltip">AMD/Intel GPU에서 Nvidia API를 에뮬레이션해 게임이 Nvidia Reflex를 쓸 수 있게 합니다(AMD Anti-Lag 2 또는 LatencyFleX로 변환). 일부 프레임 생성 구성에 필요합니다.&#10;&#10;OptiScaler 0.9 이전 버전이나 사용자 빌드에서만 표시됩니다. 최신 버전에는 이미 포함되어 있습니다.</x:String>
+    <x:String x:Key="TxtNukemFGTooltip">DLSS 프레임 생성을 FSR 3 프레임 생성으로 바꾸는 Nukem의 모드(dlssg-to-fsr3)로, DLSS-G를 지원하는 게임에서 어떤 GPU로든 프레임 생성을 쓸 수 있습니다.&#10;&#10;OptiScaler 0.9 이전 버전이나 사용자 빌드에서만 표시됩니다. 최신 버전에는 이미 포함되어 있습니다.</x:String>
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">지원 게임에서 스푸핑 없이 DLSS/DLSS-FG 입력을 노출하는 OptiScaler용 ASI 플러그인입니다. Intel Arc 사용자의 D3D12 오류와 Dxgi 스푸핑으로 인한 성능 저하 또는 크래시를 방지합니다. 자동을 선택하면 호환성 목록에서 해당 게임에 필요하다고 표시할 때 최신 버전을 자동으로 설치합니다. 특정 버전이나 없음을 선택하면 항상 그것을 대신 사용합니다.</x:String>
     <x:String x:Key="TxtProfileLbl">프로필 (.ini)</x:String>
-    <x:String x:Key="TxtProfileTooltip">프로필은 저장된 OptiScaler .ini 구성입니다. 이 게임에 OptiScaler를 설치할 때 특정 설정 세트를 재사용하려면 프로필을 선택하세요.</x:String>
+    <x:String x:Key="TxtProfileTooltip">프로필은 설치 시 적용되는 OptiScaler 설정(OptiScaler.ini)을 저장한 것입니다. 프로필 섹션에서 만들고 편집하면 같은 구성을 여러 게임에 재사용할 수 있습니다.&#10;&#10;설치 후에는 눈 아이콘으로 생성된 OptiScaler.ini를 볼 수 있습니다.</x:String>
     <x:String x:Key="TxtSpoofingLbl">스푸핑</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">OptiScaler의 DXGI, Streamline, Vulkan GPU 스푸핑(DLSS 전용 게임이 AMD/Intel에서 작동하도록 Nvidia GPU인 척하는 기능)을 함께 재정의합니다. '자동'은 OptiScaler의 기본 동작과 동일합니다: AMD/Intel에서는 활성화, Nvidia에서는 비활성화.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">게임이 Nvidia GPU가 있다고 믿게 해 DLSS 옵션을 켜도록 하고, OptiScaler가 이를 FSR이나 XeSS로 연결합니다. DLSS만 지원하는 게임을 AMD/Intel에서 쓸 때 필요합니다. DXGI, Streamline, Vulkan에 적용됩니다.&#10;&#10;Auto: AMD/Intel에서는 켜짐, Nvidia에서는 꺼짐(OptiScaler 기본값). 게임이 충돌하거나 D3D12 오류가 나면 꺼 보거나, 지원되는 게임이라면 OptiPatcher를 사용하세요.</x:String>
     <x:String x:Key="TxtViewIniTooltip">설치된 OptiScaler.ini를 봅니다(읽기 전용)</x:String>
     <x:String x:Key="TxtViewIniSearchWatermark">키 또는 값 검색...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">글자 크기 키우기</x:String>
@@ -798,11 +808,10 @@
     <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">danielblnc 모드만 (포크)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">모드 + OptiScaler</x:String>
 
-    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">현재 Linux에서는 사용할 수 없습니다.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (모드만)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc의 비공식 모드를 통해 AMD GPU에서 DLSS Neural Rendering을 사용할 수 있습니다(선택적으로 비공식 OptiScaler 빌드와 결합 가능). 실험적 기능이며 공식 지원 대상이 아니고 OptiScaler 자체 업스케일러와는 무관합니다 — 본인 책임 하에 사용하세요.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">설치할 OptiScaler 버전입니다. "없음"을 선택하면 OptiScaler를 설치하지 않고 FSR 4 DLL만 교체합니다.</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">danielblnc의 비공식 모드로 AMD GPU에서 DLSS Neural Rendering을 실행합니다. AMD 전용.&#10;&#10;• danielblnc 모드만: 모드만 설치합니다.&#10;• Mod + OptiScaler: AMD-NR-bridge를 통해 선택한 공식 OptiScaler 버전과 결합합니다.&#10;&#10;실험적이며 지원되지 않고 OptiScaler 자체 업스케일러와 무관합니다. 사용은 본인 책임입니다.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">설치할 OptiScaler 버전입니다.&#10;&#10;• Stable: 검증된 릴리스로, 대부분의 게임에 권장됩니다.&#10;• Beta: 새로운 기능과 수정이 포함된 사전 릴리스입니다.&#10;• Nightly: 자동 개발 빌드로, 불안정할 수 있습니다.&#10;&#10;OptiScaler 없이 FSR 4 DLL만 교체하려면 "없음 — FSR 4 교체만"을 선택하세요. 기본으로 선택되는 버전은 설정에서 바꿀 수 있습니다.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">이 게임에는 AMD용 DLSS Neural Rendering 모드가 이미 설치되어 있습니다.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">제거하면 danielblnc의 설치 프로그램이 다시 실행됩니다 — 표시되면 제거 옵션을 선택하세요.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">먼저 정품 nvngx_dlssnr.dll이 필요합니다 — 법적인 이유로 저희가 직접 제공할 수 없습니다. DLSS 5를 지원하는 게임에서 얻을 수 있습니다. 한 번만 요청되며 이후 설치에서 재사용됩니다. 나중에 설정 → 로컬 버전 관리에서 업데이트할 수 있습니다.</x:String>
@@ -820,12 +829,19 @@
     <x:String x:Key="TxtSetupNrDeleteWeightsMsg">캐시된 가중치를 삭제하시겠습니까? 다음 "Mod + OptiScaler" 설치(어떤 게임이든)에서는 이를 다시 생성하기 위해 danielblnc의 설치 프로그램을 다시 실행합니다.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">danielblnc 모드만 (OptiScaler 없이)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">모드 + OptiScaler (비공식 래퍼)</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">현재 OptiScaler는 Neural Rendering을 공식적으로 지원하지 않으므로, 함께 사용하려면 커뮤니티에서 래핑한 빌드(MatheusGViana)가 필요합니다. 본인 책임하에 설치하세요.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeInfo">선택한 공식 OptiScaler 버전 위에 GoldenNights의 AMD-NR-bridge(서드파티, 당사 미검증)를 사용합니다. 업스케일러를 FSR로 설정하며 프레임 생성은 OptiScaler 자체의 FSR FG 출력만 지원합니다. 설치는 본인 책임입니다.</x:String>
+    <x:String x:Key="TxtSetupNrLegacyWrapperInfo">이 게임은 아직 개발이 중단된 MatheusGViana OptiScaler 빌드를 사용 중입니다. 다시 설치하면 선택한 공식 OptiScaler 버전과 AMD-NR-bridge로 전환됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionLbl">AMD-NR-bridge 버전</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionTooltip">'Mod + OptiScaler'에서 사용하는 GoldenNights/AMD-NR-bridge 릴리스입니다. danielblnc의 모드가 공식 OptiScaler 빌드와 함께 동작하도록 합니다. GitHub 릴리스에서 다운로드되며 앱에 포함되지 않습니다.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeNoRelease">사용 가능한 AMD-NR-bridge 릴리스가 없습니다.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">AMD-NR-bridge를 다운로드하지 못했습니다: {0}</x:String>
+    <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">AMD-NR-bridge를 적용하지 못했습니다: {0}&#10;&#10;OptiScaler 자체는 설치되었습니다. 관리에서 다시 설치해 재시도하세요.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">danielblnc의 모드는 FSR 3.1 이상을 사용하는 DirectX 12 게임에서만 작동합니다. DirectX 11과 Vulkan에서는 작동하지 않습니다.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">OptiScaler와 함께 사용하려면 3zwr1의 AMD-NR + OptiScaler를 참고하세요.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">모드 버전 (danielblnc)</x:String>
-    <x:String x:Key="TxtSetupNrDanielVersionTooltip">AMD 웨이트를 생성하는 데 사용되는 danielblnc의 DLSS Neural Rendering 모드 버전입니다. "danielblnc mod only"와 "Mod + OptiScaler" 모두에 필요합니다.</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">비공식 서드파티 포크(guentra/DLSS-NR-on-AMD-Linux)를 사용해 실제 ROCm 브리지를 통해 danielblnc의 DLSS Neural Rendering 모드를 Linux에서 실행합니다</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linux에서는 danielblnc의 설치 프로그램을 직접 사용하는 대신 guentra의 비공식 포크인 DLSS-NR-on-AMD-Linux를 사용합니다. 이 포크는 모드를 실제 ROCm 런타임에 연결해 Wine/Proton에서도 GPU 검사를 통과할 수 있게 해줍니다. 크레딧: danielblnc/DLSS-NR-on-AMD(모드), guentra/DLSS-NR-on-AMD-Linux(포크).</x:String>
+    <x:String x:Key="TxtSetupNrDanielVersionTooltip">두 모드("danielblnc 모드만", "Mod + OptiScaler") 모두에서 AMD용 가중치를 생성하는 데 쓰는 danielblnc 모드 버전입니다. 모드를 선택하면 사용할 수 있습니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">비공식 서드파티 포크(bulacha3/DLSS-NR-on-AMD-Linux)를 사용해 실제 ROCm 브리지를 통해 danielblnc의 DLSS Neural Rendering 모드를 Linux에서 실행합니다</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Linux에서는 danielblnc의 설치 프로그램을 직접 사용하는 대신 bulacha3의 비공식 포크인 DLSS-NR-on-AMD-Linux를 사용합니다. 이 포크는 모드를 실제 ROCm 런타임에 연결해 Wine/Proton에서도 GPU 검사를 통과할 수 있게 해줍니다. 크레딧: danielblnc/DLSS-NR-on-AMD(모드), bulacha3/DLSS-NR-on-AMD-Linux(포크).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">설치 중(Linux 포크)...</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Linux 포크 다운로드 중...</x:String>
@@ -845,7 +861,27 @@
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">게임의 실행 옵션을 지우세요</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">모드가 제거되었습니다. 이를 위해 붙여넣었던 실행 옵션을 삭제하세요(Steam: 속성 → 일반 → 실행 옵션). 방금 삭제된 실행 스크립트를 계속 가리키고 있어서, 지우기 전까지는 게임이 실행되지 않습니다.</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 포크 (guentra)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux 포크 (bulacha3)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqTitle">필수 구성 요소 누락</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqBuildTools">Linux 포크는 GPU용 최적화 백엔드를 빌드하기 위해 gcc와 g++가 필요합니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqPython">Linux 포크는 Python 3.11 이상이 필요합니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqRunCommand">이 명령을 터미널에 붙여 넣은 다음 설치를 다시 실행하세요:</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqNoCommand">배포판의 패키지 관리자로 설치한 다음 설치를 다시 실행하세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperNoRelease">GitHub에서 Linux 포크 버전 목록을 가져오지 못했습니다. 오프라인이거나 GitHub의 시간당 요청 한도에 도달했을 수 있습니다. 잠시 후 다시 시도하세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperUninstallFailedFormat">모드를 제거하지 못했습니다: {0}&#10;&#10;게임을 완전히 종료한 후(Steam에서 아직 실행 중으로 표시되면 "중지"도 누르고) 다시 시도하세요.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseTitle">Steam 종료</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseContinueBtn">Steam을 종료했습니다, 계속</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseAddMsg">모드는 이 게임의 Steam 실행 옵션에 추가해야 하는 실행 스크립트를 통해 동작합니다. 자동으로 추가되도록 Steam을 완전히 종료하세요(현재 실행 옵션은 유지됩니다). 또는 아래 줄을 복사해 직접 추가하세요.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseRemoveMsg">모드의 실행 스크립트를 이 게임의 Steam 실행 옵션에서 제거해야 합니다. 자동으로 제거되도록 Steam을 완전히 종료하세요(다른 실행 옵션은 유지됩니다).</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsApplied">Steam에 실행 옵션을 추가했습니다.</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Steam에서 실행 옵션을 제거했습니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — danielblnc 모드</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModTooltip">AMD GPU용 danielblnc의 DLSS Neural Rendering 모드로, bulacha3의 Linux 포크를 통해 설치됩니다. 버전을 선택하면 위에서 선택한 OptiScaler 버전과 함께 설치됩니다. 모드만 설치하려면 OptiScaler를 "없음"으로 두세요. 여기서 "없음"을 선택하면 모드가 제거됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">AMD GPU용 danielblnc의 DLSS Neural Rendering 모드입니다. 버전을 선택하면 설치됩니다. Windows에서는 OptiScaler와 충돌하므로 선택되어 있는 동안 OptiScaler 옵션이 잠깁니다. 여기서 "없음"을 선택하면 모드가 제거됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. 선택한 OptiScaler 버전과 함께 설치됩니다. 모드만 설치하려면 OptiScaler를 "없음"으로 두세요.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler가 "없음"으로 설정되어 있어 모드만 설치됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. 각 게임에 일괄 설치용으로 선택한 OptiScaler 버전과 함께 모드가 설치됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Linux에서는 모드와 OptiScaler가 함께 동작합니다. Quick Install과 Bulk Install은 기본 OptiScaler 버전과 함께 설치합니다.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler 래퍼 버전 (커뮤니티, 비공식)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">설치 파일 실행</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">다운로드 및 준비</x:String>
@@ -864,6 +900,8 @@
     <x:String x:Key="TxtSetupNrDownloadError">다운로드 오류: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">danielblnc의 모드가 성공적으로 다운로드되었지만 수동 설치가 필요합니다:&#10;1) "설치 파일 실행"을 클릭하세요.&#10;2) 터미널에 표시되는 단계를 따르세요. 중요: 사용할 프록시 DLL을 물어보면 dxgi.dll이 아닌 다른 것(예: dbghelp.dll)을 선택하세요 — 이후 OptiScaler가 dxgi.dll로 설치되므로 별도의 슬롯이 필요합니다.&#10;&#10;설치 프로그램이 끝난 것을 감지하면 이 창이 자동으로 닫히고 OptiScaler 래퍼를 설치합니다.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">danielblnc의 모드가 성공적으로 다운로드되었지만 수동 설치가 필요합니다:&#10;1) "설치 파일 실행"을 클릭하세요.&#10;2) 터미널에 표시되는 단계를 따르세요 (제공되는 프록시 DLL은 어떤 것이든 괜찮습니다).&#10;&#10;설치 프로그램이 끝난 것을 감지하면 이 창이 자동으로 닫힙니다.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">v0.3.3부터 danielblnc의 모드에는 자체 설치 프로그램이 포함되어 있습니다. 설치 시 설치 프로그램이 열리며, 그곳에서 설치를 완료하면 됩니다.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">v0.3.3부터 danielblnc의 모드에는 자체 설치 프로그램이 포함되어 있습니다. 설치 시 설치 프로그램이 열리며, 그곳에서 설치를 완료하면 됩니다. 중요: 프록시 DLL은 dxgi.dll이 아닌 다른 것(예: dbghelp.dll)을 선택하세요 — OptiScaler는 이후 dxgi.dll로 설치됩니다.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Wine DLL 재정의가 필요합니다</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">Linux/Proton에서는 {0}이(가) 실제로 작동하려면 Wine DLL 재정의가 필요할 수 있습니다 — 그렇지 않으면 Wine이 방금 설치한 파일 대신 해당 이름의 자체 내장 버전을 계속 사용할 수 있습니다. Steam을 사용 중이라면 게임의 실행 옵션에 다음을 추가하세요:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">게임 폴더를 확인할 수 없습니다.</x:String>
@@ -903,7 +941,7 @@
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, 실험적)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD ("Setup NR" 경유) — 비공식, 실험적, 본인 책임하에 사용</x:String>
     <x:String x:Key="TxtSetupNrDownloadBtn">다운로드</x:String>
-    <x:String x:Key="TxtRenodxTooltip">RenoDX는 ReShade 위에서 동작하는 게임별 HDR/톤 매핑 애드온입니다. '자동'을 선택하면 이 게임에 맞는 애드온을 자동으로 찾아 다운로드합니다.</x:String>
+    <x:String x:Key="TxtRenodxTooltip">게임별 HDR/톤 매핑 애드온입니다. "Auto"는 RenoDX 위키에서 이 게임에 맞는 애드온을 찾아 다운로드합니다.&#10;&#10;게임 폴더에 ReShade(애드온 지원판)가 이미 설치되어 있어야 하며, 자동으로 다운로드할 수 없습니다. ReShade가 OptiScaler와 같은 DLL 이름을 쓰면 기존 설치는 유지됩니다.</x:String>
     <x:String x:Key="TxtExperimentalZoneLbl">실험적 기능</x:String>
     <x:String x:Key="TxtAddRenodxTitle">RenoDX 애드온 추가</x:String>
     <x:String x:Key="TxtRenodxGameNameLbl">게임 이름</x:String>
@@ -925,7 +963,7 @@
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Manage와 Quick Install에서 미리 선택할 FSR 4 DLL을 고릅니다. None은 주입 또는 교체를 건너뜁니다.</x:String>
     <x:String x:Key="TxtFrameGeneration">프레임 생성</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4 DLL (교체)</x:String>
-    <x:String x:Key="TxtFsr4SwapTooltip">게임의 FSR DLL을 FSR 4로 교체합니다. INT8: FSR 4를 공식 지원하지 않는 GPU용. FP8: 공식 모델(RDNA 4).&#10;&#10;OptiScaler 유무와 관계없이 작동합니다. DLL만 교체하려면 OptiScaler를 "없음"으로 설정하세요. OptiScaler 없이 사용하려면 게임에 FSR 3.1 이상이 포함되어 있어야 합니다.</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">더 나은 화질을 위해 게임의 FSR DLL을 FSR 4로 교체합니다.&#10;&#10;• INT8: FSR 4를 공식 지원하지 않는 GPU용.&#10;• FP8: 공식 모델, AMD RDNA 4용.&#10;&#10;OptiScaler 유무와 관계없이 작동합니다. DLL만 교체하려면 OptiScaler에서 "없음 — FSR 4 교체만"을 선택하세요. 이 경우 게임에 FSR 3.1 이상이 이미 포함되어 있어야 합니다.</x:String>
     <x:String x:Key="TxtFsr4SwapOnlyHint">OptiScaler를 설치하지 않고 FSR 4로 교체하려면 OptiScaler 버전에서 "없음"을 고른 뒤 FSR 4 DLL(교체)을 선택하세요.</x:String>
     <x:String x:Key="TxtFgRoute">FG 경로</x:String>
     <x:String x:Key="TxtFgRouteTooltip">이 게임에서 OptiScaler가 프레임 생성에 사용하는 입력 경로를 선택합니다.</x:String>
@@ -989,9 +1027,9 @@
     <x:String x:Key="TxtMfgWrongChannelToast">선택한 OptiScaler 버전에서는 MFG가 작동하지 않을 수 있습니다 — Nightly 버전을 권장합니다.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">선택된 DLSS Enabler 버전이 없습니다. 먼저 이 게임의 프레임 생성을 구성하세요.</x:String>
     <x:String x:Key="TxtUpscalingQuality">업스케일링 품질</x:String>
-    <x:String x:Key="TxtUpscalingQualityTooltip">게임의 업스케일링 품질 비율을 재정의합니다. '게임 제어'는 입력 해상도를 게임에 맡깁니다.</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">게임 자체 품질 설정을 무시하고 업스케일러의 내부 렌더링 해상도를 강제합니다. 낮은 프리셋(Performance, Ultra Performance)은 FPS가 높아지지만 이미지가 부드러워지고, Native AA는 전체 해상도로 렌더링하며 안티에일리어싱만 적용합니다.&#10;&#10;"게임 제어"는 게임 설정을 유지하고, "사용자 지정"은 정확한 비율을 지정할 수 있습니다.</x:String>
     <x:String x:Key="TxtOutputUpscaler">출력 업스케일러</x:String>
-    <x:String x:Key="TxtOutputUpscalerTooltip">선택한 프로필 위에서 이 게임에 OptiScaler가 사용하는 업스케일러 백엔드를 재정의합니다. "기본값"은 프로필의 선택을 그대로 유지합니다.</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">게임 메뉴에서 무엇을 골랐든 OptiScaler가 실제로 렌더링에 사용하는 업스케일러(FSR 2/3/4, XeSS, DLSS)입니다. 일부는 GPU에 따라 다릅니다. 예: DLSS는 Nvidia RTX가 필요합니다.&#10;&#10;"기본값"은 선택한 프로필의 설정을 유지합니다.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">한 번도 설정하지 않은 모든 게임에 미리 선택되고, 빠른 설치/일괄 설치로 자동 설치되는 기본 "Setup NR" 모드입니다. 위의 기본 GPU가 AMD일 때만 표시됩니다.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">기본값</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">출력 업스케일러 설정을 적용하지 못했습니다:</x:String>
@@ -1005,9 +1043,9 @@
     <x:String x:Key="TxtHelpGMDlssNrDllText">이 모드는 DLSS 5를 지원하는 게임에서 추출한, 사용자가 정당하게 확보한 NVIDIA의 nvngx_dlssnr.dll 파일이 필요합니다. 법적인 이유로 이 파일 자체를 제공할 수는 없습니다. 한 번만 요청되며 이후 설치를 위해 캐시됩니다.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtHelpGMDlssNrLabel">AMD용 DLSS Neural Rendering (실험적) 🧪</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrModesText">'없음'은 비활성화합니다. 'danielblnc 모드만'은 AMD Neural Rendering 모드만 설치합니다. '모드 + OptiScaler'는 OptiScaler와 Neural Rendering을 함께 동작시키기 위해 비공식 커뮤니티 래퍼 빌드도 함께 설치합니다.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">'없음'은 비활성화합니다. 'danielblnc 모드만'은 AMD Neural Rendering 모드만 설치합니다. 'Mod + OptiScaler'는 모드, 선택한 공식 OptiScaler 버전(Stable, Beta 또는 Nightly), AMD-NR-bridge를 설치해 함께 동작하게 합니다.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrModesTitle">모드</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrText">이 항목도 실험적 영역의 일부입니다('실험적' 도움말 페이지를 참고하세요). AMD GPU에서 danielblnc의 비공식 DLSS Neural Rendering 모드를 실행하며, OptiScaler 자체가 아직 Neural Rendering을 지원하지 않기 때문에 필요한 경우 비공식 커뮤니티 OptiScaler 래퍼 빌드와 함께 사용할 수 있습니다.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">실험 영역의 일부이기도 합니다('실험' 도움말 페이지 참고). danielblnc의 비공식 DLSS Neural Rendering 모드를 AMD GPU에서 실행하며, 선택적으로 GoldenNights의 AMD-NR-bridge를 통해 공식 OptiScaler 빌드와 함께 사용합니다.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionText">사용할 danielblnc 모드의 릴리스를 선택하거나, 최신 버전으로 두세요.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionTitle">모드 버전</x:String>
     <x:String x:Key="TxtHelpGMFgAdvancedText">수동 및 실험적 경로를 표시합니다. 게임에 특정 경로가 필요하다는 것을 확실히 알지 못한다면 꺼두세요.</x:String>
@@ -1037,16 +1075,11 @@
     <x:String x:Key="TxtUpscalingQualityApplyError">업스케일링 품질 설정을 적용할 수 없습니다:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">출력 해상도로부터 내부 입력 해상도를 계산할 때 사용할 배율을 선택하세요.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">사용자 지정 업스케일링 품질</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• 새 기능: README에 OptiScaler를 각 브랜치에서 직접 빌드하는 방법을 추가했습니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• 개선: 앱 전체와 어울리도록 제목 표시줄을 새로 디자인했습니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• 개선: 휴대용 기기와 작은 화면 지원 강화 — 더 많은 창에서 게임패드 지원, 터치 스크롤과 버튼, 탭으로 툴팁과 그리드 옵션 표시, 관리 창 드래그 및 두 번 탭으로 최대화.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• 개선: 표지 이미지를 찾지 못하면 실행 파일 아이콘을 표시하며, 목록 보기는 이제 더 간결하도록 아이콘을 사용합니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• 개선: Linux에서 앱 자체 아이콘이 작업 표시줄에 표시됩니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• 개선: OptiScaler를 설치하지 않고도 FSR 4 DLL을 교체할 수 있다는 안내를 추가했습니다.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• 수정: 제거 시 게임 자체의 FidelityFX DLL(amd_fidelityfx_*)이 원본 복원 없이 삭제될 수 있던 문제.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• 수정: 일부 폴더 이름이 잘못 정리되어 호환성 정보를 찾을 때 해당 게임을 인식하지 못하던 문제.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew9">• 수정: 같은 폴더가 같은 실행 파일을 찾기 위해 두 번 스캔될 수 있던 문제.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew10">• 수정: Windows에서 창을 최대화하면 자동 숨김 작업 표시줄이 나타나지 않던 문제.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• 새 기능: 앱 전체 디자인 개편, 신규 사용자를 위한 빠른 둘러보기, 개선된 도움말 섹션.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• 새 기능: 설치 전 안티치트 경고, 설치 후 설정 확인, 관리 화면에 실제 사용 중인 FSR 버전 표시.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• 개선: 프레임 생성 자동 모드가 이제 x6까지 지원되며, AMD용 DLSS Neural Rendering 설정이 더 쉬워졌습니다.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• 수정: 재설치 시 게임 자체 FidelityFX DLL이 삭제될 수 있던 문제, Steam Deck 및 Radeon AI PRO R9700에 잘못된 FSR 4 버전이 적용되던 문제.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• …그 밖에도 많은 수정과 개선이 있습니다. 전체 변경 내역은 GitHub에서 확인하세요.</x:String>
     <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
     <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
     <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
@@ -1055,4 +1088,84 @@
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">안티치트 감지됨</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">이 게임은 안티치트 보호를 사용합니다. OptiScaler를 주입하거나 DLL을 교체하면 온라인 모드에서 계정이 정지될 수 있습니다. 본인 책임하에 사용하세요.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0}은(는) 안티치트 보호를 사용합니다.&#x0a;&#x0a;OptiScaler를 주입하거나 DLL을 교체하면 온라인 모드에서 계정이 정지될 수 있습니다. 오프라인으로 플레이하거나 게임이 공식적으로 허용하는 경우에만 계속하세요.&#x0a;&#x0a;그래도 설치하시겠습니까?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">그래도 설치</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">다음 게임은 안티치트 보호를 사용합니다:&#x0a;&#x0a;{0}&#x0a;&#x0a;OptiScaler를 주입하거나 DLL을 교체하면 온라인 모드에서 계정이 정지될 수 있습니다.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">이 게임 건너뛰기</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">디스크의 DLL 파일에서 읽은 버전입니다. 실행 중에는 OptiScaler 또는 GPU 드라이버가 다른 FSR 버전을 불러올 수 있습니다.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">사용 중인 AMD FSR (OptiScaler 로그): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">마지막으로 게임을 실행했을 때 OptiScaler가 로그에 기록한 FSR 업스케일러 버전입니다.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">디스크의 DLL과 다릅니다: OptiScaler 또는 GPU 드라이버가 다른 FSR 버전을 불러왔습니다.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">설정이 적용되지 않음</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">일부 설정이 예상대로 OptiScaler.ini에 기록되지 않아 게임이 다른 구성으로 실행될 수 있습니다:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">다시 적용</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">일부 설정을 여전히 적용할 수 없습니다. OptiScaler.ini가 읽기 전용이 아닌지, 다른 프로그램에서 열려 있지 않은지 확인하세요:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">다음 게임의 OptiScaler.ini를 완전히 구성하지 못했습니다: {0}. 해당 게임의 관리 화면을 열고 다시 설치하세요.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">{0}개 게임에서 설치에 실패했습니다:&#x0a;&#x0a;{1}</x:String>
+
+    <!-- Quick tour, contextual help & sidebar labels -->
+    <x:String x:Key="TxtNavGames">게임</x:String>
+    <x:String x:Key="TxtContextHelpTip">이 섹션의 도움말 열기</x:String>
+    <x:String x:Key="TxtTourTitle">빠른 둘러보기</x:String>
+    <x:String x:Key="TxtTourHelpDesc">기본 단계와 나머지 기능의 위치를 간단히 안내합니다.</x:String>
+    <x:String x:Key="TxtTourStartBtn">둘러보기 시작</x:String>
+    <x:String x:Key="TxtTourBack">뒤로</x:String>
+    <x:String x:Key="TxtTourNext">다음</x:String>
+    <x:String x:Key="TxtTourStep3Text">• 원하는 대로 옵션을 조정한 뒤 '자동 설치'를 클릭하세요.&#x0a;• 옵션이 궁금하다면 옆의 (?) 아이콘에 마우스를 올려 보세요.&#x0a;• 자세한 내용은 각 섹션의 도움말 버튼이나 도움말 페이지를 확인하세요.&#x0a;• 이 둘러보기는 도움말 &gt; 시작하기에서 언제든지 다시 볼 수 있습니다.</x:String>
+    <x:String x:Key="TxtTourStepExtrasLabel">4단계: 기본 그 이상</x:String>
+    <x:String x:Key="TxtTourStepExtrasText">• 게임 관리 창에는 Frame Generation, FSR4 swap, OptiPatcher 같은 고급 옵션과 RenoDX, Neural Rendering (AMD용) 같은 실험적 기능이 있습니다.&#x0a;• 실험적 기능은 설정에서 활성화할 수 있습니다.&#x0a;• 프로필로 구성을 저장해 여러 게임에서 재사용할 수 있습니다.&#x0a;• 일괄 설치는 구성을 여러 게임에 한 번에 적용합니다.</x:String>
+
+    <!-- Empty library state -->
+    <x:String x:Key="TxtEmptyLibraryTitle">라이브러리가 비어 있습니다</x:String>
+    <x:String x:Key="TxtEmptyLibraryHint">게임 스캔을 눌러 시스템에 설치된 게임을 감지하거나, 수동으로 추가를 눌러 직접 게임을 추가하세요.</x:String>
+
+    <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
+    <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">sdli1995/dlssg_for_sm86을 사용해 DLSS 프레임 생성을 이미 지원하는 게임에서 GeForce RTX 20/30 시리즈 GPU로도 프레임 생성을 켭니다. 비공식·실험적 기능이며 사용에 따른 책임은 본인에게 있습니다. OptiScaler 설치 여부와 관계없이 동작합니다. 파일은 모드의 GitHub 저장소에서 고정된 버전으로 내려받고 사용 전에 검증합니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86BuildItem">런타임 {0} (최대 {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86None">없음</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierLbl">최대 프레임 생성</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierTooltip">모드가 게임에 제공하는 최대 배율입니다. 실제 배율은 게임이 정하며, 구형 Streamline 플러그인을 쓰는 게임은 2X 또는 4X에서 멈춥니다. 6X는 런타임 310.9가 필요합니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">업데이트 가능: v{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">게임 실행 파일의 폴더를 찾을 수 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">안티치트 감지: 이 게임에서는 DLSS FG for RTX 20/30을 사용할 수 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">이 게임은 DLSS 프레임 생성(Streamline)을 포함하지 않아 모드가 켤 수 있는 것이 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNotDx12">DLSS FG for RTX 20/30은 DirectX 12 게임에서만 동작합니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoFreeProxyName">모드가 쓸 수 있는 로더 이름이 모두 사용 중입니다: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerManualInstall">이 폴더에 dlssg_for_sm86이 수동으로 설치되어 있습니다: {0}. 먼저 이 파일들을 제거한 뒤 이 창을 다시 여세요.</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerManual">dlssg_for_sm86 수동 설치</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerFsr4Swap">FSR 4 Swap</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerAsiLoader">ASI 로더</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerUnknown">다른 파일</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOff">하드웨어 가속 GPU 예약이 꺼져 있습니다. 켜고 PC를 다시 시작하기 전까지 게임에서 프레임 생성을 사용할 수 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOpenSettings">그래픽 설정 열기</x:String>
+    <x:String x:Key="TxtDlssgSm86Downloading">DLSS FG for RTX 20/30 ({0}) 다운로드 중... {1}%</x:String>
+    <x:String x:Key="TxtDlssgSm86InstalledToast">DLSS FG for RTX 20/30을 설치했습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86ClampedToast">DLSS FG for RTX 20/30을 설치했습니다. 런타임 {0}은(는) 최대 {1}까지 지원하므로 최댓값을 낮췄습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86AppliedToast">최대 프레임 생성을 {0}(으)로 설정했습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG for RTX 20/30을 제거했습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallConfirm">이 게임에서 DLSS FG for RTX 20/30을 제거할까요? 교체했던 파일은 복원되며 OptiScaler에는 영향이 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG for RTX 20/30도 함께 제거됩니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">DLSS FG (RTX 20/30)를 설치할 게임 실행 파일 선택</x:String>
+    <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini가 설치 후 변경되었습니다. 그래도 삭제할까요, 아니면 수정한 파일을 게임 폴더에 남길까요?</x:String>
+    <x:String x:Key="TxtDlssgSm86DeleteIni">삭제</x:String>
+    <x:String x:Key="TxtDlssgSm86KeepIni">내 INI 유지</x:String>
+    <x:String x:Key="TxtDlssgSm86KeptFiles">설치 후 변경된 다음 파일은 그대로 두었습니다: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyFailed">내려받은 파일이 검증에 실패하여 삭제했습니다: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySize">크기가 {0}바이트입니다(예상: {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyHash">SHA-256이 고정된 값과 일치하지 않습니다</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyUnsigned">파일에 서명이 없습니다</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySigner">예상하지 않은 인증서로 서명되었습니다({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyError">확인할 수 없습니다({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86BackupFailed">설치하기 전에 {0}을(를) 백업하지 못했습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG for RTX 20/30을 설치하지 못했습니다: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG for RTX 20/30을 제거하지 못했습니다: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0}은(는) 이 게임 폴더에서 이미 DLSS FG for RTX 20/30이 사용 중입니다({1}). 다른 주입 방식을 선택하거나 DLSS FG (RTX 20/30)를 '없음'으로 설정하세요.</x:String>
+    <x:String x:Key="TxtDlssgSm86Badge">DLSS FG for RTX 20/30: v{0} ({1})</x:String>
+    <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — 비공식·실험적, 사용 책임은 본인에게</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheEmpty">캐시된 DLSS FG for RTX 20/30 빌드가 없습니다.</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheItem">v{0} · 런타임 {1}</x:String>
 </ResourceDictionary>

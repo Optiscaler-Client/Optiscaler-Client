@@ -18,6 +18,11 @@ public class GameMetadataService
     private readonly string _iconsCachePath;
     private readonly ComponentManagementService? _componentService;
     private readonly GameIconCoverService _iconCovers = new();
+    private readonly LauncherCoverLocator _launcherCovers = new();
+
+    // Sentinels carry the version of the source chain that gave up on the game; bumping it whenever a
+    // source is added retries those "no cover" verdicts once. Legacy sentinels are empty files.
+    private static readonly byte[] SentinelVersion = [3];
 
     /// <summary>Suffix of the covers generated from the game's .exe icon when no real cover exists.</summary>
     public const string IconCoverSuffix = ".icon.png";
@@ -74,7 +79,13 @@ public class GameMetadataService
     public bool HasSentinel(string appIdKey)
     {
         var sentinelPath = Path.Combine(_coversCachePath, $"{SanitizeFileName(appIdKey)}.nocover");
-        return File.Exists(sentinelPath);
+        return IsCurrentSentinel(sentinelPath);
+    }
+
+    private static bool IsCurrentSentinel(string sentinelPath)
+    {
+        try { return File.Exists(sentinelPath) && File.ReadAllBytes(sentinelPath).AsSpan().SequenceEqual(SentinelVersion); }
+        catch { return false; }
     }
 
     /// <summary>
@@ -146,8 +157,8 @@ public class GameMetadataService
 
     /// <summary>
     /// Searches for game cover art using multiple sources with fallback.
-    /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) SteamGridDB
-    /// Priority: 1) Cache, 2) Steam API (with AppId if available), 3) Steam API (gameName), 4) SteamGridDB (gameName), 5) Fallbacks
+    /// Priority: 1) Cache, 2) Launcher's local cover cache, 3) Steam CDN by AppId, 4) GOG GamesDB by
+    /// store ID, 5) Steam/GOG/Lutris search by name (then fallback name), 6) SteamGridDB (API key only).
     /// When every source fails and <paramref name="game"/> is given, falls back to a cover generated
     /// from the game's executable icon (see <see cref="GameIconCoverService"/>).
     /// </summary>
@@ -165,7 +176,7 @@ public class GameMetadataService
         }
 
         // Previously determined no cover exists — skip all network calls
-        if (File.Exists(sentinelPath))
+        if (IsCurrentSentinel(sentinelPath))
         {
             DebugWindow.Log(() => $"[Cover] HIT sentinel (no cover): {gameName}");
             return await GetIconCoverAsync(game, sanitized);
@@ -177,7 +188,18 @@ public class GameMetadataService
         string? result = null;
         int? triedSteamAppId = null;
 
-        // Try 1: If appIdKey is a numeric Steam AppId, use it directly (fastest — 1 request)
+        // Try 1: Cover the game's own launcher already cached locally (no API, mostly no network)
+        if (game != null)
+        {
+            result = await TryFetchFromLauncherCache(game, localPath, sw);
+            if (result != null)
+            {
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via launcher cache: \"{gameName}\"");
+                return result;
+            }
+        }
+
+        // Try 2: If appIdKey is a numeric Steam AppId, use it directly (fastest — 1 request)
         if (int.TryParse(appIdKey, out int steamAppId))
         {
             triedSteamAppId = steamAppId;
@@ -188,66 +210,65 @@ public class GameMetadataService
                 DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via AppId: \"{gameName}\"");
                 return result;
             }
-            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] AppId direct failed, falling back to search...");
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] AppId direct failed, falling back...");
         }
 
-        // Try 2: Search Steam Store API by name
-        DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying Steam name search...");
-        result = await TryFetchFromSteamSearch(gameName, localPath, sw, skipAppId: triedSteamAppId);
-        if (result == null && !string.IsNullOrWhiteSpace(fallbackName))
+        // Try 3: GOG GamesDB resolves the store's own ID (Steam/GOG/Epic/Ubisoft) to a portrait cover
+        if (game != null && !string.IsNullOrWhiteSpace(game.AppId))
         {
-            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Steam search failed, trying fallback name: {fallbackName}");
-            result = await TryFetchFromSteamSearch(fallbackName, localPath, sw, skipAppId: triedSteamAppId);
-        }
-        if (result != null)
-        {
-            DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via Steam search: \"{gameName}\"");
-            return result;
-        }
-        DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Steam search failed.");
-
-        // Try 3: Fallback to SteamGridDB (only if API key configured)
-        DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying SteamGridDB fallback...");
-        // Try 3: SteamGridDB by name
-        DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Steam search failed, trying SteamGridDB...");
-        result = await TryFetchFromSteamGridDB(gameName, localPath, sw);
-        if (result == null && !string.IsNullOrWhiteSpace(fallbackName))
-        {
-            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] SteamGridDB failed, trying fallback name: {fallbackName}");
-            result = await TryFetchFromSteamGridDB(fallbackName, localPath, sw);
-        }
-        if (result != null)
-        {
-            DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via SteamGridDB: \"{gameName}\"");
-            return result;
-        }
-
-        // Try 4: Fallback Name (Steam API then SteamGridDB)
-        if (!string.IsNullOrWhiteSpace(fallbackName) && fallbackName != gameName)
-        {
-            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Primary name failed everywhere, trying fallback name: {fallbackName}");
-            
-            result = await TryFetchFromSteamSearch(fallbackName, localPath, sw, skipAppId: triedSteamAppId);
+            result = await TryFetchFromGamesDb(game.Platform, game.AppId, localPath, sw);
             if (result != null)
             {
-                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via Steam search (fallback): \"{fallbackName}\"");
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via GamesDB: \"{gameName}\"");
                 return result;
             }
+        }
 
-            result = await TryFetchFromSteamGridDB(fallbackName, localPath, sw);
+        var names = new[] { gameName, fallbackName }
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(n => n!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Try 4: Searches by name (Steam, GOG, then Lutris.net for other stores' exclusives), primary name first
+        foreach (var name in names)
+        {
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying store search for: \"{name}\"");
+            result = await TryFetchFromSteamSearch(name, localPath, sw, skipAppId: triedSteamAppId)
+                     ?? await TryFetchFromGogSearch(name, localPath, sw)
+                     ?? await TryFetchFromLutrisSearch(name, localPath, sw);
             if (result != null)
             {
-                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via SteamGridDB (fallback): \"{fallbackName}\"");
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via store search: \"{name}\"");
+                return result;
+            }
+        }
+
+        // Try 5: SteamGridDB by name (only if API key configured)
+        foreach (var name in names)
+        {
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Trying SteamGridDB for: \"{name}\"");
+            result = await TryFetchFromSteamGridDB(name, localPath, sw);
+            if (result != null)
+            {
+                DebugWindow.Log(() => $"[Cover] DONE in {sw.ElapsedMilliseconds}ms via SteamGridDB: \"{name}\"");
                 return result;
             }
         }
 
         DebugWindow.Log(() => $"[Cover] FAIL in {sw.ElapsedMilliseconds}ms — no cover found for: \"{gameName}\" — writing sentinel");
-        try { await File.WriteAllBytesAsync(sentinelPath, Array.Empty<byte>()); }
+        try { await File.WriteAllBytesAsync(sentinelPath, SentinelVersion); }
         catch (Exception ex) { DebugWindow.Log(() => $"[Cover] Failed to write sentinel: {ex.Message}"); }
 
         return await GetIconCoverAsync(game, sanitized);
     }
+
+    /// <summary>
+    /// Cover generated from the game's executable icon (created on demand), or null when the game has
+    /// no usable icon. Used as the placeholder after a cover is deleted.
+    /// </summary>
+    public Task<string?> GetOrCreateIconCoverAsync(Game game, string appIdKey) =>
+        GetIconCoverAsync(game, SanitizeFileName(appIdKey));
 
     private Task<string?> GetIconCoverAsync(Game? game, string sanitizedKey)
     {
@@ -276,7 +297,19 @@ public class GameMetadataService
             return localPath;
         }
 
-        // Stage 2: primary failed — fire remaining formats in parallel
+        // Stage 1b: newer apps only publish portrait art under hashed paths — ask the store for them
+        foreach (var assetUrl in await GetSteamCapsuleUrlsAsync(appId, sw))
+        {
+            var assetResult = await TryFetchImageBytesAsync(assetUrl, sw, CancellationToken.None);
+            if (assetResult.bytes != null)
+            {
+                await File.WriteAllBytesAsync(localPath, assetResult.bytes);
+                DebugWindow.Log(() => $"[Cover]     OK {assetResult.bytes.Length / 1024}KB — {assetUrl}");
+                return localPath;
+            }
+        }
+
+        // Stage 2: no portrait art — fire remaining (landscape) formats in parallel
         using var cts = new CancellationTokenSource();
         var fallbackTasks = SteamImageTemplates.Skip(1)
             .Select(template => TryFetchImageBytesAsync(string.Format(template, appId), sw, cts.Token))
@@ -306,6 +339,51 @@ public class GameMetadataService
 
         DebugWindow.Log(() => $"[Cover]     All CDN URLs failed for AppId {appId}");
         return null;
+    }
+
+    /// <summary>
+    /// Portrait capsule URLs (2x first) from Steam's keyless IStoreBrowseService, which knows the
+    /// hashed asset paths that the fixed CDN templates miss for recently updated apps.
+    /// </summary>
+    private async Task<List<string>> GetSteamCapsuleUrlsAsync(int appId, Stopwatch? sw)
+    {
+        var urls = new List<string>();
+        try
+        {
+            var input = $"{{\"ids\":[{{\"appid\":{appId}}}],\"context\":{{\"language\":\"english\",\"country_code\":\"US\"}},\"data_request\":{{\"include_assets\":true}}}}";
+            var url = $"https://api.steampowered.com/IStoreBrowseService/GetItems/v1?input_json={Uri.EscapeDataString(input)}";
+            DebugWindow.Log(() => $"[Cover]     GET Steam GetItems for AppId {appId}");
+            var t0 = sw?.ElapsedMilliseconds ?? 0;
+            using var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                DebugWindow.Log(() => $"[Cover]     Steam GetItems {(int)response.StatusCode}");
+                return urls;
+            }
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (!doc.RootElement.TryGetProperty("response", out var resp)
+                || !resp.TryGetProperty("store_items", out var items)
+                || items.ValueKind != JsonValueKind.Array || items.GetArrayLength() == 0
+                || !items[0].TryGetProperty("assets", out var assets)
+                || !assets.TryGetProperty("asset_url_format", out var formatEl))
+                return urls;
+
+            var format = formatEl.GetString();
+            if (string.IsNullOrEmpty(format)) return urls;
+
+            foreach (var key in new[] { "library_capsule_2x", "library_capsule" })
+            {
+                if (assets.TryGetProperty(key, out var fileEl) && fileEl.GetString() is { Length: > 0 } file)
+                    urls.Add("https://shared.akamai.steamstatic.com/store_item_assets/" + format.Replace("${FILENAME}", file));
+            }
+            DebugWindow.Log(() => $"[Cover]     Steam GetItems: {urls.Count} capsule(s) in {(sw?.ElapsedMilliseconds ?? 0) - t0}ms");
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover]     Steam GetItems exception: {ex.GetType().Name}: {ex.Message}");
+        }
+        return urls;
     }
 
     private async Task<(string url, byte[]? bytes)> TryFetchImageBytesAsync(string url, Stopwatch? sw, CancellationToken ct)
@@ -404,6 +482,194 @@ public class GameMetadataService
         }
 
         return null;
+    }
+
+    private async Task<string?> TryFetchFromLauncherCache(Game game, string localPath, Stopwatch sw)
+    {
+        foreach (var candidate in _launcherCovers.FindCoverCandidates(game))
+        {
+            try
+            {
+                if (candidate.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Launcher metadata cover URL found");
+                    var (_, bytes) = await TryFetchImageBytesAsync(candidate, sw, CancellationToken.None);
+                    if (bytes == null) continue;
+                    await File.WriteAllBytesAsync(localPath, bytes);
+                }
+                else
+                {
+                    DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] Launcher cache file: {candidate}");
+                    File.Copy(candidate, localPath, overwrite: true);
+                }
+                return localPath;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log(() => $"[Cover]     Launcher cover '{candidate}' failed: {ex.Message}");
+            }
+        }
+        return null;
+    }
+
+    // GamesDB (GOG Galaxy's cross-store database) platform ids for the stores whose scanners keep
+    // the native store ID in Game.AppId.
+    private static string? GamesDbPlatform(GamePlatform platform) => platform switch
+    {
+        GamePlatform.Steam => "steam",
+        GamePlatform.GOG => "gog",
+        GamePlatform.Epic => "epic",
+        GamePlatform.Ubisoft => "uplay",
+        _ => null
+    };
+
+    private async Task<string?> TryFetchFromGamesDb(GamePlatform platform, string storeId, string localPath, Stopwatch sw)
+    {
+        var platformId = GamesDbPlatform(platform);
+        if (platformId == null) return null;
+
+        try
+        {
+            var url = $"https://gamesdb.gog.com/platforms/{platformId}/external_releases/{Uri.EscapeDataString(storeId)}";
+            DebugWindow.Log(() => $"[Cover]   [T+{sw.ElapsedMilliseconds}ms] GET {url}");
+            using var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                DebugWindow.Log(() => $"[Cover]     GamesDB {(int)response.StatusCode}");
+                return null;
+            }
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (!doc.RootElement.TryGetProperty("game", out var gameEl)
+                || !gameEl.TryGetProperty("vertical_cover", out var cover)
+                || !cover.TryGetProperty("url_format", out var formatEl)
+                || formatEl.GetString() is not { Length: > 0 } format)
+            {
+                DebugWindow.Log(() => "[Cover]     GamesDB has no vertical cover");
+                return null;
+            }
+
+            // Empty formatter = original resolution.
+            var imageUrl = format.Replace("{formatter}", "").Replace("{ext}", "jpg");
+            var (_, bytes) = await TryFetchImageBytesAsync(imageUrl, sw, CancellationToken.None);
+            if (bytes == null) return null;
+
+            await File.WriteAllBytesAsync(localPath, bytes);
+            return localPath;
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover]     GamesDB exception: {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task<string?> TryFetchFromGogSearch(string gameName, string localPath, Stopwatch? sw = null)
+    {
+        try
+        {
+            string cleanName = CleanGameName(gameName);
+            string url = $"https://catalog.gog.com/v1/catalog?limit=20&query=like:{Uri.EscapeDataString(cleanName)}&productType=in:game,pack&order=desc:score";
+
+            DebugWindow.Log(() => $"[Cover]     GET {url}");
+            using var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                DebugWindow.Log(() => $"[Cover]     GOG search {(int)response.StatusCode}");
+                return null;
+            }
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (!doc.RootElement.TryGetProperty("products", out var products) || products.GetArrayLength() == 0)
+            {
+                DebugWindow.Log(() => $"[Cover]     GOG search returned 0 results for: \"{cleanName}\"");
+                return null;
+            }
+
+            var bestMatch = FindBestMatch(products, cleanName, "title");
+            if (bestMatch == null
+                || !bestMatch.Value.TryGetProperty("coverVertical", out var coverEl)
+                || coverEl.GetString() is not { Length: > 0 } coverUrl)
+            {
+                DebugWindow.Log(() => $"[Cover]     GOG search: no matching title for \"{cleanName}\"");
+                return null;
+            }
+
+            DebugWindow.Log(() => $"[Cover]     GOG search matched: \"{bestMatch.Value.GetProperty("title").GetString()}\"");
+            var (_, bytes) = await TryFetchImageBytesAsync(coverUrl, sw, CancellationToken.None);
+            if (bytes == null) return null;
+
+            await File.WriteAllBytesAsync(localPath, bytes);
+            return localPath;
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover]     GOG search exception: {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Lutris.net's public game database mirrors IGDB covers for every store (Epic/EA/Ubisoft
+    /// exclusives included), so it catches titles that neither the Steam nor GOG catalogs carry.
+    /// </summary>
+    private async Task<string?> TryFetchFromLutrisSearch(string gameName, string localPath, Stopwatch? sw = null)
+    {
+        try
+        {
+            string cleanName = CleanGameName(gameName);
+            string url = $"https://lutris.net/api/games?search={Uri.EscapeDataString(cleanName)}";
+
+            DebugWindow.Log(() => $"[Cover]     GET {url}");
+            using var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                DebugWindow.Log(() => $"[Cover]     Lutris search {(int)response.StatusCode}");
+                return null;
+            }
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (!doc.RootElement.TryGetProperty("results", out var results) || results.GetArrayLength() == 0)
+            {
+                DebugWindow.Log(() => $"[Cover]     Lutris search returned 0 results for: \"{cleanName}\"");
+                return null;
+            }
+
+            var bestMatch = FindBestMatch(results, cleanName);
+            if (bestMatch == null
+                || !bestMatch.Value.TryGetProperty("coverart", out var coverEl)
+                || coverEl.ValueKind != JsonValueKind.String
+                || coverEl.GetString() is not { Length: > 0 } coverUrl)
+            {
+                DebugWindow.Log(() => $"[Cover]     Lutris search: no matching title with cover for \"{cleanName}\"");
+                return null;
+            }
+
+            DebugWindow.Log(() => $"[Cover]     Lutris search matched: \"{bestMatch.Value.GetProperty("name").GetString()}\"");
+
+            // Lutris serves IGDB's 264x352 "cover_big"; IGDB itself has the 2x (528x704) variant.
+            var igdb = System.Text.RegularExpressions.Regex.Match(coverUrl, @"/media/igdb/cover_big/(\w+\.jpg)$");
+            if (igdb.Success)
+            {
+                var hiRes = await TryFetchImageBytesAsync($"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{igdb.Groups[1].Value}", sw, CancellationToken.None);
+                if (hiRes.bytes != null)
+                {
+                    await File.WriteAllBytesAsync(localPath, hiRes.bytes);
+                    return localPath;
+                }
+            }
+
+            var (_, bytes) = await TryFetchImageBytesAsync(coverUrl, sw, CancellationToken.None);
+            if (bytes == null) return null;
+
+            await File.WriteAllBytesAsync(localPath, bytes);
+            return localPath;
+        }
+        catch (Exception ex)
+        {
+            DebugWindow.Log(() => $"[Cover]     Lutris search exception: {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
     }
 
     private async Task<string?> TryFetchFromSteamGridDB(string gameName, string localPath, Stopwatch? sw = null)
@@ -507,54 +773,53 @@ public class GameMetadataService
         return null;
     }
 
-    private JsonElement? FindBestMatch(JsonElement items, string searchName)
+    private static JsonElement? FindBestMatch(JsonElement items, string searchName, string nameProperty = "name")
     {
-        var itemsList = items.EnumerateArray().ToList();
+        var target = NormalizeTitle(searchName);
+        if (target.Length == 0) return null;
 
-        // First try: exact match (case insensitive)
-        foreach (var item in itemsList)
+        var candidates = items.EnumerateArray()
+            .Select(item => (item, name: item.TryGetProperty(nameProperty, out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                ? NormalizeTitle(nameEl.GetString() ?? "")
+                : ""))
+            .Where(c => c.name.Length > 0)
+            .ToList();
+
+        // Exact match, then "starts with" ("The Witcher 3" -> "The Witcher 3: Wild Hunt"),
+        // then "contains" ("Wild Hunt" -> "The Witcher 3: Wild Hunt").
+        foreach (var predicate in new Func<string, bool>[]
+                 {
+                     n => n == target,
+                     n => n.StartsWith(target + " ", StringComparison.Ordinal),
+                     n => n.Contains(target, StringComparison.Ordinal),
+                 })
         {
-            if (item.TryGetProperty("name", out var nameEl))
-            {
-                string itemName = nameEl.GetString() ?? "";
-                if (itemName.Equals(searchName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return item;
-                }
-            }
+            foreach (var (item, name) in candidates)
+                if (predicate(name)) return item;
         }
 
-        // Second try: starts with search name (e.g., "The Witcher 3" -> "The Witcher 3: Wild Hunt")
-        foreach (var item in itemsList)
-        {
-            if (item.TryGetProperty("name", out var nameEl))
-            {
-                string itemName = nameEl.GetString() ?? "";
-                if (itemName.StartsWith(searchName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return item;
-                }
-            }
-        }
-
-        // Third try: search name is fully contained in the result (e.g., "Wild Hunt" -> "The Witcher 3: Wild Hunt")
-        foreach (var item in itemsList)
-        {
-            if (item.TryGetProperty("name", out var nameEl))
-            {
-                string itemName = nameEl.GetString() ?? "";
-                if (itemName.Contains(searchName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return item;
-                }
-            }
-        }
-
-        // We used to blindly return itemsList[0] here.
-        // But Steam's API often returns completely unrelated games if the exact game is missing
-        // (e.g., searching "Alan Wake 2" returns a Beat Saber DLC).
-        // If none of the above matched, it's safer to fail so we can fall back to SteamGridDB.
+        // Never fall back to the first result: store searches often return unrelated games when the
+        // exact one is missing (e.g. "Alan Wake 2" returns a Beat Saber DLC); failing lets the
+        // remaining sources try.
         return null;
+    }
+
+    /// <summary>
+    /// Lowercases and strips trademark symbols, punctuation and accents so that "DOOM Eternal™",
+    /// "Doom: Eternal" and "doom eternal" compare equal.
+    /// </summary>
+    private static string NormalizeTitle(string title)
+    {
+        var decomposed = title.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder(decomposed.Length);
+        foreach (var ch in decomposed)
+        {
+            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (category == System.Globalization.UnicodeCategory.NonSpacingMark) continue;
+            if (ch == '\'' || ch == '\u2019') continue; // "Assassin's" == "Assassins"
+            sb.Append(char.IsLetterOrDigit(ch) ? char.ToLowerInvariant(ch) : ' ');
+        }
+        return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"\s+", " ").Trim();
     }
 
     private string CleanGameName(string gameName)

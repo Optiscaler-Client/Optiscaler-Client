@@ -24,8 +24,6 @@ public interface IFrameGenerationConfigurationService
 /// </summary>
 public sealed class FrameGenerationConfigurationService : IFrameGenerationConfigurationService
 {
-    private static readonly string[] AntiCheatFiles = ["start_protected_game.exe", "EasyAntiCheat_EOS.exe", "BEService.exe", "BEClient_x64.dll"];
-
     public FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null)
     {
         var root = ResolveGameDirectory(game);
@@ -49,7 +47,7 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         bool dx12 = files.Contains("d3d12.dll") || files.Contains("d3d12core.dll") ||
                     !string.IsNullOrEmpty(game.DlssFrameGenVersion) || hasFsr3 || hasXeFg;
         bool vulkan = files.Contains("vulkan-1.dll") || files.Contains("amd_fidelityfx_vk.dll");
-        bool antiCheat = files.Overlaps(AntiCheatFiles);
+        bool antiCheat = files.Overlaps(AntiCheatHelper.Files);
         bool arc = gpu?.Vendor == GpuVendor.Intel &&
                    (gpu.Name.Contains("Arc", StringComparison.OrdinalIgnoreCase) || gpu.Name.Contains("Battlemage", StringComparison.OrdinalIgnoreCase));
         bool supportsDynamicMfg = gpu != null && gpu.Vendor switch

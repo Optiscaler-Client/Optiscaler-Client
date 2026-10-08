@@ -36,8 +36,8 @@
     <x:String x:Key="TxtWindowMaximize">Maximaliseren</x:String>
     <x:String x:Key="TxtWindowRestore">Herstellen</x:String>
     <x:String x:Key="TxtWindowClose">Sluiten</x:String>
-    <x:String x:Key="TxtBtnScan">⟳  Games scannen</x:String>
-    <x:String x:Key="TxtBtnAddManual">＋  Voeg handmatig toe</x:String>
+    <x:String x:Key="TxtBtnScan">Games scannen</x:String>
+    <x:String x:Key="TxtBtnAddManual">Voeg handmatig toe</x:String>
     <x:String x:Key="TxtTipSettings">Instellingen</x:String>
     <x:String x:Key="TxtTipComponent">Componentversies</x:String>
     <x:String x:Key="TxtUpdateNukem">↑  Update NukemFG</x:String>
@@ -144,7 +144,7 @@
     <x:String x:Key="TxtConfigOnlyUpdateApplied">Configuratie bijgewerkt.</x:String>
     <x:String x:Key="TxtConfigOnlyUpdateError">Kan de configuratie niet bijwerken:</x:String>
     <x:String x:Key="TxtConfigOnlyNoLongerAvailable">Er is iets anders veranderd — gebruik in plaats daarvan Installeren/Opnieuw installeren.</x:String>
-    <x:String x:Key="TxtOptiVersionNone">Geen — alleen FSR 4-wissel</x:String>
+    <x:String x:Key="TxtOptiVersionNone">Geen</x:String>
     <x:String x:Key="TxtBtnAutoSwapDll">✦ Automatische DLL-swap</x:String>
     <x:String x:Key="TxtBtnManualSwapDll">✦ Handmatige DLL-swap</x:String>
     <x:String x:Key="TxtRestoreOriginalDll">↺ Originele DLL herstellen</x:String>
@@ -295,8 +295,14 @@
     <x:String x:Key="TxtClearAppCacheDesc">Verwijdert gescande spellen, omslagafbeeldingen en gecachte versiegegevens. De app scant opnieuw bij de volgende start.</x:String>
     <x:String x:Key="TxtOpenFolderBtn">Map openen</x:String>
     <x:String x:Key="TxtClearCacheBtn">Cache wissen</x:String>
-    <x:String x:Key="TxtClearAppCacheDialogMsg">Waarschuwing: Dit zal alle gescande spellen, omslagafbeeldingen en gecachte OptiScaler-versiegegevens permanent verwijderen.&#x0a;&#x0a;De applicatie sluit na het wissen. Bij de volgende start wordt de bibliotheek opnieuw gescand en versie-informatie opnieuw gedownload.</x:String>
+    <x:String x:Key="TxtClearAppCacheDialogMsg">Selecteer wat permanent verwijderd moet worden.</x:String>
     <x:String x:Key="TxtClearAppCacheSizeInfo">Totale grootte: {0}</x:String>
+    <x:String x:Key="TxtClearCacheOptGames">Gescande games</x:String>
+    <x:String x:Key="TxtClearCacheOptCovers">Covers en pictogrammen</x:String>
+    <x:String x:Key="TxtClearCacheOptVersionData">Gecachete versie- en onlinegegevens</x:String>
+    <x:String x:Key="TxtClearCacheOptDownloads">Gedownloade OptiScaler- en extra bestanden</x:String>
+    <x:String x:Key="TxtClearCacheOptSettings">App-instellingen</x:String>
+    <x:String x:Key="TxtClearCacheRestartRequired">Herstart vereist: de app wordt na het opschonen gesloten.</x:String>
     <x:String x:Key="TxtCacheTotalSizeFormat">Totale grootte: {0}</x:String>
 
     <!-- Scan Sources -->
@@ -531,9 +537,9 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpGMSpoofingLabel">Spoofing 🎭</x:String>
     <x:String x:Key="TxtHelpGMSpoofingText">Overschrijft OptiScalers eigen GPU-spoofing voor dit spel — DXGI, Streamline en Vulkan samen —, die een Nvidia-GPU voorwendt zodat DLSS-only games op AMD/Intel werken. Auto volgt OptiScalers standaard (ingeschakeld op AMD/Intel, uitgeschakeld op Nvidia); overschrijf dit per spel als een titel het omgekeerde nodig heeft.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrLabel">DLSS Neural Rendering op AMD (Experimenteel) 🧪</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrText">Maakt ook deel uit van de Experimentele zone (zie de help-pagina 'Experimenteel'). Voert danielblncs niet-officiële DLSS Neural Rendering-mod uit op AMD-GPU's, optioneel gecombineerd met een niet-officiële community OptiScaler-wrapperbuild, aangezien OptiScaler zelf nog geen Neural Rendering ondersteunt.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrText">Ook onderdeel van de Experimentele zone (zie de helppagina 'Experimenteel'). Voert de onofficiële DLSS Neural Rendering-mod van danielblnc uit op AMD-GPU's, optioneel samen met een officiële OptiScaler-build via AMD-NR-bridge van GoldenNights.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrModesTitle">Modi</x:String>
-    <x:String x:Key="TxtHelpGMDlssNrModesText">'Geen' schakelt het uit. 'Alleen danielblnc-mod' installeert alleen de AMD Neural Rendering-mod. 'Mod + OptiScaler' wisselt ook de niet-officiële community-wrapperbuild in, zodat OptiScaler en Neural Rendering samen kunnen werken.</x:String>
+    <x:String x:Key="TxtHelpGMDlssNrModesText">'Geen' schakelt het uit. 'Alleen danielblnc-mod' installeert alleen de AMD Neural Rendering-mod. 'Mod + OptiScaler' installeert de mod, de geselecteerde officiële OptiScaler-versie (Stable, Beta of Nightly) en AMD-NR-bridge zodat ze samen werken.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllTitle">nvngx_dlssnr.dll</x:String>
     <x:String x:Key="TxtHelpGMDlssNrDllText">De mod heeft je eigen legitieme kopie van NVIDIA's nvngx_dlssnr.dll nodig, geëxtraheerd uit een spel dat al DLSS 5 ondersteunt. We kunnen dit bestand zelf om juridische redenen niet aanbieden. Het wordt één keer gevraagd en gecachet voor toekomstige installaties.</x:String>
     <x:String x:Key="TxtHelpGMDlssNrVersionTitle">Modversie</x:String>
@@ -554,14 +560,14 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpExpRenodxText">Een optionele per-spel HDR/tone-mapping-addon die bovenop ReShade draait. Houd er rekening mee dat we om intellectuele eigendomsredenen de basisversies niet automatisch kunnen downloaden, maar wel de addons per spel. 'Auto' bepaalt en downloadt de juiste addon voor het huidige spel rechtstreeks vanuit de RenoDX-wiki; vereist dat ReShade al in de spelmap is geïnstalleerd.</x:String>
     <x:String x:Key="TxtHelpExpRenodxLinkLabel">RenoDX op GitHub ↗</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLabel">DLSS Neural Rendering op AMD</x:String>
-    <x:String x:Key="TxtHelpExpDlssNrText">Voert danielblncs niet-officiële DLSS Neural Rendering-mod uit op AMD-GPU's, optioneel gecombineerd met een niet-officiële community OptiScaler-wrapperbuild (MatheusGViana), zodat OptiScaler en Neural Rendering samen kunnen werken - OptiScaler zelf heeft nog geen officiële ondersteuning voor Neural Rendering.</x:String>
+    <x:String x:Key="TxtHelpExpDlssNrText">Voert de onofficiële DLSS Neural Rendering-mod van danielblnc uit op AMD-GPU's, optioneel samen met een officiële OptiScaler-build via AMD-NR-bridge van GoldenNights - OptiScaler zelf heeft nog geen officiële Neural Rendering-ondersteuning.</x:String>
     <x:String x:Key="TxtHelpExpDlssNrLinkLabel">DLSS-NR-on-AMD op GitHub ↗</x:String>
     <x:String x:Key="TxtHelpExpDllTitle">Waarom we NVIDIA's DLL niet kunnen aanbieden</x:String>
     <x:String x:Key="TxtHelpExpDllContent">DLSS Neural Rendering heeft nvngx_dlssnr.dll nodig, een bestand dat eigendom is van NVIDIA. We mogen het niet herdistribueren, dus de app downloadt of bundelt het nooit. Jij levert je eigen legitieme kopie, geëxtraheerd uit een spel dat al DLSS 5 heeft. Het wordt één keer gevraagd en gecachet voor hergebruik bij toekomstige installaties.</x:String>
     <x:String x:Key="TxtHelpExpSupportTitle">Ondersteuningsniveau</x:String>
     <x:String x:Key="TxtHelpExpSupportContent">Alles hier is een mod van derden of een community-build die buiten dit project en buiten OptiScaler wordt onderhouden. We integreren ze, cachen hun releases en proberen de workflow soepel te houden, maar we hebben geen controle over hun releasetempo, hun bugs, of hoe goed ze samenwerken met elk spel of elke GPU. Ondersteuning is best-effort en niet zo diepgaand of getest als OptiScalers eigen functies.</x:String>
     <x:String x:Key="TxtHelpExpWarningTitle">Niet-officiële builds ⚠️</x:String>
-    <x:String x:Key="TxtHelpExpWarningContent">De 'Mod + OptiScaler'-wrapperbuild wordt niet gedistribueerd of geverifieerd door het OptiScaler-project. Hij wordt rechtstreeks gedownload van de GitHub-releases en de checksum wordt geverifieerd wanneer de release er een publiceert, maar de inhoud zelf wordt niet door ons of door OptiScaler gecontroleerd. Installeer op eigen risico.</x:String>
+    <x:String x:Key="TxtHelpExpWarningContent">AMD-NR-bridge, gebruikt door 'Mod + OptiScaler', is een plugin van derden die niet door het OptiScaler-project wordt verspreid of gecontroleerd. Het wordt rechtstreeks van de GitHub-releases gedownload en de checksum wordt gecontroleerd als de release er een publiceert, maar de inhoud zelf wordt niet door ons of door OptiScaler gecontroleerd. Installeren op eigen risico.</x:String>
 
 
     <!-- Help - Profiles / Settings / Bulk / FAQ -->
@@ -738,12 +744,16 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
 
     <!-- OptiPatcher -->
     <x:String x:Key="TxtOptiPatcherLbl">OptiPatcher</x:String>
-    <x:String x:Key="TxtOptiPatcherTooltip">Een ASI-plugin voor OptiScaler die DLSS/DLSS-FG-invoer blootlegt zonder spoofing in ondersteunde spellen. Helpt Intel Arc-gebruikers D3D12-fouten te vermijden en voorkomt prestatieproblemen of crashes door Dxgi-spoofing.</x:String>
+    <x:String x:Key="TxtOptiPatcherTooltip">OptiScaler-plugin die ondersteunde games DLSS/DLSS-FG-invoer laat aanbieden zonder GPU-spoofing. Op AMD en Intel voorkomt het D3D12-fouten, crashes en prestatieverlies door spoofing.&#10;&#10;Als de Compatibility List de game als ondersteund markeert, wordt automatisch de nieuwste versie gekozen. Laat het op "None" voor andere games.</x:String>
+    <x:String x:Key="TxtInjectionTooltip">Bestandsnaam die OptiScaler in de gamemap gebruikt zodat de game het laadt. dxgi.dll werkt bij de meeste games; verschijnt OptiScaler niet in de game of crasht die, probeer dan een andere (bijv. winmm.dll of version.dll).&#10;&#10;Wordt vooraf geselecteerd uit de Compatibility List als de game er een aanbeveelt.</x:String>
+    <x:String x:Key="TxtFrameGenerationTooltip">Stelt in hoe extra frames in deze game worden gegenereerd: de route waar OptiScaler de gegevens vandaan haalt, de uitvoertechnologie (FSR FG, XeFG, DLSS-G…) en de vermenigvuldiger.&#10;&#10;Auto kiest een geschikte optie voor je GPU en de game. Klik op de knop om het te wijzigen.</x:String>
+    <x:String x:Key="TxtFakenvapiTooltip">Emuleert de Nvidia-API op AMD/Intel-GPU's zodat games Nvidia Reflex kunnen gebruiken, vertaald naar AMD Anti-Lag 2 of LatencyFleX. Sommige frame generation-configuraties hebben het nodig.&#10;&#10;Alleen zichtbaar bij OptiScaler-versies ouder dan 0.9 of aangepaste builds; nieuwere versies bevatten het al.</x:String>
+    <x:String x:Key="TxtNukemFGTooltip">Nukems mod (dlssg-to-fsr3) die DLSS Frame Generation vervangt door FSR 3 Frame Generation, zodat games met DLSS-G frame generation op elke GPU kunnen gebruiken.&#10;&#10;Alleen zichtbaar bij OptiScaler-versies ouder dan 0.9 of aangepaste builds; nieuwere versies bevatten het al.</x:String>
     <x:String x:Key="TxtDefaultOptiPatcherTooltip">Een ASI-plugin voor OptiScaler die DLSS/DLSS-FG-invoer blootlegt zonder spoofing in ondersteunde spellen. Helpt Intel Arc-gebruikers D3D12-fouten te vermijden en voorkomt prestatieproblemen of crashes door Dxgi-spoofing. Automatisch installeert automatisch de nieuwste versie wanneer de compatibiliteitslijst aangeeft dat een game deze nodig heeft; kies een specifieke versie, of Geen, om altijd die te gebruiken.</x:String>
     <x:String x:Key="TxtProfileLbl">Profiel (.ini)</x:String>
-    <x:String x:Key="TxtProfileTooltip">Een profiel is een opgeslagen OptiScaler .ini-configuratie. Kies er een om een specifieke set instellingen te hergebruiken bij het installeren van OptiScaler voor deze game.</x:String>
+    <x:String x:Key="TxtProfileTooltip">Een profiel is een opgeslagen set OptiScaler-instellingen (OptiScaler.ini) die bij installatie wordt toegepast. Maak en bewerk profielen in het onderdeel Profielen om dezelfde configuratie voor meerdere games te gebruiken.&#10;&#10;Na installatie toont het oogpictogram de resulterende OptiScaler.ini.</x:String>
     <x:String x:Key="TxtSpoofingLbl">Spoofing</x:String>
-    <x:String x:Key="TxtSpoofingTooltip">Overschrijft OptiScalers GPU-spoofing voor DXGI, Streamline en Vulkan samen (doet zich voor als een Nvidia-GPU zodat DLSS-only games werken op AMD/Intel). Auto komt overeen met OptiScalers eigen standaardgedrag: ingeschakeld op AMD/Intel, uitgeschakeld op Nvidia.</x:String>
+    <x:String x:Key="TxtSpoofingTooltip">Laat de game denken dat je een Nvidia-GPU hebt zodat die zijn DLSS-opties inschakelt, die OptiScaler vervolgens omleidt naar FSR of XeSS. Nodig op AMD/Intel in games die alleen DLSS bieden. Geldt voor DXGI, Streamline en Vulkan.&#10;&#10;Auto: ingeschakeld op AMD/Intel, uitgeschakeld op Nvidia (standaard van OptiScaler). Crasht de game of toont die D3D12-fouten, schakel het dan uit of gebruik OptiPatcher als de game ondersteund wordt.</x:String>
     <x:String x:Key="TxtViewIniTooltip">Toont het geïnstalleerde OptiScaler.ini-bestand (alleen lezen)</x:String>
     <x:String x:Key="TxtViewIniSearchWatermark">Zoek naar sleutels of waarden...</x:String>
     <x:String x:Key="TxtViewIniZoomInTooltip">Tekstgrootte vergroten</x:String>
@@ -817,11 +827,10 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrModeDanielOnlyShortLinux">Alleen danielblnc-mod (fork)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiShort">Mod + OptiScaler</x:String>
 
-    <x:String x:Key="TxtSetupNrDanielAndOptiLinuxBrokenTooltip">Momenteel niet beschikbaar op Linux.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnlySuffix"> (alleen mod)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOptiSuffix"> (+ OptiScaler)</x:String>
-    <x:String x:Key="TxtDlssNrOnAmdTooltip">Hiermee kun je DLSS Neural Rendering gebruiken op AMD-gpu's via de niet-officiële mod van danielblnc, optioneel gecombineerd met een niet-officiële OptiScaler-build. Experimenteel, zonder officiële ondersteuning en losstaand van OptiScalers eigen upscalers — gebruik op eigen risico.</x:String>
-    <x:String x:Key="TxtOptiScalerVersionTooltip">Te installeren OptiScaler-versie. Kies "Geen" om alleen de FSR 4-DLL te wisselen, zonder OptiScaler te installeren.</x:String>
+    <x:String x:Key="TxtDlssNrOnAmdTooltip">Voert DLSS Neural Rendering uit op AMD-GPU's met de onofficiële mod van danielblnc. Alleen AMD.&#10;&#10;• Alleen danielblnc-mod: installeert alleen de mod.&#10;• Mod + OptiScaler: combineert hem via AMD-NR-bridge met de geselecteerde officiële OptiScaler-versie.&#10;&#10;Experimenteel, niet ondersteund en los van OptiScalers eigen upscalers; gebruik op eigen risico.</x:String>
+    <x:String x:Key="TxtOptiScalerVersionTooltip">Te installeren OptiScaler-versie.&#10;&#10;• Stable: geteste versies, aanbevolen voor de meeste games.&#10;• Beta: voorversies met nieuwere functies en fixes.&#10;• Nightly: automatische ontwikkelbuilds, kunnen instabiel zijn.&#10;&#10;Kies "Geen — alleen FSR 4-wissel" om alleen de FSR 4-DLL te vervangen zonder OptiScaler te installeren. De standaard gekozen versie kun je wijzigen in Instellingen.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledMsg">De AMD DLSS Neural Rendering-mod is al geïnstalleerd voor deze game.</x:String>
     <x:String x:Key="TxtSetupNrAlreadyInstalledHint">Verwijderen voert het installatieprogramma van danielblnc opnieuw uit — kies de verwijderoptie wanneer daarom wordt gevraagd.</x:String>
     <x:String x:Key="TxtSetupNrNvngxHint">Eerst hebben we je eigen legitieme kopie van nvngx_dlssnr.dll nodig — we mogen dit bestand om juridische redenen niet zelf aanleveren. Je kunt het halen uit elke game met DLSS 5-ondersteuning. Wordt maar één keer gevraagd en hergebruikt voor toekomstige installaties; je kunt het later bijwerken via Instellingen → Beheer Lokale Versies.</x:String>
@@ -839,12 +848,19 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrDeleteWeightsMsg">Weet je zeker dat je de opgeslagen gewichten wilt verwijderen? De volgende "Mod + OptiScaler"-installatie (op elke game) voert de installer van danielblnc opnieuw uit om ze opnieuw te genereren.</x:String>
     <x:String x:Key="TxtSetupNrModeDanielOnly">Alleen de mod van danielblnc (zonder OptiScaler)</x:String>
     <x:String x:Key="TxtSetupNrModeDanielAndOpti">Mod + OptiScaler (niet-officiële wrapper)</x:String>
-    <x:String x:Key="TxtSetupNrWrapperWarning">OptiScaler heeft momenteel geen officiële ondersteuning voor Neural Rendering, daarom is een door de community gewrapte build (MatheusGViana) nodig om het samen te gebruiken. Installeer op eigen risico.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeInfo">Gebruikt AMD-NR-bridge van GoldenNights (van derden, niet door ons gecontroleerd) bovenop de geselecteerde officiële OptiScaler-versie. Het zet de upscaler op FSR en ondersteunt alleen OptiScalers eigen frame generation met FSR FG-uitvoer. Installeren op eigen risico.</x:String>
+    <x:String x:Key="TxtSetupNrLegacyWrapperInfo">Deze game gebruikt nog de stopgezette OptiScaler-build van MatheusGViana. Installeer opnieuw om over te stappen op de geselecteerde officiële OptiScaler-versie met AMD-NR-bridge.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionLbl">AMD-NR-bridge-versie</x:String>
+    <x:String x:Key="TxtSetupNrBridgeVersionTooltip">GoldenNights/AMD-NR-bridge-release gebruikt door 'Mod + OptiScaler'. Hiermee werkt de mod van danielblnc samen met een officiële OptiScaler-build. Gedownload van de GitHub-releases, nooit meegeleverd.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeNoRelease">Er is geen AMD-NR-bridge-release beschikbaar.</x:String>
+    <x:String x:Key="TxtSetupNrBridgeDownloadFailedFormat">Kon AMD-NR-bridge niet downloaden: {0}</x:String>
+    <x:String x:Key="TxtSetupNrBridgeApplyFailedFormat">AMD-NR-bridge kon niet worden toegepast: {0}&#10;&#10;OptiScaler zelf is geïnstalleerd. Installeer opnieuw via Beheren om het nog eens te proberen.</x:String>
     <x:String x:Key="TxtSetupNrDanielOnlyDx12Info">De mod van danielblnc werkt alleen in DirectX 12-games die FSR 3.1 of nieuwer gebruiken. Hij werkt niet in DirectX 11 of Vulkan.</x:String>
+    <x:String x:Key="TxtSetupNrWithOptiProjectInfo">Om het met OptiScaler te gebruiken, zie AMD-NR + OptiScaler van 3zwr1.</x:String>
     <x:String x:Key="TxtSetupNrDanielVersionLbl">Modversie (danielblnc)</x:String>
-    <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versie van danielblncs DLSS Neural Rendering-mod die wordt gebruikt om de AMD-weights te genereren. Nodig voor zowel "danielblnc mod only" als "Mod + OptiScaler".</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Gebruikt een onofficiële externe fork (guentra/DLSS-NR-on-AMD-Linux) om danielblncs DLSS Neural Rendering-mod via een echte ROCm-brug op Linux te draaien</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Op Linux wordt de onofficiële fork DLSS-NR-on-AMD-Linux van guentra gebruikt (niet rechtstreeks het installatieprogramma van danielblnc), die de mod verbindt met een echte ROCm-runtime zodat de GPU-controle onder Wine/Proton kan slagen. Credits: danielblnc/DLSS-NR-on-AMD (de mod) en guentra/DLSS-NR-on-AMD-Linux (de fork).</x:String>
+    <x:String x:Key="TxtSetupNrDanielVersionTooltip">Versie van de mod van danielblnc, gebruikt om in beide modi ("Alleen danielblnc-mod" en "Mod + OptiScaler") de AMD-gewichten te genereren. Beschikbaar zodra een modus is gekozen.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperWarning">Gebruikt een onofficiële externe fork (bulacha3/DLSS-NR-on-AMD-Linux) om danielblncs DLSS Neural Rendering-mod via een echte ROCm-brug op Linux te draaien</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperTooltip">Op Linux wordt de onofficiële fork DLSS-NR-on-AMD-Linux van bulacha3 gebruikt (niet rechtstreeks het installatieprogramma van danielblnc), die de mod verbindt met een echte ROCm-runtime zodat de GPU-controle onder Wine/Proton kan slagen. Credits: danielblnc/DLSS-NR-on-AMD (de mod) en bulacha3/DLSS-NR-on-AMD-Linux (de fork).</x:String>
     <x:String x:Key="TxtSetupNrLinuxWrapperInstalling">Bezig met installeren (Linux-fork)...</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxWrapperDownloading">Linux-fork downloaden...</x:String>
@@ -864,7 +880,27 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchTitle">Wis de opstartopties van het spel</x:String>
 
     <x:String x:Key="TxtSetupNrLinuxForkRemoveLaunchBody">De mod is verwijderd. Haal de opstartopties weg die je ervoor had geplakt (Steam: Eigenschappen → Algemeen → Opstartopties) — ze verwijzen nog steeds naar het zojuist verwijderde opstartscript, en het spel start pas als je ze weghaalt.</x:String>
-    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux-fork (guentra)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperCacheSection">Linux-fork (bulacha3)</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqTitle">Ontbrekende vereisten</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqBuildTools">De Linux-fork heeft gcc en g++ nodig om zijn geoptimaliseerde backend voor je GPU te bouwen.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqPython">De Linux-fork heeft Python 3.11 of nieuwer nodig.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqRunCommand">Plak deze opdracht in een terminal en voer de installatie daarna opnieuw uit:</x:String>
+    <x:String x:Key="TxtSetupNrLinuxReqNoCommand">Installeer het met de pakketbeheerder van je distributie en voer de installatie daarna opnieuw uit.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperNoRelease">Kon de lijst met versies van de Linux-fork niet van GitHub ophalen. Je bent mogelijk offline of hebt de uurlimiet voor verzoeken van GitHub bereikt — probeer het later opnieuw.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWrapperUninstallFailedFormat">De mod kon niet worden verwijderd: {0}&#10;&#10;Sluit de game volledig af (ook via "Stoppen" in Steam als hij nog als actief wordt getoond) en probeer het opnieuw.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseTitle">Sluit Steam</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseContinueBtn">Steam is gesloten, doorgaan</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseAddMsg">De mod draait via een startscript dat aan de startopties van deze game in Steam moet worden toegevoegd. Sluit Steam volledig af zodat het automatisch wordt toegevoegd (je huidige startopties blijven behouden) — of kopieer de regel hieronder en voeg hem zelf toe.</x:String>
+    <x:String x:Key="TxtSetupNrSteamCloseRemoveMsg">Het startscript van de mod moet uit de startopties van deze game in Steam worden verwijderd. Sluit Steam volledig af zodat het automatisch wordt verwijderd (je andere startopties blijven behouden).</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsApplied">Startopties toegevoegd in Steam.</x:String>
+    <x:String x:Key="TxtSetupNrSteamLaunchOptionsRemoved">Startopties verwijderd uit Steam.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModLbl">Neural Rendering (AMD) — mod van danielblnc</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModTooltip">DLSS Neural Rendering-mod van danielblnc voor AMD-GPU's, geïnstalleerd via de Linux-fork van bulacha3. Kies een versie om hem samen met de hierboven gekozen OptiScaler-versie te installeren; zet OptiScaler op "Geen" om alleen de mod te installeren. "Geen" hier verwijdert de mod.</x:String>
+    <x:String x:Key="TxtSetupNrWindowsModTooltip">De DLSS Neural Rendering-mod van danielblnc voor AMD-GPU's. Kies een versie om hem te installeren; de OptiScaler-opties blijven vergrendeld zolang hij geselecteerd is, omdat de twee op Windows conflicteren. "Geen" verwijdert hier de mod.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxWithOptiInfo">Op Linux werken de mod en OptiScaler samen: hij wordt geïnstalleerd samen met de gekozen OptiScaler-versie. Zet OptiScaler op "Geen" om alleen de mod te installeren.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxModOnlyInfo">OptiScaler staat op "Geen": alleen de mod wordt geïnstalleerd.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxBulkWithOptiInfo">Op Linux werken de mod en OptiScaler samen: elke game krijgt de mod samen met de OptiScaler-versie die voor de batch is gekozen.</x:String>
+    <x:String x:Key="TxtSetupNrLinuxDefaultWithOptiInfo">Op Linux werken de mod en OptiScaler samen: Quick Install en Bulk Install installeren hem samen met de standaard OptiScaler-versie.</x:String>
     <x:String x:Key="TxtSetupNrWrapperVersionLbl">OptiScaler wrapper-versie (community, niet-officieel)</x:String>
     <x:String x:Key="TxtSetupNrOpenFolderBtn">Installer uitvoeren</x:String>
     <x:String x:Key="TxtSetupNrLaunchBtn">Downloaden en voorbereiden</x:String>
@@ -883,6 +919,8 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtSetupNrDownloadError">Downloadfout: {0}</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeB">De mod van danielblnc is succesvol gedownload, maar moet handmatig geïnstalleerd worden:&#10;1) Klik op "Installer uitvoeren".&#10;2) Volg de stappen in de terminal. BELANGRIJK: als gevraagd wordt welke proxy-DLL te gebruiken, kies er een DIE NIET dxgi.dll is (bv. dbghelp.dll) — OptiScaler wordt daarna als dxgi.dll geïnstalleerd en ze hebben aparte slots nodig.&#10;&#10;Dit venster sluit automatisch en installeert de OptiScaler-wrapper zodra het detecteert dat de installer klaar is.</x:String>
     <x:String x:Key="TxtSetupNrInstructionsModeA">De mod van danielblnc is succesvol gedownload, maar moet handmatig geïnstalleerd worden:&#10;1) Klik op "Installer uitvoeren".&#10;2) Volg de stappen in de terminal (elke aangeboden proxy-DLL werkt).&#10;&#10;Dit venster sluit automatisch zodra het detecteert dat de installer klaar is.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfo">Vanaf v0.3.3 heeft de mod van danielblnc een eigen installatieprogramma. Bij het installeren wordt het geopend zodat je de installatie daar kunt voltooien.</x:String>
+    <x:String x:Key="TxtSetupNrGuiInstallerInfoModeB">Vanaf v0.3.3 heeft de mod van danielblnc een eigen installatieprogramma. Bij het installeren wordt het geopend zodat je de installatie daar kunt voltooien. BELANGRIJK: kies als proxy-DLL een ANDERE dan dxgi.dll (bijv. dbghelp.dll) — OptiScaler wordt daarna als dxgi.dll geïnstalleerd.</x:String>
     <x:String x:Key="TxtWineOverrideTitle">Wine DLL-override nodig</x:String>
     <x:String x:Key="TxtWineOverrideReminderFormat">Op Linux/Proton heb je mogelijk een Wine DLL-override nodig om {0} daadwerkelijk te laten werken — anders kan Wine zijn eigen ingebouwde versie van die bestandsnaam blijven gebruiken in plaats van de zojuist geïnstalleerde. Als je Steam gebruikt, voeg dit toe aan de opstartopties van het spel:</x:String>
     <x:String x:Key="TxtSetupNrCannotResolveDir">Kon de gamemap niet bepalen.</x:String>
@@ -922,7 +960,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtDlssNrBadge">DLSS Neural Rendering (AMD, experimenteel)</x:String>
     <x:String x:Key="TxtDlssNrBadgeTooltip">danielblnc/DLSS-NR-on-AMD via "Setup NR" — niet-officieel, experimenteel, op eigen risico</x:String>
     <x:String x:Key="TxtSetupNrDownloadBtn">Downloaden</x:String>
-    <x:String x:Key="TxtRenodxTooltip">RenoDX is een per-game HDR/tone-mapping-addon die bovenop ReShade draait. "Auto" probeert automatisch de juiste addon voor dit spel te vinden en te downloaden.</x:String>
+    <x:String x:Key="TxtRenodxTooltip">Gamespecifieke HDR-/tone-mapping-addon. "Auto" zoekt en downloadt de juiste addon voor deze game van de RenoDX-wiki.&#10;&#10;Vereist ReShade (met addon-ondersteuning) dat al in de gamemap is geïnstalleerd; het kan niet automatisch worden gedownload. Gebruikt ReShade dezelfde DLL-naam als OptiScaler, dan blijft de bestaande installatie behouden.</x:String>
     <x:String x:Key="TxtExperimentalZoneLbl">EXPERIMENTEEL</x:String>
     <x:String x:Key="TxtAddRenodxTitle">RenoDX-addon toevoegen</x:String>
     <x:String x:Key="TxtRenodxGameNameLbl">Spelnaam</x:String>
@@ -944,7 +982,7 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtHelpFsr4DllDefaultText">Kies de vooraf geselecteerde FSR 4-DLL in Manage en Quick Install. None slaat injectie of swap over.</x:String>
     <x:String x:Key="TxtFrameGeneration">Framegeneratie</x:String>
     <x:String x:Key="TxtFsr4SwapLbl">FSR 4-DLL (Wisselen)</x:String>
-    <x:String x:Key="TxtFsr4SwapTooltip">Vervangt de FSR-DLL van het spel door FSR 4. INT8: voor GPU's zonder officiële FSR 4-ondersteuning. FP8: het officiële model (RDNA 4).&#10;&#10;Werkt met of zonder OptiScaler: zet OptiScaler op "Geen" om alleen de DLL te wisselen. Zonder OptiScaler moet het spel al FSR 3.1 of nieuwer bevatten.</x:String>
+    <x:String x:Key="TxtFsr4SwapTooltip">Vervangt de FSR-DLL van de game door FSR 4 voor betere beeldkwaliteit.&#10;&#10;• INT8: voor GPU's zonder officiële FSR 4-ondersteuning.&#10;• FP8: het officiële model, voor AMD RDNA 4.&#10;&#10;Werkt met of zonder OptiScaler: kies bij OptiScaler "Geen — alleen FSR 4-wissel" om alleen de DLL te vervangen. De game moet dan al FSR 3.1 of nieuwer bevatten.</x:String>
     <x:String x:Key="TxtFsr4SwapOnlyHint">Om naar FSR 4 te wisselen zonder OptiScaler te installeren, kies "Geen" als OptiScaler-versie en selecteer een FSR 4-DLL (Wisselen).</x:String>
     <x:String x:Key="TxtFgRoute">FG-route</x:String>
     <x:String x:Key="TxtFgRouteTooltip">Selecteert de invoerroute die OptiScaler gebruikt voor Framegeneratie in deze game.</x:String>
@@ -1008,9 +1046,9 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtMfgWrongChannelToast">MFG werkt mogelijk niet met de geselecteerde OptiScaler-versie — een Nightly-versie wordt aanbevolen.</x:String>
     <x:String x:Key="TxtNoDlssEnablerVersionSelected">Geen DLSS Enabler-versie geselecteerd. Configureer eerst Framegeneratie voor deze game.</x:String>
     <x:String x:Key="TxtUpscalingQuality">Upscaling-kwaliteit</x:String>
-    <x:String x:Key="TxtUpscalingQualityTooltip">Overschrijft de upscaling-kwaliteitsverhouding van het spel. Door spel bepaald laat de invoerresolutie aan het spel over.</x:String>
+    <x:String x:Key="TxtUpscalingQualityTooltip">Forceert de interne renderresolutie van de upscaler en negeert de kwaliteitsinstelling van de game. Lagere presets (Performance, Ultra Performance) geven meer FPS maar een zachter beeld; Native AA rendert op volledige resolutie en past alleen anti-aliasing toe.&#10;&#10;"Door spel bepaald" behoudt de instelling van de game. "Aangepast" laat je een exacte verhouding instellen.</x:String>
     <x:String x:Key="TxtOutputUpscaler">Output-upscaler</x:String>
-    <x:String x:Key="TxtOutputUpscalerTooltip">Overschrijft welke upscaler-backend OptiScaler voor dit spel gebruikt, bovenop het geselecteerde profiel. "Standaard" laat de keuze van het profiel ongewijzigd.</x:String>
+    <x:String x:Key="TxtOutputUpscalerTooltip">Upscaler die OptiScaler echt gebruikt om het beeld te renderen (FSR 2/3/4, XeSS of DLSS), ongeacht welke in het gamemenu is gekozen. Sommige hangen af van je GPU, DLSS vereist bijvoorbeeld een Nvidia RTX.&#10;&#10;"Standaard" behoudt de keuze van het geselecteerde profiel.</x:String>
     <x:String x:Key="TxtDefaultDlssNrOnAmdDesc">Standaard "Setup NR"-modus die wordt voorgeselecteerd voor elke nog niet geconfigureerde game, en automatisch wordt geïnstalleerd met Snel installeren / Bulkinstallatie. Alleen zichtbaar als de standaard-GPU hierboven AMD is.</x:String>
     <x:String x:Key="TxtOutputUpscalerDefault">Standaard</x:String>
     <x:String x:Key="TxtOutputUpscalerApplyError">Kon de configuratie van de output-upscaler niet toepassen:</x:String>
@@ -1041,16 +1079,11 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtUpscalingQualityApplyError">De upscaling-kwaliteitsconfiguratie kon niet worden toegepast:</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomDescription">Kies de deler die wordt gebruikt om de interne invoerresolutie te berekenen op basis van de outputresolutie.</x:String>
     <x:String x:Key="TxtUpscalingQualityCustomTitle">Aangepaste upscaling-kwaliteit</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: De README legt nu uit hoe je OptiScaler zelf bouwt vanuit de verschillende branches.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew2">• Verbeterd: Vernieuwde titelbalk die opgaat in de rest van de app.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew3">• Verbeterd: Betere ondersteuning voor handhelds en kleine schermen – gamepad in meer vensters, scrollen en knoppen via aanraking, tikken voor tooltips en rasteropties, en het Beheren-venster slepen of dubbeltikken.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew4">• Verbeterd: Het pictogram van het uitvoerbare bestand wordt getoond als er geen cover is, en de lijstweergave gebruikt nu pictogrammen voor een compactere indeling.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew5">• Verbeterd: Op Linux toont de app nu zijn eigen pictogram in de taakbalk.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew6">• Verbeterd: Een nieuwe infomelding legt uit dat FSR 4-DLL's zonder OptiScaler-installatie kunnen worden gewisseld.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew7">• Opgelost: Verwijderen kon de eigen FidelityFX-DLL's van een game (amd_fidelityfx_*) wissen zonder de originelen te herstellen.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew8">• Opgelost: Sommige mapnamen werden verkeerd opgeschoond, waardoor die games niet werden herkend bij het zoeken naar compatibiliteitsinfo.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew9">• Opgelost: Dezelfde map kon twee keer worden gescand op hetzelfde uitvoerbare bestand.</x:String>
-    <x:String x:Key="TxtWelcomeWhatsNew10">• Opgelost: Op Windows verhinderde een gemaximaliseerd venster dat een automatisch verborgen taakbalk verscheen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew1">• Nieuw: visuele vernieuwing van de hele app, een snelle rondleiding voor nieuwe gebruikers en een verbeterde Help-sectie.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew2">• Nieuw: anti-cheatwaarschuwingen vóór installatie, een controle van de instellingen na installatie en de daadwerkelijk gebruikte FSR-versie in Beheren.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew3">• Verbeterd: Frame Generation Auto gaat nu tot x6, en DLSS Neural Rendering voor AMD is eenvoudiger in te stellen.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew4">• Opgelost: opnieuw installeren kon de eigen FidelityFX-DLL's van een game verwijderen, en de Steam Deck en Radeon AI PRO R9700 kregen de verkeerde FSR 4-versie.</x:String>
+    <x:String x:Key="TxtWelcomeWhatsNew5">• …en nog veel meer oplossingen en verbeteringen. Bekijk het volledige changelog op GitHub.</x:String>
     <x:String x:Key="TxtViewIniRestoreAll">Restore values</x:String>
     <x:String x:Key="TxtViewIniRestoreRowTooltip">Restore original value</x:String>
     <x:String x:Key="TxtViewIniSavePlaceholder">Save</x:String>
@@ -1059,4 +1092,84 @@ Deze versie is niet beschikbaar om te downloaden. Controleer uw internetverbindi
     <x:String x:Key="TxtViewIniSaveAsNew">As new profile</x:String>
     <x:String x:Key="TxtPromptNewProfileTitle">New Profile</x:String>
     <x:String x:Key="TxtPromptNewProfileLabel">Enter a name for the new profile:</x:String>
+    <!-- Anti-cheat warnings, FSR runtime version, OptiScaler.ini verification -->
+    <x:String x:Key="TxtAntiCheatTitle">Anti-cheat gedetecteerd</x:String>
+    <x:String x:Key="TxtAntiCheatDesc">Deze game gebruikt anti-cheatbeveiliging. OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen. Gebruik op eigen risico.</x:String>
+    <x:String x:Key="TxtAntiCheatConfirmMsg">{0} gebruikt anti-cheatbeveiliging.&#x0a;&#x0a;OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen. Ga alleen door als je offline speelt of de game het officieel toestaat.&#x0a;&#x0a;Toch installeren?</x:String>
+    <x:String x:Key="TxtAntiCheatInstallAnyway">Toch installeren</x:String>
+    <x:String x:Key="TxtAntiCheatBulkMsg">Deze games gebruiken anti-cheatbeveiliging:&#x0a;&#x0a;{0}&#x0a;&#x0a;OptiScaler injecteren of DLL's vervangen kan ertoe leiden dat je account in online modi wordt verbannen.</x:String>
+    <x:String x:Key="TxtAntiCheatSkipGames">Deze games overslaan</x:String>
+    <x:String x:Key="TxtFsrDiskVersionTip">Versie gelezen uit het DLL-bestand op schijf. OptiScaler of de GPU-driver kan tijdens het spelen een andere FSR-versie laden.</x:String>
+    <x:String x:Key="TxtFsrRuntimeLabel">Gebruikte AMD FSR (OptiScaler-log): {0}</x:String>
+    <x:String x:Key="TxtFsrRuntimeTip">FSR-upscalerversie die OptiScaler in zijn log meldde toen de game voor het laatst draaide.</x:String>
+    <x:String x:Key="TxtFsrRuntimeMismatchTip">Verschilt van de DLL op schijf: OptiScaler of de GPU-driver heeft een andere FSR-versie geladen.</x:String>
+    <x:String x:Key="TxtIniVerifyTitle">Instellingen niet toegepast</x:String>
+    <x:String x:Key="TxtIniVerifyMsg">Sommige instellingen zijn niet zoals verwacht naar OptiScaler.ini geschreven, dus de game draait mogelijk met een andere configuratie:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyReapply">Opnieuw toepassen</x:String>
+    <x:String x:Key="TxtIniVerifyReapplyFailed">Sommige instellingen konden nog steeds niet worden toegepast. Controleer of OptiScaler.ini niet alleen-lezen is of in een ander programma is geopend:&#x0a;&#x0a;{0}</x:String>
+    <x:String x:Key="TxtIniVerifyBulkSummary">OptiScaler.ini kon niet volledig worden geconfigureerd voor: {0}. Open Beheer voor deze games en installeer opnieuw.</x:String>
+    <x:String x:Key="TxtBulkInstallFailedGames">Installatie mislukt voor {0} game(s):&#x0a;&#x0a;{1}</x:String>
+
+    <!-- Quick tour, contextual help & sidebar labels -->
+    <x:String x:Key="TxtNavGames">Games</x:String>
+    <x:String x:Key="TxtContextHelpTip">Help voor dit onderdeel openen</x:String>
+    <x:String x:Key="TxtTourTitle">Korte rondleiding</x:String>
+    <x:String x:Key="TxtTourHelpDesc">Een korte rondleiding langs de basisstappen en waar je al het andere vindt.</x:String>
+    <x:String x:Key="TxtTourStartBtn">Rondleiding starten</x:String>
+    <x:String x:Key="TxtTourBack">Terug</x:String>
+    <x:String x:Key="TxtTourNext">Volgende</x:String>
+    <x:String x:Key="TxtTourStep3Text">• Pas de opties naar wens aan en klik op 'Automatische installatie'.&#x0a;• Twijfel over een optie? Beweeg over het (?)-pictogram ernaast.&#x0a;• Voor meer details gebruik je de helpknop in elk onderdeel of de Help-pagina.&#x0a;• Je kunt deze rondleiding altijd herhalen via Help &gt; Aan de slag.</x:String>
+    <x:String x:Key="TxtTourStepExtrasLabel">Stap 4: Meer dan de basis</x:String>
+    <x:String x:Key="TxtTourStepExtrasText">• Het gamebeheervenster heeft geavanceerde opties zoals Frame Generation, FSR4 swap, OptiPatcher en experimentele functies zoals RenoDX en Neural Rendering (voor AMD).&#x0a;• Experimentele functies kun je inschakelen in Instellingen.&#x0a;• Met profielen kun je een configuratie opslaan en voor meerdere games hergebruiken.&#x0a;• Bulkinstallatie past een configuratie op meerdere games tegelijk toe.</x:String>
+
+    <!-- Empty library state -->
+    <x:String x:Key="TxtEmptyLibraryTitle">Je bibliotheek is leeg</x:String>
+    <x:String x:Key="TxtEmptyLibraryHint">Klik op Games scannen om de geïnstalleerde games op je systeem te vinden, of gebruik Voeg handmatig toe om er zelf een toe te voegen.</x:String>
+
+    <!-- DLSS FG on RTX 20/30 (dlssg_for_sm86), experimental -->
+    <x:String x:Key="TxtDlssgSm86Title">DLSS FG (RTX 20/30)</x:String>
+    <x:String x:Key="TxtDlssgSm86Tooltip">Schakelt DLSS Frame Generation in op GeForce RTX 20- en 30-serie GPU's in games die het al bevatten, met sdli1995/dlssg_for_sm86. Onofficieel en experimenteel, op eigen risico. Werkt met of zonder OptiScaler. Bestanden worden in een vastgezette versie uit de GitHub-repository van de mod gedownload en vóór gebruik gecontroleerd.</x:String>
+    <x:String x:Key="TxtDlssgSm86BuildItem">Runtime {0} (tot {1})</x:String>
+    <x:String x:Key="TxtDlssgSm86None">Geen</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierLbl">Max. frame generation</x:String>
+    <x:String x:Key="TxtDlssgSm86MultiplierTooltip">De hoogste vermenigvuldiger die de mod aan de game aanbiedt. De game kiest nog steeds de werkelijke vermenigvuldiger, en games met oudere Streamline-plug-ins stoppen bij 2X of 4X. 6X vereist runtime 310.9.</x:String>
+    <x:String x:Key="TxtDlssgSm86StatusUpdateAvailable">Update beschikbaar: v{0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoTargetDirectory">De map van het uitvoerbare bestand van de game is niet gevonden.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerAntiCheat">Anti-cheat gedetecteerd: DLSS FG voor RTX 20/30 is uitgeschakeld voor deze game.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoDlssG">Deze game bevat geen DLSS Frame Generation (Streamline), dus de mod heeft niets in te schakelen.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNotDx12">DLSS FG voor RTX 20/30 werkt alleen in DirectX 12-games.</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerNoFreeProxyName">Alle loadernamen die de mod kan gebruiken zijn al bezet: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86BlockerManualInstall">dlssg_for_sm86 (handmatige installatie) staat al in deze map: {0}. Verwijder die bestanden eerst en open dit venster daarna opnieuw.</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerManual">dlssg_for_sm86, handmatige installatie</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerFsr4Swap">FSR 4 Swap</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerAsiLoader">ASI-loader</x:String>
+    <x:String x:Key="TxtDlssgSm86OwnerUnknown">een ander bestand</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOff">Hardwareversnelde GPU-planning staat uit. Frame generation blijft in games onbeschikbaar tot je deze inschakelt en de pc opnieuw opstart.</x:String>
+    <x:String x:Key="TxtDlssgSm86HagsOpenSettings">Grafische instellingen openen</x:String>
+    <x:String x:Key="TxtDlssgSm86Downloading">DLSS FG voor RTX 20/30 downloaden ({0})... {1}%</x:String>
+    <x:String x:Key="TxtDlssgSm86InstalledToast">DLSS FG voor RTX 20/30 geïnstalleerd.</x:String>
+    <x:String x:Key="TxtDlssgSm86ClampedToast">DLSS FG voor RTX 20/30 geïnstalleerd. Runtime {0} ondersteunt tot {1}, dus het maximum is verlaagd.</x:String>
+    <x:String x:Key="TxtDlssgSm86AppliedToast">Max. frame generation ingesteld op {0}.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstalledToast">DLSS FG voor RTX 20/30 verwijderd.</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallConfirm">DLSS FG voor RTX 20/30 uit deze game verwijderen? Vervangen bestanden worden hersteld. OptiScaler blijft ongemoeid.</x:String>
+    <x:String x:Key="TxtDlssgSm86AlsoRemoved">DLSS FG voor RTX 20/30 wordt ook verwijderd.</x:String>
+    <x:String x:Key="TxtDlssgSm86PickExe">Selecteer het uitvoerbare bestand van de game voor DLSS FG (RTX 20/30)</x:String>
+    <x:String x:Key="TxtDlssgSm86IniEditedPrompt">dlssg_sm86.ini is na de installatie gewijzigd. Toch verwijderen, of je bewerkte kopie in de gamemap houden?</x:String>
+    <x:String x:Key="TxtDlssgSm86DeleteIni">Verwijderen</x:String>
+    <x:String x:Key="TxtDlssgSm86KeepIni">Mijn INI houden</x:String>
+    <x:String x:Key="TxtDlssgSm86KeptFiles">Deze bestanden zijn na de installatie gewijzigd en zijn blijven staan: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyFailed">Een gedownload bestand kwam niet door de controle en is verwijderd: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySize">grootte is {0} bytes, verwacht {1}</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyHash">SHA-256 komt niet overeen met de vastgelegde waarde</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyUnsigned">het bestand is niet ondertekend</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifySigner">ondertekend met een onverwacht certificaat ({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86VerifyError">kon niet worden gecontroleerd ({0})</x:String>
+    <x:String x:Key="TxtDlssgSm86BackupFailed">Kon geen back-up maken van {0} vóór de installatie.</x:String>
+    <x:String x:Key="TxtDlssgSm86InstallFailed">DLSS FG voor RTX 20/30 kon niet worden geïnstalleerd: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86UninstallFailed">DLSS FG voor RTX 20/30 kon niet worden verwijderd: {0}</x:String>
+    <x:String x:Key="TxtDlssgSm86CollisionMsg">{0} wordt in deze gamemap al gebruikt door DLSS FG voor RTX 20/30 ({1}). Kies een andere injectiemethode of zet DLSS FG (RTX 20/30) op 'Geen'.</x:String>
+    <x:String x:Key="TxtDlssgSm86Badge">DLSS FG voor RTX 20/30: v{0} ({1})</x:String>
+    <x:String x:Key="TxtDlssgSm86BadgeTooltip">sdli1995/dlssg_for_sm86 — onofficieel, experimenteel, op eigen risico</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheEmpty">Geen builds van DLSS FG voor RTX 20/30 in de cache.</x:String>
+    <x:String x:Key="TxtDlssgSm86CacheItem">v{0} · runtime {1}</x:String>
 </ResourceDictionary>

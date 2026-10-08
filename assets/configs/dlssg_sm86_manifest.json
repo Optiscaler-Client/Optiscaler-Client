@@ -1,0 +1,30 @@
+{
+  "modVersion": "0.3.5",
+  "repo": "sdli1995/dlssg_for_sm86",
+  "commit": "9621db573e07ed54f50c15bbb585ed9a7bdfac28",
+  "signerThumbprint": "85BA66762F851E49148D706915D09026281418E6",
+  "builds": [
+    {
+      "id": "310.9",
+      "maxGeneratedFrames": 5,
+      "files": [
+        { "name": "version.dll", "path": "version.dll", "role": "proxy", "size": 30021920, "sha256": "C3934A09399F022504227C72DF0BF8C0DE55F9A08880DDDDE898C5262CEFA838", "gitBlobSha": "efd92261f2b74e0a0fb927d74bce7a1c0c2413f7" },
+        { "name": "winmm.dll", "path": "alternatives/winmm.dll", "role": "proxy", "size": 30033184, "sha256": "BC3CEF25C1CCBBDCCDD93DB9FAE845104BB6C71FD433240E26641881A7E46658", "gitBlobSha": "91151d196d7ede5959693f791630ed03fc194607" },
+        { "name": "dbghelp.dll", "path": "alternatives/dbghelp.dll", "role": "proxy", "size": 30039840, "sha256": "DFE7F44BAA68D237DFE040D4B4CFC9BD44B01E661F3051996DB1144E6BB388CB", "gitBlobSha": "0eff053d2c6a6d24788926f18d425823d2e7b6cf" },
+        { "name": "dinput8.dll", "path": "alternatives/dinput8.dll", "role": "proxy", "size": 30021408, "sha256": "4FBAD08BB9360A1CD1309A82586353484FE64B7220199344AB83FAE308176C6B", "gitBlobSha": "289fcf3219199fb38ad5d9b163ef337f24026d23" },
+        { "name": "dlssg_sm86.ini", "path": "dlssg_sm86.ini", "role": "ini", "size": 3548, "sha256": "2616857EE29EC61E33C8B52E1B50F4C93CB5339ADBB13B73F0AE71A722427A43", "gitBlobSha": "2c97d64f2239b7d511f7d0a36c16e149dd3329f6" }
+      ]
+    },
+    {
+      "id": "310.1",
+      "maxGeneratedFrames": 3,
+      "files": [
+        { "name": "version.dll", "path": "310.1/version.dll", "role": "proxy", "size": 27995424, "sha256": "4BA7FECC68E2229193757839F326176A4F0F4325BAAB3C324007E0EA844E4D17", "gitBlobSha": "f360242f177affd48b6e9fda26da2c4faab60104" },
+        { "name": "winmm.dll", "path": "310.1/alternatives/winmm.dll", "role": "proxy", "size": 28006688, "sha256": "A62E669D2CEAE7645CBAFE98D1DF69892EDE07BF78166ACF2185A8BEB9843A85", "gitBlobSha": "3037153d3e852020e2b21db8c48b4ccf71b0a9b9" },
+        { "name": "dbghelp.dll", "path": "310.1/alternatives/dbghelp.dll", "role": "proxy", "size": 28013344, "sha256": "FC58EE19B315732821EA3216D4D360972C38CE076EBC7D730B3F601C0E5C4A2C", "gitBlobSha": "2807a03584a59aa70a8b7a5e8af522f9b469069a" },
+        { "name": "dinput8.dll", "path": "310.1/alternatives/dinput8.dll", "role": "proxy", "size": 27994912, "sha256": "ED56447CEFA8B5836EC39116DB620C289CAC783FBA938A9740C7A1B845A6FFAA", "gitBlobSha": "63bf13bca7af88eaeef8b6c938d21212f2aa6533" },
+        { "name": "dlssg_sm86.ini", "path": "dlssg_sm86.ini", "role": "ini", "size": 3548, "sha256": "2616857EE29EC61E33C8B52E1B50F4C93CB5339ADBB13B73F0AE71A722427A43", "gitBlobSha": "2c97d64f2239b7d511f7d0a36c16e149dd3329f6" }
+      ]
+    }
+  ]
+}

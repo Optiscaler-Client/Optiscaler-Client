@@ -106,7 +106,7 @@ public class HeroicScanner : IGameScanner
         return games;
     }
 
-    private string[] GetHeroicDataPaths()
+    internal static string[] GetHeroicDataPaths()
     {
         if (OperatingSystem.IsWindows())
             return GetHeroicDataPathsWindows();
@@ -114,14 +114,14 @@ public class HeroicScanner : IGameScanner
     }
 
     [SupportedOSPlatform("windows")]
-    private string[] GetHeroicDataPathsWindows()
+    private static string[] GetHeroicDataPathsWindows()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var heroicDataPath = Path.Combine(appData, "heroic");
         return [heroicDataPath];
     }
 
-    private string[] GetHeroicDataPathsLinux()
+    private static string[] GetHeroicDataPathsLinux()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var dataPaths = new[]

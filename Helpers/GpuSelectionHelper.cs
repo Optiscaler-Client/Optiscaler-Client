@@ -36,9 +36,11 @@ namespace OptiscalerClient.Helpers
         /// every other AMD GPU needs the INT8 software fallback forced explicitly.</summary>
         public static bool IsRdna4(GpuInfo? gpu)
         {
+            // "R9\d{3}": the Radeon AI PRO R9700 workstation card is RDNA 4 but has no " 9"/"RX 9".
             return gpu != null && gpu.Vendor == GpuVendor.AMD &&
                    (gpu.Name.Contains(" 9", StringComparison.OrdinalIgnoreCase) ||
-                    gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase));
+                    gpu.Name.Contains("RX 9", StringComparison.OrdinalIgnoreCase) ||
+                    Regex.IsMatch(gpu.Name, @"\bR9\d{3}\b", RegexOptions.IgnoreCase));
         }
 
         /// <summary>RDNA 3 desktop (Radeon RX 7000 series) is now also whitelisted by AMD's official
@@ -57,8 +59,12 @@ namespace OptiscalerClient.Helpers
         public static bool IsRdna2(GpuInfo? gpu)
         {
             if (gpu == null || gpu.Vendor != GpuVendor.AMD) return false;
+            // Steam Deck reports "AMD Custom GPU 0405" (LCD) / "0932" (OLED) on both Windows (WMI)
+            // and Linux (amdgpu.ids) - the "Van Gogh" codename never appears in either name.
             return gpu.Name.Contains("RX 6", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("Van Gogh", StringComparison.OrdinalIgnoreCase) ||
+                   gpu.Name.Contains("Custom GPU 0405", StringComparison.OrdinalIgnoreCase) ||
+                   gpu.Name.Contains("Custom GPU 0932", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("660M", StringComparison.OrdinalIgnoreCase) ||
                    gpu.Name.Contains("680M", StringComparison.OrdinalIgnoreCase);
         }
@@ -81,5 +87,27 @@ namespace OptiscalerClient.Helpers
             return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
                    Regex.IsMatch(gpu.Name, @"RTX\s?50(50|60|70|80|90)", RegexOptions.IgnoreCase);
         }
+
+        /// <summary>Nvidia Turing with tensor cores: GeForce RTX 20 series, TITAN RTX and Quadro RTX
+        /// (with optional Super/Ti/Laptop/Max-Q suffixes). GTX 16xx and Quadro T-series are Turing too
+        /// but have no tensor cores, so they don't match.</summary>
+        public static bool IsTuringRtx(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
+                   Regex.IsMatch(gpu.Name, @"RTX\s?20(60|70|80)|TITAN\s?RTX|Quadro\s?RTX\s?\d{4}", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>Nvidia Ampere: GeForce RTX 30 series (and the GA107-based RTX 2050 Laptop) plus the
+        /// RTX A-series workstation cards (A500–A6000). The "RTX 2000/4000/… Ada" workstation cards are
+        /// Ada Lovelace and don't match.</summary>
+        public static bool IsAmpere(GpuInfo? gpu)
+        {
+            return gpu != null && gpu.Vendor == GpuVendor.NVIDIA &&
+                   Regex.IsMatch(gpu.Name, @"RTX\s?(30(50|60|70|80|90)|2050)|RTX\s?A\d{3,4}(?![0-9])", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>GPUs dlssg_for_sm86 targets: RTX 20 (Turing) and RTX 30 (Ampere), which have
+        /// tensor cores but no official DLSS Frame Generation.</summary>
+        public static bool IsDlssgSm86Capable(GpuInfo? gpu) => IsTuringRtx(gpu) || IsAmpere(gpu);
     }
 }

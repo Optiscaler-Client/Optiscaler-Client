@@ -52,9 +52,6 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     private bool _isUpdatingUpscalingQuality;
     private bool _qualityCustomHandledForOpen;
     private readonly DlssNrOnAmdService _dlssNrService = new();
-    /// <summary>Whether CmbOptiVersion currently lists the "Modded" wrapper releases instead of the
-    /// normal Stable/Beta/Nightly/Custom channels — see SetOptiTabsForModdedMode.</summary>
-    private bool _isDlssNrOnAmdModdedActive;
     /// <summary>Per-game FG capabilities are a full recursive scan of the game folder, so scanning
     /// every installable game on each Frame Generation click cost seconds. Computed once (in the
     /// background right after the window opens) and reused.</summary>
@@ -290,7 +287,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var btnCustom = this.FindControl<Button>("BtnOptiCustom");
         var gridTabs = this.FindControl<Grid>("GridOptiTabs");
         bool hasCustom = customVersions.Count > 0;
-        if (btnCustom != null) btnCustom.IsVisible = hasCustom && !_isDlssNrOnAmdModdedActive;
+        if (btnCustom != null) btnCustom.IsVisible = hasCustom;
         if (gridTabs != null)
             gridTabs.ColumnDefinitions = hasCustom
                 ? new ColumnDefinitions("*,*,*,*")
@@ -330,6 +327,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // interaction before CheckForUpdatesAsync below resolves) saw the 3-column tab row/empty
         // combo the network refresh was about to replace, instead of the real cached channels.
         PopulateAllVersionSelectors();
+        var defaultSelections = SnapshotVersionSelections();
 
         // Always ask the service to refresh. It observes the normal cooldown, except when a
         // newly introduced channel (such as Nightly) is missing from an older local cache.
@@ -339,15 +337,33 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
         // Re-populate with whatever the check refreshed (or the same cached data if the check was
         // skipped/failed) — mirrors ManageGameWindow's own second PopulateVersionSelectors call.
-        Dispatcher.UIThread.Post(PopulateAllVersionSelectors);
+        // Repopulating resets every combo to its default, silently discarding anything the user
+        // picked while the check was in flight: put those picks back (untouched combos keep the
+        // refreshed default, so a newly fetched latest version still wins there).
+        Dispatcher.UIThread.Post(() =>
+        {
+            var userSelections = SnapshotVersionSelections();
+            PopulateAllVersionSelectors();
+            foreach (var (comboName, tag) in userSelections)
+            {
+                if (tag == null || tag == defaultSelections.GetValueOrDefault(comboName)) continue;
+                var cmb = this.FindControl<ComboBox>(comboName);
+                var item = cmb?.Items.OfType<ComboBoxItem>().FirstOrDefault(i => i.Tag?.ToString() == tag);
+                if (item != null) cmb!.SelectedItem = item;
+            }
+        });
     }
+
+    private static readonly string[] VersionComboNames =
+        { "CmbOptiVersion", "CmbExtrasVersion", "CmbOptiPatcherVersion", "CmbFakenvapiVersion", "CmbNukemFGVersion" };
+
+    private Dictionary<string, string?> SnapshotVersionSelections() =>
+        VersionComboNames.ToDictionary(
+            name => name,
+            name => (this.FindControl<ComboBox>(name)?.SelectedItem as ComboBoxItem)?.Tag?.ToString());
 
     private void PopulateOptiVersionCombo()
     {
-        // While Setup NR = "Mod + OptiScaler" the combo lists the Modded wrapper releases instead
-        // (see PopulateModdedOptiVersionComboAsync) — never overwrite that with a normal channel.
-        if (_isDlssNrOnAmdModdedActive) return;
-
         var allVersions = _componentService.OptiScalerAvailableVersions;
         var betaVersions = _componentService.BetaVersions;
         var nightlyVersions = _componentService.NightlyVersions;
@@ -665,6 +681,46 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var selectedGames = _gameItems.Where(g => g.IsSelected && g.CanInstall).ToList();
         if (selectedGames.Count == 0) return;
 
+        // Anti-cheat games need an explicit choice: skip them (default) or accept the ban risk.
+        // Install/Cancel stay locked during the (async) scan: closing the window mid-scan used to let
+        // this handler carry on and install into games from a window that no longer existed.
+        var btnInstallScan = this.FindControl<Button>("BtnInstall");
+        var btnCancelScan = this.FindControl<Button>("BtnCancel");
+        _isInstalling = true;
+        if (btnInstallScan != null) btnInstallScan.IsEnabled = false;
+        if (btnCancelScan != null) btnCancelScan.IsEnabled = false;
+        List<BulkGameItem> antiCheatGames;
+        try
+        {
+            antiCheatGames = await Task.Run(() => selectedGames.Where(g => AntiCheatHelper.IsPresent(g.Game.InstallPath)).ToList());
+        }
+        finally
+        {
+            _isInstalling = false;
+            if (btnCancelScan != null) btnCancelScan.IsEnabled = true;
+            UpdateSelectionCount();
+        }
+        if (antiCheatGames.Count > 0)
+        {
+            var antiCheatDialog = new ConfirmDialog(this,
+                GetResourceString("TxtAntiCheatTitle", "Anti-cheat detected"),
+                string.Format(GetResourceString("TxtAntiCheatBulkMsg",
+                    "These games use anti-cheat protection:\n\n{0}\n\nInjecting OptiScaler or swapping DLLs can get your account banned in online modes."),
+                    string.Join("\n", antiCheatGames.Select(g => $"• {g.Name}"))),
+                confirmText: GetResourceString("TxtAntiCheatSkipGames", "Skip these games"),
+                thirdButtonText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway"));
+            if (await antiCheatDialog.ShowDialog<bool>(this))
+            {
+                foreach (var g in antiCheatGames) g.IsSelected = false;
+                selectedGames = selectedGames.Except(antiCheatGames).ToList();
+                if (selectedGames.Count == 0) return;
+            }
+            else if (!antiCheatDialog.ThirdButtonClicked)
+            {
+                return;
+            }
+        }
+
         var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
         var cmbInjectionMethod = this.FindControl<ComboBox>("CmbInjectionMethod");
         var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
@@ -676,21 +732,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (cmbOptiVersion?.SelectedItem is not ComboBoxItem selectedItem) return;
 
         // ── Setup NR (AMD DLSS Neural Rendering) ────────────────────────────────────
-        // While mode = "daniel-and-opti" the version combo lists MatheusGViana wrapper releases,
-        // not OptiScaler versions — that tag pins the wrapper, and the OptiScaler build to install
-        // is whatever InstallForQuickPathAsync imports for it, per game.
+        // "daniel-and-opti" installs the batch's selected OptiScaler version like any other game,
+        // then AMD-NR-bridge (the version pinned in Settings, else the latest) on top of it.
         var setupNrMode = SelectedSetupNrMode;
         var selectedDanielVersion = (this.FindControl<ComboBox>("CmbDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-        string? selectedWrapperVersion = _isDlssNrOnAmdModdedActive ? selectedItem.Tag?.ToString() : null;
 
-        string version = _isDlssNrOnAmdModdedActive ? "" : selectedItem.Tag?.ToString() ?? "";
-
-        if (_isDlssNrOnAmdModdedActive && string.IsNullOrEmpty(selectedWrapperVersion))
-        {
-            await new ConfirmDialog(this, "Nothing to install",
-                "No modded OptiScaler build is available for the selected Setup NR mode.").ShowDialog<object>(this);
-            return;
-        }
+        string version = selectedItem.Tag?.ToString() ?? "";
 
         // Fakenvapi: read version from combobox
         var selectedFakenvapiItem = cmbFakenvapiVersion?.SelectedItem as ComboBoxItem;
@@ -876,6 +923,8 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             }
         }
 
+        var iniFailedGames = new List<string>();
+        var failedGames = new List<string>();
         foreach (var gameItem in selectedGames)
         {
             currentGame++;
@@ -911,6 +960,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
 
                 var versionForGame = version;
                 var injectionMethodForGame = injectionMethod;
+                var bridgeForGame = false;
                 // ShowExperimentalFeatures is a separate switch from this default's own AMD-only gate
                 // in Settings — re-checked here so turning it off disables the default immediately
                 // rather than only hiding the UI that configured it.
@@ -919,10 +969,9 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     !gameItem.Game.IsDlssNrOnAmdInstalled &&
                     !(nvngxDeclinedThisBatch && !dlssNrService.IsNvngxDlssNrCached()))
                 {
-                    var (dlssNrResult, wrapperVersion) = await dlssNrService
+                    var dlssNrResult = await dlssNrService
                         .InstallForQuickPathAsync(this, gameItem.Game, setupNrMode, _componentService,
-                            danielVersionOverride: selectedDanielVersion,
-                            wrapperVersionOverride: selectedWrapperVersion);
+                            danielVersionOverride: selectedDanielVersion);
 
                     if (setupNrMode == "daniel-only")
                     {
@@ -949,15 +998,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                         continue;
                     }
 
-                    if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success &&
-                        setupNrMode == "daniel-and-opti" && !string.IsNullOrEmpty(wrapperVersion))
+                    if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Success && setupNrMode == "daniel-and-opti")
                     {
-                        // "Mod + OptiScaler": install the matching wrapper build instead of the
-                        // batch's normally configured version, dxgi.dll injection (danielblnc's own
-                        // proxy always answers "dbghelp" — see DriveInstallerAsync) — same override
-                        // ManageGameWindow/MainWindow's Quick Install apply for Mode B.
-                        versionForGame = wrapperVersion;
+                        // "Mod + OptiScaler": dxgi.dll injection (danielblnc's own proxy always
+                        // answers "dbghelp" — see DriveInstallerAsync), AMD-NR-bridge after the
+                        // install — same as ManageGameWindow/MainWindow's Quick Install.
                         injectionMethodForGame = "dxgi.dll";
+                        bridgeForGame = true;
                     }
                     else if (dlssNrResult == DlssNrOnAmdService.QuickPathResult.Skipped && !dlssNrService.IsNvngxDlssNrCached())
                     {
@@ -965,12 +1012,28 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                 }
 
-                // Get cache paths
-                var optiCacheDir = _componentService.GetOptiScalerCachePath(versionForGame);
+                // Linux: a game that already had the mod gets OptiScaler next to it the same way.
+                if (!OperatingSystem.IsWindows() && gameItem.Game.IsDlssNrOnAmdInstalled)
+                {
+                    bridgeForGame = true;
+                    injectionMethodForGame = "dxgi.dll";
+                }
+
+                // Download what isn't cached yet (both return the cached folder right away when it
+                // is, so only the first game of the batch pays for it). The combos list every
+                // published version, but this used to install from the cache path only: any version
+                // never downloaded before failed for every game with "Updates cache directory not found".
+                var downloadProgress = new Progress<double>(p =>
+                    Dispatcher.UIThread.Post(() => { if (progressBar != null) { progressBar.IsIndeterminate = false; progressBar.Value = p; } }));
+                if (txtProgressStatus != null)
+                    txtProgressStatus.Text = string.Format(GetResourceString("TxtInstallingFormat", "Downloading OptiScaler v{0}... {1}%"), versionForGame, 0);
+                var optiCacheDir = await _componentService.DownloadOptiScalerAsync(versionForGame, downloadProgress);
                 var installFakenvapiForGame = installFakenvapi;
                 var fakeCacheDir = installFakenvapiForGame
-                    ? _componentService.GetFakenvapiCachePath(selectedFakenvapiVersion!)
+                    ? await _componentService.DownloadFakenvapiAsync(selectedFakenvapiVersion!, downloadProgress)
                     : "";
+                if (txtProgressStatus != null) txtProgressStatus.Text = $"Installing {gameItem.Name}...";
+                if (progressBar != null) progressBar.Value = (currentGame - 1) * 100.0 / totalGames;
                 var nukemCacheDir = installNukemFG
                     ? _componentService.GetNukemFGCachePath(selectedNukemFGVersion!)
                     : "";
@@ -1001,16 +1064,6 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // per game even though the FG configuration itself is shared across the batch.
                 var installStreamlineForGame = fgConfigService.RequiresStreamline(
                     gameItem.Game.FrameGenerationSettings!, fgConfigService.DetectCapabilities(gameItem.Game, preferredGpuForFsr4), version);
-
-                // In Modded mode there is no fallback OptiScaler version to fall back to — the whole
-                // point is the wrapper build the step above resolves. If it didn't, skip this game
-                // instead of installing something the user never picked.
-                if (_isDlssNrOnAmdModdedActive && string.IsNullOrEmpty(versionForGame))
-                {
-                    DebugWindow.Log($"[BulkInstall][SetupNr] No modded wrapper build resolved for {gameItem.Name} — skipped.");
-                    await Task.Delay(100);
-                    continue;
-                }
 
                 // ── RenoDX (experimental, opt-in) ──────────────────────────────────
                 // Per-game addon: resolved from this game's own wiki entry, cache first then a
@@ -1233,6 +1286,34 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     }
                 }
 
+                var verifyDir = resolvedGameDir ?? _installService.DetermineInstallDirectory(gameItem.Game) ?? gameItem.Game.InstallPath;
+
+                // "Mod + OptiScaler": AMD-NR-bridge goes last, over every OptiScaler.ini layer above.
+                if (bridgeForGame)
+                {
+                    try
+                    {
+                        if (OperatingSystem.IsWindows())
+                            await new AmdNrBridgeService().EnsureAppliedAsync(gameItem.Game, verifyDir);
+                        else
+                            // Linux: no bridge — OptiScaler's ini values + Steam launch options.
+                            await LinuxNrInstallHelper.FinishWithOptiScalerAsync(this, gameItem.Game, verifyDir, injectionMethodForGame);
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugWindow.Log($"[BulkInstall][SetupNr] AMD-NR-bridge could not be applied for {gameItem.Name}: {ex.Message}");
+                        failedGames.Add($"• {gameItem.Name}: AMD-NR-bridge — {ex.Message}");
+                    }
+                }
+
+                // No per-game prompt in a batch: reapply once silently, report what still fails.
+                var iniMismatches = await Task.Run(() =>
+                {
+                    var mismatches = _installService.VerifyIniSettings(verifyDir);
+                    return mismatches.Count == 0 ? mismatches : _installService.ReapplyIniSettings(verifyDir);
+                });
+                if (iniMismatches.Count > 0) iniFailedGames.Add(gameItem.Name);
+
                 gameItem.IsInstalled = true;
                 gameItem.CanInstall = false;
                 gameItem.IsSelected = false;
@@ -1240,6 +1321,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             catch (Exception ex)
             {
                 DebugWindow.Log($"[BulkInstall] Failed to install {gameItem.Name}: {ex.Message}");
+                failedGames.Add($"• {gameItem.Name}: {ex.Message}");
             }
 
             await Task.Delay(100); // Small delay between installations
@@ -1258,11 +1340,16 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         UpdateSelectionCount();
 
         // Show completion dialog
-        var completedCount = totalGames;
+        // Failures used to be logged only, while this dialog still reported every game as installed.
+        var completedCount = totalGames - failedGames.Count;
         await new ConfirmDialog(
             this,
             "Bulk Installation Complete",
-            $"Successfully installed OptiScaler on {completedCount} game{(completedCount != 1 ? "s" : "")}.",
+            $"Successfully installed OptiScaler on {completedCount} game{(completedCount != 1 ? "s" : "")}." +
+            (iniFailedGames.Count == 0 ? "" : "\n\n" + string.Format(GetResourceString("TxtIniVerifyBulkSummary",
+                "OptiScaler.ini could not be fully configured for: {0}. Open Manage for these games and reinstall."), string.Join(", ", iniFailedGames))) +
+            (failedGames.Count == 0 ? "" : "\n\n" + string.Format(GetResourceString("TxtBulkInstallFailedGames",
+                "Installation failed for {0} game(s):\n\n{1}"), failedGames.Count, string.Join("\n", failedGames))),
             isAlert: true
         ).ShowDialog<bool>(this);
 
@@ -1834,27 +1921,27 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var panelDaniel = this.FindControl<Control>("PanelDlssNrDanielVersion");
         if (panelDaniel != null) panelDaniel.IsVisible = showExperimental && isAmd;
 
-        var cmb = this.FindControl<ComboBox>("CmbSetupNr");
-        if (cmb == null) return;
-
-        cmb.SelectionChanged -= CmbSetupNr_SelectionChanged;
-        var saved = showExperimental && isAmd ? _componentService.Config.DefaultDlssNrOnAmdMode : "none";
-        cmb.SelectedIndex = 0; // "none"
-        for (int i = 0; i < cmb.Items.Count; i++)
+        // Same as Manage — no mode selector; the mod combo ("None" or a version) is the whole
+        // control. Linux installs the batch's OptiScaler version alongside it; Windows installs the
+        // mod alone (see SelectedSetupNrMode).
         {
-            if ((cmb.Items[i] as ComboBoxItem)?.Tag?.ToString() == saved)
-            {
-                cmb.SelectedIndex = i;
-                break;
-            }
+            if (panelMode != null) panelMode.IsVisible = false;
+            if (this.FindControl<TextBlock>("TxtDlssNrDanielVersionLbl") is { } modLbl)
+                modLbl.Text = GetResourceString("TxtSetupNrLinuxModLbl", "Neural Rendering (AMD) — danielblnc mod");
+            if (this.FindControl<Border>("BdDlssNrDanielVersionHelp") is { } modHelp)
+                ToolTip.SetTip(modHelp, OperatingSystem.IsWindows()
+                    ? GetResourceString("TxtSetupNrWindowsModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs. Pick a version to install it; OptiScaler's options stay locked while it is selected, since the two conflict on Windows. \"None\" here removes the mod.")
+                    : GetResourceString("TxtSetupNrLinuxModTooltip",
+                        "danielblnc's DLSS Neural Rendering mod for AMD GPUs, installed through bulacha3's Linux fork. Pick a version to install it together with the OptiScaler version selected above; set OptiScaler to \"None\" to install only the mod. \"None\" here removes the mod."));
+            if (showExperimental && isAmd) _ = PopulateDlssNrDanielVersionComboAsync();
         }
-        cmb.SelectionChanged += CmbSetupNr_SelectionChanged;
-
-        ApplySetupNrSelection(SelectedSetupNrMode);
     }
 
+    // A picked mod version: on Linux the mod goes in with the batch's OptiScaler, on Windows alone.
     private string SelectedSetupNrMode =>
-        (this.FindControl<ComboBox>("CmbSetupNr")?.SelectedItem as ComboBoxItem)?.Tag as string ?? "none";
+        (this.FindControl<ComboBox>("CmbDlssNrDanielVersion")?.SelectedItem as ComboBoxItem)?.Tag is string v && v != "none"
+            ? (OperatingSystem.IsWindows() ? "daniel-only" : "daniel-and-opti") : "none";
 
     private void CmbSetupNr_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -1884,12 +1971,13 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
     }
 
     /// <summary>Mirrors ManageDefaultVersionsWindow.ApplyDlssNrOnAmdModeSelection: the Daniel
-    /// version combo enables/populates, "daniel-only" locks every other option, and
-    /// "daniel-and-opti" switches CmbOptiVersion over to the Modded wrapper releases.</summary>
+    /// version combo enables/populates and "daniel-only" locks every other option.
+    /// "daniel-and-opti" keeps the normal OptiScaler channels — AMD-NR-bridge is applied on top of
+    /// whichever version is picked.</summary>
     private void ApplySetupNrSelection(string? tag)
     {
         var mode = tag ?? "none";
-        DebugWindow.Log($"[BulkInstall][SetupNr] ApplySetupNrSelection mode='{mode}', _isDlssNrOnAmdModdedActive(before)={_isDlssNrOnAmdModdedActive}.");
+        DebugWindow.Log($"[BulkInstall][SetupNr] ApplySetupNrSelection mode='{mode}'.");
         SetSetupNrOptionsLocked(mode == "daniel-only");
         UpdateSelectionCount();
 
@@ -1897,50 +1985,10 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         if (mode == "none")
         {
             if (cmbDaniel != null) { cmbDaniel.IsEnabled = false; cmbDaniel.Items.Clear(); }
-            SetOptiTabsForModdedMode(false);
             return;
         }
 
         _ = PopulateDlssNrDanielVersionComboAsync();
-
-        if (mode == "daniel-and-opti")
-        {
-            SetOptiTabsForModdedMode(true);
-            _ = PopulateModdedOptiVersionComboAsync();
-        }
-        else
-        {
-            SetOptiTabsForModdedMode(false);
-        }
-    }
-
-    /// <summary>Mirrors ManageGameWindow's SetOptiTabsForModdedMode — hides Stable/Beta/Nightly/
-    /// Custom and shows the plain "Modded" indicator instead, since that's the only "channel"
-    /// available while Setup NR = "Mod + OptiScaler".</summary>
-    private void SetOptiTabsForModdedMode(bool modded)
-    {
-        if (_isDlssNrOnAmdModdedActive == modded)
-        {
-            DebugWindow.Log($"[BulkInstall][SetupNr] SetOptiTabsForModdedMode({modded}) — already in that state, no-op.");
-            return;
-        }
-        _isDlssNrOnAmdModdedActive = modded;
-
-        var btnStable = this.FindControl<Button>("BtnOptiStable");
-        var btnBeta = this.FindControl<Button>("BtnOptiBeta");
-        var btnNightly = this.FindControl<Button>("BtnOptiNightly");
-        var btnCustom = this.FindControl<Button>("BtnOptiCustom");
-        var btnModded = this.FindControl<Button>("BtnOptiModded");
-        DebugWindow.Log($"[BulkInstall][SetupNr] SetOptiTabsForModdedMode({modded}) — found controls: " +
-            $"Stable={btnStable != null}, Beta={btnBeta != null}, Nightly={btnNightly != null}, Custom={btnCustom != null}, Modded={btnModded != null}.");
-        if (btnStable != null) btnStable.IsVisible = !modded;
-        if (btnBeta != null) btnBeta.IsVisible = !modded;
-        if (btnNightly != null) btnNightly.IsVisible = !modded;
-        if (btnCustom != null) btnCustom.IsVisible = !modded && _componentService.CustomVersions.Count > 0;
-        if (btnModded != null) btnModded.IsVisible = modded;
-
-        // Leaving Modded — restore whatever normal channel/version was showing before.
-        if (!modded) PopulateOptiVersionCombo();
     }
 
     /// <summary>Populates CmbDlssNrDanielVersion from danielblnc's own releases — same source and
@@ -1951,17 +1999,19 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var cmb = this.FindControl<ComboBox>("CmbDlssNrDanielVersion");
         if (cmb == null) return;
 
+        cmb.SelectionChanged -= CmbDlssNrDanielVersion_SelectionChanged;
         cmb.Items.Clear();
         cmb.IsEnabled = false;
 
+        var isLinux = !OperatingSystem.IsWindows();
         List<DlssNrOnAmdRelease> releases;
         try
         {
-            releases = await _dlssNrService.GetReleasesAsync();
+            releases = isLinux ? await new DlssNrLinuxWrapperService().GetReleasesAsync() : await _dlssNrService.GetReleasesAsync();
         }
         catch (Exception ex)
         {
-            DebugWindow.Log($"[BulkInstall][SetupNr] Could not list danielblnc releases: {ex.Message}");
+            DebugWindow.Log($"[BulkInstall][SetupNr] Could not list {(isLinux ? "Linux fork" : "danielblnc")} releases: {ex.Message}");
             releases = new List<DlssNrOnAmdRelease>();
         }
 
@@ -1972,70 +2022,43 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             return;
         }
 
+        // "None" first — the combo is the whole mod control. Pre-selected from the Settings
+        // default ("none" mode → None).
+        const int offset = 1;
+        cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtSetupNrModeNone", "None"), Tag = "none" });
         for (int i = 0; i < releases.Count; i++)
             cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
 
         var saved = _componentService.Config.DefaultDlssNrOnAmdDanielVersion;
         var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
-        cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
+        if ((_componentService.Config.DefaultDlssNrOnAmdMode ?? "none") == "none")
+            cmb.SelectedIndex = 0;
+        else
+            cmb.SelectedIndex = (targetIndex >= 0 ? targetIndex : 0) + offset;
         cmb.IsEnabled = true;
+        cmb.SelectionChanged += CmbDlssNrDanielVersion_SelectionChanged;
+        SetSetupNrOptionsLocked(SelectedSetupNrMode == "daniel-only");
+        UpdateSelectionCount();
+        UpdateLinuxNrInfo();
     }
 
-    /// <summary>Populates CmbOptiVersion with MatheusGViana/dlss-5-amd-project's releases while
-    /// Setup NR = "Mod + OptiScaler". Tags are the raw release version, not a registered custom
-    /// version name: the actual wrapper build is resolved and downloaded per game at install time
-    /// by DlssNrOnAmdService.InstallForQuickPathAsync — this combo only pins which release.</summary>
-    private async Task PopulateModdedOptiVersionComboAsync()
+    private void CmbDlssNrDanielVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var cmb = this.FindControl<ComboBox>("CmbOptiVersion");
-        DebugWindow.Log($"[BulkInstall][SetupNr] PopulateModdedOptiVersionComboAsync entered, cmb found={cmb != null}, _isDlssNrOnAmdModdedActive={_isDlssNrOnAmdModdedActive}.");
-        if (cmb == null || !_isDlssNrOnAmdModdedActive) return;
-
-        cmb.SelectionChanged -= CmbOptiVersion_SelectionChanged;
-        cmb.Items.Clear();
-        cmb.IsEnabled = false;
-
-        List<DlssNrOnAmdRelease> releases;
-        try
-        {
-            releases = await _componentService.GetAmdWrapperReleasesAsync();
-        }
-        catch (Exception ex)
-        {
-            DebugWindow.Log($"[BulkInstall][SetupNr] Could not list MatheusGViana wrapper releases: {ex.Message}");
-            releases = new List<DlssNrOnAmdRelease>();
-        }
-
-        DebugWindow.Log($"[BulkInstall][SetupNr] Fetched {releases.Count} MatheusGViana wrapper release(s); " +
-            $"_isDlssNrOnAmdModdedActive is now {_isDlssNrOnAmdModdedActive}.");
-
-        // Re-check after the await: the user may have switched Setup NR back to "none" (or another
-        // mode) while this fetch was in flight — CmbOptiVersion has since been repopulated with the
-        // normal channel by that path, so don't clobber it with a now-stale wrapper release list.
-        if (!_isDlssNrOnAmdModdedActive)
-        {
-            cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
-            return;
-        }
-
-        if (releases.Count == 0)
-        {
-            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtNoOptiDetected", "No version detected"), IsEnabled = false });
-            cmb.SelectedIndex = 0;
-        }
-        else
-        {
-            for (int i = 0; i < releases.Count; i++)
-                cmb.Items.Add(ManageGameWindow.BuildVersionItem(releases[i].Version, isBeta: false, isLatest: i == 0));
-
-            var saved = _componentService.Config.DefaultDlssNrOnAmdWrapperVersion;
-            var targetIndex = string.IsNullOrEmpty(saved) ? -1 : releases.FindIndex(r => string.Equals(r.Version, saved, StringComparison.OrdinalIgnoreCase));
-            cmb.SelectedIndex = targetIndex >= 0 ? targetIndex : 0;
-            cmb.IsEnabled = true;
-        }
-
-        cmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+        SetSetupNrOptionsLocked(SelectedSetupNrMode == "daniel-only");
         UpdateSelectionCount();
+        UpdateLinuxNrInfo();
+    }
+
+    /// <summary>Linux: with a mod version picked, each game gets the mod next to the batch's
+    /// OptiScaler version — say so, same as Manage.</summary>
+    private void UpdateLinuxNrInfo()
+    {
+        var panel = this.FindControl<Border>("PanelBulkLinuxNrWithOptiInfo");
+        var text = this.FindControl<TextBlock>("TxtBulkLinuxNrWithOptiInfo");
+        if (panel == null || text == null) return;
+        panel.IsVisible = !OperatingSystem.IsWindows() && SelectedSetupNrMode == "daniel-and-opti";
+        text.Text = GetResourceString("TxtSetupNrLinuxBulkWithOptiInfo",
+            "On Linux the mod and OptiScaler work together: each game gets the mod alongside the OptiScaler version selected for the batch.");
     }
 
     private string GetResourceString(string key, string fallback)
@@ -2593,6 +2616,9 @@ public class BulkGameItem : INotifyPropertyChanged
     public string Platform { get; set; } = "";
     public string? CoverPath { get; set; }
     public string? OptiscalerVersion { get; set; }
+    public string OptiscalerBadgeText => string.IsNullOrWhiteSpace(OptiscalerVersion)
+        ? "✦ OptiScaler"
+        : $"✦ OptiScaler {OptiscalerVersion.Trim()}";
     public bool IsOptiscalerInstalled { get; set; }
 
     public bool IsSelected

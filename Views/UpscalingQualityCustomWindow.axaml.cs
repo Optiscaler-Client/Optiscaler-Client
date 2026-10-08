@@ -50,12 +50,12 @@ public partial class UpscalingQualityCustomWindow : Window, IGamepadInputHost
             }
             _gamepadHelper ??= new GamepadDialogNavigationHelper(this, null);
             if (owner is IGamepadInputHost host)
-                host.GamepadHelper?.SuspendInput();
+                host.SuspendInput();
         };
         Closed += (_, _) =>
         {
             if (owner is IGamepadInputHost host)
-                host.GamepadHelper?.ResumeInput();
+                host.ResumeInput();
             _gamepadHelper?.Dispose();
             _gamepadHelper = null;
         };

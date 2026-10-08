@@ -1,3 +1,49 @@
+#### [1.0.8] ####
+
+# What’s Changed
+
+This update brings a **visual overhaul**, a **quick tour** for new users and an improved **Help** section. It adds **anti-cheat warnings** before installing, a **post-install settings check** and shows the **FSR version actually in use**. Auto Frame Generation now goes up to **x6**, AMD DLSS Neural Rendering is simpler to set up, and **cover art fetching** finds far more covers without a SteamGridDB key. It also fixes a bug that **deleted game FidelityFX DLLs**, GPU detection on the **Steam Deck** and **Radeon AI PRO R9700**, and several Bulk Install, gamepad and Linux window issues.
+
+# Changelog
+
+### Fixes
+
+- Fixed a bug where reinstalling OptiScaler deleted a game's own FidelityFX DLLs, preventing the game from launching.
+- Fixed a bug where the FSR badge showed the game's native version instead of the FSR 4 DLL installed by OptiScaler.
+- Fixed a bug where the FSR 4 Swap DLL installed alongside OptiScaler was detected as a game-native file.
+- Fixed a bug where swapping the FSR 4 DLL in games using `amd_fidelityfx_dx12.dll` left the old file in place and added a differently named one the game ignored.
+- Fixed the anti-cheat detection missing EasyAntiCheat EOS and BattlEye, and files outside the game's root folder.
+- Fixed GPU detection for the Steam Deck (RDNA 2) and Radeon AI PRO R9700 (RDNA 4), which received the wrong FSR 4 version.
+- Fixed a bug where `PathRegex` scan exclusions in `config.json` were ignored. Invalid rules are now skipped instead of breaking the scan.
+- Fixed a bug in Bulk Install where version changes made while versions were still loading were reset.
+- Fixed a bug where the Bulk Install summary counted failed installations as successful. Failed games are now listed with their error.
+- Fixed gamepad focus issues in the game list and the Manage window.
+- Fixed dialogs on Linux opening on another screen or off-center.
+- Fixed "Delete cover" showing the generic placeholder instead of the executable's icon.
+
+### New
+
+- **Quick tour**: a short guide for new users, shown on first launch and available from Help.
+- **Empty library notice**: prompts you to scan your games when none have been added yet.
+- **Anti-cheat warnings**: Manage and Quick Install ask for confirmation before installing on games with anti-cheat; Bulk Install lists them and skips them by default.
+- **FSR version in use**: the Manage window shows the FSR version OptiScaler loaded the last time the game ran, flagged with ⚠ when it differs from the DLL on disk (DX12 games using the FidelityFX API).
+- **Post-install settings check**: verifies that `OptiScaler.ini` contains every applied setting, with a one-click fix. Bulk Install reapplies automatically.
+- Added gamepad navigation to the Frame Generation window and the game filters.
+
+##### Improvements
+
+- **Visual overhaul** of the whole app: refreshed colors, icons, badges and animations.
+- Improved the Help section, with a help button in each section and clearer tooltips.
+- Frame Generation **Auto** now allows multipliers up to **x6** in supported games.
+- AMD DLSS Neural Rendering (experimental):
+  - On Windows, the mode selector was replaced by the mod's version list, as on Linux. "Mod + OptiScaler" is no longer offered there; a link to a third-party project that combines both is shown instead.
+  - Supports the graphical installer included since danielblnc's mod v0.3.3, which now opens when installing.
+  - On Linux, it now uses bulacha3's fork, which tracks the current mod version and can be installed together with OptiScaler.
+- The FSR entry in the Manage window now explains that the version shown is read from the DLL on disk.
+- OptiScaler's log is now written at Info level by default, unless the profile sets its own `LogToFile` or `LogLevel`.
+- The anti-cheat warning is now translated into all supported languages.
+- **Improved cover art fetching**: more covers are found without a SteamGridDB API key, using launcher caches, store IDs and additional sources. Games without a cover are retried once.
+
 #### [1.0.7.2] ####
 
 # What’s Changed

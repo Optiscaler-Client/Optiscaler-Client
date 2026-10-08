@@ -80,7 +80,7 @@ public sealed class LinuxDesktopIntegrationService
     }
 
     /// <summary>Desktop Entry spec quoting: wrap in double quotes, escape " ` $ and \.</summary>
-    private static string QuoteExec(string path)
+    internal static string QuoteExec(string path)
     {
         var escaped = new StringBuilder();
         foreach (var c in path)

@@ -103,7 +103,7 @@ public class LutrisScanner : IGameScanner
     /// slug (with the trailing id stripped and words title-cased) is the closest name we can derive
     /// without pulling in a database dependency for a single field.
     /// </summary>
-    private static string DeriveNameFromSlug(string slug)
+    internal static string DeriveNameFromSlug(string slug)
     {
         var withoutId = Regex.Replace(slug, @"-\d+$", "");
         var words = withoutId.Split('-', StringSplitOptions.RemoveEmptyEntries)
@@ -113,7 +113,7 @@ public class LutrisScanner : IGameScanner
         return string.IsNullOrWhiteSpace(name) ? slug : name;
     }
 
-    private static IEnumerable<string> GetLutrisConfigDirectories()
+    internal static IEnumerable<string> GetLutrisConfigDirectories()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return new[]
