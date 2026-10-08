@@ -17,16 +17,16 @@
 ## Screenshots
 
 * Main window
-
-<img width="2367" height="1231" alt="opti_1" src="https://github.com/user-attachments/assets/51e5b933-d6fe-4078-b4cd-dc084cbcaacc" />
+  
+<img width="2560" height="1437" alt="optic-1" src="https://github.com/user-attachments/assets/f60226eb-ce53-48b0-a672-3824dd6b691d" />
 
 * Game management
 
-<img width="1817" height="772" alt="opti_3" src="https://github.com/user-attachments/assets/7cb9160d-7277-4ac0-b00c-f594a79d3798" />
+<img width="1810" height="735" alt="optic-2" src="https://github.com/user-attachments/assets/099a0f6c-3a0f-49d7-ae70-f8331f0f1415" />
 
 * Game management after installation
 
-<img width="1812" height="772" alt="opti_2" src="https://github.com/user-attachments/assets/13440b67-806c-4ceb-a30e-e42af875ef75" />
+<img width="1810" height="750" alt="optic-3" src="https://github.com/user-attachments/assets/726f345b-1097-469f-b567-7eee0fc469e5" />
 
 ---
 
