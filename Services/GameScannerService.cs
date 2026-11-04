@@ -142,7 +142,7 @@ public class GameScannerService
 
             GameAnalyzerService.FlushCacheToDisk();
 
-            var result = games.ToList();
+            var result = games.OrderBy(g => g.Platform).ThenBy(g => g.Name).ToList();
             DebugWindow.Log($"[Scanner] Scan completed. Found {result.Count} games (UpscalerFilter={scanConfig.UpscalerFilter}).");
             return result;
         });
