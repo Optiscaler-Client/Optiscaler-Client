@@ -48,9 +48,32 @@ namespace OptiscalerClient.Services
         private const int CooldownHours = 24;
         private const int CacheSchemaVersion = 1;
 
-        private static RenodxModsCache _cache = new();
-        private static Dictionary<string, RenodxModEntry> _byNormalizedName = new();
-        private static List<(RenodxModEntry Entry, HashSet<string> Tokens)> _tokenizedEntries = new();
+        private sealed class LookupSnapshot
+        {
+            public readonly RenodxModsCache Cache;
+            public readonly Dictionary<string, RenodxModEntry> ByNormalizedName;
+            public readonly List<(RenodxModEntry Entry, HashSet<string> Tokens)> TokenizedEntries;
+
+            public LookupSnapshot(RenodxModsCache cache)
+            {
+                Cache = cache ?? new RenodxModsCache();
+                var map = new Dictionary<string, RenodxModEntry>();
+                var tokenized = new List<(RenodxModEntry, HashSet<string>)>();
+
+                foreach (var entry in Cache.Entries)
+                {
+                    var key = GameNameMatcher.Normalize(entry.GameName);
+                    if (key.Length == 0) continue;
+                    if (!map.ContainsKey(key)) map[key] = entry;
+                    tokenized.Add((entry, GameNameMatcher.Tokenize(entry.GameName)));
+                }
+
+                ByNormalizedName = map;
+                TokenizedEntries = tokenized;
+            }
+        }
+
+        private static volatile LookupSnapshot _snapshot = new(new RenodxModsCache());
         private static bool _loadedFromDisk;
         private static readonly object _lock = new();
         private static int _refreshInProgress;
@@ -89,10 +112,11 @@ namespace OptiscalerClient.Services
             entry = null;
             if (string.IsNullOrWhiteSpace(gameName)) return false;
 
-            if (_byNormalizedName.TryGetValue(GameNameMatcher.Normalize(gameName), out entry))
+            var snap = _snapshot;
+            if (snap.ByNormalizedName.TryGetValue(GameNameMatcher.Normalize(gameName), out entry))
                 return true;
 
-            if (GameNameMatcher.TryFuzzyMatch(gameName, _tokenizedEntries, out var fuzzyMatch) && fuzzyMatch != null)
+            if (GameNameMatcher.TryFuzzyMatch(gameName, snap.TokenizedEntries, out var fuzzyMatch) && fuzzyMatch != null)
             {
                 entry = fuzzyMatch;
                 DebugWindow.Log($"[RenodxMods] Fuzzy-matched '{gameName}' -> '{fuzzyMatch.GameName}'.");
@@ -109,7 +133,8 @@ namespace OptiscalerClient.Services
         {
             var config = _componentService.Config;
             var lastCheck = config.LastRenodxModsCheckTime;
-            bool hasUsableCache = _cache.Entries.Count > 0 && _cache.SchemaVersion >= CacheSchemaVersion;
+            var snap = _snapshot;
+            bool hasUsableCache = snap.Cache.Entries.Count > 0 && snap.Cache.SchemaVersion >= CacheSchemaVersion;
             if (hasUsableCache && lastCheck.HasValue && (DateTime.UtcNow - lastCheck.Value).TotalHours < CooldownHours)
                 return;
 
@@ -137,9 +162,12 @@ namespace OptiscalerClient.Services
                     return;
                 }
 
-                _cache = new RenodxModsCache { Entries = entries, LastUpdated = DateTime.UtcNow, SchemaVersion = CacheSchemaVersion };
-                SaveCache();
-                RebuildLookup();
+                var newCache = new RenodxModsCache { Entries = entries, LastUpdated = DateTime.UtcNow, SchemaVersion = CacheSchemaVersion };
+                SaveCache(newCache);
+                lock (_lock)
+                {
+                    _snapshot = new LookupSnapshot(newCache);
+                }
                 DebugWindow.Log($"[RenodxMods] Refreshed: {entries.Count} entries.");
             }
             catch (Exception ex)
@@ -212,23 +240,6 @@ namespace OptiscalerClient.Services
             return entries;
         }
 
-        private static void RebuildLookup()
-        {
-            var map = new Dictionary<string, RenodxModEntry>();
-            var tokenized = new List<(RenodxModEntry, HashSet<string>)>();
-
-            foreach (var entry in _cache.Entries)
-            {
-                var key = GameNameMatcher.Normalize(entry.GameName);
-                if (key.Length == 0) continue;
-                if (!map.ContainsKey(key)) map[key] = entry;
-                tokenized.Add((entry, GameNameMatcher.Tokenize(entry.GameName)));
-            }
-
-            _byNormalizedName = map;
-            _tokenizedEntries = tokenized;
-        }
-
         private void LoadCache()
         {
             try
@@ -236,9 +247,9 @@ namespace OptiscalerClient.Services
                 if (File.Exists(_cacheFile))
                 {
                     var json = File.ReadAllText(_cacheFile);
-                    _cache = JsonSerializer.Deserialize(json, OptimizerContext.Default.RenodxModsCache) ?? new();
-                    RebuildLookup();
-                    DebugWindow.Log($"[RenodxMods] Loaded {_cache.Entries.Count} entries from local cache.");
+                    var cache = JsonSerializer.Deserialize(json, OptimizerContext.Default.RenodxModsCache) ?? new();
+                    _snapshot = new LookupSnapshot(cache);
+                    DebugWindow.Log($"[RenodxMods] Loaded {_snapshot.Cache.Entries.Count} entries from local cache.");
                 }
             }
             catch (Exception ex)
@@ -247,11 +258,11 @@ namespace OptiscalerClient.Services
             }
         }
 
-        private void SaveCache()
+        private void SaveCache(RenodxModsCache cache)
         {
             try
             {
-                var json = JsonSerializer.Serialize(_cache, OptimizerContext.Default.RenodxModsCache);
+                var json = JsonSerializer.Serialize(cache, OptimizerContext.Default.RenodxModsCache);
                 File.WriteAllText(_cacheFile, json);
             }
             catch (Exception ex)

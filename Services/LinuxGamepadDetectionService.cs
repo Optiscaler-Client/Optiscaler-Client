@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OptiscalerClient.Models;
@@ -26,18 +27,44 @@ public class LinuxGamepadDetectionService : IGamepadDetectionService
 
     public void StopListening()
     {
-        _cts?.Cancel();
-        try { _pollingTask?.Wait(500); } catch { }
-        _cts?.Dispose();
+        if (_cts == null) return;
+
+        _cts.Cancel();
+        try
+        {
+            if (_pollingTask != null && !_pollingTask.Wait(TimeSpan.FromSeconds(2)))
+            {
+                System.Diagnostics.Debug.WriteLine("[LinuxGamepadDetectionService] Polling task did not complete within 2s after cancellation.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // join completed or faulted after cancellation
+            System.Diagnostics.Debug.WriteLine($"[LinuxGamepadDetectionService] Polling task threw during stop: {ex.Message}");
+        }
+        _cts.Dispose();
         _cts = null;
+        _pollingTask = null;
     }
 
     private async Task PollLoop(CancellationToken token)
     {
-        string devicePath = "/dev/input/js0"; // Simplest approach for first gamepad
         while (!token.IsCancellationRequested)
         {
-            if (File.Exists(devicePath))
+            string? devicePath = null;
+            try
+            {
+                if (Directory.Exists("/dev/input"))
+                    devicePath = Directory.EnumerateFiles("/dev/input", "js*")
+                        .OrderBy(p => p, StringComparer.Ordinal)
+                        .FirstOrDefault();
+            }
+            catch
+            {
+                devicePath = null;
+            }
+
+            if (!string.IsNullOrEmpty(devicePath) && File.Exists(devicePath))
             {
                 if (!_isConnected)
                 {
@@ -158,6 +185,10 @@ public class LinuxGamepadDetectionService : IGamepadDetectionService
                         }
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
                 catch
                 {
                     if (_isConnected)
@@ -165,8 +196,8 @@ public class LinuxGamepadDetectionService : IGamepadDetectionService
                         _isConnected = false;
                         GamepadConnectionChanged?.Invoke(this, false);
                     }
-                    // If device disconnected or error, wait and retry
-                    await Task.Delay(2000, token);
+                    try { await Task.Delay(2000, token); }
+                    catch (OperationCanceledException) { return; }
                 }
             }
             else
@@ -176,7 +207,8 @@ public class LinuxGamepadDetectionService : IGamepadDetectionService
                     _isConnected = false;
                     GamepadConnectionChanged?.Invoke(this, false);
                 }
-                await Task.Delay(2000, token);
+                try { await Task.Delay(2000, token); }
+                catch (OperationCanceledException) { return; }
             }
         }
     }

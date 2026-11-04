@@ -28,11 +28,18 @@ namespace OptiscalerClient.Services;
 /// </summary>
 public static class AppPaths
 {
-    private static string? _cachedRoot;
+    private static readonly object _lock = new();
+    private static volatile string? _cachedRoot;
 
     public static string GetAppDataRoot()
     {
-        if (_cachedRoot != null) return _cachedRoot;
+        var cached = _cachedRoot;
+        if (cached != null) return cached;
+
+        lock (_lock)
+        {
+            cached = _cachedRoot;
+            if (cached != null) return cached;
 
         // Escape hatch for automated tests, which otherwise read and write the real user's
         // config.json and Backups\ — that clobbers their settings and makes tests depend on, and
@@ -62,5 +69,6 @@ public static class AppPaths
 
         _cachedRoot = dir;
         return dir;
+        }
     }
 }
