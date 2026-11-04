@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -410,6 +411,29 @@ namespace OptiscalerClient.Services
 
         // ── Private helpers ───────────────────────────────────────────────────────
 
+        private static readonly ConcurrentDictionary<string, (DateTime Stamp, HashSet<string> Hashes)> _cacheHashSetCache =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static DateTime GetDirectoryStamp(string path)
+        {
+            try
+            {
+                // Use the newest last-write time among the directory and its files so any change
+                // (added/removed/modified cached artifact) invalidates the cached hash set.
+                var stamp = Directory.GetLastWriteTimeUtc(path);
+                foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
+                {
+                    var ft = File.GetLastWriteTimeUtc(file);
+                    if (ft > stamp) stamp = ft;
+                }
+                return stamp;
+            }
+            catch
+            {
+                return DateTime.MinValue;
+            }
+        }
+
         private static HashSet<string> BuildCacheHashSet(IEnumerable<string> cacheDirs)
         {
             var hashes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -420,12 +444,22 @@ namespace OptiscalerClient.Services
 
                 try
                 {
-                    foreach (var file in Directory.GetFiles(cacheDir, "*.*", SearchOption.AllDirectories))
+                    var stamp = GetDirectoryStamp(cacheDir);
+                    if (!_cacheHashSetCache.TryGetValue(cacheDir, out var cached) || cached.Stamp != stamp)
                     {
-                        var hash = TryComputeSha256(file);
-                        if (hash != null)
-                            hashes.Add(hash);
+                        var dirHashes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var file in Directory.EnumerateFiles(cacheDir, "*.*", SearchOption.AllDirectories))
+                        {
+                            var hash = TryComputeSha256(file);
+                            if (hash != null)
+                                dirHashes.Add(hash);
+                        }
+                        cached = (stamp, dirHashes);
+                        _cacheHashSetCache[cacheDir] = cached;
                     }
+
+                    foreach (var h in cached.Hashes)
+                        hashes.Add(h);
                 }
                 catch (Exception ex)
                 {

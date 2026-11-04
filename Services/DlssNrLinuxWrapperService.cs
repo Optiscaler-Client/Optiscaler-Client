@@ -289,7 +289,7 @@ namespace OptiscalerClient.Services
             try
             {
                 DebugWindow.Log($"[DlssNrLinuxWrapper] Downloading {release.DownloadUrl}");
-                await StreamToFileAsync(release.DownloadUrl, tempPath, progress);
+                await ComponentManagementService.StreamToFileAsync(() => NetworkService.GetHttpClient(), release.DownloadUrl, tempPath, progress);
 
                 var expectedSha256 = release.Sha256 ?? await FetchChecksumForReleaseAsync(release.Version, release.AssetName);
                 if (!string.IsNullOrEmpty(expectedSha256))
@@ -315,26 +315,6 @@ namespace OptiscalerClient.Services
             {
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { /* best effort */ }
                 throw;
-            }
-        }
-
-        private static async Task StreamToFileAsync(string url, string destPath, IProgress<double>? progress)
-        {
-            using var response = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-            await using var httpStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = File.Create(destPath);
-            var buffer = new byte[81920];
-            long readSoFar = 0;
-            int read;
-            while ((read = await httpStream.ReadAsync(buffer)) > 0)
-            {
-                await fileStream.WriteAsync(buffer.AsMemory(0, read));
-                readSoFar += read;
-                if (totalBytes > 0)
-                    progress?.Report((double)readSoFar / totalBytes);
             }
         }
 
@@ -733,12 +713,12 @@ namespace OptiscalerClient.Services
         // newer interpreter installed side by side.
         private static readonly string[] PythonCandidates = { "python3", "python3.14", "python3.13", "python3.12", "python3.11" };
         private static string? _resolvedPython;
-
+        private static bool _pythonResolutionAttempted;
         /// <summary>First interpreter on PATH that is Python 3.11 or newer (what the fork's
         /// installer.py requires), or null when there is none. Cached once found.</summary>
         public static async Task<string?> ResolvePythonAsync()
         {
-            if (_resolvedPython != null) return _resolvedPython;
+            if (_pythonResolutionAttempted) return _resolvedPython;
             foreach (var candidate in PythonCandidates)
             {
                 try
@@ -758,12 +738,15 @@ namespace OptiscalerClient.Services
                     if (proc.ExitCode == 0)
                     {
                         DebugWindow.Log($"[DlssNrLinuxWrapper] Using {candidate} for the fork's installer.");
-                        return _resolvedPython = candidate;
+                        _resolvedPython = candidate;
+                        _pythonResolutionAttempted = true;
+                        return _resolvedPython;
                     }
                 }
                 catch (Exception) { /* not installed / not runnable — try the next one */ }
             }
             DebugWindow.Log("[DlssNrLinuxWrapper] No Python 3.11+ interpreter found on PATH.");
+            _pythonResolutionAttempted = true;
             return null;
         }
 

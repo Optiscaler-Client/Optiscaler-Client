@@ -183,13 +183,15 @@ namespace OptiscalerClient.Services
     {
         private const string TempSuffix = ".dlssg_tmp";
 
+        private readonly BackupStoreService _backupStore = new();
+
         public DlssgSm86PackageService Packages { get; } = new();
 
         // ── State ────────────────────────────────────────────────────────────────
 
         public DlssgSm86InstallState? GetInstallState(Game game)
         {
-            var record = DlssgSm86Records.LoadCommitted(new BackupStoreService(), game);
+            var record = DlssgSm86Records.LoadCommitted(_backupStore, game);
             if (record == null || string.IsNullOrEmpty(record.InstalledGameDirectory))
                 return null;
 
@@ -252,7 +254,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86Eligibility GetEligibility(Game game, string? targetDirectory = null)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var ours = DlssgSm86Records.LoadCommitted(store, game);
             var opti = LoadOptiScalerManifest(store, game);
 
@@ -420,7 +422,7 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) return false;
             try
             {
-                var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
+                var options = new EnumerationOptions { RecurseSubdirectories = true, MaxRecursionDepth = 8, IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
                 return Directory.EnumerateFiles(root, fileName, options).Any();
             }
             catch { return false; }
@@ -454,7 +456,7 @@ namespace OptiscalerClient.Services
         private DlssgSm86InstallResult InstallFromCache(Game game, DlssgSm86PackageManifest package, DlssgSm86BuildEntry build,
             IReadOnlyList<DlssgSm86FileEntry> files, string cacheDir, string targetDir, int maxGeneratedFrames)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var storeKey = DlssgSm86Records.StoreKey(game);
             var iniPath = Path.Combine(targetDir, DlssgSm86Records.IniFileName);
 
@@ -577,7 +579,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86InstallResult SetMaxGeneratedFrames(Game game, int maxGeneratedFrames)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var record = DlssgSm86Records.LoadCommitted(store, game) ?? throw new InvalidOperationException("dlssg_for_sm86 is not installed.");
             var build = Packages.Manifest?.FindBuild(record.DlssgSm86Build);
             var applied = build != null
@@ -603,7 +605,7 @@ namespace OptiscalerClient.Services
 
         public bool IsIniModified(Game game)
         {
-            var record = DlssgSm86Records.LoadCommitted(new BackupStoreService(), game);
+            var record = DlssgSm86Records.LoadCommitted(_backupStore, game);
             var iniRecord = record == null ? null : FindRecord(record, DlssgSm86Records.IniFileName);
             if (iniRecord == null || string.IsNullOrEmpty(record!.InstalledGameDirectory)) return false;
             var iniPath = Path.Combine(record.InstalledGameDirectory, DlssgSm86Records.IniFileName);
@@ -615,7 +617,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86UninstallResult Uninstall(Game game, bool keepModifiedIni)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var record = DlssgSm86Records.Load(store, game);
             if (record == null)
                 return new DlssgSm86UninstallResult(Array.Empty<string>());
@@ -714,7 +716,7 @@ namespace OptiscalerClient.Services
             try
             {
                 GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
-                new GameAnalyzerService().AnalyzeGame(game, forceRefresh: true);
+                new GameAnalyzerService().AnalyzeGame(game);
                 GameAnalyzerService.FlushCacheToDisk();
             }
             catch (Exception ex) { DebugWindow.Log($"[DlssgSm86] Re-analysis failed: {ex.Message}"); }

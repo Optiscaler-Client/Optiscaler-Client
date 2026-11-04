@@ -8,13 +8,15 @@ namespace OptiscalerClient.Services;
 [SupportedOSPlatform("windows")]
 public class BattleNetScanner : IGameScanner
 {
-    private readonly string[] UNINSTALL_PATHS = new[]
-    {
+    private static readonly string[] UNINSTALL_PATHS = new[]    {
         @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
     };
 
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 

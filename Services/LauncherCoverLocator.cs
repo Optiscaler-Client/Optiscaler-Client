@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -16,9 +17,12 @@ public class LauncherCoverLocator
     // Epic launcher's catalog cache (Windows): base64-encoded JSON array of catalog items.
     private const string EpicCatalogCacheRelPath = @"Epic\EpicGamesLauncher\Data\Catalog\catcache.bin";
 
-    private readonly Lazy<Dictionary<string, string>> _heroicCovers = new(LoadHeroicCovers);
-    private readonly Lazy<Dictionary<string, string>> _epicCovers = new(LoadEpicCatalogCovers);
-    private readonly Lazy<string?> _steamPath = new(SteamScanner.FindSteamInstallPath);
+    private static readonly Lazy<Dictionary<string, string>> _heroicCovers = new(LoadHeroicCovers);
+    private static readonly Lazy<Dictionary<string, string>> _epicCovers = new(LoadEpicCatalogCovers);
+    private static readonly Lazy<string?> _steamPath = new(SteamScanner.FindSteamInstallPath);
+
+    // Cached Steam cover file lists, keyed by AppId.
+    private static readonly ConcurrentDictionary<string, string[]> _steamCoverFilesByAppId = new(StringComparer.Ordinal);
 
     public IEnumerable<string> FindCoverCandidates(Game game)
     {
@@ -54,6 +58,14 @@ public class LauncherCoverLocator
         if (steamPath == null || !int.TryParse(appId, out _))
             yield break;
 
+        if (_steamCoverFilesByAppId.TryGetValue(appId, out var cached))
+        {
+            foreach (var file in cached)
+                yield return file;
+            yield break;
+        }
+
+        var result = new List<string>();
         var cacheDir = Path.Combine(steamPath, "appcache", "librarycache");
 
         // Current layout: librarycache/<appid>/[<hash>/]library_600x900[_2x].jpg
@@ -69,13 +81,18 @@ public class LauncherCoverLocator
             }
             // Prefer the 2x variant (higher resolution) when present.
             foreach (var file in files.OrderByDescending(f => f.EndsWith("_2x.jpg", StringComparison.OrdinalIgnoreCase)))
-                yield return file;
+                result.Add(file);
         }
 
         // Legacy flat layout: librarycache/<appid>_library_600x900.jpg
         var legacy = Path.Combine(cacheDir, $"{appId}_library_600x900.jpg");
         if (File.Exists(legacy))
-            yield return legacy;
+            result.Add(legacy);
+
+        var cachedFiles = result.ToArray();
+        _steamCoverFilesByAppId[appId] = cachedFiles;
+        foreach (var file in cachedFiles)
+            yield return file;
     }
 
     private static IEnumerable<string> FindLutrisCovers(string configSlug)

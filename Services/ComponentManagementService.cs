@@ -1082,58 +1082,6 @@ namespace OptiscalerClient.Services
             }
         }
 
-        // Legacy helper kept for CheckComponentUpdateAsync compatibility
-        private async Task<(System.Collections.Generic.List<string> versions, string? latestVersion)> FetchAllComponentVersionsAsync(RepositoryConfig config)
-        {
-            var versions = new System.Collections.Generic.List<string>();
-            string? latestVersion = null;
-            var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
-            try
-            {
-                if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
-                {
-                    DebugWindow.Log($"[FetchVersions] Skipping {repoLabel}: empty config");
-                    return (versions, latestVersion);
-                }
-
-                var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=30";
-                DebugWindow.Log($"[FetchVersions] GET {url}");
-                var response = await GetWithRetryAsync(() => _httpClient, url);
-                DebugWindow.Log($"[FetchVersions] {repoLabel} → HTTP {(int)response.StatusCode}");
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                foreach (var element in doc.RootElement.EnumerateArray())
-                {
-                    if (element.TryGetProperty("tag_name", out var tagName))
-                    {
-                        var version = tagName.GetString();
-                        if (version != null)
-                        {
-                            if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-                                version = version.Substring(1);
-                            versions.Add(version);
-
-                            // Check if this is marked as latest release
-                            if (latestVersion == null && element.TryGetProperty("prerelease", out var prerelease) && !prerelease.GetBoolean())
-                            {
-                                latestVersion = version;
-                                DebugWindow.Log($"[FetchVersions] {repoLabel} → Latest stable: {latestVersion}");
-                            }
-                        }
-                    }
-                }
-                DebugWindow.Log($"[FetchVersions] {repoLabel} → {versions.Count} version(s): [{string.Join(", ", versions)}]");
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[FetchVersions] {repoLabel} → ERROR: {ex.Message}");
-            }
-
-            return (versions, latestVersion);
-        }
-
         // ── OptiScaler Extras (FSR 4 Swap / FP8) ──────────────────────────────────
 
         /// <summary>
@@ -2398,7 +2346,7 @@ namespace OptiscalerClient.Services
             var dir = GetHelixSRCachePath(version);
             return Directory.Exists(dir) &&
                    (File.Exists(Path.Combine(dir, "OptiScaler.dll")) ||
-                    Directory.GetFiles(dir, "OptiScaler.dll", SearchOption.AllDirectories).Length > 0);
+                    Directory.EnumerateFiles(dir, "OptiScaler.dll", SearchOption.AllDirectories).Any());
         }
 
         public string GetHelixSRCachePath() => Path.Combine(_cacheDir, "HelixSR");
@@ -2414,7 +2362,7 @@ namespace OptiscalerClient.Services
 
             foreach (var dir in Directory.GetDirectories(helixDir))
             {
-                if (Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories).Length > 0)
+                if (Directory.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories).Any())
                 {
                     versions.Add(Path.GetFileName(dir));
                 }
@@ -2449,7 +2397,7 @@ namespace OptiscalerClient.Services
         public bool IsFakenvapiCached(string version)
         {
             var dir = GetFakenvapiCachePath(version);
-            return Directory.Exists(dir) && Directory.GetFiles(dir, "fakenvapi.dll", SearchOption.AllDirectories).Length > 0;
+            return Directory.Exists(dir) && Directory.EnumerateFiles(dir, "fakenvapi.dll", SearchOption.AllDirectories).Any();
         }
 
         /// <summary>
@@ -3078,7 +3026,7 @@ namespace OptiscalerClient.Services
                 throw new VersionUnavailableException(version, "Custom version files are missing. Re-import the archive from the Custom tab.");
             }
 
-            if (Directory.Exists(extractPath) && Directory.GetFiles(extractPath).Length > 0)
+            if (Directory.Exists(extractPath) && Directory.EnumerateFiles(extractPath).Any())
             {
                 DebugWindow.Log($"[Download] OptiScaler v{version} already cached at {extractPath}");
                 return extractPath; // Already downloaded
@@ -3402,7 +3350,7 @@ namespace OptiscalerClient.Services
         {
             var cacheDir = GetStreamlineCachePath(version);
             return File.Exists(Path.Combine(cacheDir, "sl.common.dll")) &&
-                   Directory.GetFiles(cacheDir, "*.dll", SearchOption.AllDirectories).Length > 0;
+                   Directory.EnumerateFiles(cacheDir, "*.dll", SearchOption.AllDirectories).Any();
         }
 
         /// <summary>Returns locally-cached Streamline SDK versions (subdirectory names under Cache/Streamline/).</summary>
@@ -4318,11 +4266,11 @@ namespace OptiscalerClient.Services
         {
             try
             {
-                var bytes = File.ReadAllBytes(path);
-                // Basic corruption check only — unlike ReShade there's no reliable content marker
-                // to check for, but the source is the curated RenoDX wiki itself, not an arbitrary
-                // user-provided file, so a PE-header sanity check is enough.
-                return bytes.Length > 0 && bytes.Length > 2 && bytes[0] == 'M' && bytes[1] == 'Z';
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (fs.Length < 2) return false;
+                var b0 = fs.ReadByte();
+                var b1 = fs.ReadByte();
+                return b0 == 'M' && b1 == 'Z';
             }
             catch
             {

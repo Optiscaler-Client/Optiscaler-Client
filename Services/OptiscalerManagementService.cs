@@ -20,8 +20,7 @@ public class OptiscalerManagementService
     private readonly string _cacheDir;
     private readonly string _versionFile;
     private string _configFile;
-    private static readonly HttpClient SharedHttpClient = CreateHttpClient();
-    private readonly HttpClient _httpClient;
+    private HttpClient _httpClient => NetworkService.GetHttpClient();
 
     public string? CurrentLocalVersion { get; private set; }
     public bool IsUpdateAvailable { get; private set; }
@@ -38,17 +37,8 @@ public class OptiscalerManagementService
 
         Directory.CreateDirectory(_cacheDir);
 
-        _httpClient = SharedHttpClient;
-
         LoadConfiguration();
         LoadLocalVersion();
-    }
-
-    private static HttpClient CreateHttpClient()
-    {
-        var client = new HttpClient();
-        client.DefaultRequestHeaders.Add("User-Agent", "OptiscalerClient");
-        return client;
     }
 
     private void LoadConfiguration()

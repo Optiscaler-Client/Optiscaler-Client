@@ -84,12 +84,13 @@ namespace OptiscalerClient.Services
                 try
                 {
                     var text = File.ReadAllText(file);
-                    var current = GetLaunchOptions(text, appId) ?? "";
+                    var tokens = Tokenize(text);
+                    var current = GetLaunchOptions(tokens, appId) ?? "";
                     var updated = change(current);
                     newOptions = updated;
                     if (updated == current) { written = true; continue; }
 
-                    var newText = SetLaunchOptions(text, appId, updated);
+                    var newText = SetLaunchOptions(text, tokens, appId, updated);
                     if (newText == null) continue;
 
                     var backup = file + ".optiscaler-client.bak";
@@ -98,7 +99,7 @@ namespace OptiscalerClient.Services
                     DebugWindow.Log($"[SteamLaunchOptions] {file}: app {appId} launch options '{current}' -> '{updated}'.");
                     written = true;
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                catch (Exception ex)
                 {
                     DebugWindow.Log($"[SteamLaunchOptions] Could not update {file}: {ex.Message}");
                 }
@@ -111,7 +112,7 @@ namespace OptiscalerClient.Services
         private static List<string> FindLocalConfigs(string appId)
         {
             var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            var all = new List<string>();
+            var all = new HashSet<string>(StringComparer.Ordinal);
             foreach (var root in SteamRoots)
             {
                 var userdata = Path.Combine(home, root, "userdata");
@@ -121,16 +122,16 @@ namespace OptiscalerClient.Services
                     foreach (var dir in Directory.GetDirectories(userdata))
                     {
                         var file = Path.Combine(dir, "config", "localconfig.vdf");
-                        if (File.Exists(file) && !all.Contains(Path.GetFullPath(file))) all.Add(Path.GetFullPath(file));
+                        if (File.Exists(file)) all.Add(Path.GetFullPath(file));
                     }
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                catch (Exception) { }
             }
 
             var withApp = all.Where(f =>
             {
                 try { return FindAppBlock(Tokenize(File.ReadAllText(f)), appId) != null; }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
+                catch (Exception) { return false; }
             }).ToList();
             if (withApp.Count > 0) return withApp;
             return all.OrderByDescending(File.GetLastWriteTimeUtc).Take(1).ToList();
@@ -205,8 +206,8 @@ namespace OptiscalerClient.Services
 
         // ── localconfig.vdf ─────────────────────────────────────────────────────────
 
-        private enum TokenKind { String, Open, Close }
-        private sealed record Token(TokenKind Kind, string Value, int Start, int End);
+        internal enum TokenKind { String, Open, Close }
+        internal sealed record Token(TokenKind Kind, string Value, int Start, int End);
 
         private static List<Token> Tokenize(string text)
         {
@@ -315,8 +316,10 @@ namespace OptiscalerClient.Services
         }
 
         internal static string? GetLaunchOptions(string vdf, string appId)
+            => GetLaunchOptions(Tokenize(vdf), appId);
+
+        internal static string? GetLaunchOptions(List<Token> t, string appId)
         {
-            var t = Tokenize(vdf);
             var app = FindAppBlock(t, appId);
             if (app == null) return null;
             var v = FindValue(t, app.Value.Open, app.Value.Close, "LaunchOptions");
@@ -327,8 +330,10 @@ namespace OptiscalerClient.Services
         /// (added to the game's block, or a new block, when missing). Null when the file has no
         /// apps section to add it to.</summary>
         internal static string? SetLaunchOptions(string vdf, string appId, string value)
+            => SetLaunchOptions(vdf, Tokenize(vdf), appId, value);
+
+        internal static string? SetLaunchOptions(string vdf, List<Token> t, string appId, string value)
         {
-            var t = Tokenize(vdf);
             var quoted = "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
             var app = FindAppBlock(t, appId);

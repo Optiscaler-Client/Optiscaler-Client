@@ -449,17 +449,13 @@ public class LinuxGpuDetectionService : IGpuDetectionService
                 return vram;
         }
 
-        // NVIDIA: query via nvidia-smi (returns MiB)
+        // NVIDIA: VRAM comes from the batched nvidia-smi query (one process per DetectGPUs call).
+        // Never fall back to a separate per-GPU query — it returns the first GPU's memory for every card.
         if (vendor == GpuVendor.NVIDIA)
         {
             var info = FindNvidiaSmiEntry(GetPciBusId(devicePath));
             if (info is not null && info.MemoryBytes > 0)
                 return info.MemoryBytes;
-
-            // Fallback for older drivers / parse failures.
-            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
-            if (ulong.TryParse(output?.Trim(), out var mb))
-                return mb * 1024 * 1024;
         }
 
         return 0;
@@ -472,10 +468,6 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             var info = FindNvidiaSmiEntry(GetPciBusId(devicePath));
             if (!string.IsNullOrWhiteSpace(info?.DriverVersion))
                 return info.DriverVersion!;
-
-            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
-            if (!string.IsNullOrWhiteSpace(output))
-                return output.Trim();
         }
 
         var modulePath = vendor switch
@@ -498,14 +490,28 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             var psi = new ProcessStartInfo(fileName, args)
             {
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
             using var proc = Process.Start(psi);
             if (proc == null) return null;
-            var output = readAllLines ? proc.StandardOutput.ReadToEnd() : proc.StandardOutput.ReadLine();
-            proc.WaitForExit(timeoutMs);
-            return output;
+
+            // Read both streams asynchronously to avoid the classic read-before-exit deadlock
+            // when the process fills a pipe buffer.
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync();
+            var stderrTask = proc.StandardError.ReadToEndAsync();
+
+            if (!proc.WaitForExit(timeoutMs))
+            {
+                try { proc.Kill(entireProcessTree: true); } catch { }
+                proc.WaitForExit();
+                return null;
+            }
+
+            _ = stderrTask; // drained; value intentionally unused
+            var output = stdoutTask.GetAwaiter().GetResult();
+            return readAllLines ? output : output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
         }
         catch
         {

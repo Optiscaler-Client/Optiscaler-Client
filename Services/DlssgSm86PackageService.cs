@@ -56,21 +56,14 @@ namespace OptiscalerClient.Services
         // One download at a time across every window: two Manage windows asking for the same
         // ~120 MB build must not race on the same .part files.
         private static readonly SemaphoreSlim _downloadLock = new(1, 1);
-        private static DlssgSm86PackageManifest? _manifest;
-        private static bool _manifestLoaded;
+        private static readonly Lazy<DlssgSm86PackageManifest?> _manifest = new(LoadManifest);
 
         public string CacheRoot { get; } = Path.Combine(AppPaths.GetAppDataRoot(), "Cache", "DlssgSm86");
 
         /// <summary>The pinned manifest, or null if it's missing or unreadable (feature unavailable).</summary>
         public DlssgSm86PackageManifest? Manifest
         {
-            get
-            {
-                if (_manifestLoaded) return _manifest;
-                _manifest = LoadManifest();
-                _manifestLoaded = true;
-                return _manifest;
-            }
+            get => _manifest.Value;
         }
 
         private static DlssgSm86PackageManifest? LoadManifest()
