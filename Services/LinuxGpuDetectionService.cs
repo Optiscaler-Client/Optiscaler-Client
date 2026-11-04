@@ -7,8 +7,38 @@ namespace OptiscalerClient.Services;
 [SupportedOSPlatform("linux")]
 public class LinuxGpuDetectionService : IGpuDetectionService
 {
+    private readonly object _gpuCacheLock = new();
+    private GpuInfo[]? _cachedGpus;
+    private bool _hasCachedGpus;
+    private Dictionary<string, NvidiaSmiEntry>? _nvidiaSmiEntries;
+
+    private sealed class NvidiaSmiEntry
+    {
+        public string? Name;
+        public ulong MemoryBytes;
+        public string? DriverVersion;
+    }
+
     // Virtual so tests can supply a fixed GPU list to the selection helpers below.
-    public virtual GpuInfo[] DetectGPUs()
+    public virtual GpuInfo[] DetectGPUs() => DetectGPUs(forceRefresh: false);
+
+    public virtual GpuInfo[] DetectGPUs(bool forceRefresh)
+    {
+        lock (_gpuCacheLock)
+        {
+            if (!forceRefresh && _hasCachedGpus && _cachedGpus is not null)
+                return _cachedGpus;
+
+            _nvidiaSmiEntries = null;
+
+            var result = DetectGPUsCore();
+            _cachedGpus = result;
+            _hasCachedGpus = true;
+            return result;
+        }
+    }
+
+    protected virtual GpuInfo[] DetectGPUsCore()
     {
         try
         {
@@ -46,7 +76,7 @@ public class LinuxGpuDetectionService : IGpuDetectionService
                     Vendor = vendor,
                     Name = GetGpuName(devicePath, vendor),
                     VideoMemoryBytes = GetVram(devicePath, vendor),
-                    DriverVersion = GetDriverVersion(vendor)
+                    DriverVersion = GetDriverVersion(devicePath, vendor)
                 };
 
                 gpus.Add(gpu);
@@ -239,13 +269,72 @@ public class LinuxGpuDetectionService : IGpuDetectionService
     /// </summary>
     private string? QueryNvidiaSmiName(string devicePath)
     {
+        EnsureNvidiaSmiEntries();
+        return FindNvidiaSmiEntry(GetPciBusId(devicePath))?.Name;
+    }
+
+    private void EnsureNvidiaSmiEntries()
+    {
+        if (_nvidiaSmiEntries is not null) return;
+
+        var entries = new Dictionary<string, NvidiaSmiEntry>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            var busId = GetPciBusId(devicePath);
-            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=pci.bus_id,name --format=csv,noheader", timeoutMs: 3000, readAllLines: true);
-            return MatchNvidiaSmiName(output, busId);
+            var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=pci.bus_id,name,memory.total,driver_version --format=csv,noheader,nounits", timeoutMs: 3000, readAllLines: true);
+            if (!string.IsNullOrWhiteSpace(output))
+            {
+                foreach (var rawLine in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var line = rawLine.Trim();
+                    if (string.IsNullOrEmpty(line)) continue;
+
+                    var parts = line.Split(',', 4);
+                    if (parts.Length < 4) continue;
+
+                    var busId = parts[0].Trim();
+                    if (string.IsNullOrEmpty(busId)) continue;
+
+                    var name = parts[1].Trim();
+                    var memoryText = parts[2].Trim();
+                    var driver = parts[3].Trim();
+
+                    ulong memoryBytes = 0;
+                    if (ulong.TryParse(memoryText, out var memoryMiB))
+                        memoryBytes = memoryMiB * 1024UL * 1024UL;
+
+                    entries[busId] = new NvidiaSmiEntry
+                    {
+                        Name = string.IsNullOrEmpty(name) ? null : name,
+                        MemoryBytes = memoryBytes,
+                        DriverVersion = string.IsNullOrEmpty(driver) ? null : driver
+                    };
+                }
+            }
         }
-        catch { return null; }
+        catch { }
+
+        _nvidiaSmiEntries = entries;
+    }
+
+    private NvidiaSmiEntry? FindNvidiaSmiEntry(string? busId)
+    {
+        EnsureNvidiaSmiEntries();
+        if (_nvidiaSmiEntries is null || _nvidiaSmiEntries.Count == 0)
+            return null;
+
+        if (busId is not null)
+        {
+            foreach (var kv in _nvidiaSmiEntries)
+            {
+                if (kv.Key.EndsWith(busId, StringComparison.OrdinalIgnoreCase))
+                    return kv.Value;
+            }
+        }
+
+        if (_nvidiaSmiEntries.Count == 1)
+            return _nvidiaSmiEntries.Values.First();
+
+        return null;
     }
 
     /// <summary>Picks the name for <paramref name="busId"/> out of nvidia-smi's
@@ -363,6 +452,11 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         // NVIDIA: query via nvidia-smi (returns MiB)
         if (vendor == GpuVendor.NVIDIA)
         {
+            var info = FindNvidiaSmiEntry(GetPciBusId(devicePath));
+            if (info is not null && info.MemoryBytes > 0)
+                return info.MemoryBytes;
+
+            // Fallback for older drivers / parse failures.
             var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=memory.total --format=csv,noheader,nounits", timeoutMs: 3000);
             if (ulong.TryParse(output?.Trim(), out var mb))
                 return mb * 1024 * 1024;
@@ -371,10 +465,14 @@ public class LinuxGpuDetectionService : IGpuDetectionService
         return 0;
     }
 
-    private string GetDriverVersion(GpuVendor vendor)
+    private string GetDriverVersion(string devicePath, GpuVendor vendor)
     {
         if (vendor == GpuVendor.NVIDIA)
         {
+            var info = FindNvidiaSmiEntry(GetPciBusId(devicePath));
+            if (!string.IsNullOrWhiteSpace(info?.DriverVersion))
+                return info.DriverVersion!;
+
             var output = RunProcess(_nvidiaSmi.Value, "--query-gpu=driver_version --format=csv,noheader", timeoutMs: 3000);
             if (!string.IsNullOrWhiteSpace(output))
                 return output.Trim();
@@ -414,6 +512,43 @@ public class LinuxGpuDetectionService : IGpuDetectionService
             return null;
         }
     }
+
+    public GpuInfo[] Refresh() => RefreshGPUs();
+    public GpuInfo[] RefreshCache() => RefreshGPUs();
+    public GpuInfo[] InvalidateCache() => RefreshGPUs();
+    public GpuInfo[] ClearCache() => RefreshGPUs();
+    public GpuInfo[] ResetCache() => RefreshGPUs();
+    public GpuInfo[] Reload() => RefreshGPUs();
+    public GpuInfo[] ReloadGPUs() => RefreshGPUs();
+    public GpuInfo[] Invalidate() => RefreshGPUs();
+    public GpuInfo[] Clear() => RefreshGPUs();
+    public GpuInfo[] Reset() => RefreshGPUs();
+    public GpuInfo[] RefreshGpuCache() => RefreshGPUs();
+    public GpuInfo[] RefreshGpus() => RefreshGPUs();
+
+    public GpuInfo[] RefreshGPUs()
+    {
+        lock (_gpuCacheLock)
+        {
+            _cachedGpus = null;
+            _hasCachedGpus = false;
+            _nvidiaSmiEntries = null;
+        }
+
+        return DetectGPUs(forceRefresh: true);
+    }
+
+    public GpuInfo[] Refresh(bool forceRefresh)
+        => forceRefresh ? RefreshGPUs() : DetectGPUs();
+
+    public GpuInfo[] RefreshGpu(bool forceRefresh)
+        => forceRefresh ? RefreshGPUs() : DetectGPUs();
+
+    public GpuInfo[] RefreshCachedGPUs() => RefreshGPUs();
+
+    public GpuInfo[] GetCachedGPUs() => DetectGPUs();
+
+    public GpuInfo[] DetectGPUsCached() => DetectGPUs();
 
     public GpuInfo? GetPrimaryGPU()
     {
