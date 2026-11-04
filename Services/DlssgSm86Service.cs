@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -376,28 +377,46 @@ namespace OptiscalerClient.Services
         // not just the hashes pinned in our manifest.
         private static readonly byte[] ProxySignature = Encoding.Unicode.GetBytes(DlssgSm86Records.IniFileName);
 
+        // Per-file cache: a proxy DLL's bytes don't change without its size/mtime changing, so an
+        // unchanged file never has to be re-scanned (proxies are small but GetEligibility re-checks
+        // the same folder repeatedly). 1 = proxy, 0 = not.
+        private static readonly ConcurrentDictionary<string, int> _proxyScanCache = new(StringComparer.OrdinalIgnoreCase);
+
         /// <summary>True when <paramref name="path"/> is a dlssg_for_sm86 proxy DLL (any version).</summary>
         internal static bool IsDlssgSm86Proxy(string path)
         {
             try
             {
-                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16);
-                var buffer = new byte[1 << 20];
-                int carried = 0;
-                int read;
-                while ((read = stream.Read(buffer, carried, buffer.Length - carried)) > 0)
-                {
-                    int length = carried + read;
-                    if (buffer.AsSpan(0, length).IndexOf(ProxySignature) >= 0)
-                        return true;
-                    // Keep the tail so a signature split across two reads is still found.
-                    carried = Math.Min(ProxySignature.Length - 1, length);
-                    Buffer.BlockCopy(buffer, length - carried, buffer, 0, carried);
-                }
+                var info = new FileInfo(path);
+                var cacheKey = $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+                if (_proxyScanCache.TryGetValue(cacheKey, out var cached))
+                    return cached == 1;
+
+                bool result = ScanProxy(path);
+                _proxyScanCache[cacheKey] = result ? 1 : 0;
+                return result;
             }
             catch (Exception ex)
             {
                 DebugWindow.Log($"[DlssgSm86] Could not inspect '{path}': {ex.Message}");
+            }
+            return false;
+        }
+
+        private static bool ScanProxy(string path)
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16);
+            var buffer = new byte[1 << 20];
+            int carried = 0;
+            int read;
+            while ((read = stream.Read(buffer, carried, buffer.Length - carried)) > 0)
+            {
+                int length = carried + read;
+                if (buffer.AsSpan(0, length).IndexOf(ProxySignature) >= 0)
+                    return true;
+                // Keep the tail so a signature split across two reads is still found.
+                carried = Math.Min(ProxySignature.Length - 1, length);
+                Buffer.BlockCopy(buffer, length - carried, buffer, 0, carried);
             }
             return false;
         }
