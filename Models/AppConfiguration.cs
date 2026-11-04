@@ -354,6 +354,7 @@ namespace OptiscalerClient.Models
         public string? OptiScalerVersion { get; set; }
         public string? FakenvapiVersion { get; set; }
         public string? NukemFGVersion { get; set; }
+        public string? HelixSRVersion { get; set; }
     }
 
     /// <summary>

@@ -2138,6 +2138,27 @@ namespace OptiscalerClient.Views
         /// </summary>
         private void CmbExtrasVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
+            var cmb = sender as ComboBox;
+            var tag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            if (!string.IsNullOrEmpty(tag) && !tag.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                // Mutual exclusivity: selecting an Extras (FSR4 swap) version clears any real
+                // HelixSR selection, mirroring the HelixSR <-> OptiScaler pattern.
+                var helixCmb = this.FindControl<ComboBox>("CmbHelixSRVersion");
+                if (helixCmb != null)
+                {
+                    var helixTag = (helixCmb.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                    if (!string.IsNullOrEmpty(helixTag) && !helixTag.Equals("none", StringComparison.OrdinalIgnoreCase))
+                    {
+                        helixCmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
+                        helixCmb.SelectedIndex = 0;
+                        helixCmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
+                        UpdateInstallButtonsForSwapState();
+                        RefreshInstallActionAvailability();
+                    }
+                }
+            }
+
             UpdateInstallButtonsForSwapState();
             RefreshInstallActionAvailability();
         }
@@ -4832,6 +4853,16 @@ namespace OptiscalerClient.Views
             var earlyOptiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             if (string.Equals(earlyOptiTag, "none", StringComparison.OrdinalIgnoreCase))
             {
+                // HelixSR selected: install it through the same bottom buttons (auto/manual)
+                // instead of the dedicated button.
+                var helixEarly = (this.FindControl<ComboBox>("CmbHelixSRVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                if (!string.IsNullOrEmpty(helixEarly) && !helixEarly.Equals("none", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!await ConfirmAntiCheatRiskAsync()) return;
+                    await ExecuteHelixSRInstallAsync(isManualMode);
+                    return;
+                }
+
                 bool installDlssgSm86 = HasDlssgSm86PendingInstall();
                 if (!injectExtras && !installDlssgSm86)
                 {
@@ -7486,6 +7517,19 @@ namespace OptiscalerClient.Views
                 ConfigureAdditionalComponents();
             }
 
+            // Mutual exclusivity: OptiScaler and HelixSR cannot both be selected at once.
+            // Selecting a real OptiScaler version clears any HelixSR selection.
+            if (!string.IsNullOrEmpty(selectedTag) && !selectedTag.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                var helixCmb = this.FindControl<ComboBox>("CmbHelixSRVersion");
+                if (helixCmb != null && helixCmb.SelectedIndex != 0)
+                {
+                    helixCmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
+                    helixCmb.SelectedIndex = 0;
+                    helixCmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
+                }
+            }
+
             UpdateInstallButtonsForSwapState();
             RefreshInstallActionAvailability();
         }
@@ -7518,6 +7562,7 @@ namespace OptiscalerClient.Views
 
             var cmbOptiVersion = this.FindControl<ComboBox>("CmbOptiVersion");
             var cmbExtrasVersion = this.FindControl<ComboBox>("CmbExtrasVersion");
+            var cmbHelixSRVersion = this.FindControl<ComboBox>("CmbHelixSRVersion");
 
             // This is the resync point called after every install/uninstall/swap completes (via
             // UpdateStatus) as well as on every combo change — ExecuteInstallAsync disables the
@@ -7527,9 +7572,11 @@ namespace OptiscalerClient.Views
             if (cmbOptiVersion != null) cmbOptiVersion.IsEnabled = true;
             var optiTag = (cmbOptiVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             var extrasTag = (cmbExtrasVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var helixTag = (cmbHelixSRVersion?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
 
             bool optiIsNone = string.Equals(optiTag, "none", StringComparison.OrdinalIgnoreCase);
             bool extrasIsNone = string.IsNullOrEmpty(extrasTag) || string.Equals(extrasTag, "none", StringComparison.OrdinalIgnoreCase);
+            bool helixSelected = !string.IsNullOrEmpty(helixTag) && !helixTag.Equals("none", StringComparison.OrdinalIgnoreCase);
             // The NR mod is a third thing to install (Experimental Features only): on Linux, with
             // OptiScaler at "None" it goes in on its own, with or without an FSR 4 Swap.
             bool modSelected = new ComponentManagementService().Config.ShowExperimentalFeatures &&
@@ -7537,10 +7584,10 @@ namespace OptiscalerClient.Views
             // DLSS FG for RTX 20/30 (Experimental, Windows) is the same kind of third thing: with
             // OptiScaler and FSR 4 Swap at "None" it goes in on its own.
             bool dlssgSm86Pending = HasDlssgSm86PendingInstall();
-            bool nothingToInstall = optiIsNone && extrasIsNone && !modSelected && !dlssgSm86Pending;
+            bool nothingToInstall = optiIsNone && extrasIsNone && !modSelected && !dlssgSm86Pending && !helixSelected;
             if (pnlNothingToInstall != null) pnlNothingToInstall.IsVisible = nothingToInstall;
 
-            if (!optiIsNone || modSelected)
+            if (!optiIsNone || modSelected || helixSelected)
             {
                 // Normal install mode. Recompute the label instead of assuming UpdateStatus already
                 // set it — this method is also called live on every combo change (not just window
@@ -7992,21 +8039,10 @@ namespace OptiscalerClient.Views
                 }
             }
             catch { if (panel != null) panel.IsVisible = false; }
-            int sel = 0;
-            var preferred = _game.HelixSRVersion;
-            if (string.IsNullOrEmpty(preferred))
-            {
-                try { preferred = new ComponentManagementService().Config.DefaultHelixSRVersion; } catch { }
-            }
-            if (!string.IsNullOrEmpty(preferred))
-            {
-                for (int i = 0; i < cmb.Items.Count; i++)
-                {
-                    if (cmb.Items[i] is ComboBoxItem ci && string.Equals(ci.Tag?.ToString(), preferred, StringComparison.OrdinalIgnoreCase))
-                    { sel = i; break; }
-                }
-            }
-            cmb.SelectedIndex = sel;
+            // HelixSR defaults to "None": it is an alternative to OptiScaler, and the OptiScaler
+            // combo defaults to a real version, so pre-selecting HelixSR would conflict.
+            // The last user selection is still saved to config (see CmbHelixSRVersion_SelectionChanged).
+            cmb.SelectedIndex = 0;
             cmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
         }
 
@@ -8018,19 +8054,49 @@ namespace OptiscalerClient.Views
                 var tag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
                 if (!string.IsNullOrEmpty(tag) && !tag.Equals("none", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Mutual exclusivity: selecting HelixSR clears any real OptiScaler selection
+                    // (switches OptiScaler to "None", enabling DLL-swap-style HelixSR-only install).
+                    var optiCmb = this.FindControl<ComboBox>("CmbOptiVersion");
+                    if (optiCmb != null)
+                    {
+                        var optiTag = (optiCmb.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                        if (!string.IsNullOrEmpty(optiTag) && !optiTag.Equals("none", StringComparison.OrdinalIgnoreCase))
+                        {
+                            optiCmb.SelectionChanged -= CmbOptiVersion_SelectionChanged;
+                            optiCmb.SelectedIndex = 0;
+                            optiCmb.SelectionChanged += CmbOptiVersion_SelectionChanged;
+                            UpdateCheckboxStatesForVersion(optiCmb);
+                            UpdateInstallButtonsForSwapState();
+                        }
+                    }
+
+                    // Mutual exclusivity: selecting HelixSR clears any real Extras (FSR4 swap) selection.
+                    var extrasCmb = this.FindControl<ComboBox>("CmbExtrasVersion");
+                    if (extrasCmb != null)
+                    {
+                        var extrasTag = (extrasCmb.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                        if (!string.IsNullOrEmpty(extrasTag) && !extrasTag.Equals("none", StringComparison.OrdinalIgnoreCase))
+                        {
+                            extrasCmb.SelectionChanged -= CmbExtrasVersion_SelectionChanged;
+                            extrasCmb.SelectedIndex = 0;
+                            extrasCmb.SelectionChanged += CmbExtrasVersion_SelectionChanged;
+                            UpdateInstallButtonsForSwapState();
+                            RefreshInstallActionAvailability();
+                        }
+                    }
+
                     var cs = new ComponentManagementService();
                     cs.Config.DefaultHelixSRVersion = tag;
                     cs.SaveConfiguration();
                 }
             }
             catch { }
+            UpdateInstallButtonsForSwapState();
             RefreshInstallActionAvailability();
         }
 
-        private async void BtnInstallHelixSR_Click(object? sender, RoutedEventArgs e)
+        private async Task ExecuteHelixSRInstallAsync(bool isManualMode)
         {
-            if (!await ConfirmAntiCheatRiskAsync()) return;
-
             var cmbHelix = this.FindControl<ComboBox>("CmbHelixSRVersion");
             var helixItem = cmbHelix?.SelectedItem as ComboBoxItem;
             var helixTag = helixItem?.Tag?.ToString();
@@ -8057,11 +8123,33 @@ namespace OptiscalerClient.Views
                 injectionMethod = "dxgi.dll";
             }
 
+            string? overrideGameDir = null;
+            if (isManualMode)
+            {
+                var files = await this.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
+                {
+                    Title = "Select Game Executable (Main .exe)",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[]
+                    {
+                        new FilePickerFileType("Executable Files (*.exe)")
+                        {
+                            Patterns = new[] { "*.exe" }
+                        },
+                        new FilePickerFileType("All files")
+                        {
+                            Patterns = new[] { "*.*" }
+                        }
+                    }
+                });
+
+                if (files == null || !files.Any()) return;
+                overrideGameDir = System.IO.Path.GetDirectoryName(files[0].Path.LocalPath);
+            }
+
             try
             {
                 Dispatcher.UIThread.Post(() => {
-                    var btn = sender as Button;
-                    if (btn != null) btn.IsEnabled = false;
                     var bdProgress = this.FindControl<Border>("BdProgress");
                     var prgDownload = this.FindControl<ProgressBar>("PrgDownload");
                     var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
@@ -8077,13 +8165,11 @@ namespace OptiscalerClient.Views
                 });
                 await Task.Run(() => {
                     var inst = new GameInstallationService();
-                    inst.InstallHelixSR(_game, helixCache, injectionMethod, helixTag);
+                    inst.InstallHelixSR(_game, helixCache, injectionMethod, helixTag, overrideGameDir);
                 });
                 Dispatcher.UIThread.Post(() => {
                     var bdProgress = this.FindControl<Border>("BdProgress");
                     if (bdProgress != null) bdProgress.IsVisible = false;
-                    var btn = sender as Button;
-                    if (btn != null) btn.IsEnabled = true;
                 });
                 _game.IsOptiscalerInstalled = true;
                 _game.OptiscalerVersion = helixTag;
@@ -8103,12 +8189,9 @@ namespace OptiscalerClient.Views
                 Dispatcher.UIThread.Post(() => {
                     var bdProgress = this.FindControl<Border>("BdProgress");
                     if (bdProgress != null) bdProgress.IsVisible = false;
-                    var btn = sender as Button;
-                    if (btn != null) btn.IsEnabled = true;
                 });
                 await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), hexEx.Message).ShowDialog<object>(this);
             }
         }
-
     }
 }

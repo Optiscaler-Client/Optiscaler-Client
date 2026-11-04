@@ -1213,8 +1213,19 @@
                                                    Foreground="{StaticResource BrTextSecondary}"
                                                    FontSize="{StaticResource FontSizeCaption}"
                                                    VerticalAlignment="Center"/>
+                                        <Border Background="{StaticResource BrBgElevated}"
+                                                BorderBrush="{StaticResource BrBorderSubtle}"
+                                                BorderThickness="1" CornerRadius="8"
+                                                Width="16" Height="16"
+                                                ToolTip.ShowDelay="100" Cursor="Help"
+                                                ToolTip.Tip="HelixSR is an OptiScaler variant. Selecting it disables OptiScaler; install it with the Auto/Manual install buttons below.">
+                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Margin="0,-1,0,0"/>
+                                        </Border>
                                     </StackPanel>
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,4,0,0">
+                                    <Grid ColumnDefinitions="*" Margin="0,4,0,0">
                                         <ComboBox Name="CmbHelixSRVersion"
                                                   Grid.Column="0"
                                                   HorizontalAlignment="Stretch"
@@ -1222,12 +1233,6 @@
                                                   Padding="8,0,24,0"
                                                   HorizontalContentAlignment="Left"
                                                   VerticalContentAlignment="Center"/>
-                                        <Button Name="BtnInstallHelixSR"
-                                                Grid.Column="1"
-                                                Content="Install HelixSR"
-                                                Classes="BtnSuccess"
-                                                Padding="14,7"
-                                                Click="BtnInstallHelixSR_Click"/>
                                     </Grid>
                                 </StackPanel>
 
