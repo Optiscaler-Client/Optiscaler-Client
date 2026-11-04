@@ -234,6 +234,7 @@ namespace OptiscalerClient.Services
         public string? OptiScalerVersion => _localVersions.OptiScalerVersion;
         public string? FakenvapiVersion => _localVersions.FakenvapiVersion;
         public string? NukemFGVersion => _localVersions.NukemFGVersion;
+        public string? HelixSRVersion => _localVersions.HelixSRVersion;
 
         public bool IsOptiScalerUpdateAvailable { get; private set; }
         public bool IsFakenvapiUpdateAvailable { get; private set; }
@@ -2403,6 +2404,46 @@ namespace OptiscalerClient.Services
         public string GetHelixSRCachePath() => Path.Combine(_cacheDir, "HelixSR");
 
         /// <summary>
+        /// Returns a list of locally-cached HelixSR version names (subdirectory names under Cache/HelixSR/).
+        /// </summary>
+        public System.Collections.Generic.List<string> GetDownloadedHelixSRVersions()
+        {
+            var versions = new System.Collections.Generic.List<string>();
+            var helixDir = GetHelixSRCachePath();
+            if (!Directory.Exists(helixDir)) return versions;
+
+            foreach (var dir in Directory.GetDirectories(helixDir))
+            {
+                if (Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories).Length > 0)
+                {
+                    versions.Add(Path.GetFileName(dir));
+                }
+            }
+            return versions.OrderByDescending(v => v, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public void DeleteHelixSRCache(string version)
+        {
+            var cachePath = GetHelixSRCachePath(version);
+            if (Directory.Exists(cachePath))
+            {
+                Directory.Delete(cachePath, true);
+            }
+            // Clear the configured default if it pointed at the deleted version, mirroring
+            // how DeleteOptiScalerCache clears custom versions.
+            if (string.Equals(_config.DefaultHelixSRVersion, version, StringComparison.OrdinalIgnoreCase))
+            {
+                _config.DefaultHelixSRVersion = null;
+                SaveConfiguration();
+            }
+            if (_localVersions.HelixSRVersion == version)
+            {
+                _localVersions.HelixSRVersion = GetDownloadedHelixSRVersions().FirstOrDefault();
+                SaveLocalVersions();
+            }
+        }
+
+        /// <summary>
         /// Returns true if the given Fakenvapi version is already cached locally.
         /// </summary>
         public bool IsFakenvapiCached(string version)
@@ -4407,6 +4448,8 @@ namespace OptiscalerClient.Services
                 await StreamToFileAsync(() => _httpClient, downloadUrl, tempFile, progress);
                 if (Directory.Exists(cacheDir)) { foreach (var f in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)) try { File.Delete(f); } catch { } foreach (var d in Directory.GetDirectories(cacheDir)) try { Directory.Delete(d, true); } catch { } }
                 System.IO.Compression.ZipFile.ExtractToDirectory(tempFile, cacheDir);
+                _localVersions.HelixSRVersion = version;
+                SaveLocalVersions();
                 return cacheDir;
             }
             finally { try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { } }

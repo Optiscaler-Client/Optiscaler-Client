@@ -236,6 +236,9 @@ namespace OptiscalerClient.Views
             // ── nukemfg ──────────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("nukemfg",   "nukemfg",   "\uE619"));
 
+            // ── HelixSR ──────────────────────────────────────────────────────
+            sidebar.Children.Add(CreateTopButton("helixsr",   "HelixSR",   "\uE619"));
+
             // ── DLSS Enabler ─────────────────────────────────────────────────
             sidebar.Children.Add(CreateTopButton("dlss-enabler",
                 Application.Current?.FindResource("TxtDlssEnabler") as string ?? "DLSS Enabler", "\uF4B6"));
@@ -369,6 +372,7 @@ namespace OptiscalerClient.Views
                 case "fsr4":        RenderFsr4WithTabs(content); break;
                 case "fakenvapi":   RenderFakenvapi(content); break;
                 case "nukemfg":     RenderNukemfg(content); break;
+                case "helixsr":     RenderHelixSR(content); break;
                 case "dlss-enabler": RenderDlssEnablerWithTabs(content); break;
                 case "streamline":  RenderStreamline(content); break;
                 case "renodx":      RenderRenodx(content); break;
@@ -800,6 +804,23 @@ namespace OptiscalerClient.Views
             {
                 foreach (var ver in nukemSizes.Keys)
                     content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isNukemFG: true, sizeBytes: nukemSizes[ver]));
+            }
+        }
+
+        private void RenderHelixSR(StackPanel content)
+        {
+            var helixSizes = _componentService.GetDownloadedHelixSRVersions()
+                .ToDictionary(v => v, v => GetDirectorySizeBytes(_componentService.GetHelixSRCachePath(v)));
+            content.Children.Add(CreateTotalSizeBadge(helixSizes.Values.Sum()));
+
+            if (helixSizes.Count == 0)
+            {
+                content.Children.Add(MakeEmptyLabel("No HelixSR versions cached."));
+            }
+            else
+            {
+                foreach (var ver in helixSizes.Keys)
+                    content.Children.Add(CreateVersionCard(ver, isExtras: false, isDeletable: true, isOptiPatcher: false, isHelixSR: true, sizeBytes: helixSizes[ver]));
             }
         }
 
@@ -1424,7 +1445,7 @@ namespace OptiscalerClient.Views
 
         // ── Version card ──────────────────────────────────────────────────────
 
-        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, bool isDlssNrLinuxWrapper = false, bool isAmdNrBridge = false, long? sizeBytes = null)
+        private Border CreateVersionCard(string version, bool isExtras, bool isDeletable = true, bool isOptiPatcher = false, bool isNukemFG = false, bool isFakenvapi = false, bool isDlssEnabler = false, bool isStreamline = false, bool isDlssEnablerMirror = false, bool isDlssNrOnAmd = false, bool isDlssNrLinuxWrapper = false, bool isAmdNrBridge = false, bool isHelixSR = false, long? sizeBytes = null)
         {
             var grid = new Grid
             {
@@ -1473,7 +1494,7 @@ namespace OptiscalerClient.Views
                     Padding = new Thickness(12, 4),
                     FontSize = 11,
                     Margin = new Thickness(8, 0, 0, 0),
-                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd, IsDlssNrLinuxWrapper = isDlssNrLinuxWrapper, IsAmdNrBridge = isAmdNrBridge }
+                    Tag = new VersionDeleteInfo { Version = version, IsExtras = isExtras, IsOptiPatcher = isOptiPatcher, IsNukemFG = isNukemFG, IsFakenvapi = isFakenvapi, IsDlssEnabler = isDlssEnabler, IsStreamline = isStreamline, IsDlssEnablerMirror = isDlssEnablerMirror, IsDlssNrOnAmd = isDlssNrOnAmd, IsDlssNrLinuxWrapper = isDlssNrLinuxWrapper, IsAmdNrBridge = isAmdNrBridge, IsHelixSR = isHelixSR }
                 };
                 btnDelete.Classes.Add("BtnSecondary");
                 btnDelete.Click += BtnDelete_Click;
@@ -1557,7 +1578,8 @@ namespace OptiscalerClient.Views
             var renodx      = _componentService.GetAllCachedRenodxEntries();
             var dlssNrOnAmd = _dlssNrService.GetDownloadedVersions();
             var amdNrBridge = _amdNrBridgeService.GetDownloadedVersions();
-            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count + dlssNrOnAmd.Count + amdNrBridge.Count;
+            var helixsr     = _componentService.GetDownloadedHelixSRVersions();
+            int total       = versions.Count + extras.Count + optiPatcher.Count + nukemfg.Count + fakenvapi.Count + dlssEnabler.Count + streamline.Count + renodx.Count + dlssNrOnAmd.Count + amdNrBridge.Count + helixsr.Count;
             txtCacheInfo.Text = $"{total} items cached locally.";
         }
 
@@ -1579,6 +1601,7 @@ namespace OptiscalerClient.Views
             public bool IsDlssNrOnAmd { get; set; }
             public bool IsDlssNrLinuxWrapper { get; set; }
             public bool IsAmdNrBridge { get; set; }
+            public bool IsHelixSR { get; set; }
         }
 
         private async void BtnDelete_Click(object? sender, RoutedEventArgs e)
@@ -1631,6 +1654,11 @@ namespace OptiscalerClient.Views
                     title = "Delete AMD-NR-bridge Version";
                     msg = $"Are you sure you want to delete AMD-NR-bridge '{info.Version}' from cache?";
                 }
+                else if (info.IsHelixSR)
+                {
+                    title = "Delete HelixSR Version";
+                    msg = $"Are you sure you want to delete HelixSR '{info.Version}' from cache?";
+                }
                 else if (info.IsDlssNrLinuxWrapper)
                 {
                     title = "Delete bulacha3/DLSS-NR-on-AMD-Linux Version";
@@ -1671,6 +1699,8 @@ namespace OptiscalerClient.Views
                             _dlssNrLinuxWrapperService.DeleteCache(info.Version);
                         else if (info.IsAmdNrBridge)
                             _amdNrBridgeService.DeleteCache(info.Version);
+                        else if (info.IsHelixSR)
+                            _componentService.DeleteHelixSRCache(info.Version);
                         else
                             _componentService.DeleteOptiScalerCache(info.Version);
 

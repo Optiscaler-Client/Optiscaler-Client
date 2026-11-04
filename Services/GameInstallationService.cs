@@ -63,6 +63,9 @@ namespace OptiscalerClient.Services
             "D3D12_Optiscaler",
             "Licenses",
             "plugins",
+            // HelixSR drop-in folders (must be removed on uninstall so no residue remains)
+            "HelixSR",
+            "HLX-FSR4",
             // Nightly's dependency-DLL folder (OptiScaler.ini's default OptiDllPath=.\OptiScaler),
             // also used by this client for Streamline (OptiScaler/streamline/) and the DLSS Enabler
             // headless DLL. Directory.CreateDirectory in the Streamline/DLSS Enabler install steps
@@ -3691,6 +3694,12 @@ namespace OptiscalerClient.Services
                 game.OptiscalerVersion = helixsrVersion ?? "HelixSR";
                 game.IsHelixSRInstalled = true;
                 game.HelixSRVersion = helixsrVersion;
+
+                // Post-Install: Re-analyze to refresh component information.
+                var analyzer = new GameAnalyzerService();
+                GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
+                analyzer.AnalyzeGame(game, forceRefresh: true);
+                GameAnalyzerService.FlushCacheToDisk();
 
                 DebugWindow.Log($"[Install][HelixSR] Installation completed");
                 return gameDir;
