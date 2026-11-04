@@ -35,16 +35,18 @@ public static class PlatformServiceFactory
         return new XdgShellService();
     }
 
-    /// <summary>Returns the <see cref="IGpuDetectionService"/> for the current OS,
-    /// or <c>null</c> on unsupported platforms.</summary>
-    public static IGpuDetectionService? CreateGpuDetectionService()
+    private static readonly Lazy<IGpuDetectionService?> _gpuDetectionService = new(() =>
     {
         if (OperatingSystem.IsWindows())
             return new WindowsGpuDetectionService();
         if (OperatingSystem.IsLinux())
             return new LinuxGpuDetectionService();
         return null;
-    }
+    });
+
+    /// <summary>Returns the cached <see cref="IGpuDetectionService"/> for the current OS,
+    /// or <c>null</c> on unsupported platforms. The instance is created once and reused.</summary>
+    public static IGpuDetectionService? CreateGpuDetectionService() => _gpuDetectionService.Value;
 
     /// <summary>Returns the <see cref="IGamepadDetectionService"/> for the current OS,
     /// or <c>null</c> on unsupported platforms.</summary>

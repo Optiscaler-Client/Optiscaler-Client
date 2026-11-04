@@ -10,34 +10,69 @@ namespace OptiscalerClient.Services
     [SupportedOSPlatform("windows")]
     public class WindowsGpuDetectionService : IGpuDetectionService
     {
+        private static readonly object _cacheLock = new();
+        private static GpuInfo[]? _cachedGpus;
+        private static DateTime _cacheTimestampUtc;
+        // Detection results are effectively immutable for the process lifetime, but allow a
+        // periodic refresh so a transient WMI/registry failure can recover without a restart.
+        private static readonly TimeSpan _cacheLifetime = TimeSpan.FromMinutes(5);
+
+        private static List<RegistryVramEntry>? _cachedRegistryEntries;
+
+        private readonly record struct RegistryVramEntry(string? AdapterString, string? DriverDesc, ulong Bytes);
+
         /// <summary>
         /// Detects all GPUs in the system
         /// </summary>
         public GpuInfo[] DetectGPUs()
         {
+            lock (_cacheLock)
+            {
+                if (_cachedGpus != null && DateTime.UtcNow - _cacheTimestampUtc < _cacheLifetime)
+                {
+                    return _cachedGpus;
+                }
+            }
+
+            var gpus = DetectGpusCore();
+
+            lock (_cacheLock)
+            {
+                _cachedGpus = gpus;
+                _cacheTimestampUtc = DateTime.UtcNow;
+                return _cachedGpus;
+            }
+        }
+
+        private GpuInfo[] DetectGpusCore()
+        {
             try
             {
                 var gpus = new System.Collections.Generic.List<GpuInfo>();
 
-                using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController"))
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, DriverVersion, AdapterRAM FROM Win32_VideoController"))
+                using (var results = searcher.Get())
                 {
-                    foreach (ManagementObject obj in searcher.Get())
+                    foreach (ManagementObject obj in results)
                     {
-                        var gpu = new GpuInfo();
+                        using (obj)
+                        {
+                            var gpu = new GpuInfo();
 
-                        // Get GPU name
-                        gpu.Name = obj["Name"]?.ToString() ?? "Unknown GPU";
+                            // Get GPU name
+                            gpu.Name = obj["Name"]?.ToString() ?? "Unknown GPU";
 
-                        // Detect vendor from name
-                        gpu.Vendor = DetectVendorFromName(gpu.Name);
+                            // Detect vendor from name
+                            gpu.Vendor = DetectVendorFromName(gpu.Name);
 
-                        // Get driver version
-                        gpu.DriverVersion = obj["DriverVersion"]?.ToString() ?? "Unknown";
+                            // Get driver version
+                            gpu.DriverVersion = obj["DriverVersion"]?.ToString() ?? "Unknown";
 
-                        // Get video memory (in bytes) using WMI + registry fallback.
-                        gpu.VideoMemoryBytes = GetBestVideoMemoryBytes(obj, gpu.Name);
+                            // Get video memory (in bytes) using WMI + registry fallback.
+                            gpu.VideoMemoryBytes = GetBestVideoMemoryBytes(obj, gpu.Name);
 
-                        gpus.Add(gpu);
+                            gpus.Add(gpu);
+                        }
                     }
                 }
 
@@ -195,11 +230,49 @@ namespace OptiscalerClient.Services
 
         private ulong TryGetRegistryVram(string gpuName)
         {
+            foreach (var entry in GetCachedRegistryEntries())
+            {
+                if (IsGpuNameMatch(gpuName, entry.AdapterString, entry.DriverDesc))
+                {
+                    return entry.Bytes;
+                }
+            }
+
+            return 0;
+        }
+
+        private List<RegistryVramEntry> GetCachedRegistryEntries()
+        {
+            lock (_cacheLock)
+            {
+                if (_cachedRegistryEntries != null)
+                {
+                    return _cachedRegistryEntries;
+                }
+            }
+
+            var entries = ScanRegistryEntries();
+
+            lock (_cacheLock)
+            {
+                if (_cachedRegistryEntries == null)
+                {
+                    _cachedRegistryEntries = entries;
+                }
+
+                return _cachedRegistryEntries;
+            }
+        }
+
+        private static List<RegistryVramEntry> ScanRegistryEntries()
+        {
+            var entries = new List<RegistryVramEntry>();
+
             try
             {
                 using var videoRoot = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Video");
                 if (videoRoot == null)
-                    return 0;
+                    return entries;
 
                 foreach (var adapterGuid in videoRoot.GetSubKeyNames())
                 {
@@ -219,13 +292,12 @@ namespace OptiscalerClient.Services
                         var adapterString = settingsKey.GetValue("HardwareInformation.AdapterString")?.ToString();
                         var driverDesc = settingsKey.GetValue("DriverDesc")?.ToString();
 
-                        if (!IsGpuNameMatch(gpuName, adapterString, driverDesc))
-                            continue;
-
                         var value = settingsKey.GetValue("HardwareInformation.qwMemorySize");
                         var bytes = TryConvertRegistryMemoryValue(value);
                         if (bytes > 0)
-                            return bytes;
+                        {
+                            entries.Add(new RegistryVramEntry(adapterString, driverDesc, bytes));
+                        }
                     }
                 }
             }
@@ -234,7 +306,7 @@ namespace OptiscalerClient.Services
                 System.Diagnostics.Debug.WriteLine($"[GPU] Registry VRAM lookup failed: {ex.Message}");
             }
 
-            return 0;
+            return entries;
         }
 
         private bool IsGpuNameMatch(string gpuName, string? adapterString, string? driverDesc)
@@ -256,7 +328,7 @@ namespace OptiscalerClient.Services
             return left.IndexOf(right, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private ulong TryConvertRegistryMemoryValue(object? value)
+        private static ulong TryConvertRegistryMemoryValue(object? value)
         {
             try
             {
