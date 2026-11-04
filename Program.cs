@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using Avalonia;
+using Avalonia.Media;
 using System;
 using System.Reflection;
 using OptiscalerClient.Services;
@@ -48,6 +49,9 @@ class Program
         var appBuilder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
+            // Prevent arbitrary system font selection on Linux when configured UI fonts are missing
+            // (e.g. Segoe UI) — fall back deterministically to the bundled Inter font.
+            .With(new FontManagerOptions { DefaultFamilyName = "avares://Avalonia.Fonts.Inter#Inter" })
             .LogToTrace()
             .AfterSetup(_ => TryCapRenderFps(renderFpsLimit))
             // Pinned X11 WM_CLASS: Linux desktops (GNOME 45+ ignores the window's own icon) match the
