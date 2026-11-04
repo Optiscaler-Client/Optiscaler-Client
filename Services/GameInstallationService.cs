@@ -3278,31 +3278,20 @@ namespace OptiscalerClient.Services
             File.Copy(asiSourcePath, destAsi, overwrite: true);
             DebugWindow.Log($"[AsiPlugin] Installed to {destAsi}");
 
-            var iniPath = ResolveOptiScalerIniPath(gameDir);
-            if (File.Exists(iniPath))
+            // LoadAsiPlugins must live in the [Plugins] section to be honored (it is a
+            // [Plugins]-scoped key in OptiScaler's ini schema). Writing it section-agnostic
+            // (or appending it at EOF) left it orphaned in whatever section happened to be
+            // last, so *.asi files (incl. XeFGUnlock.asi) were never loaded -> XeSS MFG
+            // unlock silently never engaged. Route through ModifyOptiScalerIni so the key is
+            // inserted into [Plugins] (creating the section if missing).
+            if (File.Exists(ResolveOptiScalerIniPath(gameDir)))
             {
-                var lines = File.ReadAllLines(iniPath).ToList();
-                bool found = false;
-                for (int idx = 0; idx < lines.Count; idx++)
-                {
-                    var trimmed = lines[idx].Trim();
-                    if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
-                        (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
-                    {
-                        lines[idx] = "LoadAsiPlugins=true";
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    lines.Add("LoadAsiPlugins=true");
-                File.WriteAllLines(iniPath, lines);
-                ForgetExpectedIniKey(iniPath, "LoadAsiPlugins"); // written section-agnostic, see above
-                DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: LoadAsiPlugins=true ({asiFileName})");
+                ModifyOptiScalerIni(gameDir, "LoadAsiPlugins", "true", "Plugins");
+                DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: [Plugins] LoadAsiPlugins=true ({asiFileName})");
             }
             else
             {
-                DebugWindow.Log($"[AsiPlugin] OptiScaler.ini not found at {iniPath}, skipping patch");
+                DebugWindow.Log($"[AsiPlugin] OptiScaler.ini not found at {ResolveOptiScalerIniPath(gameDir)}, skipping patch");
             }
         }
 
