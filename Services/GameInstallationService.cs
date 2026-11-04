@@ -1993,6 +1993,8 @@ namespace OptiscalerClient.Services
             // Clear game state immediately so the UI reflects the uninstallation
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
             game.IsFsr4DllSwapped = false;
             game.Fsr4DllSwapTargetFileName = null;
@@ -2523,6 +2525,8 @@ namespace OptiscalerClient.Services
             // not create a "stuck-as-installed" loop.
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
 
             var analyzer = new GameAnalyzerService();
@@ -2533,6 +2537,8 @@ namespace OptiscalerClient.Services
             // are sensitive ones the user explicitly chose to keep, not a live installation.
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
 
             GameAnalyzerService.FlushCacheToDisk();
@@ -3545,5 +3551,158 @@ namespace OptiscalerClient.Services
                 ModifyOptiScalerIni(gameDir, key, value, section);
             return VerifyIniSettings(gameDir);
         }
+
+        public string InstallHelixSR(Game game, string cachePath, string injectionDllName = "dxgi.dll",
+                                    string? helixsrVersion = null,
+                                    string? overrideGameDir = null)
+        {
+            DebugWindow.Log($"[Install][HelixSR] Starting HelixSR installation for game: {game.Name}");
+            if (!Directory.Exists(cachePath))
+                throw new DirectoryNotFoundException("HelixSR cache directory not found. Please download HelixSR first.");
+
+            var cacheFiles = Directory.GetFiles(cachePath, "*.*", SearchOption.AllDirectories);
+            if (cacheFiles.Length == 0)
+                throw new Exception("HelixSR cache directory is empty. Download again.");
+
+            string? gameDir;
+            if (overrideGameDir != null)
+                gameDir = overrideGameDir;
+            else
+            {
+                gameDir = DetermineInstallDirectory(game);
+                if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+                    throw new Exception("Could not automatically detect the game directory. Please use Manual Install.");
+            }
+
+            if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+                throw new Exception("Installation cancelled or valid directory not found.");
+
+            var storeKey = game.InstallPath;
+            using var rollbackJournal = new InstallationRollbackJournal(gameDir);
+            var backupStore = new BackupStoreService();
+            var priorManifest = backupStore.LoadManifest(storeKey);
+            bool hasValidBackup = priorManifest != null && string.Equals(priorManifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
+            if (!hasValidBackup) priorManifest = null;
+
+            var manifest = new InstallationManifest
+            {
+                OperationId = Guid.NewGuid().ToString(),
+                OperationStatus = "in_progress",
+                StartedAtUtc = DateTime.UtcNow.ToString("o"),
+                OptiscalerVersion = helixsrVersion,
+                InjectionMethod = injectionDllName,
+                InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                InstalledGameDirectory = gameDir,
+                IncludesHelixSR = true,
+                HelixSRVersion = helixsrVersion
+            };
+            backupStore.SaveManifest(storeKey, manifest);
+
+            try
+            {
+                string sourceRoot = cachePath;
+                var scalerDir = Directory.GetDirectories(cachePath, "helixsr-scaler", SearchOption.AllDirectories).FirstOrDefault();
+                if (scalerDir != null) sourceRoot = scalerDir;
+                else { var subdirs = Directory.GetDirectories(cachePath); if (subdirs.Length == 1) sourceRoot = subdirs[0]; }
+
+                var filesToCopy = Directory.GetFiles(sourceRoot, "*", SearchOption.AllDirectories);
+                foreach (var sourceFile in filesToCopy)
+                {
+                    var relativePath = Path.GetRelativePath(sourceRoot, sourceFile);
+                    if (relativePath.Contains("setup") || relativePath.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ||
+                        relativePath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) || relativePath.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) ||
+                        relativePath.Contains("README") || relativePath.Contains("LICENSE") || relativePath.Contains("THIRD_PARTY"))
+                        continue;
+
+                    var destPath = Path.Combine(gameDir, relativePath);
+                    var destDir = Path.GetDirectoryName(destPath);
+                    if (!string.IsNullOrEmpty(destDir)) Directory.CreateDirectory(destDir);
+
+                    if (File.Exists(destPath))
+                    {
+                        if (priorManifest == null || !priorManifest.FilesCreated.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)))
+                            backupStore.BackupFile(storeKey, gameDir, relativePath);
+                    }
+                    File.Copy(sourceFile, destPath, true);
+                    manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = relativePath, PostInstallSha256 = ComputeSha256(destPath) });
+                }
+
+                // Copy the HelixSR/ folder (helixsr.dll + helixsr.ini) required by HLX DLSS
+                var helixSrDir = Directory.GetDirectories(cachePath, "HelixSR", SearchOption.AllDirectories).FirstOrDefault();
+                if (helixSrDir != null)
+                {
+                    var helixDestRoot = Path.Combine(gameDir, "HelixSR");
+                    Directory.CreateDirectory(helixDestRoot);
+                    foreach (var srcFile in Directory.GetFiles(helixSrDir, "*", SearchOption.AllDirectories))
+                    {
+                        var rel = Path.GetRelativePath(helixSrDir, srcFile);
+                        if (rel.Contains("setup", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) ||
+                            rel.Contains("README", StringComparison.OrdinalIgnoreCase) ||
+                            rel.Contains("LICENSE", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        var dest = Path.Combine(helixDestRoot, rel);
+                        var ddir = Path.GetDirectoryName(dest);
+                        if (!string.IsNullOrEmpty(ddir)) Directory.CreateDirectory(ddir);
+                        File.Copy(srcFile, dest, true);
+                        manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = Path.Combine("HelixSR", rel), PostInstallSha256 = ComputeSha256(dest) });
+                    }
+                }
+
+                // HLX FSR 4 drop-in (prebuilt) — copy as HLX-FSR4/ folder
+                var hlxDir = Directory.GetDirectories(cachePath, "HLX-FSR4", SearchOption.AllDirectories).FirstOrDefault();
+                if (hlxDir != null)
+                {
+                    var hlxdest = Path.Combine(gameDir, "HLX-FSR4");
+                    Directory.CreateDirectory(hlxdest);
+                    foreach (var srcFile in Directory.GetFiles(hlxDir, "*", SearchOption.AllDirectories))
+                    {
+                        var rel = Path.GetRelativePath(hlxDir, srcFile);
+                        var dest = Path.Combine(hlxdest, rel);
+                        var ddir = Path.GetDirectoryName(dest);
+                        if (!string.IsNullOrEmpty(ddir)) Directory.CreateDirectory(ddir);
+                        File.Copy(srcFile, dest, true);
+                        manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = Path.Combine("HLX-FSR4", rel), PostInstallSha256 = ComputeSha256(dest) });
+                    }
+                }
+
+                string targetInjection = Path.Combine(gameDir, injectionDllName);
+                string optiDll = Path.Combine(gameDir, "OptiScaler.dll");
+                if (File.Exists(optiDll) && !string.Equals(Path.GetFileName(optiDll), injectionDllName, StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        if (File.Exists(targetInjection) && (priorManifest == null || !priorManifest.FilesCreated.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase))))
+                            backupStore.BackupFile(storeKey, gameDir, injectionDllName);
+                        File.Copy(optiDll, targetInjection, true);
+                        if (!manifest.FilesCreated.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase)))
+                            manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = injectionDllName, PostInstallSha256 = ComputeSha256(targetInjection) });
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[Install][HelixSR] Failed to setup injection: {ex.Message}"); }
+                }
+
+                manifest.OperationStatus = "committed";
+                manifest.FinishedAtUtc = DateTime.UtcNow.ToString("o");
+                backupStore.SaveManifest(storeKey, manifest);
+
+                game.IsOptiscalerInstalled = true;
+                game.OptiscalerVersion = helixsrVersion ?? "HelixSR";
+                game.IsHelixSRInstalled = true;
+                game.HelixSRVersion = helixsrVersion;
+
+                DebugWindow.Log($"[Install][HelixSR] Installation completed");
+                return gameDir;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install][HelixSR] Installation failed: {ex.Message}");
+                try { rollbackJournal.Rollback(); } catch { }
+                try { manifest.OperationStatus = "failed"; manifest.FinishedAtUtc = DateTime.UtcNow.ToString("o"); backupStore.SaveManifest(storeKey, manifest); } catch { }
+                throw;
+            }
+        }
+
     }
 }
