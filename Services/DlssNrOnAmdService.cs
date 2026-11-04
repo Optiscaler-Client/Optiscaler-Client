@@ -333,7 +333,7 @@ namespace OptiscalerClient.Services
 
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind != JsonValueKind.Array) return releases;
+                if (doc.RootElement.ValueKind != JsonValueKind.Array) return _cachedReleases ?? releases;
 
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
@@ -371,9 +371,9 @@ namespace OptiscalerClient.Services
                 }
 
                 DebugWindow.Log($"[DlssNrOnAmd] {RepoOwner}/{RepoName} -> {releases.Count} usable release(s)");
-                _cachedReleases = releases;
                 if (releases.Count > 0)
                 {
+                    _cachedReleases = releases;
                     try
                     {
                         _cachedReleasesLastUpdated = DateTime.UtcNow;
@@ -386,9 +386,10 @@ namespace OptiscalerClient.Services
             catch (Exception ex)
             {
                 DebugWindow.Log($"[DlssNrOnAmd] Release listing failed: {ex.Message}");
+                if (_cachedReleases != null) return _cachedReleases;
             }
 
-            return releases;
+            return releases.Count > 0 ? releases : (_cachedReleases ?? releases);
         }
 
         /// <summary>Parses a "SHA256SUMS.txt"-style checksums file (one "&lt;hash&gt; *&lt;filename&gt;"
@@ -521,7 +522,7 @@ namespace OptiscalerClient.Services
             try
             {
                 DebugWindow.Log($"[DlssNrOnAmd] Downloading {release.DownloadUrl}");
-                await StreamToFileAsync(release.DownloadUrl, tempPath, progress);
+                await ComponentManagementService.StreamToFileAsync(() => NetworkService.GetHttpClient(), release.DownloadUrl, tempPath, progress);
 
                 var expectedSha256 = release.Sha256 ?? await FetchChecksumForReleaseAsync(release.Version, release.AssetName);
                 if (!string.IsNullOrEmpty(expectedSha256))
@@ -547,26 +548,6 @@ namespace OptiscalerClient.Services
             {
                 try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { /* best effort */ }
                 throw;
-            }
-        }
-
-        private static async Task StreamToFileAsync(string url, string destPath, IProgress<double>? progress)
-        {
-            using var response = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-            await using var httpStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = File.Create(destPath);
-            var buffer = new byte[81920];
-            long readSoFar = 0;
-            int read;
-            while ((read = await httpStream.ReadAsync(buffer)) > 0)
-            {
-                await fileStream.WriteAsync(buffer.AsMemory(0, read));
-                readSoFar += read;
-                if (totalBytes > 0)
-                    progress?.Report((double)readSoFar / totalBytes);
             }
         }
 

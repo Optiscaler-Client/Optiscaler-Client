@@ -242,7 +242,11 @@ public sealed partial class GameIconCoverService
             .ToArray();
         var compactName = Normalize(game.Name).Replace(" ", "");
 
-        return Directory.EnumerateFiles(game.InstallPath, "*.exe", options)
+        // Score by name/depth first (cheap), then stat (SafeLength) only the top candidates.
+        // +1 leaves room for game.ExecutablePath being filtered out by the caller.
+        const int needed = MaxExecutablesTried + 1;
+
+        var scored = Directory.EnumerateFiles(game.InstallPath, "*.exe", options)
             .Where(path => !NonGameExecutable().IsMatch(Path.GetFileNameWithoutExtension(path)))
             .Select(path =>
             {
@@ -252,11 +256,29 @@ public sealed partial class GameIconCoverService
                     + (stem.Length >= 3 && compactName.Contains(stem, StringComparison.Ordinal) ? 60 : 0)
                     - depth * 15
                     - (stem.Contains("shipping", StringComparison.Ordinal) ? 20 : 0);
-                return (path, score, size: SafeLength(path));
+                return (path, score);
             })
+            .OrderByDescending(c => c.score)
+            .ToList();
+
+        // Top candidates: at least `needed`, including every file tied on the boundary score.
+        var top = new List<(string path, int score)>();
+        int? boundary = null;
+        foreach (var c in scored)
+        {
+            if (top.Count >= needed && boundary.HasValue && c.score < boundary.Value)
+                break;
+            top.Add(c);
+            boundary = c.score;
+        }
+
+        var topPaths = top
+            .Select(c => (c.path, c.score, size: SafeLength(c.path)))
             .OrderByDescending(c => c.score)
             .ThenByDescending(c => c.size)
             .Select(c => c.path);
+
+        return topPaths.Concat(scored.Skip(top.Count).Select(c => c.path));
     }
 
     private static string Normalize(string text)

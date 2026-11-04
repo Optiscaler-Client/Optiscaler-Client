@@ -91,11 +91,19 @@ public class Game
 
     public bool IsOptiscalerInstalled { get; set; }
     public string? OptiscalerVersion { get; set; }
+    public bool IsHelixSRInstalled { get; set; }
+    public string? HelixSRVersion { get; set; }
 
     [JsonIgnore]
-    public string OptiscalerBadgeText => string.IsNullOrWhiteSpace(OptiscalerVersion)
-        ? "✦ OptiScaler"
-        : $"✦ OptiScaler {OptiscalerVersion.Trim()}";
+    public string OptiscalerBadgeText
+    {
+        get
+        {
+            var ver = !string.IsNullOrWhiteSpace(OptiscalerVersion) ? OptiscalerVersion : HelixSRVersion;
+            if (string.IsNullOrWhiteSpace(ver)) return "✦ OptiScaler";
+            return IsHelixSRInstalled ? $"✦ OptiScaler HelixSR {ver.Trim()}" : $"✦ OptiScaler {ver.Trim()}";
+        }
+    }
 
     // Set by GameAnalyzerService (AntiCheatHelper); drives the warning badge on the Games view cover.
     public bool HasAntiCheat { get; set; }

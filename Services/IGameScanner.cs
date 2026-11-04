@@ -8,5 +8,5 @@ namespace OptiscalerClient.Services;
 /// </summary>
 public interface IGameScanner
 {
-    List<Game> Scan();
+    Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default);
 }

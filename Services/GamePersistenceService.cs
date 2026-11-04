@@ -23,6 +23,7 @@ namespace OptiscalerClient.Services;
 public class GamePersistenceService
 {
     private readonly string _filePath;
+    private readonly object _lock = new();
 
     public GamePersistenceService()
     {
@@ -32,28 +33,36 @@ public class GamePersistenceService
 
     public void SaveGames(IEnumerable<Game> games)
     {
-        var json = JsonSerializer.Serialize(games.ToList(), OptimizerContext.Default.ListGame);
-        File.WriteAllText(_filePath, json);
+        lock (_lock)
+        {
+            var json = JsonSerializer.Serialize(games.ToList(), OptimizerContext.Default.ListGame);
+            var tmpPath = _filePath + ".tmp";
+            File.WriteAllText(tmpPath, json);
+            File.Move(tmpPath, _filePath, overwrite: true);
+        }
     }
 
     public List<Game> LoadGames()
     {
-        if (!File.Exists(_filePath))
+        lock (_lock)
         {
-            return new List<Game>();
-        }
+            if (!File.Exists(_filePath))
+            {
+                return new List<Game>();
+            }
 
-        try
-        {
-            var json = File.ReadAllText(_filePath);
-            var games = JsonSerializer.Deserialize(json, OptimizerContext.Default.ListGame) ?? new List<Game>();
-            MigrateMisclassifiedManualGames(games);
-            return games;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[GamePersistence] Failed to load games: {ex.Message}");
-            return new List<Game>();
+            try
+            {
+                var json = File.ReadAllText(_filePath);
+                var games = JsonSerializer.Deserialize(json, OptimizerContext.Default.ListGame) ?? new List<Game>();
+                MigrateMisclassifiedManualGames(games);
+                return games;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GamePersistence] Failed to load games: {ex.Message}");
+                return new List<Game>();
+            }
         }
     }
 

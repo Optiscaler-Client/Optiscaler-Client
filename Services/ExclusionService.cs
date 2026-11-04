@@ -18,6 +18,7 @@ namespace OptiscalerClient.Services;
 public class ExclusionService
 {
     private readonly List<ScanExclusion> _exclusions;
+    private List<Regex?> _regexes = new();
 
     public ExclusionService(string configPath)
     {
@@ -27,8 +28,10 @@ public class ExclusionService
     /// <summary>Returns true if the game should be skipped during scanning.</summary>
     public bool IsExcluded(Game game)
     {
-        foreach (var rule in _exclusions)
+        for (var i = 0; i < _exclusions.Count; i++)
         {
+            var rule = _exclusions[i];
+
             // Match by name
             if (!string.IsNullOrWhiteSpace(rule.Name) &&
                 game.Name.Equals(rule.Name, StringComparison.OrdinalIgnoreCase))
@@ -39,9 +42,10 @@ public class ExclusionService
                 game.InstallPath.Contains(rule.PathSegment, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Match by regex pattern (case-insensitive, optional)
-            if (!string.IsNullOrWhiteSpace(rule.PathRegex) &&
-                Regex.IsMatch(game.InstallPath, rule.PathRegex, RegexOptions.IgnoreCase))
+            // Match by regex pattern (case-insensitive, optional), using the
+            // compiled regex stored for this rule.
+            var regex = _regexes[i];
+            if (regex != null && regex.IsMatch(game.InstallPath))
                 return true;
         }
         return false;
@@ -51,47 +55,77 @@ public class ExclusionService
     public IReadOnlyList<ScanExclusion> Exclusions => _exclusions;
 
     // ─────────────────────────────────────────────────────────────────────
-    private static List<ScanExclusion> Load(string configPath)
+    private List<ScanExclusion> Load(string configPath)
     {
+        List<ScanExclusion> list;
         try
         {
             if (!File.Exists(configPath))
-                return DefaultExclusions();
-
-            var json = File.ReadAllText(configPath);
-            using var doc = JsonDocument.Parse(json);
-
-            if (!doc.RootElement.TryGetProperty("ScanExclusions", out var arr) ||
-                arr.ValueKind != JsonValueKind.Array)
-                return DefaultExclusions();
-
-            var list = new List<ScanExclusion>();
-            foreach (var item in arr.EnumerateArray())
             {
-                // PathRegex used to be dropped here, so a regex rule only ever worked in the
-                // built-in defaults. An invalid pattern is skipped rather than kept: IsExcluded
-                // would otherwise throw on every game and abort the whole scan.
-                var regex = item.TryGetProperty("PathRegex", out var r) ? r.GetString() ?? "" : "";
-                if (!string.IsNullOrWhiteSpace(regex))
-                {
-                    try { _ = new Regex(regex); }
-                    catch (ArgumentException) { regex = ""; }
-                }
-
-                list.Add(new ScanExclusion
-                {
-                    Name = item.TryGetProperty("Name", out var n) ? n.GetString() ?? "" : "",
-                    PathSegment = item.TryGetProperty("PathSegment", out var p) ? p.GetString() ?? "" : "",
-                    PathRegex = regex
-                });
+                list = DefaultExclusions();
             }
-            return list;
+            else
+            {
+                var json = File.ReadAllText(configPath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (!doc.RootElement.TryGetProperty("ScanExclusions", out var arr) ||
+                    arr.ValueKind != JsonValueKind.Array)
+                {
+                    list = DefaultExclusions();
+                }
+                else
+                {
+                    list = new List<ScanExclusion>();
+                    foreach (var item in arr.EnumerateArray())
+                    {
+                        // PathRegex used to be dropped here, so a regex rule only ever worked in the
+                        // built-in defaults. An invalid pattern is skipped rather than kept: IsExcluded
+                        // would otherwise throw on every game and abort the whole scan.
+                        var regexPattern = item.TryGetProperty("PathRegex", out var r) ? r.GetString() ?? "" : "";
+                        if (!string.IsNullOrWhiteSpace(regexPattern))
+                        {
+                            try { _ = new Regex(regexPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase); }
+                            catch (ArgumentException) { regexPattern = ""; }
+                        }
+
+                        list.Add(new ScanExclusion
+                        {
+                            Name = item.TryGetProperty("Name", out var n) ? n.GetString() ?? "" : "",
+                            PathSegment = item.TryGetProperty("PathSegment", out var p) ? p.GetString() ?? "" : "",
+                            PathRegex = regexPattern
+                        });
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ExclusionService] Failed to load exclusions: {ex.Message}");
-            return DefaultExclusions();
+            list = DefaultExclusions();
         }
+
+        // Compile/store regex instances once, with the required options.
+        _regexes = new List<Regex?>(list.Count);
+        foreach (var rule in list)
+        {
+            if (string.IsNullOrWhiteSpace(rule.PathRegex))
+            {
+                _regexes.Add(null);
+                continue;
+            }
+
+            try
+            {
+                _regexes.Add(new Regex(rule.PathRegex!, RegexOptions.Compiled | RegexOptions.IgnoreCase));
+            }
+            catch (ArgumentException)
+            {
+                _regexes.Add(null);
+            }
+        }
+
+        return list;
     }
 
     /// <summary>

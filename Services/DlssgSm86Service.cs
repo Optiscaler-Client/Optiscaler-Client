@@ -15,6 +15,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -183,13 +184,15 @@ namespace OptiscalerClient.Services
     {
         private const string TempSuffix = ".dlssg_tmp";
 
+        private readonly BackupStoreService _backupStore = new();
+
         public DlssgSm86PackageService Packages { get; } = new();
 
         // ── State ────────────────────────────────────────────────────────────────
 
         public DlssgSm86InstallState? GetInstallState(Game game)
         {
-            var record = DlssgSm86Records.LoadCommitted(new BackupStoreService(), game);
+            var record = DlssgSm86Records.LoadCommitted(_backupStore, game);
             if (record == null || string.IsNullOrEmpty(record.InstalledGameDirectory))
                 return null;
 
@@ -252,7 +255,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86Eligibility GetEligibility(Game game, string? targetDirectory = null)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var ours = DlssgSm86Records.LoadCommitted(store, game);
             var opti = LoadOptiScalerManifest(store, game);
 
@@ -374,28 +377,46 @@ namespace OptiscalerClient.Services
         // not just the hashes pinned in our manifest.
         private static readonly byte[] ProxySignature = Encoding.Unicode.GetBytes(DlssgSm86Records.IniFileName);
 
+        // Per-file cache: a proxy DLL's bytes don't change without its size/mtime changing, so an
+        // unchanged file never has to be re-scanned (proxies are small but GetEligibility re-checks
+        // the same folder repeatedly). 1 = proxy, 0 = not.
+        private static readonly ConcurrentDictionary<string, int> _proxyScanCache = new(StringComparer.OrdinalIgnoreCase);
+
         /// <summary>True when <paramref name="path"/> is a dlssg_for_sm86 proxy DLL (any version).</summary>
         internal static bool IsDlssgSm86Proxy(string path)
         {
             try
             {
-                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16);
-                var buffer = new byte[1 << 20];
-                int carried = 0;
-                int read;
-                while ((read = stream.Read(buffer, carried, buffer.Length - carried)) > 0)
-                {
-                    int length = carried + read;
-                    if (buffer.AsSpan(0, length).IndexOf(ProxySignature) >= 0)
-                        return true;
-                    // Keep the tail so a signature split across two reads is still found.
-                    carried = Math.Min(ProxySignature.Length - 1, length);
-                    Buffer.BlockCopy(buffer, length - carried, buffer, 0, carried);
-                }
+                var info = new FileInfo(path);
+                var cacheKey = $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+                if (_proxyScanCache.TryGetValue(cacheKey, out var cached))
+                    return cached == 1;
+
+                bool result = ScanProxy(path);
+                _proxyScanCache[cacheKey] = result ? 1 : 0;
+                return result;
             }
             catch (Exception ex)
             {
                 DebugWindow.Log($"[DlssgSm86] Could not inspect '{path}': {ex.Message}");
+            }
+            return false;
+        }
+
+        private static bool ScanProxy(string path)
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16);
+            var buffer = new byte[1 << 20];
+            int carried = 0;
+            int read;
+            while ((read = stream.Read(buffer, carried, buffer.Length - carried)) > 0)
+            {
+                int length = carried + read;
+                if (buffer.AsSpan(0, length).IndexOf(ProxySignature) >= 0)
+                    return true;
+                // Keep the tail so a signature split across two reads is still found.
+                carried = Math.Min(ProxySignature.Length - 1, length);
+                Buffer.BlockCopy(buffer, length - carried, buffer, 0, carried);
             }
             return false;
         }
@@ -420,7 +441,7 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) return false;
             try
             {
-                var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
+                var options = new EnumerationOptions { RecurseSubdirectories = true, MaxRecursionDepth = 8, IgnoreInaccessible = true, MatchCasing = MatchCasing.CaseInsensitive };
                 return Directory.EnumerateFiles(root, fileName, options).Any();
             }
             catch { return false; }
@@ -454,7 +475,7 @@ namespace OptiscalerClient.Services
         private DlssgSm86InstallResult InstallFromCache(Game game, DlssgSm86PackageManifest package, DlssgSm86BuildEntry build,
             IReadOnlyList<DlssgSm86FileEntry> files, string cacheDir, string targetDir, int maxGeneratedFrames)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var storeKey = DlssgSm86Records.StoreKey(game);
             var iniPath = Path.Combine(targetDir, DlssgSm86Records.IniFileName);
 
@@ -577,7 +598,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86InstallResult SetMaxGeneratedFrames(Game game, int maxGeneratedFrames)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var record = DlssgSm86Records.LoadCommitted(store, game) ?? throw new InvalidOperationException("dlssg_for_sm86 is not installed.");
             var build = Packages.Manifest?.FindBuild(record.DlssgSm86Build);
             var applied = build != null
@@ -603,7 +624,7 @@ namespace OptiscalerClient.Services
 
         public bool IsIniModified(Game game)
         {
-            var record = DlssgSm86Records.LoadCommitted(new BackupStoreService(), game);
+            var record = DlssgSm86Records.LoadCommitted(_backupStore, game);
             var iniRecord = record == null ? null : FindRecord(record, DlssgSm86Records.IniFileName);
             if (iniRecord == null || string.IsNullOrEmpty(record!.InstalledGameDirectory)) return false;
             var iniPath = Path.Combine(record.InstalledGameDirectory, DlssgSm86Records.IniFileName);
@@ -615,7 +636,7 @@ namespace OptiscalerClient.Services
 
         public DlssgSm86UninstallResult Uninstall(Game game, bool keepModifiedIni)
         {
-            var store = new BackupStoreService();
+            var store = _backupStore;
             var record = DlssgSm86Records.Load(store, game);
             if (record == null)
                 return new DlssgSm86UninstallResult(Array.Empty<string>());
@@ -714,7 +735,7 @@ namespace OptiscalerClient.Services
             try
             {
                 GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
-                new GameAnalyzerService().AnalyzeGame(game, forceRefresh: true);
+                new GameAnalyzerService().AnalyzeGame(game);
                 GameAnalyzerService.FlushCacheToDisk();
             }
             catch (Exception ex) { DebugWindow.Log($"[DlssgSm86] Re-analysis failed: {ex.Message}"); }

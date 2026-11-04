@@ -10,44 +10,33 @@ namespace OptiscalerClient.Services;
 
 public class UbisoftScanner : IGameScanner
 {
-    private const string UNINSTALL_PATH = @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall";
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
 
-    public List<Game> Scan()
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 
         try
         {
-            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-            using var uninstallKey = baseKey.OpenSubKey(UNINSTALL_PATH);
-
-            if (uninstallKey != null)
+            foreach (var entry in WindowsUninstallRegistryHelper.GetEntries())
             {
-                foreach (var subKeyName in uninstallKey.GetSubKeyNames())
+                // Uplay games usually start with "Uplay Install "
+                if (!entry.SubKeyName.StartsWith("Uplay Install ", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var gameName = entry.DisplayName;
+                var path = entry.InstallLocation;
+
+                if (!string.IsNullOrEmpty(gameName) && !string.IsNullOrEmpty(path) && Directory.Exists(path))
                 {
-                    // Uplay games usually start with "Uplay Install "
-                    if (subKeyName.StartsWith("Uplay Install ", StringComparison.OrdinalIgnoreCase))
+                    games.Add(new Game
                     {
-                        using var appKey = uninstallKey.OpenSubKey(subKeyName);
-                        if (appKey == null) continue;
-
-                        var gameName = appKey.GetValue("DisplayName") as string;
-                        var path = appKey.GetValue("InstallLocation") as string;
-
-                        if (!string.IsNullOrEmpty(gameName) && !string.IsNullOrEmpty(path))
-                        {
-                            if (Directory.Exists(path))
-                            {
-                                games.Add(new Game
-                                {
-                                    AppId = subKeyName.Replace("Uplay Install ", "").Trim(),
-                                    Name = gameName,
-                                    InstallPath = path,
-                                    Platform = GamePlatform.Ubisoft
-                                });
-                            }
-                        }
-                    }
+                        AppId = entry.SubKeyName.Replace("Uplay Install ", "").Trim(),
+                        Name = gameName,
+                        InstallPath = path,
+                        Platform = GamePlatform.Ubisoft
+                    });
                 }
             }
         }

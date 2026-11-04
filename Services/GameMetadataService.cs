@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,10 @@ public class GameMetadataService
     // Sentinels carry the version of the source chain that gave up on the game; bumping it whenever a
     // source is added retries those "no cover" verdicts once. Legacy sentinels are empty files.
     private static readonly byte[] SentinelVersion = [3];
+
+    // Caches for HasSentinel / HasNoIconMarker, keyed by path + mtime (ticks; 0 when absent).
+    private static readonly ConcurrentDictionary<string, bool> SentinelCache = new();
+    private static readonly ConcurrentDictionary<string, bool> NoIconCache = new();
 
     /// <summary>Suffix of the covers generated from the game's .exe icon when no real cover exists.</summary>
     public const string IconCoverSuffix = ".icon.png";
@@ -79,7 +84,7 @@ public class GameMetadataService
     public bool HasSentinel(string appIdKey)
     {
         var sentinelPath = Path.Combine(_coversCachePath, $"{SanitizeFileName(appIdKey)}.nocover");
-        return IsCurrentSentinel(sentinelPath);
+        return GetCachedBool(sentinelPath, SentinelCache, IsCurrentSentinel);
     }
 
     private static bool IsCurrentSentinel(string sentinelPath)
@@ -92,7 +97,19 @@ public class GameMetadataService
     /// True when the exe-icon fallback already ran for a game and found no usable icon.
     /// </summary>
     public bool HasNoIconMarker(string appIdKey) =>
-        File.Exists(NoIconMarkerPath(SanitizeFileName(appIdKey)));
+        GetCachedBool(NoIconMarkerPath(SanitizeFileName(appIdKey)), NoIconCache, p => File.Exists(p));
+
+    private static bool GetCachedBool(string path, ConcurrentDictionary<string, bool> cache, Func<string, bool> compute)
+    {
+        long mtime;
+        try { mtime = File.Exists(path) ? File.GetLastWriteTimeUtc(path).Ticks : 0L; }
+        catch { mtime = 0L; }
+        var key = path + "\u0001" + mtime;
+        if (cache.TryGetValue(key, out var cached)) return cached;
+        var result = compute(path);
+        cache[key] = result;
+        return result;
+    }
 
     private string IconPath(string sanitizedKey) => Path.Combine(_iconsCachePath, $"{sanitizedKey}.png");
     private string NoIconMarkerPath(string sanitizedKey) => Path.Combine(_iconsCachePath, $"{sanitizedKey}.noicon");
@@ -392,7 +409,7 @@ public class GameMetadataService
         {
             DebugWindow.Log(() => $"[Cover]     GET {url}");
             var t0 = sw?.ElapsedMilliseconds ?? 0;
-            var response = await _httpClient.GetAsync(url, ct);
+            using var response = await _httpClient.GetAsync(url, ct);
             var t1 = sw?.ElapsedMilliseconds ?? 0;
 
             if (!response.IsSuccessStatusCode)
@@ -692,7 +709,7 @@ public class GameMetadataService
             var t0 = sw?.ElapsedMilliseconds ?? 0;
             var request = new HttpRequestMessage(HttpMethod.Get, searchUrl);
             request.Headers.Add("Authorization", $"Bearer {apiKey}");
-            var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request);
             var t1 = sw?.ElapsedMilliseconds ?? 0;
 
             if (!response.IsSuccessStatusCode)
@@ -718,7 +735,7 @@ public class GameMetadataService
                     var t2 = sw?.ElapsedMilliseconds ?? 0;
                     var gridsRequest = new HttpRequestMessage(HttpMethod.Get, gridsUrl);
                     gridsRequest.Headers.Add("Authorization", $"Bearer {apiKey}");
-                    var gridsResponse = await _httpClient.SendAsync(gridsRequest);
+                    using var gridsResponse = await _httpClient.SendAsync(gridsRequest);
                     var t3 = sw?.ElapsedMilliseconds ?? 0;
 
                     if (gridsResponse.IsSuccessStatusCode)
@@ -864,7 +881,7 @@ public class GameMetadataService
             string queryName = Uri.EscapeDataString(gameName);
             string url = $"https://store.steampowered.com/api/storesearch/?term={queryName}&l=english&cc=US";
 
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) return null;
 
             var json = await response.Content.ReadAsStringAsync();

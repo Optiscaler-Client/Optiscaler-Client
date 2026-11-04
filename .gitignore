@@ -79,3 +79,7 @@ dist/
 
 # Git worktrees
 .worktrees/
+
+# AppImage build artifacts
+*.AppImage
+packaging/appimage/build/

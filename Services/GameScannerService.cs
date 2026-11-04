@@ -86,23 +86,23 @@ public class GameScannerService
             var platformTasks = new List<Task<List<Game>>>();
 
             if (scanConfig.ScanSteam)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Steam library..."); return _steamScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Steam scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Steam library..."); return await _steamScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Steam scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanHeroic)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Heroic library..."); return _heroicScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Heroic scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Heroic library..."); return await _heroicScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Heroic scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanEpic && _epicScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Epic Games library..."); return _epicScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Epic scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Epic Games library..."); return await _epicScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Epic scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanGOG && _gogScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning GOG library..."); return _gogScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] GOG scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning GOG library..."); return await _gogScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] GOG scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanXbox && _xboxScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Xbox library (MS Store)..."); return _xboxScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Xbox scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Xbox library (MS Store)..."); return await _xboxScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Xbox scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanEA && _eaScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning EA App library..."); return _eaScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] EA scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning EA App library..."); return await _eaScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] EA scan error: {ex.Message}"); return new List<Game>(); } }));
             if (_battleNetScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Battle.net library..."); return _battleNetScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Battle.net scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Battle.net library..."); return await _battleNetScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Battle.net scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanUbisoft && _ubisoftScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Ubisoft Connect library..."); return _ubisoftScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Ubisoft scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Ubisoft Connect library..."); return await _ubisoftScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Ubisoft scan error: {ex.Message}"); return new List<Game>(); } }));
             if (scanConfig.ScanLutris && _lutrisScanner != null)
-                platformTasks.Add(Task.Run(() => { try { DebugWindow.Log("[Scanner] Scanning Lutris library..."); return _lutrisScanner.Scan(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Lutris scan error: {ex.Message}"); return new List<Game>(); } }));
+                platformTasks.Add(Task.Run(async () => { try { DebugWindow.Log("[Scanner] Scanning Lutris library..."); return await _lutrisScanner.ScanAsync(); } catch (Exception ex) { DebugWindow.Log($"[Scanner] Lutris scan error: {ex.Message}"); return new List<Game>(); } }));
 
             var platformResults = await Task.WhenAll(platformTasks);
 
@@ -132,11 +132,12 @@ public class GameScannerService
 
             // ── 3. Parallel game analysis (up to 4 concurrent) ─────────────────
             var analyzer = new GameAnalyzerService();
-            var games = new ConcurrentBag<Game>();
-            Parallel.ForEach(allScannedGames, new ParallelOptions { MaxDegreeOfParallelism = 4 }, game =>
+            var games = new Game[allScannedGames.Count];
+            Parallel.For(0, allScannedGames.Count, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
             {
+                var game = allScannedGames[i];
                 analyzer.AnalyzeGame(game);
-                games.Add(game);
+                games[i] = game;
             });
 
             GameAnalyzerService.FlushCacheToDisk();
@@ -220,6 +221,19 @@ public class GameScannerService
         return games;
     }
 
+    private static readonly System.Text.RegularExpressions.Regex SceneSuffixRegex =
+        new(@"\s*-[A-Za-z0-9_.]+$", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex YearSuffixRegex =
+        new(@"\s*[\(\-]\s*\d{4}\s*[\)]?\s*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly string[] EditionNames = { "Deluxe", "Ultimate", "Gold", "GOTY", "Complete", "Enhanced", "Remastered", "Definitive" };
+    private static readonly System.Text.RegularExpressions.Regex[] EditionRegexes =
+        EditionNames.Select(p => new System.Text.RegularExpressions.Regex(
+            $@"\s*-?\s*{p}\s*(Edition)?\s*$",
+            System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase)).ToArray();
+    private static readonly System.Text.RegularExpressions.Regex PrefixRegex =
+        new(@"^(Custom|Rune|Razor|PLAZA|CODEX|RELOADED|FLT|SKIDROW|CPY|PROPHET|HOODLUM|SiMPLEX)\s+",
+            System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
     /// <summary>
     /// Converts a raw scene/release folder name into a human-readable game display name.
     /// e.g. "Custom_Alan.Wake.2.Deluxe.Edition-InsaneRamZes" → "Alan Wake 2"
@@ -235,28 +249,19 @@ public class GameScannerService
             cleaned = cleaned.Replace('_', ' ').Replace('.', ' ');
 
         // Remove scene/release group suffixes like "-InsaneRamZes", "-CODEX", "-FLT", etc.
-        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*-[A-Za-z0-9_.]+$", "");
+        cleaned = SceneSuffixRegex.Replace(cleaned, "");
 
         // Remove year suffixes like "(2024)", "- 2024"
-        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*[\(\-]\s*\d{4}\s*[\)]?\s*$", "");
+        cleaned = YearSuffixRegex.Replace(cleaned, "");
 
         // Remove edition suffixes
-        var editionPatterns = new[] { "Deluxe", "Ultimate", "Gold", "GOTY", "Complete", "Enhanced", "Remastered", "Definitive" };
-        foreach (var pattern in editionPatterns)
+        foreach (var editionRegex in EditionRegexes)
         {
-            cleaned = System.Text.RegularExpressions.Regex.Replace(
-                cleaned,
-                $@"\s*-?\s*{pattern}\s*(Edition)?\s*$",
-                "",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            cleaned = editionRegex.Replace(cleaned, "");
         }
 
         // Remove scene/release group prefixes that appear before the real game name
-        cleaned = System.Text.RegularExpressions.Regex.Replace(
-            cleaned,
-            @"^(Custom|Rune|Razor|PLAZA|CODEX|RELOADED|FLT|SKIDROW|CPY|PROPHET|HOODLUM|SiMPLEX)\s+",
-            "",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        cleaned = PrefixRegex.Replace(cleaned, "");
 
         return cleaned.Trim();
     }

@@ -15,9 +15,9 @@ namespace OptiscalerClient.Services
         private readonly string _builtInProfilesDir;
         private readonly string _customProfilesDir;
 
+        private readonly object _cacheLock = new();
         private List<OptiScalerProfile> _cachedProfiles = new();
         private DateTime _lastCacheTime = DateTime.MinValue;
-
         public ProfileManagementService()
         {
             _profilesDir = Path.Combine(AppPaths.GetAppDataRoot(), "Profiles");
@@ -60,62 +60,65 @@ namespace OptiscalerClient.Services
 
         public List<OptiScalerProfile> GetAllProfiles(bool forceRefresh = false)
         {
-            if (!forceRefresh && (DateTime.Now - _lastCacheTime).TotalSeconds < 5 && _cachedProfiles.Count > 0)
+            lock (_cacheLock)
             {
-                return _cachedProfiles;
-            }
-
-            var profiles = new List<OptiScalerProfile>();
-
-            try
-            {
-                var builtInFiles = Directory.GetFiles(_builtInProfilesDir, "*.json");
-                foreach (var file in builtInFiles)
+                if (!forceRefresh && (DateTime.Now - _lastCacheTime).TotalSeconds < 5 && _cachedProfiles.Count > 0)
                 {
-                    try
-                    {
-                        var profile = LoadProfileFromFile(file);
-                        if (profile != null)
-                        {
-                            profile.IsBuiltIn = true;
-                            profiles.Add(profile);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugWindow.Log($"[Profiles] Failed to load built-in profile {file}: {ex.Message}");
-                    }
+                    return _cachedProfiles;
                 }
 
-                var customFiles = Directory.GetFiles(_customProfilesDir, "*.json");
-                foreach (var file in customFiles)
+                var profiles = new List<OptiScalerProfile>();
+
+                try
                 {
-                    try
+                    var builtInFiles = Directory.GetFiles(_builtInProfilesDir, "*.json");
+                    foreach (var file in builtInFiles)
                     {
-                        var profile = LoadProfileFromFile(file);
-                        if (profile != null)
+                        try
                         {
-                            profile.IsBuiltIn = false;
-                            profiles.Add(profile);
+                            var profile = LoadProfileFromFile(file);
+                            if (profile != null)
+                            {
+                                profile.IsBuiltIn = true;
+                                profiles.Add(profile);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugWindow.Log($"[Profiles] Failed to load built-in profile {file}: {ex.Message}");
                         }
                     }
-                    catch (Exception ex)
+
+                    var customFiles = Directory.GetFiles(_customProfilesDir, "*.json");
+                    foreach (var file in customFiles)
                     {
-                        DebugWindow.Log($"[Profiles] Failed to load custom profile {file}: {ex.Message}");
+                        try
+                        {
+                            var profile = LoadProfileFromFile(file);
+                            if (profile != null)
+                            {
+                                profile.IsBuiltIn = false;
+                                profiles.Add(profile);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            DebugWindow.Log($"[Profiles] Failed to load custom profile {file}: {ex.Message}");
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[Profiles] Error loading profiles: {ex.Message}");
+                }
+
+                profiles = profiles.OrderBy(p => p.IsBuiltIn ? 0 : 1).ThenBy(p => p.Name).ToList();
+
+                _cachedProfiles = profiles;
+                _lastCacheTime = DateTime.Now;
+
+                return profiles;
             }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[Profiles] Error loading profiles: {ex.Message}");
-            }
-
-            profiles = profiles.OrderBy(p => p.IsBuiltIn ? 0 : 1).ThenBy(p => p.Name).ToList();
-
-            _cachedProfiles = profiles;
-            _lastCacheTime = DateTime.Now;
-
-            return profiles;
         }
 
         public OptiScalerProfile? GetProfileByName(string name)
@@ -153,7 +156,7 @@ namespace OptiscalerClient.Services
                 var json = JsonSerializer.Serialize(profile, OptimizerContext.Default.OptiScalerProfile);
                 File.WriteAllText(filePath, json);
 
-                _lastCacheTime = DateTime.MinValue;
+                lock (_cacheLock) { _lastCacheTime = DateTime.MinValue; }
                 DebugWindow.Log($"[Profiles] Saved profile: {profile.Name} to {filePath}");
             }
             catch (Exception ex)
@@ -178,7 +181,7 @@ namespace OptiscalerClient.Services
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
-                    _lastCacheTime = DateTime.MinValue;
+                    lock (_cacheLock) { _lastCacheTime = DateTime.MinValue; }
                     DebugWindow.Log($"[Profiles] Deleted profile: {profile.Name}");
                 }
             }

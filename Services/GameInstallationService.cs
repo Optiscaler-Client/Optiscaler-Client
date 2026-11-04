@@ -63,6 +63,9 @@ namespace OptiscalerClient.Services
             "D3D12_Optiscaler",
             "Licenses",
             "plugins",
+            // HelixSR drop-in folders (must be removed on uninstall so no residue remains)
+            "HelixSR",
+            "HLX-FSR4",
             // Nightly's dependency-DLL folder (OptiScaler.ini's default OptiDllPath=.\OptiScaler),
             // also used by this client for Streamline (OptiScaler/streamline/) and the DLSS Enabler
             // headless DLL. Directory.CreateDirectory in the Streamline/DLSS Enabler install steps
@@ -949,30 +952,10 @@ namespace OptiscalerClient.Services
                         fileName.Equals("fakenvapi.ini", StringComparison.OrdinalIgnoreCase))
                     {
                         var destPath = Path.Combine(gameDir, fileName);
-                        var existedBefore = File.Exists(destPath);
 
-                        // Backup if exists (into external store).
-                        // During an update, skip files already protected by a prior install's backup.
-                        bool fakeIsOriginal = priorBackedUpOriginals.Contains(fileName);
-                        bool fakeIsOptiCreated = priorCreatedByOptiScaler.Contains(fileName);
-                        string? preHash = null;
-                        if (existedBefore && !fakeIsOriginal && !fakeIsOptiCreated)
-                        {
-                            preHash = ComputeSha256(destPath); // only hash when we actually need it
-                            _backupStore.BackupFile(storeKey, gameDir, fileName);
-                            manifest.BackedUpFiles.Add(fileName);
-                            DebugWindow.Log($"[Install] Backed up existing Fakenvapi file: {fileName}");
-                        }
-
-                        rollbackJournal.CaptureFile(fileName);
-                        File.Copy(sourcePath, destPath, true);
-                        manifest.InstalledFiles.Add(fileName);
-                        TrackManifestFileMutation(
-                            manifest,
-                            relativePath: fileName,
-                            existedBefore: existedBefore && !fakeIsOptiCreated,
-                            preInstallHash: (!fakeIsOriginal && !fakeIsOptiCreated) ? preHash : null,
-                            postInstallHash: ComputeSha256(destPath));
+                        InstallFileWithBackupTracking(
+                            manifest, storeKey, gameDir, sourcePath, destPath, fileName,
+                            rollbackJournal, priorBackedUpOriginals, priorCreatedByOptiScaler);
                         fakeFileCount++;
                         DebugWindow.Log($"[Install] Installed Fakenvapi file: {fileName}");
                     }
@@ -1006,30 +989,10 @@ namespace OptiscalerClient.Services
                     if (fileName.Equals("dlssg_to_fsr3_amd_is_better.dll", StringComparison.OrdinalIgnoreCase))
                     {
                         var destPath = Path.Combine(gameDir, fileName);
-                        var existedBefore = File.Exists(destPath);
 
-                        // Backup if exists (into external store).
-                        // During an update, skip files already protected by a prior install's backup.
-                        bool nukemIsOriginal = priorBackedUpOriginals.Contains(fileName);
-                        bool nukemIsOptiCreated = priorCreatedByOptiScaler.Contains(fileName);
-                        string? preHash = null;
-                        if (existedBefore && !nukemIsOriginal && !nukemIsOptiCreated)
-                        {
-                            preHash = ComputeSha256(destPath); // only hash when we actually need it
-                            _backupStore.BackupFile(storeKey, gameDir, fileName);
-                            manifest.BackedUpFiles.Add(fileName);
-                            DebugWindow.Log($"[Install] Backed up existing NukemFG file: {fileName}");
-                        }
-
-                        rollbackJournal.CaptureFile(fileName);
-                        File.Copy(sourcePath, destPath, true);
-                        manifest.InstalledFiles.Add(fileName);
-                        TrackManifestFileMutation(
-                            manifest,
-                            relativePath: fileName,
-                            existedBefore: existedBefore && !nukemIsOptiCreated,
-                            preInstallHash: (!nukemIsOriginal && !nukemIsOptiCreated) ? preHash : null,
-                            postInstallHash: ComputeSha256(destPath));
+                        InstallFileWithBackupTracking(
+                            manifest, storeKey, gameDir, sourcePath, destPath, fileName,
+                            rollbackJournal, priorBackedUpOriginals, priorCreatedByOptiScaler);
                         nukemFileCount++;
                         DebugWindow.Log($"[Install] Installed NukemFG file: {fileName}");
 
@@ -1596,6 +1559,37 @@ namespace OptiscalerClient.Services
             TrackManifestFileMutation(manifest, relativePath, existedBefore: isOriginalFile, preHash, ComputeSha256(destPath));
         }
 
+        /// <summary>Installs a single file with the standard backup/before-overwrite tracking used by
+        /// the Fakenvapi and NukemFG steps. Centralises the repeated backup-tracking block so the
+        /// install method stays readable.</summary>
+        private void InstallFileWithBackupTracking(
+            InstallationManifest manifest, string storeKey, string gameDir, string sourcePath, string destPath,
+            string relativePath, InstallationRollbackJournal rollbackJournal,
+            HashSet<string> priorBackedUpOriginals, HashSet<string> priorCreatedByOptiScaler)
+        {
+            var existedBefore = File.Exists(destPath);
+            bool isOriginal = priorBackedUpOriginals.Contains(relativePath);
+            bool isOptiCreated = priorCreatedByOptiScaler.Contains(relativePath);
+            string? preHash = null;
+            if (existedBefore && !isOriginal && !isOptiCreated)
+            {
+                preHash = ComputeSha256(destPath);
+                _backupStore.BackupFile(storeKey, gameDir, relativePath);
+                manifest.BackedUpFiles.Add(relativePath);
+                DebugWindow.Log($"[Install] Backed up existing file: {relativePath}");
+            }
+
+            rollbackJournal.CaptureFile(relativePath);
+            File.Copy(sourcePath, destPath, true);
+            manifest.InstalledFiles.Add(relativePath);
+            TrackManifestFileMutation(
+                manifest,
+                relativePath: relativePath,
+                existedBefore: existedBefore && !isOptiCreated,
+                preInstallHash: (!isOriginal && !isOptiCreated) ? preHash : null,
+                postInstallHash: ComputeSha256(destPath));
+        }
+
         public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
 
         /// <summary>Deletes a file, retrying briefly on a sharing violation. The game process can still
@@ -1993,6 +1987,8 @@ namespace OptiscalerClient.Services
             // Clear game state immediately so the UI reflects the uninstallation
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
             game.IsFsr4DllSwapped = false;
             game.Fsr4DllSwapTargetFileName = null;
@@ -2523,6 +2519,8 @@ namespace OptiscalerClient.Services
             // not create a "stuck-as-installed" loop.
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
 
             var analyzer = new GameAnalyzerService();
@@ -2533,6 +2531,8 @@ namespace OptiscalerClient.Services
             // are sensitive ones the user explicitly chose to keep, not a live installation.
             game.IsOptiscalerInstalled = false;
             game.OptiscalerVersion = null;
+            game.IsHelixSRInstalled = false;
+            game.HelixSRVersion = null;
             game.Fsr4ExtraVersion = null;
 
             GameAnalyzerService.FlushCacheToDisk();
@@ -3278,31 +3278,20 @@ namespace OptiscalerClient.Services
             File.Copy(asiSourcePath, destAsi, overwrite: true);
             DebugWindow.Log($"[AsiPlugin] Installed to {destAsi}");
 
-            var iniPath = ResolveOptiScalerIniPath(gameDir);
-            if (File.Exists(iniPath))
+            // LoadAsiPlugins must live in the [Plugins] section to be honored (it is a
+            // [Plugins]-scoped key in OptiScaler's ini schema). Writing it section-agnostic
+            // (or appending it at EOF) left it orphaned in whatever section happened to be
+            // last, so *.asi files (incl. XeFGUnlock.asi) were never loaded -> XeSS MFG
+            // unlock silently never engaged. Route through ModifyOptiScalerIni so the key is
+            // inserted into [Plugins] (creating the section if missing).
+            if (File.Exists(ResolveOptiScalerIniPath(gameDir)))
             {
-                var lines = File.ReadAllLines(iniPath).ToList();
-                bool found = false;
-                for (int idx = 0; idx < lines.Count; idx++)
-                {
-                    var trimmed = lines[idx].Trim();
-                    if (trimmed.StartsWith("LoadAsiPlugins", StringComparison.OrdinalIgnoreCase) &&
-                        (trimmed.Length == "LoadAsiPlugins".Length || trimmed["LoadAsiPlugins".Length] == '='))
-                    {
-                        lines[idx] = "LoadAsiPlugins=true";
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    lines.Add("LoadAsiPlugins=true");
-                File.WriteAllLines(iniPath, lines);
-                ForgetExpectedIniKey(iniPath, "LoadAsiPlugins"); // written section-agnostic, see above
-                DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: LoadAsiPlugins=true ({asiFileName})");
+                ModifyOptiScalerIni(gameDir, "LoadAsiPlugins", "true", "Plugins");
+                DebugWindow.Log($"[AsiPlugin] Patched OptiScaler.ini: [Plugins] LoadAsiPlugins=true ({asiFileName})");
             }
             else
             {
-                DebugWindow.Log($"[AsiPlugin] OptiScaler.ini not found at {iniPath}, skipping patch");
+                DebugWindow.Log($"[AsiPlugin] OptiScaler.ini not found at {ResolveOptiScalerIniPath(gameDir)}, skipping patch");
             }
         }
 
@@ -3545,5 +3534,164 @@ namespace OptiscalerClient.Services
                 ModifyOptiScalerIni(gameDir, key, value, section);
             return VerifyIniSettings(gameDir);
         }
+
+        public string InstallHelixSR(Game game, string cachePath, string injectionDllName = "dxgi.dll",
+                                    string? helixsrVersion = null,
+                                    string? overrideGameDir = null)
+        {
+            DebugWindow.Log($"[Install][HelixSR] Starting HelixSR installation for game: {game.Name}");
+            if (!Directory.Exists(cachePath))
+                throw new DirectoryNotFoundException("HelixSR cache directory not found. Please download HelixSR first.");
+
+            var cacheFiles = Directory.GetFiles(cachePath, "*.*", SearchOption.AllDirectories);
+            if (cacheFiles.Length == 0)
+                throw new Exception("HelixSR cache directory is empty. Download again.");
+
+            string? gameDir;
+            if (overrideGameDir != null)
+                gameDir = overrideGameDir;
+            else
+            {
+                gameDir = DetermineInstallDirectory(game);
+                if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+                    throw new Exception("Could not automatically detect the game directory. Please use Manual Install.");
+            }
+
+            if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir))
+                throw new Exception("Installation cancelled or valid directory not found.");
+
+            var storeKey = game.InstallPath;
+            using var rollbackJournal = new InstallationRollbackJournal(gameDir);
+            var backupStore = new BackupStoreService();
+            var priorManifest = backupStore.LoadManifest(storeKey);
+            bool hasValidBackup = priorManifest != null && string.Equals(priorManifest.OperationStatus, "committed", StringComparison.OrdinalIgnoreCase);
+            if (!hasValidBackup) priorManifest = null;
+
+            var manifest = new InstallationManifest
+            {
+                OperationId = Guid.NewGuid().ToString(),
+                OperationStatus = "in_progress",
+                StartedAtUtc = DateTime.UtcNow.ToString("o"),
+                OptiscalerVersion = helixsrVersion,
+                InjectionMethod = injectionDllName,
+                InstallDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                InstalledGameDirectory = gameDir,
+                IncludesHelixSR = true,
+                HelixSRVersion = helixsrVersion
+            };
+            backupStore.SaveManifest(storeKey, manifest);
+
+            try
+            {
+                string sourceRoot = cachePath;
+                var scalerDir = Directory.GetDirectories(cachePath, "helixsr-scaler", SearchOption.AllDirectories).FirstOrDefault();
+                if (scalerDir != null) sourceRoot = scalerDir;
+                else { var subdirs = Directory.GetDirectories(cachePath); if (subdirs.Length == 1) sourceRoot = subdirs[0]; }
+
+                var filesToCopy = Directory.GetFiles(sourceRoot, "*", SearchOption.AllDirectories);
+                foreach (var sourceFile in filesToCopy)
+                {
+                    var relativePath = Path.GetRelativePath(sourceRoot, sourceFile);
+                    if (relativePath.Contains("setup") || relativePath.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ||
+                        relativePath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) || relativePath.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) ||
+                        relativePath.Contains("README") || relativePath.Contains("LICENSE") || relativePath.Contains("THIRD_PARTY"))
+                        continue;
+
+                    var destPath = Path.Combine(gameDir, relativePath);
+                    var destDir = Path.GetDirectoryName(destPath);
+                    if (!string.IsNullOrEmpty(destDir)) Directory.CreateDirectory(destDir);
+
+                    if (File.Exists(destPath))
+                    {
+                        if (priorManifest == null || !priorManifest.FilesCreated.Any(f => f.RelativePath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)))
+                            backupStore.BackupFile(storeKey, gameDir, relativePath);
+                    }
+                    File.Copy(sourceFile, destPath, true);
+                    manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = relativePath, PostInstallSha256 = ComputeSha256(destPath) });
+                }
+
+                // Copy the HelixSR/ folder (helixsr.dll + helixsr.ini) required by HLX DLSS
+                var helixSrDir = Directory.GetDirectories(cachePath, "HelixSR", SearchOption.AllDirectories).FirstOrDefault();
+                if (helixSrDir != null)
+                {
+                    var helixDestRoot = Path.Combine(gameDir, "HelixSR");
+                    Directory.CreateDirectory(helixDestRoot);
+                    foreach (var srcFile in Directory.GetFiles(helixSrDir, "*", SearchOption.AllDirectories))
+                    {
+                        var rel = Path.GetRelativePath(helixSrDir, srcFile);
+                        if (rel.Contains("setup", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase) ||
+                            rel.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) ||
+                            rel.Contains("README", StringComparison.OrdinalIgnoreCase) ||
+                            rel.Contains("LICENSE", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        var dest = Path.Combine(helixDestRoot, rel);
+                        var ddir = Path.GetDirectoryName(dest);
+                        if (!string.IsNullOrEmpty(ddir)) Directory.CreateDirectory(ddir);
+                        File.Copy(srcFile, dest, true);
+                        manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = Path.Combine("HelixSR", rel), PostInstallSha256 = ComputeSha256(dest) });
+                    }
+                }
+
+                // HLX FSR 4 drop-in (prebuilt) — copy as HLX-FSR4/ folder
+                var hlxDir = Directory.GetDirectories(cachePath, "HLX-FSR4", SearchOption.AllDirectories).FirstOrDefault();
+                if (hlxDir != null)
+                {
+                    var hlxdest = Path.Combine(gameDir, "HLX-FSR4");
+                    Directory.CreateDirectory(hlxdest);
+                    foreach (var srcFile in Directory.GetFiles(hlxDir, "*", SearchOption.AllDirectories))
+                    {
+                        var rel = Path.GetRelativePath(hlxDir, srcFile);
+                        var dest = Path.Combine(hlxdest, rel);
+                        var ddir = Path.GetDirectoryName(dest);
+                        if (!string.IsNullOrEmpty(ddir)) Directory.CreateDirectory(ddir);
+                        File.Copy(srcFile, dest, true);
+                        manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = Path.Combine("HLX-FSR4", rel), PostInstallSha256 = ComputeSha256(dest) });
+                    }
+                }
+
+                string targetInjection = Path.Combine(gameDir, injectionDllName);
+                string optiDll = Path.Combine(gameDir, "OptiScaler.dll");
+                if (File.Exists(optiDll) && !string.Equals(Path.GetFileName(optiDll), injectionDllName, StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        if (File.Exists(targetInjection) && (priorManifest == null || !priorManifest.FilesCreated.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase))))
+                            backupStore.BackupFile(storeKey, gameDir, injectionDllName);
+                        File.Copy(optiDll, targetInjection, true);
+                        if (!manifest.FilesCreated.Any(f => f.RelativePath.Equals(injectionDllName, StringComparison.OrdinalIgnoreCase)))
+                            manifest.FilesCreated.Add(new ManifestFileRecord { RelativePath = injectionDllName, PostInstallSha256 = ComputeSha256(targetInjection) });
+                    }
+                    catch (Exception ex) { DebugWindow.Log($"[Install][HelixSR] Failed to setup injection: {ex.Message}"); }
+                }
+
+                manifest.OperationStatus = "committed";
+                manifest.FinishedAtUtc = DateTime.UtcNow.ToString("o");
+                backupStore.SaveManifest(storeKey, manifest);
+
+                game.IsOptiscalerInstalled = true;
+                game.OptiscalerVersion = helixsrVersion ?? "HelixSR";
+                game.IsHelixSRInstalled = true;
+                game.HelixSRVersion = helixsrVersion;
+
+                // Post-Install: Re-analyze to refresh component information.
+                var analyzer = new GameAnalyzerService();
+                GameAnalyzerService.InvalidateCacheForPath(game.InstallPath);
+                analyzer.AnalyzeGame(game, forceRefresh: true);
+                GameAnalyzerService.FlushCacheToDisk();
+
+                DebugWindow.Log($"[Install][HelixSR] Installation completed");
+                return gameDir;
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Install][HelixSR] Installation failed: {ex.Message}");
+                try { rollbackJournal.Rollback(); } catch { }
+                try { manifest.OperationStatus = "failed"; manifest.FinishedAtUtc = DateTime.UtcNow.ToString("o"); backupStore.SaveManifest(storeKey, manifest); } catch { }
+                throw;
+            }
+        }
+
     }
 }

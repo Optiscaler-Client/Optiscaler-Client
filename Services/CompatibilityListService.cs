@@ -56,7 +56,7 @@ namespace OptiscalerClient.Services
 
         // Static so the in-memory cache survives across `new CompatibilityListService()` calls,
         // same convention as ComponentManagementService's release caches.
-        private static CompatibilityListCache _cache = new();
+        private static volatile CompatibilityListCache _cache = new();
         private static Dictionary<string, CompatibilityListEntry> _byNormalizedName = new();
         private static List<(CompatibilityListEntry Entry, HashSet<string> Tokens)> _tokenizedEntries = new();
         private static bool _loadedFromDisk;
@@ -144,14 +144,17 @@ namespace OptiscalerClient.Services
             entry = null;
             if (string.IsNullOrWhiteSpace(gameName)) return false;
 
-            if (_byNormalizedName.TryGetValue(GameNameMatcher.Normalize(gameName), out entry))
-                return true;
-
-            if (GameNameMatcher.TryFuzzyMatch(gameName, _tokenizedEntries, out var fuzzyMatch) && fuzzyMatch != null)
+            lock (_lock)
             {
-                entry = fuzzyMatch;
-                DebugWindow.Log($"[CompatList] Fuzzy-matched '{gameName}' -> '{fuzzyMatch.GameName}'.");
-                return true;
+                if (_byNormalizedName.TryGetValue(GameNameMatcher.Normalize(gameName), out entry))
+                    return true;
+
+                if (GameNameMatcher.TryFuzzyMatch(gameName, _tokenizedEntries, out var fuzzyMatch) && fuzzyMatch != null)
+                {
+                    entry = fuzzyMatch;
+                    DebugWindow.Log($"[CompatList] Fuzzy-matched '{gameName}' -> '{fuzzyMatch.GameName}'.");
+                    return true;
+                }
             }
 
             return false;
@@ -172,7 +175,8 @@ namespace OptiscalerClient.Services
         {
             var config = _componentService.Config;
             var lastCheck = config.LastCompatListCheckTime;
-            bool hasUsableCache = _cache.Entries.Count > 0 && _cache.SchemaVersion >= CacheSchemaVersion;
+            bool hasUsableCache;
+            lock (_lock) { hasUsableCache = _cache.Entries.Count > 0 && _cache.SchemaVersion >= CacheSchemaVersion; }
             if (hasUsableCache && lastCheck.HasValue && (DateTime.UtcNow - lastCheck.Value).TotalHours < CooldownHours)
             {
                 DebugWindow.Log($"[CompatList] Skipping refresh, last check was {(DateTime.UtcNow - lastCheck.Value):hh\\:mm\\:ss} ago.");
@@ -213,9 +217,12 @@ namespace OptiscalerClient.Services
                     return;
                 }
 
-                _cache = new CompatibilityListCache { Entries = entries, LastUpdated = DateTime.UtcNow, SchemaVersion = CacheSchemaVersion };
-                SaveCache();
-                RebuildLookup();
+                lock (_lock)
+                {
+                    _cache = new CompatibilityListCache { Entries = entries, LastUpdated = DateTime.UtcNow, SchemaVersion = CacheSchemaVersion };
+                    SaveCache();
+                    RebuildLookup();
+                }
                 DebugWindow.Log($"[CompatList] Refreshed: {entries.Count} entries.");
             }
             catch (Exception ex)
@@ -427,14 +434,17 @@ namespace OptiscalerClient.Services
 
         private void SaveGameWikiCache()
         {
-            try
+            lock (_lock)
             {
-                var json = JsonSerializer.Serialize(_gameWikiCache, OptimizerContext.Default.GameWikiDetailsCache);
-                File.WriteAllText(_gameWikiCacheFile, json);
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[CompatList] Failed to save game wiki details cache: {ex.Message}");
+                try
+                {
+                    var json = JsonSerializer.Serialize(_gameWikiCache, OptimizerContext.Default.GameWikiDetailsCache);
+                    File.WriteAllText(_gameWikiCacheFile, json);
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[CompatList] Failed to save game wiki details cache: {ex.Message}");
+                }
             }
         }
 
@@ -622,58 +632,67 @@ namespace OptiscalerClient.Services
 
         private static void RebuildLookup()
         {
-            var map = new Dictionary<string, CompatibilityListEntry>();
-            var tokenized = new List<(CompatibilityListEntry, HashSet<string>)>();
-
-            foreach (var entry in _cache.Entries)
+            lock (_lock)
             {
-                var key = GameNameMatcher.Normalize(entry.GameName);
-                if (key.Length == 0) continue;
+                var map = new Dictionary<string, CompatibilityListEntry>();
+                var tokenized = new List<(CompatibilityListEntry, HashSet<string>)>();
 
-                if (!map.ContainsKey(key))
+                foreach (var entry in _cache.Entries)
                 {
-                    map[key] = entry;
-                }
-                else
-                {
-                    DebugWindow.Log($"[CompatList] Duplicate normalized name '{key}' — keeping first occurrence.");
+                    var key = GameNameMatcher.Normalize(entry.GameName);
+                    if (key.Length == 0) continue;
+
+                    if (!map.ContainsKey(key))
+                    {
+                        map[key] = entry;
+                    }
+                    else
+                    {
+                        DebugWindow.Log($"[CompatList] Duplicate normalized name '{key}' — keeping first occurrence.");
+                    }
+
+                    tokenized.Add((entry, GameNameMatcher.Tokenize(entry.GameName)));
                 }
 
-                tokenized.Add((entry, GameNameMatcher.Tokenize(entry.GameName)));
+                _byNormalizedName = map;
+                _tokenizedEntries = tokenized;
             }
-
-            _byNormalizedName = map;
-            _tokenizedEntries = tokenized;
         }
 
         private void LoadCache()
         {
-            try
+            lock (_lock)
             {
-                if (File.Exists(_cacheFile))
+                try
                 {
-                    var json = File.ReadAllText(_cacheFile);
-                    _cache = JsonSerializer.Deserialize(json, OptimizerContext.Default.CompatibilityListCache) ?? new();
-                    RebuildLookup();
-                    DebugWindow.Log($"[CompatList] Loaded {_cache.Entries.Count} entries from local cache.");
+                    if (File.Exists(_cacheFile))
+                    {
+                        var json = File.ReadAllText(_cacheFile);
+                        _cache = JsonSerializer.Deserialize(json, OptimizerContext.Default.CompatibilityListCache) ?? new();
+                        RebuildLookup();
+                        DebugWindow.Log($"[CompatList] Loaded {_cache.Entries.Count} entries from local cache.");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[CompatList] Failed to load local cache: {ex.Message}");
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[CompatList] Failed to load local cache: {ex.Message}");
+                }
             }
         }
 
         private void SaveCache()
         {
-            try
+            lock (_lock)
             {
-                var json = JsonSerializer.Serialize(_cache, OptimizerContext.Default.CompatibilityListCache);
-                File.WriteAllText(_cacheFile, json);
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.Log($"[CompatList] Failed to save local cache: {ex.Message}");
+                try
+                {
+                    var json = JsonSerializer.Serialize(_cache, OptimizerContext.Default.CompatibilityListCache);
+                    File.WriteAllText(_cacheFile, json);
+                }
+                catch (Exception ex)
+                {
+                    DebugWindow.Log($"[CompatList] Failed to save local cache: {ex.Message}");
+                }
             }
         }
     }

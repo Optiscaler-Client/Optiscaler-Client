@@ -98,16 +98,20 @@ public sealed class LinuxDesktopIntegrationService
         try
         {
             var iconPath = Path.Combine(AppPaths.GetAppDataRoot(), "optiscaler-client.png");
+
+            // Reuse an icon that is already installed; only read the bundled asset when it is missing.
+            if (File.Exists(iconPath) && new FileInfo(iconPath).Length > 0)
+            {
+                return iconPath;
+            }
+
             using var source = AssetLoader.Open(new Uri("avares://OptiscalerClient/assets/icon.png"));
             using var buffer = new MemoryStream();
             source.CopyTo(buffer);
             var bytes = buffer.ToArray();
 
-            if (!File.Exists(iconPath) || new FileInfo(iconPath).Length != bytes.Length)
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(iconPath)!);
-                File.WriteAllBytes(iconPath, bytes);
-            }
+            Directory.CreateDirectory(Path.GetDirectoryName(iconPath)!);
+            File.WriteAllBytes(iconPath, bytes);
             return iconPath;
         }
         catch (Exception ex)

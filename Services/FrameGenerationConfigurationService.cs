@@ -24,9 +24,17 @@ public interface IFrameGenerationConfigurationService
 /// </summary>
 public sealed class FrameGenerationConfigurationService : IFrameGenerationConfigurationService
 {
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime Stamp, FrameGenerationCapabilities Capabilities)> _capabilitiesCache =
+        new(System.StringComparer.OrdinalIgnoreCase);
+
     public FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null)
     {
         var root = ResolveGameDirectory(game);
+        var stamp = GetDirectoryLastWriteTimeUtc(root);
+        var gpuKey = gpu is null ? "nogpu" : $"{gpu.Vendor}|{gpu.Name}";
+        var cacheKey = root + "\u0000" + gpuKey + "\u0000" + (game.DlssFrameGenVersion ?? string.Empty);
+        if (_capabilitiesCache.TryGetValue(cacheKey, out var cached) && cached.Stamp == stamp)
+            return cached.Capabilities;
         // Do not treat OptiScaler's own installed runtime files as native game capabilities.
         // Otherwise its dependencies make every manual FG route look safe before the user has
         // explicitly enabled Advanced routes.
@@ -41,7 +49,16 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         bool hasDlssG = !string.IsNullOrEmpty(game.DlssFrameGenVersion) || files.Contains("nvngx_dlssg.dll");
         bool hasFsr3 = files.Contains("ffx_fsr3_api_x64.dll") || files.Contains("ffx_fsr3_api_dx12_x64.dll") || files.Contains("amd_fidelityfx_framegeneration_dx12.dll");
         bool hasStreamline = files.Any(n => n!.StartsWith("sl.", StringComparison.OrdinalIgnoreCase) || n!.Contains("streamline", StringComparison.OrdinalIgnoreCase));
-        bool hasXeFg = files.Contains("libxess_fg.dll") && files.Contains("libxell.dll");
+        // XeFG runtime (libxess_fg.dll + libxell.dll) ships with OptiScaler itself, so unlike
+        // native DLSS-G/FSR3 detection we DO count OptiScaler's own bundled copies here — otherwise
+        // XeSS Frame Generation would never be offered even on a fully installed OptiScaler setup.
+        var allFiles = Directory.Exists(root)
+            ? Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Select(Path.GetFileName)
+                .OfType<string>()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        bool hasXeFg = allFiles.Contains("libxess_fg.dll") && allFiles.Contains("libxell.dll");
         bool hasFsrFg = files.Contains("amd_fidelityfx_dx12.dll") ||
                         (files.Contains("amd_fidelityfx_loader_dx12.dll") && files.Contains("amd_fidelityfx_framegeneration_dx12.dll"));
         bool dx12 = files.Contains("d3d12.dll") || files.Contains("d3d12core.dll") ||
@@ -100,7 +117,7 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
         var mfg = new List<MultiFrameGenerationMode> { MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2 };
         if (arc) { mfg.Add(MultiFrameGenerationMode.X3); mfg.Add(MultiFrameGenerationMode.X4); }
-        return new FrameGenerationCapabilities
+        var capabilities = new FrameGenerationCapabilities
         {
             IsDirectX12 = dx12, IsVulkan = vulkan, HasNativeDlssG = hasDlssG, HasNativeFsr3 = hasFsr3,
             HasStreamline = hasStreamline, HasXeFgDependencies = hasXeFg, HasFsrFgDependencies = hasFsrFg,
@@ -109,6 +126,8 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             HasNukem = hasDlssG, IsIntelArc = arc, IsAntiCheatDetected = antiCheat, SupportsDynamicMfg = supportsDynamicMfg,
             AvailableRoutes = routes, AvailableOutputs = outputs, AvailableMfgModes = mfg, Warnings = warnings
         };
+        _capabilitiesCache[cacheKey] = (stamp, capabilities);
+        return capabilities;
     }
 
     public FrameGenerationRecommendation GetRecommendation(FrameGenerationCapabilities c)
@@ -402,6 +421,18 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         var firstSeparator = relativePath.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]);
         var topLevelDirectory = firstSeparator < 0 ? relativePath : relativePath[..firstSeparator];
         return topLevelDirectory.Equals("OptiScaler", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static DateTime GetDirectoryLastWriteTimeUtc(string path)
+    {
+        try
+        {
+            return Directory.Exists(path) ? Directory.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+        }
+        catch
+        {
+            return DateTime.MinValue;
+        }
     }
 
     private static string ResolveGameDirectory(Game game) => !string.IsNullOrWhiteSpace(game.ExecutablePath) ? Path.GetDirectoryName(game.ExecutablePath) ?? game.InstallPath : game.InstallPath;

@@ -8,7 +8,10 @@ public class EpicScanner : IGameScanner
 {
     private const string MANIFESTS_REL_PATH = @"Epic\EpicGamesLauncher\Data\Manifests";
 
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
         var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);

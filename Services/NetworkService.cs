@@ -29,10 +29,16 @@ namespace OptiscalerClient.Services
     public static class NetworkService
     {
         private static readonly object _lock = new();
-        private static HttpClient _httpClient = BuildClient(null);
+        private static volatile HttpClient _httpClient = BuildClient(null);
 
         /// <summary>Returns the shared <see cref="HttpClient"/> configured with the current proxy settings.</summary>
-        public static HttpClient GetHttpClient() => _httpClient;
+        public static HttpClient GetHttpClient()
+        {
+            lock (_lock)
+            {
+                return _httpClient;
+            }
+        }
 
         /// <summary>
         /// Reconfigures the shared <see cref="HttpClient"/> with the provided <paramref name="config"/>.
@@ -41,12 +47,13 @@ namespace OptiscalerClient.Services
         public static void Configure(NetworkConfig config)
         {
             var newClient = BuildClient(config);
+            HttpClient oldClient;
             lock (_lock)
             {
-                var old = _httpClient;
+                oldClient = _httpClient;
                 _httpClient = newClient;
-                old.Dispose();
             }
+            oldClient.Dispose();
         }
 
         private static HttpClient BuildClient(NetworkConfig? config)
