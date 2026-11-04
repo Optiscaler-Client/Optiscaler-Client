@@ -952,30 +952,10 @@ namespace OptiscalerClient.Services
                         fileName.Equals("fakenvapi.ini", StringComparison.OrdinalIgnoreCase))
                     {
                         var destPath = Path.Combine(gameDir, fileName);
-                        var existedBefore = File.Exists(destPath);
 
-                        // Backup if exists (into external store).
-                        // During an update, skip files already protected by a prior install's backup.
-                        bool fakeIsOriginal = priorBackedUpOriginals.Contains(fileName);
-                        bool fakeIsOptiCreated = priorCreatedByOptiScaler.Contains(fileName);
-                        string? preHash = null;
-                        if (existedBefore && !fakeIsOriginal && !fakeIsOptiCreated)
-                        {
-                            preHash = ComputeSha256(destPath); // only hash when we actually need it
-                            _backupStore.BackupFile(storeKey, gameDir, fileName);
-                            manifest.BackedUpFiles.Add(fileName);
-                            DebugWindow.Log($"[Install] Backed up existing Fakenvapi file: {fileName}");
-                        }
-
-                        rollbackJournal.CaptureFile(fileName);
-                        File.Copy(sourcePath, destPath, true);
-                        manifest.InstalledFiles.Add(fileName);
-                        TrackManifestFileMutation(
-                            manifest,
-                            relativePath: fileName,
-                            existedBefore: existedBefore && !fakeIsOptiCreated,
-                            preInstallHash: (!fakeIsOriginal && !fakeIsOptiCreated) ? preHash : null,
-                            postInstallHash: ComputeSha256(destPath));
+                        InstallFileWithBackupTracking(
+                            manifest, storeKey, gameDir, sourcePath, destPath, fileName,
+                            rollbackJournal, priorBackedUpOriginals, priorCreatedByOptiScaler);
                         fakeFileCount++;
                         DebugWindow.Log($"[Install] Installed Fakenvapi file: {fileName}");
                     }
@@ -1009,30 +989,10 @@ namespace OptiscalerClient.Services
                     if (fileName.Equals("dlssg_to_fsr3_amd_is_better.dll", StringComparison.OrdinalIgnoreCase))
                     {
                         var destPath = Path.Combine(gameDir, fileName);
-                        var existedBefore = File.Exists(destPath);
 
-                        // Backup if exists (into external store).
-                        // During an update, skip files already protected by a prior install's backup.
-                        bool nukemIsOriginal = priorBackedUpOriginals.Contains(fileName);
-                        bool nukemIsOptiCreated = priorCreatedByOptiScaler.Contains(fileName);
-                        string? preHash = null;
-                        if (existedBefore && !nukemIsOriginal && !nukemIsOptiCreated)
-                        {
-                            preHash = ComputeSha256(destPath); // only hash when we actually need it
-                            _backupStore.BackupFile(storeKey, gameDir, fileName);
-                            manifest.BackedUpFiles.Add(fileName);
-                            DebugWindow.Log($"[Install] Backed up existing NukemFG file: {fileName}");
-                        }
-
-                        rollbackJournal.CaptureFile(fileName);
-                        File.Copy(sourcePath, destPath, true);
-                        manifest.InstalledFiles.Add(fileName);
-                        TrackManifestFileMutation(
-                            manifest,
-                            relativePath: fileName,
-                            existedBefore: existedBefore && !nukemIsOptiCreated,
-                            preInstallHash: (!nukemIsOriginal && !nukemIsOptiCreated) ? preHash : null,
-                            postInstallHash: ComputeSha256(destPath));
+                        InstallFileWithBackupTracking(
+                            manifest, storeKey, gameDir, sourcePath, destPath, fileName,
+                            rollbackJournal, priorBackedUpOriginals, priorCreatedByOptiScaler);
                         nukemFileCount++;
                         DebugWindow.Log($"[Install] Installed NukemFG file: {fileName}");
 
@@ -1597,6 +1557,37 @@ namespace OptiscalerClient.Services
             }
 
             TrackManifestFileMutation(manifest, relativePath, existedBefore: isOriginalFile, preHash, ComputeSha256(destPath));
+        }
+
+        /// <summary>Installs a single file with the standard backup/before-overwrite tracking used by
+        /// the Fakenvapi and NukemFG steps. Centralises the repeated backup-tracking block so the
+        /// install method stays readable.</summary>
+        private void InstallFileWithBackupTracking(
+            InstallationManifest manifest, string storeKey, string gameDir, string sourcePath, string destPath,
+            string relativePath, InstallationRollbackJournal rollbackJournal,
+            HashSet<string> priorBackedUpOriginals, HashSet<string> priorCreatedByOptiScaler)
+        {
+            var existedBefore = File.Exists(destPath);
+            bool isOriginal = priorBackedUpOriginals.Contains(relativePath);
+            bool isOptiCreated = priorCreatedByOptiScaler.Contains(relativePath);
+            string? preHash = null;
+            if (existedBefore && !isOriginal && !isOptiCreated)
+            {
+                preHash = ComputeSha256(destPath);
+                _backupStore.BackupFile(storeKey, gameDir, relativePath);
+                manifest.BackedUpFiles.Add(relativePath);
+                DebugWindow.Log($"[Install] Backed up existing file: {relativePath}");
+            }
+
+            rollbackJournal.CaptureFile(relativePath);
+            File.Copy(sourcePath, destPath, true);
+            manifest.InstalledFiles.Add(relativePath);
+            TrackManifestFileMutation(
+                manifest,
+                relativePath: relativePath,
+                existedBefore: existedBefore && !isOptiCreated,
+                preInstallHash: (!isOriginal && !isOptiCreated) ? preHash : null,
+                postInstallHash: ComputeSha256(destPath));
         }
 
         public sealed record UninstallResult(bool UsedLegacyFallback, IReadOnlyList<string> RemainingSensitiveFiles);
