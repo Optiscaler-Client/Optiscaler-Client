@@ -59,6 +59,11 @@
 - **OptiPatcher** — ASI plugin loader, automatically configured with `LoadAsiPlugins=true` in OptiScaler.ini.
 - **DLSS Enabler** — Optional Frame Generation / Multi Frame Generation support, downloaded from an unofficial mirror since official builds are Nexus Mods-only.
 
+### Performance & Stability
+
+- **Services optimization pass** — Thread-safe caches and lifecycle fixes, GPU detection caching, atomic/locked persistence, and reduced repeated directory enumeration, hashing and regex compilation across scanners and analyzers.
+- **XeSS Frame Generation** — Now offered when OptiScaler bundles the XeSS runtime (not only when the game ships `libxess_fg.dll`/`libxell.dll` natively), and the XeSS MFG unlock plugin (`XeFGUnlock.asi`) is correctly loaded via `[Plugins] LoadAsiPlugins`.
+
 ### Game Management Shortcuts
 
 - **Output Upscaler Selector** — Override a game's upscaling technology (Default, FSR 2/3/4, XeSS, DLSS) directly from the Manage window, without opening Profiles.

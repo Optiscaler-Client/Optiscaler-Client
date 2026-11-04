@@ -1,3 +1,24 @@
+#### [Unreleased] ####
+
+# What’s Changed
+
+Services layer performance and stability pass (P0–P4): thread-safe caches and lifecycle fixes, GPU detection caching, async/atomic persistence, reduced repeated directory enumeration and hashing, and maintainability refactors. Also fixes XeSS Frame Generation not appearing when OptiScaler bundles the XeSS runtime, and XeSS MFG unlock (XeFGUnlock.asi) not loading because `LoadAsiPlugins` was written outside the `[Plugins]` section.
+
+# Changelog
+
+### Fixes
+
+- Fixed `LoadAsiPlugins` being written outside the `[Plugins]` section, which prevented `.asi` plugins (including `XeFGUnlock.asi`) from loading — XeSS MFG unlock did not engage.
+- Fixed XeSS Frame Generation output not being offered when `libxess_fg.dll`/`libxell.dll` come from OptiScaler's own bundle rather than the game's native files.
+- Restored alphabetical ordering of scanned games (regression from the throughput pass).
+
+### Improvements
+
+- Hardened thread-safety and lifecycle hotspots in Services (NetworkService, AppPaths, CompatibilityList, RenodxMods, ProfileManagement, gamepad detection).
+- Cached GPU detection results and batched nvidia-smi queries on Linux; projected WMI columns and cached registry VRAM on Windows.
+- Atomic, locked persistence for game data; cached sentinel/no-icon markers.
+- Reduced repeated directory enumeration, hashing and regex compilation across scanners and analyzers.
+
 #### [1.0.8] ####
 
 # What’s Changed
