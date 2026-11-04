@@ -12,13 +12,19 @@ public class GogScanner : IGameScanner
 {
     private const string REGISTRY_PATH = @"SOFTWARE\WOW6432Node\GOG.com\Games";
 
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 
+        if (!OperatingSystem.IsWindows())
+            return games;
+
         try
         {
-            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32);
+            using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
             using var gamesKey = baseKey.OpenSubKey(REGISTRY_PATH);
 
             if (gamesKey == null)

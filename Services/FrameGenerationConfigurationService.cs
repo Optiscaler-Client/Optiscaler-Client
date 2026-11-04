@@ -24,9 +24,17 @@ public interface IFrameGenerationConfigurationService
 /// </summary>
 public sealed class FrameGenerationConfigurationService : IFrameGenerationConfigurationService
 {
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime Stamp, FrameGenerationCapabilities Capabilities)> _capabilitiesCache =
+        new(System.StringComparer.OrdinalIgnoreCase);
+
     public FrameGenerationCapabilities DetectCapabilities(Game game, GpuInfo? gpu = null)
     {
         var root = ResolveGameDirectory(game);
+        var stamp = GetDirectoryLastWriteTimeUtc(root);
+        var gpuKey = gpu is null ? "nogpu" : $"{gpu.Vendor}|{gpu.Name}";
+        var cacheKey = root + "\u0000" + gpuKey + "\u0000" + (game.DlssFrameGenVersion ?? string.Empty);
+        if (_capabilitiesCache.TryGetValue(cacheKey, out var cached) && cached.Stamp == stamp)
+            return cached.Capabilities;
         // Do not treat OptiScaler's own installed runtime files as native game capabilities.
         // Otherwise its dependencies make every manual FG route look safe before the user has
         // explicitly enabled Advanced routes.
@@ -100,7 +108,7 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
 
         var mfg = new List<MultiFrameGenerationMode> { MultiFrameGenerationMode.Auto, MultiFrameGenerationMode.X2 };
         if (arc) { mfg.Add(MultiFrameGenerationMode.X3); mfg.Add(MultiFrameGenerationMode.X4); }
-        return new FrameGenerationCapabilities
+        var capabilities = new FrameGenerationCapabilities
         {
             IsDirectX12 = dx12, IsVulkan = vulkan, HasNativeDlssG = hasDlssG, HasNativeFsr3 = hasFsr3,
             HasStreamline = hasStreamline, HasXeFgDependencies = hasXeFg, HasFsrFgDependencies = hasFsrFg,
@@ -109,6 +117,8 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
             HasNukem = hasDlssG, IsIntelArc = arc, IsAntiCheatDetected = antiCheat, SupportsDynamicMfg = supportsDynamicMfg,
             AvailableRoutes = routes, AvailableOutputs = outputs, AvailableMfgModes = mfg, Warnings = warnings
         };
+        _capabilitiesCache[cacheKey] = (stamp, capabilities);
+        return capabilities;
     }
 
     public FrameGenerationRecommendation GetRecommendation(FrameGenerationCapabilities c)
@@ -402,6 +412,18 @@ public sealed class FrameGenerationConfigurationService : IFrameGenerationConfig
         var firstSeparator = relativePath.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]);
         var topLevelDirectory = firstSeparator < 0 ? relativePath : relativePath[..firstSeparator];
         return topLevelDirectory.Equals("OptiScaler", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static DateTime GetDirectoryLastWriteTimeUtc(string path)
+    {
+        try
+        {
+            return Directory.Exists(path) ? Directory.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+        }
+        catch
+        {
+            return DateTime.MinValue;
+        }
     }
 
     private static string ResolveGameDirectory(Game game) => !string.IsNullOrWhiteSpace(game.ExecutablePath) ? Path.GetDirectoryName(game.ExecutablePath) ?? game.InstallPath : game.InstallPath;

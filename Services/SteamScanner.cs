@@ -22,9 +22,25 @@ public class SteamScanner : IGameScanner
         HasEscapeSequences = true
     };
 
-    private static readonly KVSerializer _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+    // KVSerializer is not guaranteed thread-safe; keep one per SteamScanner instance and guard calls.
+    private readonly KVSerializer _kvSerializer = KVSerializer.Create(KVSerializationFormat.KeyValues1Text);
+    private readonly object _kvLock = new();
 
-    public List<Game> Scan()
+    // Caches keyed by path (+ mtime) so repeated scans avoid filesystem resolution and VDF reparsing.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime MtimeUtc, string Canonical)> _canonicalPathCache =
+        new(StringComparer.Ordinal);
+    private sealed class CachedLibraryFolders
+    {
+        public DateTime MtimeUtc;
+        public List<string> Folders = new();
+    }
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, CachedLibraryFolders> _libraryFolderCache =
+        new(StringComparer.Ordinal);
+
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
         var installPath = GetSteamInstallPath();
@@ -107,45 +123,74 @@ public class SteamScanner : IGameScanner
 
     private static string CanonicalPath(string path)
     {
-        try { return new DirectoryInfo(path).ResolveLinkTarget(true)?.FullName ?? Path.GetFullPath(path); }
-        catch { return Path.GetFullPath(path); }
+        DateTime mtime;
+        try { mtime = File.GetLastWriteTimeUtc(path); }
+        catch { mtime = DateTime.MinValue; }
+
+        if (_canonicalPathCache.TryGetValue(path, out var cached) && cached.MtimeUtc == mtime)
+            return cached.Canonical;
+
+        string canonical;
+        try { canonical = new DirectoryInfo(path).ResolveLinkTarget(true)?.FullName ?? Path.GetFullPath(path); }
+        catch { canonical = Path.GetFullPath(path); }
+
+        _canonicalPathCache[path] = (mtime, canonical);
+        return canonical;
     }
 
     private List<string> GetLibraryFolders(string steamPath)
     {
+        var canonicalSteamPath = CanonicalPath(steamPath);
+
+        var vdfPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
+        var vdfMtime = File.Exists(vdfPath) ? File.GetLastWriteTimeUtc(vdfPath) : DateTime.MinValue;
+
+        if (_libraryFolderCache.TryGetValue(canonicalSteamPath, out var cached) && cached.MtimeUtc == vdfMtime)
+            return new List<string>(cached.Folders);
+
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var folders = new List<string>();
 
-        var canonical = CanonicalPath(steamPath);
-        seen.Add(canonical);
-        folders.Add(canonical);
+        seen.Add(canonicalSteamPath);
+        folders.Add(canonicalSteamPath);
 
-        var vdfPath = Path.Combine(steamPath, "steamapps", "libraryfolders.vdf");
-        if (!File.Exists(vdfPath)) return folders;
-
-        try
+        if (File.Exists(vdfPath))
         {
-            using var stream = File.OpenRead(vdfPath);
-            var doc = _kvSerializer.Deserialize(stream, _libraryFolderOptions);
-
-            foreach (var (_, value) in doc.Root.Children)
+            try
             {
-                if (value.TryGetValue("path", out var pathValue))
+                lock (_kvLock)
                 {
-                    var path = pathValue.ToString();
-                    if (!string.IsNullOrEmpty(path))
+                    using var stream = File.OpenRead(vdfPath);
+                    var doc = _kvSerializer.Deserialize(stream, _libraryFolderOptions);
+                    if (doc != null)
                     {
-                        var canon = CanonicalPath(path);
-                        if (seen.Add(canon))
-                            folders.Add(canon);
+                        foreach (var (_, value) in doc.Root.Children)
+                        {
+                            if (value.TryGetValue("path", out var pathValue))
+                            {
+                                var path = pathValue.ToString();
+                                if (!string.IsNullOrEmpty(path))
+                                {
+                                    var canon = CanonicalPath(path);
+                                    if (seen.Add(canon))
+                                        folders.Add(canon);
+                                }
+                            }
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[Steam] Error reading libraryfolders.vdf: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+
+        _libraryFolderCache[canonicalSteamPath] = new CachedLibraryFolders
         {
-            DebugWindow.Log($"[Steam] Error reading libraryfolders.vdf: {ex.Message}");
-        }
+            MtimeUtc = vdfMtime,
+            Folders = new List<string>(folders)
+        };
 
         return folders;
     }
@@ -154,8 +199,12 @@ public class SteamScanner : IGameScanner
     {
         try
         {
-            using var stream = File.OpenRead(manifestPath);
-            var appState = _kvSerializer.Deserialize<AppState>(stream);
+            AppState? appState;
+            lock (_kvLock)
+            {
+                using var stream = File.OpenRead(manifestPath);
+                appState = _kvSerializer.Deserialize<AppState>(stream);
+            }
 
             // Extract AppID
             var appId = !string.IsNullOrEmpty(appState.AppId)

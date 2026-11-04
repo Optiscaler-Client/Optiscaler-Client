@@ -629,7 +629,9 @@ public class GameAnalyzerService
         {
             RecurseSubdirectories = true,
             IgnoreInaccessible = true,
-            MatchCasing = MatchCasing.CaseInsensitive
+            MatchCasing = MatchCasing.CaseInsensitive,
+            MaxRecursionDepth = 8,
+            AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
         };
 
         try
@@ -716,32 +718,56 @@ public class GameAnalyzerService
     {
         try
         {
-            var bytes = File.ReadAllBytes(filePath);
-            var marker = System.Text.Encoding.ASCII.GetBytes("OptiScaler v");
+            // Stream the file in bounded chunks instead of reading it whole: OptiScaler proxy DLLs can be
+            // tens of MB and this runs during analysis. Keep enough tail bytes between chunks so a marker
+            // sitting on a boundary (and its trailing version) is never split across two windows.
+            const string markerText = "OptiScaler v";
+            var marker = System.Text.Encoding.ASCII.GetBytes(markerText);
+            const int maxVersionLength = 64;
+            const int markerLength = 12; // "OptiScaler v".Length
+            const int overlap = (markerLength - 1) + maxVersionLength;
+            const int bufferSize = 1 << 20;
+            var buffer = new byte[bufferSize];
 
-            for (int i = 0; i <= bytes.Length - marker.Length; i++)
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, FileOptions.SequentialScan);
+            int carried = 0;
+            int read;
+            while ((read = stream.Read(buffer, carried, buffer.Length - carried)) > 0)
             {
-                var isMatch = true;
-                for (int j = 0; j < marker.Length; j++)
-                {
-                    if (bytes[i + j] != marker[j]) { isMatch = false; break; }
-                }
-                if (!isMatch) continue;
+                var windowLength = carried + read;
+                var window = buffer.AsSpan(0, windowLength);
 
-                var start = i + marker.Length;
-                var end = start;
-                while (end < bytes.Length && bytes[end] > 0x20 && bytes[end] < 0x7F)
-                    end++;
-
-                if (end > start)
+                int searchFrom = 0;
+                while (true)
                 {
-                    var ver = System.Text.Encoding.ASCII.GetString(bytes, start, end - start);
-                    // Strip pre-release/build suffixes like "-final" or "-rc1" — only the numeric version is wanted.
-                    var dashIdx = ver.IndexOf('-');
-                    if (dashIdx != -1) ver = ver.Substring(0, dashIdx);
-                    if (!string.IsNullOrEmpty(ver))
-                        return ver;
+                    int pos = window.Slice(searchFrom).IndexOf(marker);
+                    if (pos < 0) break;
+                    pos += searchFrom;
+
+                    var start = pos + marker.Length;
+                    var end = start;
+                    while (end < windowLength && window[end] > 0x20 && window[end] < 0x7F)
+                        end++;
+
+                    // If the version runs to the very end of this window without a terminator, it may be
+                    // truncated by the chunk boundary — defer to the overlapped next window rather than
+                    // returning a partial version.
+                    if (end > start && !(end == windowLength && read == buffer.Length - carried))
+                    {
+                        var ver = System.Text.Encoding.ASCII.GetString(buffer, start, end - start);
+                        // Strip pre-release/build suffixes like "-final" or "-rc1" — only the numeric version is wanted.
+                        var dashIdx = ver.IndexOf('-');
+                        if (dashIdx != -1) ver = ver.Substring(0, dashIdx);
+                        if (!string.IsNullOrEmpty(ver))
+                            return ver;
+                    }
+
+                    searchFrom = pos + 1;
                 }
+
+                carried = Math.Min(overlap, windowLength);
+                if (carried > 0)
+                    Buffer.BlockCopy(buffer, windowLength - carried, buffer, 0, carried);
             }
         }
         catch (Exception ex)
@@ -958,24 +984,27 @@ public class GameAnalyzerService
     {
         value = null;
         var keyBytes = System.Text.Encoding.Unicode.GetBytes(key);
-        for (int i = 0; i <= data.Length - keyBytes.Length - 2; i++)
+        var span = data.AsSpan();
+        int searchFrom = 0;
+        while (true)
         {
-            bool match = true;
-            for (int k = 0; k < keyBytes.Length; k++)
-            {
-                if (data[i + k] != keyBytes[k]) { match = false; break; }
-            }
-            if (!match) continue;
+            int pos = span.Slice(searchFrom).IndexOf(keyBytes);
+            if (pos < 0) break;
+            pos += searchFrom;
 
-            var afterKey = i + keyBytes.Length;
-            if (afterKey + 1 >= data.Length || data[afterKey] != 0 || data[afterKey + 1] != 0) continue;
+            var afterKey = pos + keyBytes.Length;
+            if (afterKey + 1 >= data.Length || data[afterKey] != 0 || data[afterKey + 1] != 0)
+            {
+                searchFrom = pos + 1;
+                continue;
+            }
 
             var valueStart = afterKey + 2;
             // VS_VERSIONINFO members are DWORD-aligned relative to the structure they're nested in;
             // this approximates that alignment from the raw offset, which holds in practice for the
             // standard MSVC-generated layout this targets.
             if (valueStart % 4 != 0) valueStart += 2;
-            if (valueStart >= data.Length) continue;
+            if (valueStart >= data.Length) { searchFrom = pos + 1; continue; }
 
             var maxLen = Math.Min(520, data.Length - valueStart); // 260 WCHARs, generous (MAX_PATH)
             var end = valueStart;
@@ -984,10 +1013,10 @@ public class GameAnalyzerService
                 if (data[end] == 0 && data[end + 1] == 0) break;
                 end += 2;
             }
-            if (end <= valueStart) continue; // empty value — keep looking, might be a stray key match
+            if (end <= valueStart) { searchFrom = pos + 1; continue; } // empty value — keep looking
 
             var str = System.Text.Encoding.Unicode.GetString(data, valueStart, end - valueStart).Trim();
-            if (string.IsNullOrEmpty(str)) continue;
+            if (string.IsNullOrEmpty(str)) { searchFrom = pos + 1; continue; }
 
             value = str;
             return true;
@@ -1000,22 +1029,33 @@ public class GameAnalyzerService
     private static bool TryFindFixedFileInfo(byte[] rsrcData, out string? version)
     {
         version = null;
-        for (int i = 0; i <= rsrcData.Length - 20; i++)
+        // Search for the VS_FIXEDFILEINFO signature (0xFEEF04BD) via IndexOf instead of a per-byte
+        // loop; the .rsrc section can be hundreds of MB, so skipping non-matching bytes in bulk
+        // (via the runtime's vectorised search) is the whole point of P3 here.
+        var searchFrom = 0;
+        while (true)
         {
-            if (rsrcData[i] != 0xBD || rsrcData[i + 1] != 0x04 ||
-                rsrcData[i + 2] != 0xEF || rsrcData[i + 3] != 0xFE) continue;
+            var pos = Array.IndexOf(rsrcData, (byte)0xBD, searchFrom);
+            if (pos < 0 || pos + 20 > rsrcData.Length) break;
 
-            // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
-            var structVer = BitConverter.ToUInt32(rsrcData, i + 4);
-            if (structVer != 0x00010000) continue;
+            if (rsrcData[pos + 1] == 0x04 && rsrcData[pos + 2] == 0xEF && rsrcData[pos + 3] == 0xFE)
+            {
+                // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
+                var structVer = BitConverter.ToUInt32(rsrcData, pos + 4);
+                if (structVer == 0x00010000)
+                {
+                    var ms = BitConverter.ToUInt32(rsrcData, pos + 8);  // dwFileVersionMS
+                    var ls = BitConverter.ToUInt32(rsrcData, pos + 12); // dwFileVersionLS
 
-            var ms = BitConverter.ToUInt32(rsrcData, i + 8);  // dwFileVersionMS
-            var ls = BitConverter.ToUInt32(rsrcData, i + 12); // dwFileVersionLS
+                    if (ms != 0 || ls != 0)
+                    {
+                        version = $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
+                        return true;
+                    }
+                }
+            }
 
-            if (ms == 0 && ls == 0) continue;
-
-            version = $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
-            return true;
+            searchFrom = pos + 1;
         }
         return false;
     }

@@ -15,7 +15,10 @@ public class EaScanner : IGameScanner
         @"SOFTWARE\Electronic Arts\EA Games"
     };
 
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 

@@ -31,7 +31,10 @@ public class HeroicScanner : IGameScanner
         public GamePlatform? GamePlatform { get; set; }
     }
 
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 
@@ -80,11 +83,11 @@ public class HeroicScanner : IGameScanner
             foreach (var game in heroicGames)
             {
                 if (game.IsDlc || game.GamePlatform == null
-                    || game.OsPlatform.ToLower() != "windows")
+                    || !string.Equals(game.OsPlatform, "windows", StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var gameName = game.Title
-                    ?? game.InstallPath.Split(Path.DirectorySeparatorChar).Last();
+                    ?? Path.GetFileName(Path.TrimEndingDirectorySeparator(game.InstallPath));
 
                 if (Path.Exists(game.InstallPath) && !string.IsNullOrEmpty(gameName))
                 {

@@ -247,7 +247,7 @@ namespace OptiscalerClient.Services
             try
             {
                 DebugWindow.Log($"[AmdNrBridge] Downloading {release.DownloadUrl}");
-                await StreamToFileAsync(release.DownloadUrl, tempZip, progress);
+                await ComponentManagementService.StreamToFileAsync(() => NetworkService.GetHttpClient(), release.DownloadUrl, tempZip, progress);
 
                 if (!string.IsNullOrEmpty(release.Sha256))
                 {
@@ -308,26 +308,6 @@ namespace OptiscalerClient.Services
 
                 Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
                 entry.ExtractToFile(destPath, overwrite: true);
-            }
-        }
-
-        private static async Task StreamToFileAsync(string url, string destPath, IProgress<double>? progress)
-        {
-            using var response = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-            await using var httpStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = File.Create(destPath);
-            var buffer = new byte[81920];
-            long readSoFar = 0;
-            int read;
-            while ((read = await httpStream.ReadAsync(buffer)) > 0)
-            {
-                await fileStream.WriteAsync(buffer.AsMemory(0, read));
-                readSoFar += read;
-                if (totalBytes > 0)
-                    progress?.Report((double)readSoFar / totalBytes);
             }
         }
 
@@ -608,21 +588,39 @@ namespace OptiscalerClient.Services
             return result;
         }
 
+        // Per-file scan cache: an exe that hasn't changed (same path, size and last-write time) never
+        // needs to be read again. 0 = no FidelityFX reference, 1 = has one, 2 = carries the DLSS-NR
+        // marker (treated as "skip this exe", matching FindPatterns' last-pattern convention).
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _ownFsrExeScanCache =
+            new(System.StringComparer.OrdinalIgnoreCase);
+
         /// <summary>True when an exe in <paramref name="gameDir"/> names the FidelityFX API (ASCII or
         /// UTF-16), as a game with its own FSR 3.1 / FSR 4 does. Exes carrying DLSS-NR-on-AMD's
-        /// marker are skipped. Streams each file — game exes can be hundreds of MB.</summary>
+        /// marker are skipped. Results are cached per file (path + size + last write) so unchanged
+        /// exes are not re-read on repeated calls. Streams each file — game exes can be hundreds of MB.</summary>
         internal static bool GameHasOwnFsr(string gameDir)
         {
+            if (string.IsNullOrEmpty(gameDir) || !Directory.Exists(gameDir)) return false;
+
             var ffxPatterns = FidelityFxNames.SelectMany(n => new[] { Encoding.ASCII.GetBytes(n), Encoding.Unicode.GetBytes(n) }).ToArray();
             var markerPattern = Encoding.ASCII.GetBytes(DlssNrMarker);
+            var patterns = ffxPatterns.Append(markerPattern).ToArray();
 
             foreach (var exe in Directory.EnumerateFiles(gameDir, "*.exe"))
             {
                 try
                 {
-                    var found = FindPatterns(exe, ffxPatterns.Append(markerPattern).ToArray());
-                    if (found[^1]) continue; // DLSS-NR-on-AMD's own setup
-                    if (found.Take(found.Length - 1).Any(f => f)) return true;
+                    var info = new FileInfo(exe);
+                    var cacheKey = $"{exe}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";
+                    if (!_ownFsrExeScanCache.TryGetValue(cacheKey, out var cached))
+                    {
+                        var found = FindPatterns(exe, patterns);
+                        cached = found[^1] ? 2 : (found.Take(found.Length - 1).Any(f => f) ? 1 : 0);
+                        _ownFsrExeScanCache[cacheKey] = cached;
+                    }
+
+                    if (cached == 2) continue; // DLSS-NR-on-AMD's own setup
+                    if (cached == 1) return true;
                 }
                 catch (IOException ex) { DebugWindow.Log($"[AmdNrBridge] Could not scan {exe}: {ex.Message}"); }
                 catch (UnauthorizedAccessException ex) { DebugWindow.Log($"[AmdNrBridge] Could not scan {exe}: {ex.Message}"); }

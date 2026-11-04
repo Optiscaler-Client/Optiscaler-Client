@@ -103,18 +103,24 @@ namespace OptiscalerClient.Services
             if (string.IsNullOrEmpty(searchRoot) || !Directory.Exists(searchRoot))
                 return false;
 
+            // Early-skip: if an external backup already exists for this root, no migration is needed.
+            if (_backupStore.HasValidBackup(searchRoot))
+                return true;
+
             string? legacyManifestPath = null;
             try
             {
+                // Bounded recursive enumeration: cap depth and stop at the first match (early-skip)
+                // instead of materialising every file under potentially huge game trees.
                 var opts = new EnumerationOptions
                 {
                     RecurseSubdirectories = true,
                     IgnoreInaccessible = true,
-                    MatchCasing = MatchCasing.CaseInsensitive
+                    MatchCasing = MatchCasing.CaseInsensitive,
+                    MaxRecursionDepth = 8,
+                    AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
                 };
-                var matches = Directory.GetFiles(searchRoot, LegacyManifestFileName, opts);
-                if (matches.Length > 0)
-                    legacyManifestPath = matches[0];
+                legacyManifestPath = Directory.EnumerateFiles(searchRoot, LegacyManifestFileName, opts).FirstOrDefault();
             }
             catch (Exception ex)
             {

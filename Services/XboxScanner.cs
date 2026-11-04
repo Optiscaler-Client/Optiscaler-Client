@@ -1,11 +1,15 @@
 using OptiscalerClient.Models;
 using System.IO;
+using System.Linq;
 
 namespace OptiscalerClient.Services;
 
 public class XboxScanner : IGameScanner
 {
-    public List<Game> Scan()
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 
@@ -26,10 +30,10 @@ public class XboxScanner : IGameScanner
                             {
                                 // Xbox Game Pass games typically have executable files or a Content folder structure.
                                 // A folder inside an XboxGames directory is generally an installed game.
-                                string gameName = new DirectoryInfo(dir).Name;
+                                string gameName = Path.GetFileName(dir);
 
                                 // Basic validation: skip empty folders
-                                if (Directory.GetFileSystemEntries(dir).Length > 0)
+                                if (Directory.EnumerateFileSystemEntries(dir).Any())
                                 {
                                     games.Add(new Game
                                     {

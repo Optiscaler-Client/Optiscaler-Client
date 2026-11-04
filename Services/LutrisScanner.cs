@@ -42,7 +42,24 @@ public class LutrisScanner : IGameScanner
         .IgnoreUnmatchedProperties()
         .Build();
 
-    public List<Game> Scan()
+    private static readonly Regex TrailingIdRegex = new(@"-\d+$");
+
+    private static readonly string[] ConfigDirectories = CreateConfigDirectories();
+
+    private static string[] CreateConfigDirectories()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return new[]
+        {
+            Path.Combine(home, ".local", "share", "lutris"),
+            Path.Combine(home, ".var", "app", "net.lutris.Lutris", "data", "lutris"),
+        };
+    }
+
+    public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
+    => Task.Run(() => Scan(cancellationToken), cancellationToken);
+
+    private List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
 
@@ -105,7 +122,7 @@ public class LutrisScanner : IGameScanner
     /// </summary>
     internal static string DeriveNameFromSlug(string slug)
     {
-        var withoutId = Regex.Replace(slug, @"-\d+$", "");
+        var withoutId = TrailingIdRegex.Replace(slug, "");
         var words = withoutId.Split('-', StringSplitOptions.RemoveEmptyEntries)
             .Select(w => char.ToUpperInvariant(w[0]) + w[1..]);
 
@@ -115,11 +132,6 @@ public class LutrisScanner : IGameScanner
 
     internal static IEnumerable<string> GetLutrisConfigDirectories()
     {
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return new[]
-        {
-            Path.Combine(home, ".local", "share", "lutris"),
-            Path.Combine(home, ".var", "app", "net.lutris.Lutris", "data", "lutris"),
-        };
+        return ConfigDirectories;
     }
 }
