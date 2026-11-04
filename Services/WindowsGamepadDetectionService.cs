@@ -67,10 +67,24 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
 
     public void StopListening()
     {
-        _cts?.Cancel();
-        try { _pollingTask?.Wait(500); } catch { }
-        _cts?.Dispose();
+        if (_cts == null) return;
+
+        _cts.Cancel();
+        try
+        {
+            if (_pollingTask != null && !_pollingTask.Wait(TimeSpan.FromSeconds(2)))
+            {
+                System.Diagnostics.Debug.WriteLine("[WindowsGamepadDetectionService] Polling task did not complete within 2s after cancellation.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // join completed or faulted after cancellation
+            System.Diagnostics.Debug.WriteLine($"[WindowsGamepadDetectionService] Polling task threw during stop: {ex.Message}");
+        }
+        _cts.Dispose();
         _cts = null;
+        _pollingTask = null;
     }
 
     private async Task PollLoop(CancellationToken token)
@@ -94,10 +108,15 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
                     _useFallback = true;
                     continue;
                 }
-                // Si no hay XInput, cancelamos silenciosamente
+                // If no XInput, cancel silently
+                return;
+            }
+            catch (OperationCanceledException)
+            {
                 return;
             }
 
+            int pollDelay = 16;
             if (result == 0) // ERROR_SUCCESS
             {
                 if (!_isConnected)
@@ -143,6 +162,8 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
             }
             else
             {
+                // Back off while disconnected instead of busy-polling at 60fps.
+                pollDelay = 500;
                 if (_isConnected)
                 {
                     _isConnected = false;
@@ -151,7 +172,14 @@ public class WindowsGamepadDetectionService : IGamepadDetectionService
                 }
             }
             
-            await Task.Delay(16, token); // ~60fps
+            try
+            {
+                await Task.Delay(pollDelay, token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
         }
     }
 
