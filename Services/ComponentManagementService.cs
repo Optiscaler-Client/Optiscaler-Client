@@ -84,6 +84,10 @@ namespace OptiscalerClient.Services
         private static FakenvapiReleasesCache _fakenvapiCache = new();
         private static System.Collections.Generic.List<string>? _cachedFakenvapiVersions = null;
         private static string? _cachedLatestFakenvapiVersion = null;
+        // Persistent local cache of HelixSR release metadata
+        private static HelixSRReleasesCache _helixSRCache = new();
+        private static System.Collections.Generic.List<string>? _cachedHelixSRVersions = null;
+        private static string? _cachedLatestHelixSRVersion = null;
         // Persistent local cache of DLSS Enabler mirror release metadata
         private static DlssEnablerMirrorReleasesCache _dlssEnablerMirrorCache = new();
         private static System.Collections.Generic.List<string>? _cachedDlssEnablerMirrorVersions = null;
@@ -206,6 +210,11 @@ namespace OptiscalerClient.Services
             => _cachedFakenvapiVersions ?? new System.Collections.Generic.List<string>();
         /// <summary>The latest Fakenvapi version tag, or null if none fetched yet.</summary>
         public string? LatestFakenvapiVersion => _cachedLatestFakenvapiVersion;
+        /// <summary>All available HelixSR versions from the remote cache.</summary>
+        public System.Collections.Generic.List<string> HelixSRAvailableVersions
+            => _cachedHelixSRVersions ?? new System.Collections.Generic.List<string>();
+        /// <summary>The latest HelixSR version tag, or null if none fetched yet.</summary>
+        public string? LatestHelixSRVersion => _cachedLatestHelixSRVersion;
 
         /// <summary>All DLSS Enabler versions known from the unofficial mirror repo's releases
         /// (whether downloaded locally yet or not) — the "Mirror" tab in version pickers.</summary>
@@ -257,6 +266,7 @@ namespace OptiscalerClient.Services
             LoadOptiPatcherCache();
             LoadXeFGUnlockCache();
             LoadFakenvapiCache();
+            LoadHelixSRCache();
             LoadDlssEnablerMirrorCache();
             LoadStreamlineReleasesCache();
             LoadRenodxCache();
@@ -350,6 +360,7 @@ namespace OptiscalerClient.Services
                 if (!string.IsNullOrEmpty(template.OptiPatcher.RepoOwner))    target.OptiPatcher    = template.OptiPatcher;
                 if (!string.IsNullOrEmpty(template.XeFGUnlock.RepoOwner))     target.XeFGUnlock     = template.XeFGUnlock;
                 if (!string.IsNullOrEmpty(template.DlssEnablerMirror.RepoOwner)) target.DlssEnablerMirror = template.DlssEnablerMirror;
+                if (!string.IsNullOrEmpty(template.HelixSR.RepoOwner))         target.HelixSR        = template.HelixSR;
 
                 if (target.ScanExclusions.Count == 0 && template.ScanExclusions.Count > 0)
                     target.ScanExclusions = template.ScanExclusions;
@@ -806,6 +817,8 @@ namespace OptiscalerClient.Services
                         await Task.Delay(150);
                         var fakeTask = FetchFakenvapiReleasesAsync();
                         await Task.Delay(150);
+                        var helixTask = FetchHelixSRReleasesAsync();
+                        await Task.Delay(150);
                         var extrasTask = FetchExtrasReleasesAsync();
                         await Task.Delay(150);
                         var extrasFp8Task = FetchExtrasFp8ReleasesAsync();
@@ -818,7 +831,7 @@ namespace OptiscalerClient.Services
                         await Task.Delay(150);
                         var xeFGUnlockTask = FetchXeFGUnlockReleasesAsync();
 
-                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask, streamlineTask, xeFGUnlockTask);
+                        await Task.WhenAll(optiVersionsTask, optiBetasTask, optiNightlyTask, fakeTask, helixTask, extrasTask, extrasFp8Task, optiPatcherTask, dlssEnablerMirrorTask, streamlineTask, xeFGUnlockTask);
 
                         var stableEntries = await optiVersionsTask;
                         var betaEntries = await optiBetasTask;
@@ -835,6 +848,7 @@ namespace OptiscalerClient.Services
                         MergeExtrasReleases((await extrasTask).Concat(await extrasFp8Task).ToList());
 
                         MergeFakenvapiReleases(await fakeTask);
+                        MergeHelixSRReleases(await helixTask);
                         _cachedFakenvapiVersion = _cachedLatestFakenvapiVersion ?? _cachedFakenvapiVersion;
 
                         MergeOptiPatcherReleases(await optiPatcherTask);
@@ -1765,6 +1779,184 @@ namespace OptiscalerClient.Services
             DebugWindow.Log($"[FakenvapiCache] Rebuilt in-memory: {_cachedFakenvapiVersions.Count} version(s), latest={_cachedLatestFakenvapiVersion}");
         }
 
+        private void LoadHelixSRCache()
+        {
+            if (_helixSRCache.Releases.Count > 0) return;
+            try
+            {
+                var file = Path.Combine(_baseDir, "helixsr_cache.json");
+                if (File.Exists(file))
+                {
+                    var json = File.ReadAllText(file);
+                    var loaded = JsonSerializer.Deserialize(json, OptimizerContext.Default.HelixSRReleasesCache);
+                    if (loaded != null)
+                    {
+                        _helixSRCache = loaded;
+                        RebuildInMemoryHelixSRCache();
+                        DebugWindow.Log($"[HelixSRCache] Loaded {_helixSRCache.Releases.Count} entries from local cache.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[HelixSRCache] Failed to load: {ex.Message}");
+            }
+        }
+
+        private void SaveHelixSRCache()
+        {
+            try
+            {
+                var file = Path.Combine(_baseDir, "helixsr_cache.json");
+                var json = JsonSerializer.Serialize(_helixSRCache, OptimizerContext.Default.HelixSRReleasesCache);
+                File.WriteAllText(file, json);
+                DebugWindow.Log($"[HelixSRCache] Saved {_helixSRCache.Releases.Count} entries.");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[HelixSRCache] Failed to save: {ex.Message}");
+            }
+        }
+
+        private void RebuildInMemoryHelixSRCache()
+        {
+            if (_helixSRCache.Releases == null || _helixSRCache.Releases.Count == 0)
+            {
+                _cachedHelixSRVersions = new System.Collections.Generic.List<string>();
+                _cachedLatestHelixSRVersion = null;
+                return;
+            }
+            _cachedLatestHelixSRVersion = _helixSRCache.Releases.FirstOrDefault(r => r.IsLatest)?.Version
+                ?? _helixSRCache.Releases.FirstOrDefault()?.Version;
+
+            static Version parseHelixVer(string v)
+            {
+                var clean = v.TrimStart('v');
+                var dash = clean.IndexOf('-');
+                if (dash >= 0) clean = clean[..dash];
+                var plus = clean.IndexOf('+');
+                if (plus >= 0) clean = clean[..plus];
+                return Version.TryParse(clean, out var p) ? p : new Version(0, 0);
+            }
+
+            _cachedHelixSRVersions = _helixSRCache.Releases
+                .Select(r => r.Version)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(v => parseHelixVer(v))
+                .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            DebugWindow.Log($"[HelixSRCache] Rebuilt in-memory: {_cachedHelixSRVersions.Count} version(s), latest={_cachedLatestHelixSRVersion}");
+        }
+
+        private void MergeHelixSRReleases(System.Collections.Generic.List<HelixSRReleaseEntry> newReleases)
+        {
+            if (newReleases == null || newReleases.Count == 0) return;
+            var existing = new System.Collections.Generic.HashSet<string>(_helixSRCache.Releases.Select(r => r.Version), StringComparer.OrdinalIgnoreCase);
+            foreach (var e in _helixSRCache.Releases) e.IsLatest = false;
+            foreach (var entry in newReleases)
+            {
+                if (!existing.Contains(entry.Version))
+                    _helixSRCache.Releases.Add(entry);
+                else
+                {
+                    var ex = _helixSRCache.Releases.FirstOrDefault(r => string.Equals(r.Version, entry.Version, StringComparison.OrdinalIgnoreCase));
+                    if (ex != null)
+                    {
+                        if (string.IsNullOrEmpty(ex.DownloadUrl)) ex.DownloadUrl = entry.DownloadUrl;
+                        ex.IsLatest = entry.IsLatest;
+                    }
+                }
+            }
+            _helixSRCache.LastUpdated = DateTime.Now;
+            SaveHelixSRCache();
+            RebuildInMemoryHelixSRCache();
+        }
+
+        private async Task<System.Collections.Generic.List<HelixSRReleaseEntry>> FetchHelixSRReleasesAsync()
+        {
+            var entries = new System.Collections.Generic.List<HelixSRReleaseEntry>();
+            var config = _config.HelixSR;
+            var repoLabel = $"{config.RepoOwner}/{config.RepoName}";
+
+            try
+            {
+                if (string.IsNullOrEmpty(config.RepoOwner) || string.IsNullOrEmpty(config.RepoName))
+                {
+                    DebugWindow.Log($"[HelixSRVersions] Skipping {repoLabel}: empty config");
+                    return entries;
+                }
+
+                var url = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases?per_page=30";
+                var response = await GetWithRetryAsync(() => _httpClient, url);
+                DebugWindow.Log($"[HelixSRVersions] GET {url} → HTTP {(int)response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                bool latestMarked = false;
+
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    DebugWindow.Log($"[HelixSRVersions] ERROR: Expected JSON array, got {doc.RootElement.ValueKind}");
+                    return entries;
+                }
+
+                foreach (var element in doc.RootElement.EnumerateArray())
+                {
+                    if (!element.TryGetProperty("tag_name", out var tagName)) continue;
+                    var version = tagName.GetString();
+                    if (string.IsNullOrEmpty(version)) continue;
+
+                    if (version.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+                        version = version.Substring(1);
+
+                    string? downloadUrl = null;
+                    if (element.TryGetProperty("assets", out var assets))
+                    {
+                        foreach (var asset in assets.EnumerateArray())
+                        {
+                            if (asset.TryGetProperty("browser_download_url", out var urlProp) &&
+                                asset.TryGetProperty("name", out var nameProp))
+                            {
+                                var assetName = nameProp.GetString() ?? "";
+                                var assetUrl = urlProp.GetString();
+                                if (assetUrl != null &&
+                                    assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                                    !assetName.Contains("Desktop", StringComparison.OrdinalIgnoreCase) &&
+                                    !assetName.Contains("Scaler", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    downloadUrl = assetUrl;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (downloadUrl == null && element.TryGetProperty("zipball_url", out var zipballProp))
+                        downloadUrl = zipballProp.GetString();
+
+                    bool prerelease = element.TryGetProperty("prerelease", out var prProp) && prProp.ValueKind == JsonValueKind.True;
+                    bool isLatest = !latestMarked && !prerelease;
+
+                    entries.Add(new HelixSRReleaseEntry
+                    {
+                        Version = version,
+                        DownloadUrl = downloadUrl,
+                        IsLatest = isLatest,
+                    });
+                    if (isLatest) latestMarked = true;
+                }
+
+                DebugWindow.Log($"[HelixSRVersions] {repoLabel} → {entries.Count} release(s)");
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.Log($"[HelixSRVersions] {repoLabel} → ERROR: {ex.Message}");
+            }
+
+            return entries;
+        }
+
         // ── DLSS Enabler mirror cache ────────────────────────────────────────────
         // Releases published by Optiscaler-Client/OptiScaler-DlssEnabler — an unofficial mirror of
         // the official DLSS Enabler builds (which are Nexus Mods-only). Each release is a zip
@@ -2196,6 +2388,19 @@ namespace OptiscalerClient.Services
         /// </summary>
         public string GetFakenvapiCachePath(string version)
             => Path.Combine(_cacheDir, "Fakenvapi", version);
+
+        public string GetHelixSRCachePath(string version)
+            => Path.Combine(_cacheDir, "HelixSR", version);
+
+        public bool IsHelixSRCached(string version)
+        {
+            var dir = GetHelixSRCachePath(version);
+            return Directory.Exists(dir) &&
+                   (File.Exists(Path.Combine(dir, "OptiScaler.dll")) ||
+                    Directory.GetFiles(dir, "OptiScaler.dll", SearchOption.AllDirectories).Length > 0);
+        }
+
+        public string GetHelixSRCachePath() => Path.Combine(_cacheDir, "HelixSR");
 
         /// <summary>
         /// Returns true if the given Fakenvapi version is already cached locally.
@@ -4150,6 +4355,61 @@ namespace OptiscalerClient.Services
             RegisterRenodxCacheEntry(gameKey, displayName, fileName);
             DebugWindow.Log($"[Renodx] Imported '{fileName}' for '{displayName}'.");
             return Task.FromResult(destPath);
+        }
+
+        public async System.Threading.Tasks.Task<string> DownloadHelixSRAsync(string version, IProgress<double>? progress = null)
+        {
+            var cacheDir = GetHelixSRCachePath(version);
+            if (IsHelixSRCached(version))
+            {
+                DebugWindow.Log($"[HelixSRDownload] v{version} already cached at {cacheDir}");
+                return cacheDir;
+            }
+            string? downloadUrl = _helixSRCache.Releases.FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))?.DownloadUrl;
+            if (string.IsNullOrEmpty(downloadUrl))
+            {
+                var config = _config.HelixSR;
+                foreach (var prefix in new[] { "v", "" })
+                {
+                    try
+                    {
+                        var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
+                        var resp = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
+                        if (!resp.IsSuccessStatusCode) continue;
+                        var tagJson = await resp.Content.ReadAsStringAsync();
+                        using var tagDoc = System.Text.Json.JsonDocument.Parse(tagJson);
+                        if (tagDoc.RootElement.TryGetProperty("assets", out var assets))
+                        {
+                            foreach (var asset in assets.EnumerateArray())
+                            {
+                                if (asset.TryGetProperty("browser_download_url", out var urlProp) && asset.TryGetProperty("name", out var nameProp))
+                                {
+                                    var assetName = nameProp.GetString() ?? "";
+                                    var assetUrl = urlProp.GetString();
+                                    if (assetUrl != null && assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) && !assetName.Contains("Desktop", StringComparison.OrdinalIgnoreCase) && !assetName.Contains("Scaler", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        downloadUrl = assetUrl;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (downloadUrl != null) break;
+                    }
+                    catch { }
+                }
+            }
+            if (string.IsNullOrEmpty(downloadUrl)) throw new VersionUnavailableException(version, "Could not find HelixSR download URL for this version.");
+            Directory.CreateDirectory(cacheDir);
+            var tempFile = Path.Combine(Path.GetTempPath(), $"helixsr_{version}_{Guid.NewGuid():N}.zip");
+            try
+            {
+                await StreamToFileAsync(() => _httpClient, downloadUrl, tempFile, progress);
+                if (Directory.Exists(cacheDir)) { foreach (var f in Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)) try { File.Delete(f); } catch { } foreach (var d in Directory.GetDirectories(cacheDir)) try { Directory.Delete(d, true); } catch { } }
+                System.IO.Compression.ZipFile.ExtractToDirectory(tempFile, cacheDir);
+                return cacheDir;
+            }
+            finally { try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { } }
         }
 
         private void LoadRenodxCache()

@@ -1545,6 +1545,9 @@ namespace OptiscalerClient.Views
             // ── Populate Fakenvapi selector ───────────────────────────────────
             PopulateFakenvapiComboBox(componentService);
 
+            // ── Populate HelixSR selector ─────────────────────────────────────
+            PopulateHelixSRComboBox(componentService);
+
             // ── Populate RenoDX selector (experimental, opt-in) ───────────────
             var showExperimental = componentService.Config.ShowExperimentalFeatures;
             var experimentalZone = this.FindControl<Control>("BorderExperimentalZone");
@@ -1751,6 +1754,9 @@ namespace OptiscalerClient.Views
                 }
                 cmbOptiVersion.Items.Add(cbi);
             }
+
+            // HelixSR is installed via its own panel (PanelHelixSRVersion) — not through the
+            // OptiScaler version combo, to avoid the dead "helixsr:" download path.
 
             // Select version: try to match config default if it's in this channel, else select first
             // real version (latest). Index 0 is always "None" and is never picked here — it only
@@ -2531,6 +2537,10 @@ namespace OptiscalerClient.Views
         {
             if (string.IsNullOrEmpty(ver)) return false;
 
+            // Strip channel prefixes such as "helixsr:" so fork tags compare like plain versions
+            if (ver.StartsWith("helixsr:", StringComparison.OrdinalIgnoreCase))
+                ver = ver.Substring("helixsr:".Length);
+
             // Extract numeric prefix (e.g. "0.9.1" from "v0.9.1-beta" or "0.9.1-beta")
             var m = Regex.Match(ver, "^v?(\\d+(?:\\.\\d+)*)");
             if (!m.Success) return false;
@@ -2716,6 +2726,7 @@ namespace OptiscalerClient.Views
 
             var opti = this.FindControl<StackPanel>("PanelOptiScalerVersion");
             var extras = this.FindControl<StackPanel>("PanelExtrasVersion");
+            var helixSR = this.FindControl<StackPanel>("PanelHelixSRVersion");
             var injection = this.FindControl<StackPanel>("PanelInjectionMethod");
             var patcher = this.FindControl<StackPanel>("PanelOptiPatcherVersion");
             var profile = this.FindControl<StackPanel>("PanelProfile");
@@ -2725,7 +2736,7 @@ namespace OptiscalerClient.Views
             var spoofingHost = this.FindControl<StackPanel>("PanelSpoofingHost");
             var injectionLabel = this.FindControl<StackPanel>("LblInjectionMethod");
 
-            if (opti == null || extras == null || injection == null || patcher == null
+            if (opti == null || extras == null || helixSR == null || injection == null || patcher == null
                 || profile == null || frameGeneration == null || upscalingQuality == null
                 || outputUpscaler == null || spoofingHost == null)
                 return;
@@ -2737,7 +2748,7 @@ namespace OptiscalerClient.Views
                 // Generation / Profile / Spoofing — exactly 9 panels: 3 rows at 3 columns, 5 at 2.
                 var ordered = new List<StackPanel>
                 {
-                    opti, extras, injection, patcher, outputUpscaler, upscalingQuality,
+                    opti, extras, helixSR, injection, patcher, outputUpscaler, upscalingQuality,
                     frameGeneration, profile, spoofingHost,
                 };
                 for (var i = 0; i < ordered.Count; i++)
@@ -2755,7 +2766,7 @@ namespace OptiscalerClient.Views
                 // hand-picking (row, col) per panel — wrap to a new row every 3.
                 var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
                 var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
-                var ordered = new List<StackPanel> { opti, extras };
+                var ordered = new List<StackPanel> { opti, extras, helixSR };
                 if (fakenvapiPanel is { IsVisible: true }) ordered.Add(fakenvapiPanel);
                 ordered.Add(injection);
                 ordered.Add(patcher);
@@ -5089,6 +5100,8 @@ namespace OptiscalerClient.Views
 
                 var selectedItem = cmbInjectionMethod?.SelectedItem as ComboBoxItem;
                 var injectionMethod = selectedItem?.Tag?.ToString() ?? "dxgi.dll";
+
+
                 // "Mod + OptiScaler": danielblnc's mod is always installed as dbghelp.dll (see
                 // DlssNrOnAmdService.DriveInstallerAsync) — OptiScaler can't take that same name.
                 if (_game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode &&
@@ -5937,6 +5950,7 @@ namespace OptiscalerClient.Views
             "PanelOptiScalerVersion", "PanelInjectionMethod", "PanelOptiPatcherVersion",
             "PanelProfile", "PanelFrameGeneration", "PanelUpscalingQuality", "PanelSpoofingHost",
             "PanelOutputUpscaler", "PanelFakenvapiVersion", "PanelNukemFGVersion", "PanelRenodxVersion",
+            "PanelHelixSRVersion",
         };
 
         private void SetOptiScalerControlsLocked(bool locked)
@@ -7003,8 +7017,11 @@ namespace OptiscalerClient.Views
 
                 if (txtVersion != null)
                 {
-                    if (!string.IsNullOrEmpty(_game.OptiscalerVersion))
-                        txtVersion.Text = $"v{_game.OptiscalerVersion}";
+                    if (!string.IsNullOrEmpty(_game.OptiscalerVersion) || (_game.IsHelixSRInstalled && !string.IsNullOrEmpty(_game.HelixSRVersion)))
+                    {
+                        var v = !string.IsNullOrEmpty(_game.OptiscalerVersion) ? _game.OptiscalerVersion : _game.HelixSRVersion;
+                        txtVersion.Text = _game.IsHelixSRInstalled ? $"vHelixSR {v}" : $"v{v}";
+                    }
                     else
                         txtVersion.Text = "";
                 }
@@ -7933,5 +7950,165 @@ namespace OptiscalerClient.Views
         {
             return Application.Current?.TryFindResource(key, out var res) == true && res is string str ? str : fallback;
         }
+        private void PopulateHelixSRComboBox(ComponentManagementService componentService)
+        {
+            var cmb = this.FindControl<ComboBox>("CmbHelixSRVersion");
+            var panel = this.FindControl<StackPanel>("PanelHelixSRVersion");
+            if (cmb == null) return;
+            cmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
+            cmb.Items.Clear();
+            cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtOptiVersionNone", "None"), Tag = "none" });
+            try
+            {
+                var versions = componentService.HelixSRAvailableVersions;
+                if (versions != null && versions.Count > 0)
+                {
+                    foreach (var v in versions)
+                    {
+                        bool isLatest = string.Equals(v, componentService.LatestHelixSRVersion, StringComparison.OrdinalIgnoreCase);
+                        if (isLatest)
+                        {
+                            var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
+                            stack.Children.Add(new TextBlock { Text = v, VerticalAlignment = VerticalAlignment.Center });
+                            stack.Children.Add(new Border
+                            {
+                                CornerRadius = new CornerRadius(4),
+                                Background = new SolidColorBrush(Color.Parse("#22D3EE")),
+                                Padding = new Thickness(5, 1),
+                                Child = new TextBlock { Text = "LATEST", FontSize = 10, Foreground = Brushes.White, FontWeight = FontWeight.Bold, VerticalAlignment = VerticalAlignment.Center }
+                            });
+                            cmb.Items.Add(new ComboBoxItem { Content = stack, Tag = v });
+                        }
+                        else
+                        {
+                            cmb.Items.Add(new ComboBoxItem { Content = v, Tag = v });
+                        }
+                    }
+                    if (panel != null) panel.IsVisible = true;
+                }
+                else
+                {
+                    if (panel != null) panel.IsVisible = false;
+                }
+            }
+            catch { if (panel != null) panel.IsVisible = false; }
+            int sel = 0;
+            var preferred = _game.HelixSRVersion;
+            if (string.IsNullOrEmpty(preferred))
+            {
+                try { preferred = new ComponentManagementService().Config.DefaultHelixSRVersion; } catch { }
+            }
+            if (!string.IsNullOrEmpty(preferred))
+            {
+                for (int i = 0; i < cmb.Items.Count; i++)
+                {
+                    if (cmb.Items[i] is ComboBoxItem ci && string.Equals(ci.Tag?.ToString(), preferred, StringComparison.OrdinalIgnoreCase))
+                    { sel = i; break; }
+                }
+            }
+            cmb.SelectedIndex = sel;
+            cmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
+        }
+
+        private void CmbHelixSRVersion_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var cmb = sender as ComboBox;
+                var tag = (cmb?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                if (!string.IsNullOrEmpty(tag) && !tag.Equals("none", StringComparison.OrdinalIgnoreCase))
+                {
+                    var cs = new ComponentManagementService();
+                    cs.Config.DefaultHelixSRVersion = tag;
+                    cs.SaveConfiguration();
+                }
+            }
+            catch { }
+            RefreshInstallActionAvailability();
+        }
+
+        private async void BtnInstallHelixSR_Click(object? sender, RoutedEventArgs e)
+        {
+            if (!await ConfirmAntiCheatRiskAsync()) return;
+
+            var cmbHelix = this.FindControl<ComboBox>("CmbHelixSRVersion");
+            var helixItem = cmbHelix?.SelectedItem as ComboBoxItem;
+            var helixTag = helixItem?.Tag?.ToString();
+            if (string.IsNullOrEmpty(helixTag) || helixTag.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), "Select a HelixSR version.").ShowDialog<object>(this);
+                return;
+            }
+
+            var selectedItem = this.FindControl<ComboBox>("CmbInjectionMethod")?.SelectedItem as ComboBoxItem;
+            var injectionMethod = selectedItem?.Tag?.ToString();
+            if (string.IsNullOrEmpty(injectionMethod)) injectionMethod = "dxgi.dll";
+            if (injectionMethod.Equals("auto", StringComparison.OrdinalIgnoreCase)) injectionMethod = "dxgi.dll";
+
+            // "Mod + OptiScaler": danielblnc's mod is always installed as dbghelp.dll
+            if (_game.InstalledDlssNrOnAmdMode == AmdNrBridgeService.BridgeMode &&
+                injectionMethod.Equals("dbghelp.dll", StringComparison.OrdinalIgnoreCase))
+            {
+                injectionMethod = "dxgi.dll";
+            }
+            if (!OperatingSystem.IsWindows() && _game.IsDlssNrOnAmdInstalled &&
+                new[] { "version.dll", "d3d12.dll", "d3d12core.dll", "amdhip64_7.dll" }.Contains(injectionMethod, StringComparer.OrdinalIgnoreCase))
+            {
+                injectionMethod = "dxgi.dll";
+            }
+
+            try
+            {
+                Dispatcher.UIThread.Post(() => {
+                    var btn = sender as Button;
+                    if (btn != null) btn.IsEnabled = false;
+                    var bdProgress = this.FindControl<Border>("BdProgress");
+                    var prgDownload = this.FindControl<ProgressBar>("PrgDownload");
+                    var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
+                    if (bdProgress != null) bdProgress.IsVisible = true;
+                    if (prgDownload != null) { prgDownload.IsIndeterminate = true; }
+                    if (txtProgressState != null) txtProgressState.Text = "Downloading HelixSR " + helixTag + "...";
+                });
+                var compSvc2 = new ComponentManagementService();
+                var helixCache = await compSvc2.DownloadHelixSRAsync(helixTag);
+                Dispatcher.UIThread.Post(() => {
+                    var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
+                    if (txtProgressState != null) txtProgressState.Text = "Installing HelixSR " + helixTag + "...";
+                });
+                await Task.Run(() => {
+                    var inst = new GameInstallationService();
+                    inst.InstallHelixSR(_game, helixCache, injectionMethod, helixTag);
+                });
+                Dispatcher.UIThread.Post(() => {
+                    var bdProgress = this.FindControl<Border>("BdProgress");
+                    if (bdProgress != null) bdProgress.IsVisible = false;
+                    var btn = sender as Button;
+                    if (btn != null) btn.IsEnabled = true;
+                });
+                _game.IsOptiscalerInstalled = true;
+                _game.OptiscalerVersion = helixTag;
+                _game.IsHelixSRInstalled = true;
+                _game.HelixSRVersion = helixTag;
+                UpdateStatus();
+                RefreshInstallActionAvailability();
+                NeedsScan = true;
+                LoadComponents();
+                _ = ShowToastAsync(string.Format(GetResourceString("TxtInstallSuccessFormat", "{0} installed successfully!"), "HelixSR " + helixTag));
+                await ConfirmDialog.VerifyIniAfterInstallAsync(this,
+                    new GameInstallationService().DetermineInstallDirectory(_game) ?? _game.InstallPath);
+                await new ConfirmDialog(this, "HelixSR", "HelixSR " + helixTag + " installed successfully.").ShowDialog<object>(this);
+            }
+            catch (Exception hexEx)
+            {
+                Dispatcher.UIThread.Post(() => {
+                    var bdProgress = this.FindControl<Border>("BdProgress");
+                    if (bdProgress != null) bdProgress.IsVisible = false;
+                    var btn = sender as Button;
+                    if (btn != null) btn.IsEnabled = true;
+                });
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), hexEx.Message).ShowDialog<object>(this);
+            }
+        }
+
     }
 }

@@ -58,6 +58,8 @@ namespace OptiscalerClient.Models
 
         public bool IncludesOptiscaler { get; set; } = true;
         public bool IncludesFakenvapi { get; set; }
+        public bool IncludesHelixSR { get; set; }
+        public string? HelixSRVersion { get; set; }
         public bool IncludesNukemFG { get; set; }
         public bool IncludesStreamline { get; set; }
         public bool IncludesDlssEnabler { get; set; }

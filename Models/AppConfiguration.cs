@@ -95,6 +95,7 @@ namespace OptiscalerClient.Models
         public RepositoryConfig OptiScalerExtras { get; set; } = new();
         public RepositoryConfig OptiScalerExtrasFp8 { get; set; } = new();
         public RepositoryConfig Fakenvapi { get; set; } = new();
+        public RepositoryConfig HelixSR { get; set; } = new();
         public RepositoryConfig NukemFG { get; set; } = new();
         public RepositoryConfig OptiPatcher { get; set; } = new();
         public RepositoryConfig XeFGUnlock { get; set; } = new();
@@ -152,6 +153,7 @@ namespace OptiscalerClient.Models
         /// Null or "none" means "do not install".
         /// </summary>
         public string? DefaultFakenvapiVersion { get; set; } = null;
+        public string? DefaultHelixSRVersion { get; set; } = null;
         /// <summary>
         /// The default NukemFG version to pre-select in ManageGameWindow / Quick Install.
         /// Null or "none" means "do not install".
@@ -446,6 +448,25 @@ namespace OptiscalerClient.Models
     {
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
         public List<XeFGUnlockReleaseEntry> Releases { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A single HelixSR release entry stored in the local cache.
+    /// </summary>
+    public class HelixSRReleaseEntry
+    {
+        public string Version { get; set; } = string.Empty;
+        public string? DownloadUrl { get; set; }
+        public bool IsLatest { get; set; }
+    }
+
+    /// <summary>
+    /// Local cache of HelixSR release metadata.
+    /// </summary>
+    public class HelixSRReleasesCache
+    {
+        public DateTime LastUpdated { get; set; } = DateTime.MinValue;
+        public List<HelixSRReleaseEntry> Releases { get; set; } = new();
     }
 
     /// <summary>

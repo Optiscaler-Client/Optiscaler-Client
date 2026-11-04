@@ -861,6 +861,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -1205,6 +1206,29 @@
                                               Padding="8,0,24,0"
                                               HorizontalContentAlignment="Left"
                                               VerticalContentAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Name="PanelHelixSRVersion" Grid.Row="0" Grid.Column="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="HelixSR"
+                                                   Foreground="{StaticResource BrTextSecondary}"
+                                                   FontSize="{StaticResource FontSizeCaption}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,4,0,0">
+                                        <ComboBox Name="CmbHelixSRVersion"
+                                                  Grid.Column="0"
+                                                  HorizontalAlignment="Stretch"
+                                                  Classes="BtnSelector"
+                                                  Padding="8,0,24,0"
+                                                  HorizontalContentAlignment="Left"
+                                                  VerticalContentAlignment="Center"/>
+                                        <Button Name="BtnInstallHelixSR"
+                                                Grid.Column="1"
+                                                Content="Install HelixSR"
+                                                Classes="BtnSuccess"
+                                                Padding="14,7"
+                                                Click="BtnInstallHelixSR_Click"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Row 1, Col 1 : OptiPatcher -->

@@ -152,7 +152,9 @@ public class GameAnalyzerService
         game.XessPath = null;
         game.XessViaOptiscaler = false;
         game.IsOptiscalerInstalled = false;
-        game.OptiscalerVersion = null; // Will be repopulated from manifest or log
+        game.OptiscalerVersion = null;
+        game.IsHelixSRInstalled = false;
+        game.HelixSRVersion = null; // Will be repopulated from manifest or log
         game.HasAntiCheat = false;
         game.IsFsr4DllSwapped = false;
         game.Fsr4DllSwapTargetFileName = null;
@@ -238,6 +240,17 @@ public class GameAnalyzerService
                                     DebugWindow.Log($"[Analyzer] Priority 0 (external store) detected OptiScaler {extManifest.OptiscalerVersion} for '{game.Name}'");
                                     goto detectOtherComponents;
                                 }
+                                if (extManifest.IncludesHelixSR)
+                                {
+                                    game.IsHelixSRInstalled = true;
+                                    if (!string.IsNullOrEmpty(extManifest.HelixSRVersion))
+                                    {
+                                        game.HelixSRVersion = extManifest.HelixSRVersion;
+                                        if (string.IsNullOrEmpty(game.OptiscalerVersion))
+                                            game.OptiscalerVersion = extManifest.HelixSRVersion;
+                                    }
+                                    blockHeuristicFallbackDetection = true;
+                                }
 
                                 // Manifest found and processed (swap-only, or neither flag set) —
                                 // don't consider a second candidate dir for the same game, but do
@@ -310,6 +323,21 @@ public class GameAnalyzerService
                                 game.IsOptiscalerInstalled = true;
                                 if (!string.IsNullOrEmpty(manifest.OptiscalerVersion))
                                     game.OptiscalerVersion = manifest.OptiscalerVersion;
+                                if (manifest.IncludesHelixSR || (game.OptiscalerVersion != null && game.OptiscalerVersion.Contains("HelixSR", StringComparison.OrdinalIgnoreCase)) ||
+                                    (!string.IsNullOrEmpty(originDir) && File.Exists(Path.Combine(originDir, "HelixSR", "helixsr.dll"))))
+                                {
+                                    game.IsHelixSRInstalled = true;
+                                    if (!string.IsNullOrEmpty(manifest.HelixSRVersion))
+                                    {
+                                        game.HelixSRVersion = manifest.HelixSRVersion;
+                                        if (string.IsNullOrEmpty(game.OptiscalerVersion))
+                                            game.OptiscalerVersion = manifest.HelixSRVersion;
+                                    }
+                                    else if (string.IsNullOrEmpty(game.HelixSRVersion) && !string.IsNullOrEmpty(game.OptiscalerVersion))
+                                    {
+                                        game.HelixSRVersion = game.OptiscalerVersion;
+                                    }
+                                }
 
                                 if (!string.IsNullOrEmpty(originDir))
                                 {
@@ -1008,6 +1036,8 @@ public class GameAnalyzerService
         public bool XessViaOptiscaler { get; set; }
         public bool IsOptiscalerInstalled { get; set; }
         public string? OptiscalerVersion { get; set; }
+        public bool IsHelixSRInstalled { get; set; }
+        public string? HelixSRVersion { get; set; }
         public bool HasAntiCheat { get; set; }
 
         public static AnalysisCacheEntry FromGame(Game game, DateTime directoryWriteStampUtc)
@@ -1028,6 +1058,8 @@ public class GameAnalyzerService
                 XessViaOptiscaler = game.XessViaOptiscaler,
                 IsOptiscalerInstalled = game.IsOptiscalerInstalled,
                 OptiscalerVersion = game.OptiscalerVersion,
+                IsHelixSRInstalled = game.IsHelixSRInstalled,
+                HelixSRVersion = game.HelixSRVersion,
                 HasAntiCheat = game.HasAntiCheat
             };
         }
@@ -1047,6 +1079,8 @@ public class GameAnalyzerService
             game.XessViaOptiscaler = XessViaOptiscaler;
             game.IsOptiscalerInstalled = IsOptiscalerInstalled;
             game.OptiscalerVersion = OptiscalerVersion;
+            game.IsHelixSRInstalled = IsHelixSRInstalled;
+            game.HelixSRVersion = HelixSRVersion;
             game.HasAntiCheat = HasAntiCheat;
         }
     }
