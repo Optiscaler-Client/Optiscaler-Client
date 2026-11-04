@@ -1029,29 +1029,31 @@ public class GameAnalyzerService
     private static bool TryFindFixedFileInfo(byte[] rsrcData, out string? version)
     {
         version = null;
-        // Search for the VS_FIXEDFILEINFO signature (0xFEEF04BD) via IndexOf instead of a per-byte
-        // loop; the .rsrc section can be hundreds of MB, so skipping non-matching bytes in bulk
-        // (via the runtime's vectorised search) is the whole point of P3 here.
+        // Search for the VS_FIXEDFILEINFO signature (0xFEEF04BD, stored little-endian as BD 04 EF FE)
+        // as a full 4-byte run through the runtime's vectorised Span.IndexOf rather than byte-by-byte:
+        // the .rsrc section can be hundreds of MB, so skipping non-matching bytes in bulk is the whole
+        // point of P3 here.
+        var signature = new byte[] { 0xBD, 0x04, 0xEF, 0xFE };
+        var span = rsrcData.AsSpan();
         var searchFrom = 0;
         while (true)
         {
-            var pos = Array.IndexOf(rsrcData, (byte)0xBD, searchFrom);
-            if (pos < 0 || pos + 20 > rsrcData.Length) break;
+            var pos = span.Slice(searchFrom).IndexOf(signature);
+            if (pos < 0) break;
+            pos += searchFrom;
+            if (pos + 20 > rsrcData.Length) break;
 
-            if (rsrcData[pos + 1] == 0x04 && rsrcData[pos + 2] == 0xEF && rsrcData[pos + 3] == 0xFE)
+            // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
+            var structVer = BitConverter.ToUInt32(rsrcData, pos + 4);
+            if (structVer == 0x00010000)
             {
-                // Offset +4: dwStrucVersion must be 0x00010000 (version 1.0)
-                var structVer = BitConverter.ToUInt32(rsrcData, pos + 4);
-                if (structVer == 0x00010000)
-                {
-                    var ms = BitConverter.ToUInt32(rsrcData, pos + 8);  // dwFileVersionMS
-                    var ls = BitConverter.ToUInt32(rsrcData, pos + 12); // dwFileVersionLS
+                var ms = BitConverter.ToUInt32(rsrcData, pos + 8);  // dwFileVersionMS
+                var ls = BitConverter.ToUInt32(rsrcData, pos + 12); // dwFileVersionLS
 
-                    if (ms != 0 || ls != 0)
-                    {
-                        version = $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
-                        return true;
-                    }
+                if (ms != 0 || ls != 0)
+                {
+                    version = $"{ms >> 16}.{ms & 0xFFFF}.{ls >> 16}.{ls & 0xFFFF}";
+                    return true;
                 }
             }
 
