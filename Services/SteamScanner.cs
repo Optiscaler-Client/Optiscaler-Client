@@ -40,7 +40,7 @@ public class SteamScanner : IGameScanner
     public Task<List<Game>> ScanAsync(CancellationToken cancellationToken = default)
     => Task.Run(() => Scan(cancellationToken), cancellationToken);
 
-    private List<Game> Scan(CancellationToken cancellationToken = default)
+    public List<Game> Scan(CancellationToken cancellationToken = default)
     {
         var games = new List<Game>();
         var installPath = GetSteamInstallPath();

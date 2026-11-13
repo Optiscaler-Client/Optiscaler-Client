@@ -861,7 +861,6 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Row 0, Col 0 : OptiScaler version -->
@@ -1207,34 +1206,6 @@
                                               HorizontalContentAlignment="Left"
                                               VerticalContentAlignment="Center"/>
                                 </StackPanel>
-                                <StackPanel Name="PanelHelixSRVersion" Grid.Row="0" Grid.Column="2">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="HelixSR"
-                                                   Foreground="{StaticResource BrTextSecondary}"
-                                                   FontSize="{StaticResource FontSizeCaption}"
-                                                   VerticalAlignment="Center"/>
-                                        <Border Background="{StaticResource BrBgElevated}"
-                                                BorderBrush="{StaticResource BrBorderSubtle}"
-                                                BorderThickness="1" CornerRadius="8"
-                                                Width="16" Height="16"
-                                                ToolTip.ShowDelay="100" Cursor="Help"
-                                                ToolTip.Tip="HelixSR is an OptiScaler variant. Selecting it disables OptiScaler; install it with the Auto/Manual install buttons below.">
-                                            <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
-                                                       FontSize="10" FontWeight="Bold"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       Margin="0,-1,0,0"/>
-                                        </Border>
-                                    </StackPanel>
-                                    <Grid ColumnDefinitions="*" Margin="0,4,0,0">
-                                        <ComboBox Name="CmbHelixSRVersion"
-                                                  Grid.Column="0"
-                                                  HorizontalAlignment="Stretch"
-                                                  Classes="BtnSelector"
-                                                  Padding="8,0,24,0"
-                                                  HorizontalContentAlignment="Left"
-                                                  VerticalContentAlignment="Center"/>
-                                    </Grid>
-                                </StackPanel>
 
                                 <!-- Row 1, Col 1 : OptiPatcher -->
                                 <StackPanel Name="PanelOptiPatcherVersion" Grid.Row="1" Grid.Column="1">
@@ -1383,6 +1354,38 @@
                                                           VerticalContentAlignment="Center"
                                                           IsEnabled="False"
                                                           SelectionChanged="CmbDlssNrDanielVersion_SelectionChanged"/>
+                                            </StackPanel>
+
+                                            <!-- HelixSR: third-party OptiScaler fork (lonewolf0622/HelixSR). Column 2 is free on both
+                                                 OSes (PanelDlssNrOnAmd is hidden and the danielblnc version moves to column 1). Mutually
+                                                 exclusive with the OptiScaler / FSR 4 Swap selectors; installed via the Auto/Manual buttons. -->
+                                            <StackPanel Name="PanelHelixSRVersion" Grid.Column="2" IsVisible="False">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="HelixSR"
+                                                               Foreground="{StaticResource BrTextSecondary}"
+                                                               FontSize="{StaticResource FontSizeCaption}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Background="{StaticResource BrBgElevated}"
+                                                            BorderBrush="{StaticResource BrBorderSubtle}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Width="16" Height="16"
+                                                            ToolTip.ShowDelay="100" Cursor="Help"
+                                                            ToolTip.Tip="{DynamicResource TxtHelixSRTooltip}">
+                                                        <TextBlock Text="?" Foreground="{StaticResource BrTextSecondary}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Margin="0,-1,0,0"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <Grid ColumnDefinitions="*" Margin="0,4,0,0">
+                                                    <ComboBox Name="CmbHelixSRVersion"
+                                                              Grid.Column="0"
+                                                              HorizontalAlignment="Stretch"
+                                                              Classes="BtnSelector"
+                                                              Padding="8,0,24,0"
+                                                              HorizontalContentAlignment="Left"
+                                                              VerticalContentAlignment="Center"/>
+                                                </Grid>
                                             </StackPanel>
                                         </Grid>
 

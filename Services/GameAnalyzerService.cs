@@ -629,9 +629,7 @@ public class GameAnalyzerService
         {
             RecurseSubdirectories = true,
             IgnoreInaccessible = true,
-            MatchCasing = MatchCasing.CaseInsensitive,
-            MaxRecursionDepth = 8,
-            AttributesToSkip = FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReparsePoint
+            MatchCasing = MatchCasing.CaseInsensitive
         };
 
         try

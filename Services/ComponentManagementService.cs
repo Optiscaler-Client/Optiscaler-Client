@@ -2352,6 +2352,32 @@ namespace OptiscalerClient.Services
         public string GetHelixSRCachePath() => Path.Combine(_cacheDir, "HelixSR");
 
         /// <summary>
+        /// HelixSR's release ZIP ships HelixSR\helixsr.dll WITHOUT its DLSS network: HelixSR's own setup
+        /// builds it on the user's PC from NVIDIA's DLSS DLL and appends it to the DLL, ending the file
+        /// with a 32-byte trailer that starts with "HXSRNET1" (see strip_network in HelixSR's
+        /// setup/helixsr_install.py). Without it HLX DLSS does not run; HelixSR Scaler and HLX FSR 4 do.
+        /// </summary>
+        public static bool IsHelixSRNetworkBuilt(string cachePath)
+        {
+            try
+            {
+                var dll = Directory.EnumerateFiles(cachePath, "helixsr.dll", SearchOption.AllDirectories)
+                    .FirstOrDefault(p => string.Equals(Path.GetFileName(Path.GetDirectoryName(p)), "HelixSR", StringComparison.OrdinalIgnoreCase));
+                if (dll == null) return false;
+                using var fs = File.OpenRead(dll);
+                if (fs.Length < 32) return false;
+                fs.Seek(-32, SeekOrigin.End);
+                Span<byte> magic = stackalloc byte[8];
+                fs.ReadExactly(magic);
+                return magic.SequenceEqual("HXSRNET1"u8);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Returns a list of locally-cached HelixSR version names (subdirectory names under Cache/HelixSR/).
         /// </summary>
         public System.Collections.Generic.List<string> GetDownloadedHelixSRVersions()

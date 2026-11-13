@@ -2150,9 +2150,9 @@ namespace OptiscalerClient.Views
                     var helixTag = (helixCmb.SelectedItem as ComboBoxItem)?.Tag?.ToString();
                     if (!string.IsNullOrEmpty(helixTag) && !helixTag.Equals("none", StringComparison.OrdinalIgnoreCase))
                     {
-                        helixCmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
-                        helixCmb.SelectedIndex = 0;
-                        helixCmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
+                        ResetHelixSRSelection();
+                        // OptiScaler is "None" here (HelixSR forced it): Injection goes back to locked.
+                        UpdateLockedOptionsForNoneSelection(true);
                         UpdateInstallButtonsForSwapState();
                         RefreshInstallActionAvailability();
                     }
@@ -2536,6 +2536,12 @@ namespace OptiscalerClient.Views
         /// that only makes sense alongside an actual OptiScaler install (a bare FSR4 DLL swap
         /// doesn't touch any of these).
         /// </summary>
+        private bool IsHelixSRSelected()
+        {
+            var tag = (this.FindControl<ComboBox>("CmbHelixSRVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            return !string.IsNullOrEmpty(tag) && !tag.Equals("none", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void UpdateLockedOptionsForNoneSelection(bool isNone)
         {
             var cmbInjection = this.FindControl<ComboBox>("CmbInjectionMethod");
@@ -2546,7 +2552,9 @@ namespace OptiscalerClient.Views
             var cmbOutputUpscaler = this.FindControl<ComboBox>("CmbOutputUpscaler");
 
             bool enabled = !isNone;
-            if (cmbInjection != null) cmbInjection.IsEnabled = enabled;
+            // HelixSR installs its own OptiScaler build under the chosen proxy name (README: use
+            // winmm.dll/version.dll when the game already ships dxgi.dll), so it needs this selector.
+            if (cmbInjection != null) cmbInjection.IsEnabled = enabled || IsHelixSRSelected();
             if (cmbOptiPatcher != null) cmbOptiPatcher.IsEnabled = enabled;
             if (cmbProfile != null) cmbProfile.IsEnabled = enabled;
             if (btnFrameGeneration != null) btnFrameGeneration.IsEnabled = enabled;
@@ -2747,7 +2755,6 @@ namespace OptiscalerClient.Views
 
             var opti = this.FindControl<StackPanel>("PanelOptiScalerVersion");
             var extras = this.FindControl<StackPanel>("PanelExtrasVersion");
-            var helixSR = this.FindControl<StackPanel>("PanelHelixSRVersion");
             var injection = this.FindControl<StackPanel>("PanelInjectionMethod");
             var patcher = this.FindControl<StackPanel>("PanelOptiPatcherVersion");
             var profile = this.FindControl<StackPanel>("PanelProfile");
@@ -2757,7 +2764,7 @@ namespace OptiscalerClient.Views
             var spoofingHost = this.FindControl<StackPanel>("PanelSpoofingHost");
             var injectionLabel = this.FindControl<StackPanel>("LblInjectionMethod");
 
-            if (opti == null || extras == null || helixSR == null || injection == null || patcher == null
+            if (opti == null || extras == null || injection == null || patcher == null
                 || profile == null || frameGeneration == null || upscalingQuality == null
                 || outputUpscaler == null || spoofingHost == null)
                 return;
@@ -2769,7 +2776,7 @@ namespace OptiscalerClient.Views
                 // Generation / Profile / Spoofing — exactly 9 panels: 3 rows at 3 columns, 5 at 2.
                 var ordered = new List<StackPanel>
                 {
-                    opti, extras, helixSR, injection, patcher, outputUpscaler, upscalingQuality,
+                    opti, extras, injection, patcher, outputUpscaler, upscalingQuality,
                     frameGeneration, profile, spoofingHost,
                 };
                 for (var i = 0; i < ordered.Count; i++)
@@ -2787,7 +2794,7 @@ namespace OptiscalerClient.Views
                 // hand-picking (row, col) per panel — wrap to a new row every 3.
                 var fakenvapiPanel = this.FindControl<StackPanel>("PanelFakenvapiVersion");
                 var nukemFGPanel = this.FindControl<StackPanel>("PanelNukemFGVersion");
-                var ordered = new List<StackPanel> { opti, extras, helixSR };
+                var ordered = new List<StackPanel> { opti, extras };
                 if (fakenvapiPanel is { IsVisible: true }) ordered.Add(fakenvapiPanel);
                 ordered.Add(injection);
                 ordered.Add(patcher);
@@ -5886,6 +5893,7 @@ namespace OptiscalerClient.Views
                         _game.PendingDlssNrOnAmdMode = "daniel-only";
                     // Only Windows needs OptiScaler out of the way; on Linux they run together.
                     SetOptiScalerControlsLocked(OperatingSystem.IsWindows());
+                    ResetHelixSRSelection();
                     SetAmdNrBridgePanelVisible(false);
                     // Both Install buttons are shown for this mode (see UpdateStatus's danielOnlyPending
                     // block below, which runs right after this switch and is authoritative for their
@@ -7521,13 +7529,7 @@ namespace OptiscalerClient.Views
             // Selecting a real OptiScaler version clears any HelixSR selection.
             if (!string.IsNullOrEmpty(selectedTag) && !selectedTag.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
-                var helixCmb = this.FindControl<ComboBox>("CmbHelixSRVersion");
-                if (helixCmb != null && helixCmb.SelectedIndex != 0)
-                {
-                    helixCmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
-                    helixCmb.SelectedIndex = 0;
-                    helixCmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
-                }
+                ResetHelixSRSelection();
             }
 
             UpdateInstallButtonsForSwapState();
@@ -8007,8 +8009,10 @@ namespace OptiscalerClient.Views
             cmb.Items.Add(new ComboBoxItem { Content = GetResourceString("TxtOptiVersionNone", "None"), Tag = "none" });
             try
             {
+                // Third-party OptiScaler fork: opt-in behind Experimental Features, like the other
+                // community mods (DLSS-NR-on-AMD, RenoDX).
                 var versions = componentService.HelixSRAvailableVersions;
-                if (versions != null && versions.Count > 0)
+                if (componentService.Config.ShowExperimentalFeatures && versions != null && versions.Count > 0)
                 {
                     foreach (var v in versions)
                     {
@@ -8091,8 +8095,37 @@ namespace OptiscalerClient.Views
                 }
             }
             catch { }
+            var optiTagNow = (this.FindControl<ComboBox>("CmbOptiVersion")?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            UpdateLockedOptionsForNoneSelection(string.Equals(optiTagNow, "none", StringComparison.OrdinalIgnoreCase));
+            ApplyHelixSRLocks();
             UpdateInstallButtonsForSwapState();
             RefreshInstallActionAvailability();
+        }
+
+        /// <summary>Sets the HelixSR selector back to "None" without firing its handler.</summary>
+        private void ResetHelixSRSelection()
+        {
+            var cmb = this.FindControl<ComboBox>("CmbHelixSRVersion");
+            if (cmb == null || cmb.SelectedIndex <= 0) return;
+            cmb.SelectionChanged -= CmbHelixSRVersion_SelectionChanged;
+            cmb.SelectedIndex = 0;
+            cmb.SelectionChanged += CmbHelixSRVersion_SelectionChanged;
+            ApplyHelixSRLocks();
+        }
+
+        /// <summary>The HelixSR install path only copies HelixSR's own files: RenoDX and DXGI
+        /// spoofing would be silently skipped, so lock them (and clear RenoDX) while it is selected.</summary>
+        private void ApplyHelixSRLocks()
+        {
+            bool helixOn = IsHelixSRSelected();
+            var renodx = this.FindControl<ComboBox>("CmbRenodxVersion");
+            if (renodx != null)
+            {
+                if (helixOn && renodx.SelectedIndex > 0) renodx.SelectedIndex = 0;
+                renodx.IsEnabled = !helixOn;
+            }
+            var spoofing = this.FindControl<ComboBox>("CmbSpoofing");
+            if (spoofing != null) spoofing.IsEnabled = !helixOn;
         }
 
         private async Task ExecuteHelixSRInstallAsync(bool isManualMode)
@@ -8102,7 +8135,7 @@ namespace OptiscalerClient.Views
             var helixTag = helixItem?.Tag?.ToString();
             if (string.IsNullOrEmpty(helixTag) || helixTag.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
-                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), "Select a HelixSR version.").ShowDialog<object>(this);
+                await new ConfirmDialog(this, GetResourceString("TxtError", "Error"), GetResourceString("TxtSelectHelixSRVersion", "Select a HelixSR version.")).ShowDialog<object>(this);
                 return;
             }
 
@@ -8155,13 +8188,32 @@ namespace OptiscalerClient.Views
                     var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
                     if (bdProgress != null) bdProgress.IsVisible = true;
                     if (prgDownload != null) { prgDownload.IsIndeterminate = true; }
-                    if (txtProgressState != null) txtProgressState.Text = "Downloading HelixSR " + helixTag + "...";
+                    if (txtProgressState != null) txtProgressState.Text = string.Format(GetResourceString("TxtDownloadingHelixSRFormat", "Downloading HelixSR {0}..."), helixTag);
                 });
                 var compSvc2 = new ComponentManagementService();
                 var helixCache = await compSvc2.DownloadHelixSRAsync(helixTag);
+
+                // HelixSR's ZIP has no DLSS network (its own setup builds it from NVIDIA's DLL), so
+                // HLX DLSS would not run from this install: say so and let the user decide.
+                if (!ComponentManagementService.IsHelixSRNetworkBuilt(helixCache))
+                {
+                    Dispatcher.UIThread.Post(() => {
+                        var bdProgress = this.FindControl<Border>("BdProgress");
+                        if (bdProgress != null) bdProgress.IsVisible = false;
+                    });
+                    var proceed = await new ConfirmDialog(this,
+                        GetResourceString("TxtHelixSRNoNetworkTitle", "HLX DLSS is not built"),
+                        GetResourceString("TxtHelixSRNoNetworkMsg", "This HelixSR package does not include HLX DLSS: HelixSR builds it on your PC from NVIDIA's DLSS file, and this app can't do that step.\n\nIf you install now, HelixSR Scaler and HLX FSR 4 will work, but the game's DLSS option will not use HLX DLSS. To use HLX DLSS, install HelixSR in this game with HelixSR Desktop instead.\n\nInstall anyway?"),
+                        confirmText: GetResourceString("TxtAntiCheatInstallAnyway", "Install anyway")).ShowDialog<bool>(this);
+                    if (!proceed) return;
+                    Dispatcher.UIThread.Post(() => {
+                        var bdProgress = this.FindControl<Border>("BdProgress");
+                        if (bdProgress != null) bdProgress.IsVisible = true;
+                    });
+                }
                 Dispatcher.UIThread.Post(() => {
                     var txtProgressState = this.FindControl<TextBlock>("TxtProgressState");
-                    if (txtProgressState != null) txtProgressState.Text = "Installing HelixSR " + helixTag + "...";
+                    if (txtProgressState != null) txtProgressState.Text = string.Format(GetResourceString("TxtInstallingHelixSRFormat", "Installing HelixSR {0}..."), helixTag);
                 });
                 await Task.Run(() => {
                     var inst = new GameInstallationService();
@@ -8182,7 +8234,7 @@ namespace OptiscalerClient.Views
                 _ = ShowToastAsync(string.Format(GetResourceString("TxtInstallSuccessFormat", "{0} installed successfully!"), "HelixSR " + helixTag));
                 await ConfirmDialog.VerifyIniAfterInstallAsync(this,
                     new GameInstallationService().DetermineInstallDirectory(_game) ?? _game.InstallPath);
-                await new ConfirmDialog(this, "HelixSR", "HelixSR " + helixTag + " installed successfully.").ShowDialog<object>(this);
+                await new ConfirmDialog(this, "HelixSR", string.Format(GetResourceString("TxtInstallSuccessFormat", "{0} installed successfully!"), "HelixSR " + helixTag)).ShowDialog<object>(this);
             }
             catch (Exception hexEx)
             {

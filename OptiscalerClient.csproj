@@ -17,7 +17,7 @@
     <SelfContained>true</SelfContained>
     <PublishTrimmed>false</PublishTrimmed> <!-- Disabled globally to fix NETSDK1168 (WPF limitation) -->
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishReadyToRun>true</PublishReadyToRun>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>

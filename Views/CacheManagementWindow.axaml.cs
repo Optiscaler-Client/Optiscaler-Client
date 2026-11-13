@@ -815,7 +815,7 @@ namespace OptiscalerClient.Views
 
             if (helixSizes.Count == 0)
             {
-                content.Children.Add(MakeEmptyLabel("No HelixSR versions cached."));
+                content.Children.Add(MakeEmptyLabel(Application.Current?.FindResource("TxtNoHelixSRVersions") as string ?? "No HelixSR versions cached."));
             }
             else
             {
@@ -1656,8 +1656,8 @@ namespace OptiscalerClient.Views
                 }
                 else if (info.IsHelixSR)
                 {
-                    title = "Delete HelixSR Version";
-                    msg = $"Are you sure you want to delete HelixSR '{info.Version}' from cache?";
+                    title = Application.Current?.FindResource("TxtDeleteHelixSRTitle") as string ?? "Delete HelixSR Version";
+                    msg = string.Format(Application.Current?.FindResource("TxtDeleteHelixSRMsgFormat") as string ?? "Are you sure you want to delete HelixSR '{0}' from cache?", info.Version);
                 }
                 else if (info.IsDlssNrLinuxWrapper)
                 {

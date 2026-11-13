@@ -792,6 +792,15 @@ This version is unavailable for download. Check your internet connection and try
     <x:String x:Key="TxtInstallingOptiPatcher">Installing OptiPatcher...</x:String>
     <x:String x:Key="TxtDownloadingXeFGUnlock">Downloading XeSS MFG unlock plugin...</x:String>
     <x:String x:Key="TxtInstallingXeFGUnlock">Installing XeSS MFG unlock plugin...</x:String>
+    <x:String x:Key="TxtHelixSRTooltip">HelixSR is an OptiScaler variant (experimental). Selecting it disables OptiScaler; install it with the Auto/Manual install buttons below.</x:String>
+    <x:String x:Key="TxtNoHelixSRVersions">No HelixSR versions cached.</x:String>
+    <x:String x:Key="TxtDeleteHelixSRTitle">Delete HelixSR Version</x:String>
+    <x:String x:Key="TxtDeleteHelixSRMsgFormat">Are you sure you want to delete HelixSR '{0}' from cache?</x:String>
+    <x:String x:Key="TxtSelectHelixSRVersion">Select a HelixSR version.</x:String>
+    <x:String x:Key="TxtDownloadingHelixSRFormat">Downloading HelixSR {0}...</x:String>
+    <x:String x:Key="TxtInstallingHelixSRFormat">Installing HelixSR {0}...</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkTitle">HLX DLSS is not built</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkMsg">This HelixSR package does not include HLX DLSS: HelixSR builds it on your PC from NVIDIA's DLSS file, and this app can't do that step.&#x0a;&#x0a;If you install now, HelixSR Scaler and HLX FSR 4 will work, but the game's DLSS option will not use HLX DLSS. To use HLX DLSS, install HelixSR in this game with HelixSR Desktop instead.&#x0a;&#x0a;Install anyway?</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Version Management</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi and NukemFG versions can be managed from the Local cache &amp; Default version management section in Settings.</x:String>
     <x:String x:Key="TxtSetDefault">Set Default</x:String>

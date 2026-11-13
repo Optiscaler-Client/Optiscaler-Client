@@ -754,6 +754,15 @@
     <x:String x:Key="TxtInstallingOptiPatcher">OptiPatcherをインストール中...</x:String>
     <x:String x:Key="TxtDownloadingXeFGUnlock">XeSS MFGアンロックプラグインをダウンロード中...</x:String>
     <x:String x:Key="TxtInstallingXeFGUnlock">XeSS MFGアンロックプラグインをインストール中...</x:String>
+    <x:String x:Key="TxtHelixSRTooltip">HelixSR は OptiScaler の派生版です（実験的）。選択すると OptiScaler は無効になります。下の自動/手動インストールボタンでインストールしてください。</x:String>
+    <x:String x:Key="TxtNoHelixSRVersions">キャッシュされた HelixSR バージョンがありません。</x:String>
+    <x:String x:Key="TxtDeleteHelixSRTitle">HelixSR バージョンの削除</x:String>
+    <x:String x:Key="TxtDeleteHelixSRMsgFormat">HelixSR '{0}' をキャッシュから削除してもよろしいですか？</x:String>
+    <x:String x:Key="TxtSelectHelixSRVersion">HelixSR のバージョンを選択してください。</x:String>
+    <x:String x:Key="TxtDownloadingHelixSRFormat">HelixSR {0} をダウンロード中...</x:String>
+    <x:String x:Key="TxtInstallingHelixSRFormat">HelixSR {0} をインストール中...</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkTitle">HLX DLSS はビルドされていません</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkMsg">この HelixSR パッケージには HLX DLSS が含まれていません。HelixSR は NVIDIA の DLSS ファイルから PC 上でこれを生成しますが、このアプリではその手順を実行できません。&#x0a;&#x0a;今インストールすると HelixSR Scaler と HLX FSR 4 は動作しますが、ゲームの DLSS オプションは HLX DLSS を使用しません。HLX DLSS を使うには、代わりに HelixSR Desktop でこのゲームに HelixSR をインストールしてください。&#x0a;&#x0a;このままインストールしますか？</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">バージョン管理</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">OptiScaler、OptiPatcher、FSR 4 Swap、Fakenvapi、NukemFGのバージョンは、設定のローカルキャッシュ &amp; デフォルトバージョン管理セクションから管理できます。</x:String>
     <x:String x:Key="TxtSetDefault">デフォルトに設定</x:String>

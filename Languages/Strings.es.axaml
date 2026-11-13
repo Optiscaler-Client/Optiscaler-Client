@@ -792,6 +792,15 @@ Esta versión no está disponible para descarga. Verificá tu conexión a intern
     <x:String x:Key="TxtInstallingOptiPatcher">Instalando OptiPatcher...</x:String>
     <x:String x:Key="TxtDownloadingXeFGUnlock">Descargando plugin de desbloqueo XeSS MFG...</x:String>
     <x:String x:Key="TxtInstallingXeFGUnlock">Instalando plugin de desbloqueo XeSS MFG...</x:String>
+    <x:String x:Key="TxtHelixSRTooltip">HelixSR es una variante de OptiScaler (experimental). Al seleccionarlo se desactiva OptiScaler; instálalo con los botones de instalación Auto/Manual de abajo.</x:String>
+    <x:String x:Key="TxtNoHelixSRVersions">No hay versiones de HelixSR en caché.</x:String>
+    <x:String x:Key="TxtDeleteHelixSRTitle">Eliminar versión de HelixSR</x:String>
+    <x:String x:Key="TxtDeleteHelixSRMsgFormat">¿Estás seguro de que quieres eliminar HelixSR '{0}' de la caché?</x:String>
+    <x:String x:Key="TxtSelectHelixSRVersion">Selecciona una versión de HelixSR.</x:String>
+    <x:String x:Key="TxtDownloadingHelixSRFormat">Descargando HelixSR {0}...</x:String>
+    <x:String x:Key="TxtInstallingHelixSRFormat">Instalando HelixSR {0}...</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkTitle">HLX DLSS no está compilado</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkMsg">Este paquete de HelixSR no incluye HLX DLSS: HelixSR lo genera en tu PC a partir del archivo DLSS de NVIDIA, y esta app no puede hacer ese paso.&#x0a;&#x0a;Si instalás ahora, HelixSR Scaler y HLX FSR 4 van a funcionar, pero la opción DLSS del juego no va a usar HLX DLSS. Para usar HLX DLSS, instalá HelixSR en este juego con HelixSR Desktop.&#x0a;&#x0a;¿Instalar de todos modos?</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestión de versiones</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">Las versiones de OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi y NukemFG se pueden gestionar desde la sección Caché local y versiones predeterminadas en Configuración.</x:String>
     <x:String x:Key="TxtSetDefault">Predeterminar</x:String>

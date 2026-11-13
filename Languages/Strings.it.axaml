@@ -766,6 +766,15 @@ Questa versione non è disponibile per il download. Controlla la tua connessione
     <x:String x:Key="TxtInstallingOptiPatcher">Installazione di OptiPatcher...</x:String>
     <x:String x:Key="TxtDownloadingXeFGUnlock">Download del plugin di sblocco XeSS MFG...</x:String>
     <x:String x:Key="TxtInstallingXeFGUnlock">Installazione del plugin di sblocco XeSS MFG...</x:String>
+    <x:String x:Key="TxtHelixSRTooltip">HelixSR è una variante di OptiScaler (sperimentale). Selezionarla disattiva OptiScaler; installala con i pulsanti di installazione Auto/Manuale qui sotto.</x:String>
+    <x:String x:Key="TxtNoHelixSRVersions">Nessuna versione di HelixSR nella cache.</x:String>
+    <x:String x:Key="TxtDeleteHelixSRTitle">Elimina versione HelixSR</x:String>
+    <x:String x:Key="TxtDeleteHelixSRMsgFormat">Sei sicuro di voler eliminare HelixSR '{0}' dalla cache?</x:String>
+    <x:String x:Key="TxtSelectHelixSRVersion">Seleziona una versione di HelixSR.</x:String>
+    <x:String x:Key="TxtDownloadingHelixSRFormat">Download di HelixSR {0}...</x:String>
+    <x:String x:Key="TxtInstallingHelixSRFormat">Installazione di HelixSR {0}...</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkTitle">HLX DLSS non è compilato</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkMsg">Questo pacchetto HelixSR non include HLX DLSS: HelixSR lo genera sul tuo PC dal file DLSS di NVIDIA e questa app non può eseguire questo passaggio.&#x0a;&#x0a;Se installi ora, HelixSR Scaler e HLX FSR 4 funzioneranno, ma l'opzione DLSS del gioco non userà HLX DLSS. Per usare HLX DLSS, installa invece HelixSR in questo gioco con HelixSR Desktop.&#x0a;&#x0a;Installare comunque?</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestione delle versioni</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">Le versioni di OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi e NukemFG possono essere gestite dalla sezione Cache locale &amp; Gestione versioni predefinite nelle Impostazioni.</x:String>
     <x:String x:Key="TxtSetDefault">Imposta predefinito</x:String>

@@ -766,6 +766,15 @@ Cette version n'est pas disponible en téléchargement. Vérifiez votre connexio
     <x:String x:Key="TxtInstallingOptiPatcher">Installation d'OptiPatcher...</x:String>
     <x:String x:Key="TxtDownloadingXeFGUnlock">Téléchargement du plugin de déblocage XeSS MFG...</x:String>
     <x:String x:Key="TxtInstallingXeFGUnlock">Installation du plugin de déblocage XeSS MFG...</x:String>
+    <x:String x:Key="TxtHelixSRTooltip">HelixSR est une variante d'OptiScaler (expérimentale). La sélectionner désactive OptiScaler ; installez-la avec les boutons d'installation Auto/Manuelle ci-dessous.</x:String>
+    <x:String x:Key="TxtNoHelixSRVersions">Aucune version de HelixSR en cache.</x:String>
+    <x:String x:Key="TxtDeleteHelixSRTitle">Supprimer la version de HelixSR</x:String>
+    <x:String x:Key="TxtDeleteHelixSRMsgFormat">Êtes-vous sûr de vouloir supprimer HelixSR '{0}' du cache ?</x:String>
+    <x:String x:Key="TxtSelectHelixSRVersion">Sélectionnez une version de HelixSR.</x:String>
+    <x:String x:Key="TxtDownloadingHelixSRFormat">Téléchargement de HelixSR {0}...</x:String>
+    <x:String x:Key="TxtInstallingHelixSRFormat">Installation de HelixSR {0}...</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkTitle">HLX DLSS n'est pas compilé</x:String>
+    <x:String x:Key="TxtHelixSRNoNetworkMsg">Ce paquet HelixSR n'inclut pas HLX DLSS : HelixSR le génère sur votre PC à partir du fichier DLSS de NVIDIA, et cette application ne peut pas effectuer cette étape.&#x0a;&#x0a;Si vous installez maintenant, HelixSR Scaler et HLX FSR 4 fonctionneront, mais l'option DLSS du jeu n'utilisera pas HLX DLSS. Pour utiliser HLX DLSS, installez plutôt HelixSR dans ce jeu avec HelixSR Desktop.&#x0a;&#x0a;Installer quand même ?</x:String>
     <x:String x:Key="TxtVersionMgmtInfoTitle">Gestion des versions</x:String>
     <x:String x:Key="TxtVersionMgmtInfoDesc">Les versions d'OptiScaler, OptiPatcher, FSR 4 Swap, Fakenvapi et NukemFG peuvent être gérées depuis la section Cache local &amp; Gestion des versions par défaut dans les Paramètres.</x:String>
     <x:String x:Key="TxtSetDefault">Définir par défaut</x:String>
