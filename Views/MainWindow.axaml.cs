@@ -6429,10 +6429,11 @@ namespace OptiscalerClient.Views
                         // ── FSR 4 Swap DLL injection (respect configured default extras)
                         var configuredExtras = _componentService.Config.DefaultExtrasVersion;
                         if (configuredExtras == ComponentManagementService.LatestAvailableTag)
-                            configuredExtras = await _componentService.ResolveLatestExtrasVersionAsync();
+                            configuredExtras = await _componentService.ResolveLatestExtrasVersionAsync(
+                                _componentService.Config.DefaultExtrasVariant ?? Fsr4DllVariant.Int8, preferredGpuForFsr4);
                         if (!string.IsNullOrEmpty(configuredExtras) && !configuredExtras.Equals("none", StringComparison.OrdinalIgnoreCase))
                         {
-                            var configuredExtrasIsInt8 = _componentService.GetExtrasDllVariant(configuredExtras) == Fsr4DllVariant.Int8;
+                            var configuredExtrasNeedsInt8Fallback = _componentService.UsesLegacyFsr4Int8Fallback(configuredExtras);
                             try
                             {
                                 ShowToast(string.Format(GetResourceString("TxtDownloadingExtrasFormat", "Downloading FSR 4 Swap v{0}... {1}%"), configuredExtras, 0), showProgress: true, progressPercent: 0);
@@ -6447,7 +6448,7 @@ namespace OptiscalerClient.Views
                                 if (!File.Exists(extrasDllPath))
                                     throw new Exception("FSR 4 Swap package is corrupt or incomplete.");
                                 File.Copy(extrasDllPath, destPath, overwrite: true);
-                                if (configuredExtrasIsInt8)
+                                if (configuredExtrasNeedsInt8Fallback)
                                 {
                                     var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(configuredExtras);
                                     if (customAmdxc64Path != null)
