@@ -762,7 +762,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         var selectedExtrasVersion = selectedExtrasItem?.Tag?.ToString();
         bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
                             !selectedExtrasVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
-        bool selectedExtrasIsInt8 = injectExtras && _componentService.GetExtrasDllVariant(selectedExtrasVersion!) == Fsr4DllVariant.Int8;
+        bool selectedExtrasNeedsInt8Fallback = injectExtras && _componentService.UsesLegacyFsr4Int8Fallback(selectedExtrasVersion!);
 
         // ── DLL-swap mode: OptiScaler version is "None" ─────────────────────────────
         // Ignores the normal batch install flow entirely (profile, injection method, Fakenvapi,
@@ -1200,7 +1200,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                             _installService.InjectExtrasDll(gameItem.Game, gameDirForSwap, file.TargetPath, file.SourceContentPath);
                             DebugWindow.Log($"[BulkInstall] Copied FSR 4 Swap DLL to {file.TargetPath} for {gameItem.Name}");
                         }
-                        if (selectedExtrasIsInt8)
+                        if (selectedExtrasNeedsInt8Fallback)
                         {
                             var customAmdxc64Path = _componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
                             if (customAmdxc64Path != null)
@@ -1409,7 +1409,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 // Null only when none of the known names exist yet — filled in below with the
                 // downloaded package's own filename, never a forced/renamed one.
                 string? targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
-                    _componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
+                    _componentService.UsesLegacyFsr4Int8Fallback(extrasVersion));
 
                 // The RDNA2 companion (amdxc64.dll) has its own separate source and can be absent
                 // for a given version — everything else comes from the regular Extras package.
@@ -1419,7 +1419,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                 List<(string TargetPath, string SourceContentPath)> filesToSwap;
                 if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (_componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
+                    if (!_componentService.UsesLegacyFsr4Int8Fallback(extrasVersion))
                     {
                         skippedCount++;
                         continue;
@@ -2259,7 +2259,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             if (!string.IsNullOrWhiteSpace(defaultVersion) &&
                 !defaultVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
-                _extrasVariant = _componentService.GetExtrasDllVariant(defaultVersion);
+                _extrasVariant = _componentService.GetDefaultExtrasVariant(defaultVersion);
             }
             _extrasTabInitialized = true;
         }
@@ -2314,11 +2314,12 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
         // Determine default selection
         bool isRdna4OrRdna3 = false;
         bool isRdna2 = false;
+        GpuInfo? gpu = null;
         if (_gpuService != null)
         {
             try
             {
-                var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
                 isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
                 isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
             }
@@ -2354,9 +2355,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
                     // Applying same "intelligent" logic if user's favorite version is gone
                     if (!isRdna4OrRdna3 && versions.Count > 0)
                     {
-                        var automaticVersion = isRdna2
-                            ? _componentService.GetRdna2PreferredExtrasVersion()
-                            : versions[0];
+                        var automaticVersion = _componentService.GetAutomaticExtrasVersion(versions, gpu, isRdna2);
                         targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                     }
                 }
@@ -2368,9 +2367,7 @@ public partial class BulkInstallWindow : Window, IGamepadInputHost
             // → Use "intelligent" logic
             if (!isRdna4OrRdna3 && versions.Count > 0)
             {
-                var automaticVersion = isRdna2
-                    ? _componentService.GetRdna2PreferredExtrasVersion()
-                    : versions[0];
+                var automaticVersion = _componentService.GetAutomaticExtrasVersion(versions, gpu, isRdna2);
                 targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
             }
             else

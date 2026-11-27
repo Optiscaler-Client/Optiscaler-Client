@@ -126,6 +126,8 @@ namespace OptiscalerClient.Models
         /// Null or "none" means "do not inject".
         /// </summary>
         public string? DefaultExtrasVersion { get; set; } = null;
+        /// <summary>Variant tab a "Latest version available" FSR 4 default was saved from.</summary>
+        public Fsr4DllVariant? DefaultExtrasVariant { get; set; } = null;
         /// <summary>
         /// The default OptiScaler version to pre-select in ManageGameWindow / Quick Install.
         /// Null or "auto" means let the app choose the recommended/latest version automatically.

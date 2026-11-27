@@ -345,7 +345,7 @@ namespace OptiscalerClient.Views
                 if (!string.IsNullOrWhiteSpace(defaultVersion) &&
                     !defaultVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
                 {
-                    _extrasDefaultVariant = _componentService.GetExtrasDllVariant(defaultVersion);
+                    _extrasDefaultVariant = _componentService.GetDefaultExtrasVariant(defaultVersion);
                 }
                 _extrasDefaultTabInitialized = true;
             }
@@ -420,13 +420,14 @@ namespace OptiscalerClient.Views
             {
                 bool isRdna4OrRdna3 = false;
                 bool isRdna2 = false;
-                if (OperatingSystem.IsWindows() && _gpuService != null)
+                GpuInfo? gpu = null;
+                if (_gpuService != null)
                 {
                     try
                     {
-                        var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
-                        isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
-                        isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
+                        gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, _componentService.Config.DefaultGpuId);
+                        isRdna4OrRdna3 = OperatingSystem.IsWindows() && (GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu));
+                        isRdna2 = OperatingSystem.IsWindows() && GpuSelectionHelper.IsRdna2(gpu);
                     }
                     catch (Exception ex)
                     {
@@ -436,9 +437,7 @@ namespace OptiscalerClient.Views
 
                 if (!isRdna4OrRdna3)
                 {
-                    var automaticVersion = isRdna2
-                        ? _componentService.GetRdna2PreferredExtrasVersion()
-                        : versions.FirstOrDefault();
+                    var automaticVersion = _componentService.GetAutomaticExtrasVersion(versions, gpu, isRdna2);
                     // +2: index 0 is "None", index 1 is "Latest version available", real versions start at 2.
                     targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 2;
                 }
@@ -1172,11 +1171,14 @@ namespace OptiscalerClient.Views
 
             // Save Extras version
             var cmbExtras = this.FindControl<ComboBox>("CmbDefaultExtrasVersion");
-            if (cmbExtras?.SelectedItem is ComboBoxItem extrasItem)
+            // A disabled combo only shows "No Versions Available"; keep the saved default.
+            if (cmbExtras?.IsEnabled == true && cmbExtras.SelectedItem is ComboBoxItem extrasItem)
             {
                 var ver = extrasItem.Tag?.ToString() ?? "none";
                 _componentService.Config.DefaultExtrasVersion =
                     ver.Equals("none", StringComparison.OrdinalIgnoreCase) ? null : ver;
+                _componentService.Config.DefaultExtrasVariant =
+                    ver == ComponentManagementService.LatestAvailableTag ? _extrasDefaultVariant : null;
             }
 
             // Save OptiPatcher version

@@ -122,6 +122,12 @@ namespace OptiscalerClient.Services
         /// "always resolve to whatever is currently the latest available", set from Manage Default Versions.
         /// </summary>
         public const string LatestAvailableTag = "__latest__";
+        /// <summary>
+        /// From 4.1.2 on, AMD's signed SDK upscaler also carries the official INT8 model for RX 6000
+        /// and RX 7000. Each such FP8 mirror release is listed a second time as an INT8 swap.
+        /// </summary>
+        private const string SdkInt8Suffix = "_SDK_INT8";
+        private static readonly Version FirstSdkInt8Upscaler = new(4, 1, 2);
 
         /// <summary>
         /// Effective OptiScaler default: the explicitly pinned version, or — when auto-latest is on —
@@ -176,6 +182,8 @@ namespace OptiscalerClient.Services
         /// </summary>
         public Fsr4DllVariant GetExtrasDllVariant(string version)
         {
+            if (IsSdkInt8Extras(version)) return Fsr4DllVariant.Int8;
+
             var release = _extrasCache.Releases.FirstOrDefault(r =>
                 string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase));
             if (release != null) return release.Variant;
@@ -188,8 +196,36 @@ namespace OptiscalerClient.Services
         public string GetExtrasDllDisplayName(string version)
         {
             var variant = GetExtrasDllVariant(version);
-            var siblings = ExtrasAvailableVersions.Where(v => GetExtrasDllVariant(v) == variant);
-            return Fsr4Int8DllHelper.FormatDisplayLabel(version, siblings);
+            var siblings = ExtrasAvailableVersions.Where(v => GetExtrasDllVariant(v) == variant).Select(GetExtrasSourceTag);
+            return Fsr4Int8DllHelper.FormatDisplayLabel(GetExtrasSourceTag(version), siblings);
+        }
+
+        public static bool IsSdkInt8Extras(string version) =>
+            version.EndsWith(SdkInt8Suffix, StringComparison.OrdinalIgnoreCase);
+
+        private static string GetExtrasSourceTag(string version) =>
+            IsSdkInt8Extras(version) ? version[..^SdkInt8Suffix.Length] : version;
+
+        /// <summary>Leaked INT8 packages need the amdxc64 companion and forcing keys; SDK INT8 builds do not.</summary>
+        public bool UsesLegacyFsr4Int8Fallback(string version) =>
+            GetExtrasDllVariant(version) == Fsr4DllVariant.Int8 && !IsSdkInt8Extras(version);
+
+        /// <summary>"Latest" resolves within the variant tab it was saved from.</summary>
+        public Fsr4DllVariant GetDefaultExtrasVariant(string version) =>
+            version == LatestAvailableTag
+                ? _config.DefaultExtrasVariant ?? Fsr4DllVariant.Int8
+                : GetExtrasDllVariant(version);
+
+        /// <summary>Newest version in the list, skipping SDK INT8 builds the GPU cannot run.</summary>
+        public static string? GetLatestExtrasVersion(System.Collections.Generic.IEnumerable<string> versions, GpuInfo? gpu) =>
+            versions.FirstOrDefault(v => !IsSdkInt8Extras(v) || GpuSelectionHelper.SupportsFsr4SdkInt8(gpu));
+
+        /// <summary>Automatic pick: the newest usable build, or the tested INT8 build on RDNA2
+        /// cards without SDK INT8 support.</summary>
+        public string? GetAutomaticExtrasVersion(System.Collections.Generic.IEnumerable<string> versions, GpuInfo? gpu, bool isRdna2)
+        {
+            var latest = GetLatestExtrasVersion(versions, gpu);
+            return isRdna2 && (latest == null || !IsSdkInt8Extras(latest)) ? GetRdna2PreferredExtrasVersion() : latest;
         }
 
         public System.Collections.Generic.List<string> ExtrasDownloadedVersions
@@ -521,17 +557,15 @@ namespace OptiscalerClient.Services
             RebuildInMemoryExtrasCache();
         }
 
-        /// <summary>Same on-demand "latest" resolution as ResolveLatestStreamlineVersionAsync.</summary>
-        public async Task<string?> ResolveLatestExtrasVersionAsync()
+        /// <summary>On-demand "latest" resolution within one variant, fetching only when that variant
+        /// has no cached entries yet.</summary>
+        public async Task<string?> ResolveLatestExtrasVersionAsync(Fsr4DllVariant variant, GpuInfo? gpu = null)
         {
-            if (!string.IsNullOrEmpty(_cachedLatestExtrasVersion))
-                return _cachedLatestExtrasVersion;
+            if (!ExtrasAvailableVersions.Any(v => GetExtrasDllVariant(v) == variant))
+                MergeExtrasReleases((await FetchExtrasReleasesAsync()).Concat(await FetchExtrasFp8ReleasesAsync()).ToList());
 
-            MergeExtrasReleases((await FetchExtrasReleasesAsync()).Concat(await FetchExtrasFp8ReleasesAsync()).ToList());
-            if (!string.IsNullOrEmpty(_cachedLatestExtrasVersion))
-                return _cachedLatestExtrasVersion;
-
-            return GetDownloadedExtrasVersions().FirstOrDefault();
+            return GetLatestExtrasVersion(ExtrasAvailableVersions.Concat(GetDownloadedExtrasVersions())
+                .Where(v => GetExtrasDllVariant(v) == variant), gpu);
         }
 
         private void RebuildInMemoryExtrasCache()
@@ -543,11 +577,13 @@ namespace OptiscalerClient.Services
             }
 
             _cachedExtrasVersions = _extrasCache.Releases
-                .Select(r => r.Version)
+                .SelectMany(r => r.Variant == Fsr4DllVariant.Fp8 && ParseVersionForSort(r.Version) >= FirstSdkInt8Upscaler
+                    ? new[] { r.Version, r.Version + SdkInt8Suffix }
+                    : new[] { r.Version })
                 .Distinct()
                 .OrderByDescending(ParseVersionForSort)
-                .ThenByDescending(ParseVersionLetterSuffixValue)
-                .ThenByDescending(ParseVersionSuffixValue)
+                .ThenByDescending(v => ParseVersionLetterSuffixValue(GetExtrasSourceTag(v)))
+                .ThenByDescending(v => ParseVersionSuffixValue(GetExtrasSourceTag(v)))
                 .ThenByDescending(v => v, StringComparer.OrdinalIgnoreCase)
                 .ToList();
             // Trust the version-sorted list, not each release's IsLatest flag: GitHub's releases API
@@ -796,6 +832,7 @@ namespace OptiscalerClient.Services
                 if ((_cachedOptiScalerVersions == null || _cachedOptiScalerVersions.Count == 0) ||
                     _cachedNightlyVersions.Count == 0 ||
                     HasMistaggedExtrasVariant() ||
+                    IsMissingExtrasVariant() ||
                     (DateTime.Now - lastCheck).TotalMinutes > 15)
                 {
                     DebugWindow.Log($"[ComponentCheck] Fetching updates from GitHub API (last check: {(DateTime.Now - lastCheck).ToString(@"hh\:mm\:ss")} ago)");
@@ -1214,6 +1251,17 @@ namespace OptiscalerClient.Services
                 r.Variant != Fsr4DllVariant.Fp8);
         }
 
+        /// <summary>
+        /// True if one Extras variant has no cached entries, e.g. when a check reached only one of the two
+        /// repos. Lets CheckForUpdatesAsync bypass its cooldown once per launch to fill that tab.
+        /// </summary>
+        private bool IsMissingExtrasVariant() =>
+            _lastApiCheckTime == default &&
+            ((!string.IsNullOrEmpty(_config.OptiScalerExtras.RepoName) &&
+              !_extrasCache.Releases.Any(r => r.Variant == Fsr4DllVariant.Int8)) ||
+             (!string.IsNullOrEmpty(_config.OptiScalerExtrasFp8.RepoName) &&
+              !_extrasCache.Releases.Any(r => r.Variant == Fsr4DllVariant.Fp8)));
+
         private static Fsr4DllVariant InferFsr4DllVariant(string? source)
         {
             if (!string.IsNullOrWhiteSpace(source) &&
@@ -1324,9 +1372,10 @@ namespace OptiscalerClient.Services
                 return cachedDllPath;
             }
 
-            // Resolve download URL (cache first, then API)
+            // Resolve download URL (cache first, then API). SDK INT8 entries download their FP8 release.
+            var sourceTag = GetExtrasSourceTag(version);
             string? downloadUrl = _extrasCache.Releases
-                .FirstOrDefault(r => string.Equals(r.Version, version, StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault(r => string.Equals(r.Version, sourceTag, StringComparison.OrdinalIgnoreCase))
                 ?.DownloadUrl;
 
             if (string.IsNullOrEmpty(downloadUrl))
@@ -1341,7 +1390,7 @@ namespace OptiscalerClient.Services
                     {
                         try
                         {
-                            var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{version}";
+                            var apiUrl = $"https://api.github.com/repos/{config.RepoOwner}/{config.RepoName}/releases/tags/{prefix}{sourceTag}";
                             var response = await GetWithRetryAsync(() => _httpClient, apiUrl, maxRetries: 2, timeoutSeconds: 15);
                             if (!response.IsSuccessStatusCode) continue;
 

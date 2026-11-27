@@ -78,6 +78,12 @@ namespace OptiscalerClient.Helpers
         /// still AMD.</summary>
         public static bool IsRdna3OrRdna4(GpuInfo? gpu) => IsRdna3(gpu) || IsRdna4(gpu);
 
+        /// <summary>AMD's SDK INT8 model supports RX 6000 discrete cards, not the RDNA2 APUs
+        /// that IsRdna2 also matches.</summary>
+        public static bool SupportsFsr4SdkInt8(GpuInfo? gpu) =>
+            IsRdna3OrRdna4(gpu) || (gpu?.Vendor == GpuVendor.AMD &&
+                gpu.Name.Contains("RX 6", StringComparison.OrdinalIgnoreCase));
+
         /// <summary>Nvidia Blackwell (GeForce RTX 50 series) is the only Nvidia generation with native
         /// Dynamic Multi Frame Generation support (OptiScaler's ForceDMFG/OverrideForceDMFG). Matches
         /// RTX 5050/5060/5070/5080/5090 (with optional Ti/Laptop suffixes) but not the RTX 5000 Ada

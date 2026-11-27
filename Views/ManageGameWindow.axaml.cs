@@ -1939,7 +1939,7 @@ namespace OptiscalerClient.Views
                 if (!string.IsNullOrWhiteSpace(defaultVersion) &&
                     !defaultVersion.Equals("none", StringComparison.OrdinalIgnoreCase))
                 {
-                    _extrasVariant = componentService.GetExtrasDllVariant(defaultVersion);
+                    _extrasVariant = componentService.GetDefaultExtrasVariant(defaultVersion);
                 }
                 _extrasTabInitialized = true;
             }
@@ -2000,11 +2000,12 @@ namespace OptiscalerClient.Views
             // Determine default selection
             bool isRdna4OrRdna3 = false;
             bool isRdna2 = false;
+            GpuInfo? gpu = null;
             if (_gpuService != null)
             {
                 try
                 {
-                    var gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
+                    gpu = GpuSelectionHelper.GetPreferredGpu(_gpuService, componentService.Config.DefaultGpuId);
                     isRdna4OrRdna3 = GpuSelectionHelper.IsRdna4(gpu) || GpuSelectionHelper.IsRdna3(gpu);
                     isRdna2 = GpuSelectionHelper.IsRdna2(gpu);
                 }
@@ -2017,10 +2018,10 @@ namespace OptiscalerClient.Views
 
             if (globalDefault == ComponentManagementService.LatestAvailableTag)
             {
-                // "Latest version available" (set from Manage Default Versions) always means the
-                // newest release in whichever variant tab is showing — no GPU gating, unlike the
-                // "no preference configured" fallback below.
-                targetIndex = versions.Count > 0 ? 1 : 0;
+                // "Latest version available" (set from Manage Default Versions) means the newest
+                // release in the variant tab it was saved from that this GPU can run.
+                var latest = ComponentManagementService.GetLatestExtrasVersion(versions, gpu);
+                targetIndex = latest == null ? 0 : versions.IndexOf(latest) + 1;
             }
             else if (!string.IsNullOrEmpty(globalDefault))
             {
@@ -2047,9 +2048,7 @@ namespace OptiscalerClient.Views
                         // Applying same "intelligent" logic if user's favorite version is gone
                         if (!isRdna4OrRdna3 && versions.Count > 0)
                         {
-                            var automaticVersion = isRdna2
-                                ? componentService.GetRdna2PreferredExtrasVersion()
-                                : versions[0];
+                            var automaticVersion = componentService.GetAutomaticExtrasVersion(versions, gpu, isRdna2);
                             targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                         }
                     }
@@ -2061,9 +2060,7 @@ namespace OptiscalerClient.Views
                 // → Use "intelligent" logic
                 if (!isRdna4OrRdna3 && versions.Count > 0)
                 {
-                    var automaticVersion = isRdna2
-                        ? componentService.GetRdna2PreferredExtrasVersion()
-                        : versions[0];
+                    var automaticVersion = componentService.GetAutomaticExtrasVersion(versions, gpu, isRdna2);
                     targetIndex = automaticVersion == null ? 0 : versions.IndexOf(automaticVersion) + 1;
                 }
                 else
@@ -4827,7 +4824,7 @@ namespace OptiscalerClient.Views
             var selectedExtrasVersion = selectedExtrasItem?.Tag?.ToString();
             bool injectExtras = !string.IsNullOrEmpty(selectedExtrasVersion) &&
                                 !selectedExtrasVersion.Equals("none", StringComparison.OrdinalIgnoreCase);
-            bool selectedExtrasIsInt8 = injectExtras && extrasComponentService.GetExtrasDllVariant(selectedExtrasVersion!) == Fsr4DllVariant.Int8;
+            bool selectedExtrasNeedsInt8Fallback = injectExtras && extrasComponentService.UsesLegacyFsr4Int8Fallback(selectedExtrasVersion!);
 
             // Read selected OptiPatcher version before any async work
             var cmbOptiPatcherVersion = this.FindControl<ComboBox>("CmbOptiPatcherVersion");
@@ -5586,7 +5583,7 @@ namespace OptiscalerClient.Views
                                 DebugWindow.Log($"[ExtrasInject] Copied DLL to {file.TargetPath} and set version to {selectedExtrasVersion}");
                             }
 
-                            if (selectedExtrasIsInt8)
+                            if (selectedExtrasNeedsInt8Fallback)
                             {
                                 var customAmdxc64Path = componentService.GetCachedCustomAmdxc64Path(selectedExtrasVersion);
                                 if (customAmdxc64Path != null)
@@ -6687,7 +6684,7 @@ namespace OptiscalerClient.Views
                     // uses (never a forced/renamed one), tracked as a created file so uninstall
                     // deletes it instead of trying to "restore" an original that never existed.
                     targetPath = Fsr4Int8DllHelper.FindSwapTargetIn(gameDir,
-                        componentService.GetExtrasDllVariant(extrasVersion) == Fsr4DllVariant.Int8);
+                        componentService.UsesLegacyFsr4Int8Fallback(extrasVersion));
                 }
 
                 if (btnInstall != null) btnInstall.IsEnabled = false;
@@ -6709,7 +6706,7 @@ namespace OptiscalerClient.Views
 
                 if (targetFileName != null && string.Equals(targetFileName, Fsr4Int8DllHelper.CustomRdna2FileName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (componentService.GetExtrasDllVariant(extrasVersion) != Fsr4DllVariant.Int8)
+                    if (!componentService.UsesLegacyFsr4Int8Fallback(extrasVersion))
                         throw new InvalidOperationException("amdxc64.dll can only be replaced with an INT8 package.");
                     var rdna2Path = componentService.GetCachedCustomAmdxc64Path(extrasVersion);
                     if (rdna2Path == null)
